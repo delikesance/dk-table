@@ -2,8 +2,8 @@
 import type { DktDoc, DocSheet } from "../io/types";
 import type { SheetInfo } from "./tabs/tabs";
 import type { RecentFile } from "./sidebar/sidebar";
-import type { CellStyle } from "./model";
 import type { Sheet } from "../engine/sheet";
+import type { CellStyle } from "./model";
 import type { MacroStore } from "../macros/store";
 import type { RunResult } from "../macros/lua";
 
@@ -19,8 +19,12 @@ export interface Hooks {
 export interface App {
   hooks: Hooks;
   path: string | undefined;
+  /** True when there are unsaved changes (set by setTitle). */
+  dirty?: boolean;
   /** Edit a cell (undoable) and recalculate dependents. */
   edit(key: string, raw: string): void;
+  /** Edit several cells as ONE undo step and ONE refresh (paste/clear). */
+  editMany(cells: Record<string, string>): void;
   undo(): void;
   redo(): void;
   addSheet(): void;
@@ -41,10 +45,12 @@ export interface App {
   /** Style of the active cell. */
   activeStyle(): CellStyle;
   toggleSidebar(): void;
-  /** Start `=NAME(` in the active cell. */
+  /** Write a complete `=NAME()` in the active cell; no-op if the cell is not empty (never overwrites). */
   insertFunction(name: string): void;
   recents(): RecentFile[];
   addRecent(path: string): void;
+  /** Sort the active column's data block (one undo step); false when nothing to sort. */
+  sortColumn(desc: boolean): boolean;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
   /** Lua macros of the workbook (persisted with the document). */

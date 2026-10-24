@@ -13,11 +13,14 @@ export interface IoDeps {
   writeTextFile: (path: string, data: string) => Promise<void>;
 }
 
+/** Test-only hook: `globalThis.__DK_IO__` (e.g. set by Playwright) replaces the Tauri plugins when defined. */
+const hook = (): IoDeps | undefined => (globalThis as { __DK_IO__?: IoDeps }).__DK_IO__;
+
 const defaultDeps: IoDeps = {
-  open: (o) => open(o) as Promise<string | null>,
-  save: (o) => save(o),
-  readTextFile,
-  writeTextFile,
+  open: (o) => (hook()?.open ?? ((x) => open(x) as Promise<string | null>))(o),
+  save: (o) => (hook()?.save ?? save)(o),
+  readTextFile: (p) => (hook()?.readTextFile ?? readTextFile)(p),
+  writeTextFile: (p, d) => (hook()?.writeTextFile ?? writeTextFile)(p, d),
 };
 
 const FILTERS = [{ name: "dk-table", extensions: ["dktable"] }];
