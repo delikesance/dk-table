@@ -63,6 +63,15 @@ function checkStyles(raw: unknown, at: string): Record<string, CellStyle> {
   return out;
 }
 
+/** Validates the optional `freeze` of a sheet: integers >= 0, unknown props dropped. */
+function checkFreeze(v: unknown, at: string): NonNullable<DocSheet["freeze"]> {
+  const ok = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0;
+  if (!isObj(v) || !ok(v.rows) || !ok(v.cols)) {
+    throw new DktParseError(`${at}.freeze must be {rows, cols} with integers >= 0`);
+  }
+  return { rows: v.rows, cols: v.cols };
+}
+
 /** Validates one sheet entry, throwing a located DktParseError. */
 function checkSheet(s: unknown, i: number): DocSheet {
   const at = `sheets[${i}]`;
@@ -82,6 +91,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   }
   const sheet: DocSheet = { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
   if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
+  if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
   return sheet;
 }
 
