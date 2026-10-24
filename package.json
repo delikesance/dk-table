@@ -23,6 +23,7 @@
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-dialog": "^2.8.3",
     "@tauri-apps/plugin-fs": "^2.7.1",
-    "iconoir": "^7.12.1"
+    "iconoir": "^7.12.1",
+    "wasmoon": "^1.16.0"
   }
 }

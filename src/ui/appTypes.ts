@@ -2,6 +2,7 @@
 import type { DktDoc, DocSheet } from "../io/types";
 import type { SheetInfo } from "./tabs/tabs";
 import type { RecentFile } from "./sidebar/sidebar";
+import type { Sheet } from "../engine/sheet";
 import type { CellStyle } from "./model";
 
 /** Hooks set by the command layer (file ops, context menu). */
@@ -22,6 +23,8 @@ export interface App {
   edit(key: string, raw: string): void;
   /** Edit several cells as ONE undo step and ONE refresh (paste/clear). */
   editMany(cells: Record<string, string>): void;
+  /** Run `fn` on the active sheet as ONE undo step (macros), then refresh the grid. */
+  runBatch<T>(fn: (sheet: Sheet) => Promise<T>): Promise<T>;
   undo(): void;
   redo(): void;
   addSheet(): void;

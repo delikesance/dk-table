@@ -36,6 +36,10 @@ export function createApi(c: Ctx): App {
       for (const [k, raw] of Object.entries(cells)) setCell(c.cur.sheet, k, raw);
       touch(c);
     },
+    async runBatch(fn) {
+      pushUndo(c.cur);
+      try { return await fn(c.cur.sheet); } finally { touch(c); }
+    },
     undo() { if (step(c.cur, "undo")) { buildGrid(c); setTitle(c, true); } },
     redo() { if (step(c.cur, "redo")) { buildGrid(c); setTitle(c, true); } },
     addSheet() {
