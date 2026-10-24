@@ -32,6 +32,7 @@ export function mount(root: HTMLElement): App {
   } as unknown as Ctx;
   c.app = createApi(c);
   createWidgets(c, root);
+  c.sidebar.setRecent(c.recents);
   createPalette({ hotkey: true });
   refreshTabs(c);
   buildGrid(c);
