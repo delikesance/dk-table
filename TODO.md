@@ -114,7 +114,6 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 
 - [x] Macros Lua (wasmoon) : remplacées par l'implémentation fengari + éditeur (Phase 8 Macros Lua)
 - [ ] Macros : accès aux styles et à plusieurs feuilles
-
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
 
@@ -134,7 +133,6 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
 - [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules
 - [x] benchmark-captures: docs/benchmark-captures.md (benchmark UI tableurs, patterns à reprendre/éviter)
-
 - [x] Onboarding: écran d'accueil au lancement (`src/ui/onboarding/`, tokens `--ob-*` Hermes en fin de `tokens.css`), liste des feuilles + « Créer », `?onboarding=0` pour l'ignorer (e2e `openApp`), spec `e2e/onboarding.spec.ts`
 
 ## Refonte visuelle UI (revue 1re phase, branche wt/ui-review)
@@ -181,7 +179,6 @@ Classement par gravité (P0 = pire)
 - [ ] CF6 Vérification à la main dans Tauri
 
 ## Phase 8 : Macros Lua
-
 - [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
 - [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
 - [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
@@ -190,10 +187,12 @@ Classement par gravité (P0 = pire)
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
 ## Saisie des formules
-
 - [x] F1 Autocomplétion des fonctions après « = » (cellule + barre de formule) : liste filtrée avec description, signature de la sélection, flèches/Entrée/Tab/Échap, aide de signature avec l'argument courant (`ui/formula/`). Tests : `fnComplete.test.ts`, `fnPopup.test.ts`, `wiring.test.ts`, e2e `feat-fncomplete.spec.ts`.
 
 ## Contrôles de la grille façon Google Sheets
-
 - [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
 - [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
+
+## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
+- [x] Format Comptabilité ; SLN, SYD, DB, DDB, VDB, AMORLINC, AMORDEGRC ; IPMT, PPMT, PV, FV, RATE, NPER, CUMIPMT, CUMPRINC ; IRR avec estimation, MIRR, XNPV, XIRR ; SUBTOTAL, AGGREGATE ; MROUND, YEARFRAC, DAYS360 ; export FEC (Fichier) + en-têtes FEC (Données)
+- [ ] Suites : lignes masquées pour SUBTOTAL 101-111 / AGGREGATE ; contrôle FEC avec Test-Compta-Demat (DGFiP) ; tableau croisé simplifié

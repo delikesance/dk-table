@@ -33,7 +33,7 @@ export interface Toolbar { el: HTMLElement; setState(s: Partial<ToolbarState>): 
 /** Number formats offered in the select (value, label). */
 export const FORMATS: [string, string][] = [
   ["general", "Standard"], ["number", "Nombre"], ["percent", "Pourcentage"],
-  ["currency", "Monétaire"], ["date", "Date"],
+  ["currency", "Monétaire"], ["accounting", "Comptabilité"], ["date", "Date"],
 ];
 
 /** Creates a labelled icon button. */

@@ -70,3 +70,14 @@ export async function exportCsvFile(sheet: DocSheet, deps: IoDeps = defaultDeps)
   await deps.writeTextFile(path, toCsv(sheet));
   return path;
 }
+
+const FEC_FILTERS = [{ name: "FEC", extensions: ["txt"] }];
+
+/** Asks for a destination and writes FEC text from `toFec` (adds `.txt`). Null on cancel. */
+export async function exportFecFile(text: string, deps: IoDeps = defaultDeps): Promise<string | null> {
+  const chosen = await deps.save({ filters: FEC_FILTERS });
+  if (!chosen) return null;
+  const path = /\.txt$/i.test(chosen) ? chosen : `${chosen}.txt`;
+  await deps.writeTextFile(path, text);
+  return path;
+}
