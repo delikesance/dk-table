@@ -49,7 +49,7 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
   const refresh = (): void => {
     if (!c.grid) return;
     const multi = c.grid.getSelection().includes(":");
-    const editing = !!c.gridHost.querySelector(".dkg input");
+    const editing = !!c.gridHost.querySelector(".dkg .dkg-editor");
     const rect = multi && !editing ? selectionRect(c.gridHost) : null;
     if (!rect) { pickers.forEach((p) => { p.hidden = true; }); fb.hide(); return; }
     const st = c.app.activeStyle();

@@ -32,7 +32,7 @@ describe("FN_DOCS", () => {
   it("has no duplicate names", () => expect(new Set(names).size).toBe(names.length));
   it("has non-empty name, signature and French description", () => {
     for (const d of FN_DOCS) {
-      expect(d.name, d.name).toMatch(/^[A-Z]+$/);
+      expect(d.name, d.name).toMatch(/^[A-Z][A-Z0-9]*$/);
       expect(d.description.trim().length, d.name).toBeGreaterThan(3);
       expect(d.description, d.name).toMatch(/^[A-ZÀ-Ý]/);
     }

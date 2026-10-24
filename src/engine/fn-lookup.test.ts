@@ -69,3 +69,17 @@ describe("XLOOKUP", () => {
   it("not found without default", () => expect(call("XLOOKUP", 9, [1], ["x"])).toEqual(N_A));
   it("length mismatch", () => expect(call("XLOOKUP", 1, [1, 2], ["x"])).toEqual(err("#VALUE!")));
 });
+
+describe("CHOOSE", () => {
+  it("picks the n-th value", () => {
+    expect(call("CHOOSE", 2, "a", "b", "c")).toBe("b");
+    expect(call("CHOOSE", 1.9, "a", "b")).toBe("a");
+    expect(call("CHOOSE", 1, [[7]])).toBe(7);
+  });
+  it("index out of range -> #VALUE!, errors propagate", () => {
+    expect(call("CHOOSE", 0, "a")).toEqual(err("#VALUE!"));
+    expect(call("CHOOSE", 3, "a", "b")).toEqual(err("#VALUE!"));
+    expect(call("CHOOSE", err("#REF!"), "a")).toEqual(err("#REF!"));
+    expect(call("CHOOSE", 1, [[1], [2]])).toEqual(err("#VALUE!"));
+  });
+});

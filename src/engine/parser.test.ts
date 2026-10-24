@@ -76,13 +76,13 @@ describe("tokens", () => {
 
 describe("syntax errors", () => {
   it("throw from parseFormula", () => {
-    for (const b of ["", "1+", "(1", "1)", "1 2", '"abc', "1+*2", "A1:", "A1:5", "SUM(1,", "$A$1", "@"])
+    for (const b of ["", "1+", "(1", "1)", "1 2", '"abc', "1+*2", "A1:", "A1:5", "SUM(1,", "$A$1$", "$$A1", "@"])
       expect(() => parseFormula(b), b).toThrow();
   });
   it("evaluate as #VALUE! in a cell", () => {
     expect(ev("1+")).toEqual({ error: "#VALUE!" });
     expect(ev("(1")).toEqual({ error: "#VALUE!" });
-    expect(ev("$A$1")).toEqual({ error: "#VALUE!" });
+    expect(ev("$$A1")).toEqual({ error: "#VALUE!" });
   });
   it("unknown identifiers are #NAME?, unknown functions too", () => {
     expect(ev("foo")).toEqual({ error: "#NAME?" });
@@ -106,6 +106,17 @@ describe("ranges and refs", () => {
   });
   it("collectRefs ignores literals", () => {
     expect(collectRefs(parseFormula('1+"x"'))).toEqual([]);
+  });
+  it("parses $A$1, $A1, A$1 like the plain ref, and mixed ranges", () => {
+    for (const r of ["$A$1", "$A1", "A$1", "$a$1"]) expect(parseFormula(r)).toEqual({ t: "ref", key: "A1" });
+    expect(parseFormula("SUM($A$1:B$5)")).toEqual({ t: "call", name: "SUM", args: [{ t: "range", a: "A1", b: "B5" }] });
+  });
+  it("evaluates $ refs identically", () => {
+    const s = createSheet();
+    setCell(s, "A1", "2");
+    setCell(s, "B2", "3");
+    setCell(s, "C1", "=$A$1+B$2*$B2+SUM($A$1:$B$2)");
+    expect(getValue(s, "C1")).toBe(16);
   });
   it("a bare range as scalar is #VALUE!", () => {
     expect(ev("A1:B2")).toEqual({ error: "#VALUE!" });

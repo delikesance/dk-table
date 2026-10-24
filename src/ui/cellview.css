@@ -1,0 +1,10 @@
+/* Cell formats painted by cellview.ts: wrapped text and user borders (data-borders = t/r/b/l letters). */
+.dkg-cell.dk-wrap { white-space: normal; overflow: hidden; text-overflow: clip; line-height: 1.15; overflow-wrap: anywhere; }
+.dkg-cell[data-borders]::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border: 0 solid var(--c-text);
+}
+.dkg-cell[data-borders*="t"]::after { border-top-width: 1px; }
+.dkg-cell[data-borders*="r"]::after { border-right-width: 1px; }
+.dkg-cell[data-borders*="b"]::after { border-bottom-width: 1px; }
+.dkg-cell[data-borders*="l"]::after { border-left-width: 1px; }
