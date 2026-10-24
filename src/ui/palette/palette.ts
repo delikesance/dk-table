@@ -62,10 +62,10 @@ export function createPalette(opts: PaletteOptions = {}): Palette {
     const box = document.createElement("div");
     box.className = "dk-palette";
     box.setAttribute("role", "dialog");
-    box.setAttribute("aria-label", "Command palette");
+    box.setAttribute("aria-label", "Palette de commandes");
     const input = document.createElement("input");
     input.className = "dk-palette__input";
-    input.placeholder = opts.placeholder ?? "Type a command…";
+    input.placeholder = opts.placeholder ?? "Taper une commande…";
     input.setAttribute("role", "combobox");
     const list = document.createElement("ul");
     list.className = "dk-palette__list";
