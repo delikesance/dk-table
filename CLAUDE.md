@@ -41,6 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## CI
 
 - `.github/workflows/ci.yml` (GitHub Actions, on push + PR): `npm ci`, `npm test`, `cargo test`, each guarded by file existence.
+- `.github/workflows/release.yml`: build Linux (deb + AppImage); à valider via workflow_dispatch. Tests de config: `src/config/packaging.test.ts`; tests de styles/contraste: `src/styles/styles.test.ts`.
 
 ## Commands
 
@@ -50,7 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
-- `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
+- `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
 ## Decisions (intégration I8)
