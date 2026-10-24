@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /** Tests for file actions: CSV sheet name, dirty confirmation, unload guard. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

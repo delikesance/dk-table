@@ -16,6 +16,8 @@ export interface Hooks {
 export interface App {
   hooks: Hooks;
   path: string | undefined;
+  /** True when there are unsaved changes (set by setTitle). */
+  dirty?: boolean;
   /** Edit a cell (undoable) and recalculate dependents. */
   edit(key: string, raw: string): void;
   undo(): void;
