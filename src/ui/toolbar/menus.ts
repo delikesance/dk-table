@@ -86,8 +86,18 @@ export function createMenus(h: MenuHandlers): HTMLElement {
       { label: "Exporter en CSV", icon: "download", run: h.onExportCsv },
     ], closers),
   );
-  document.addEventListener("click", (ev) => {
+  const onDocClick = (ev: MouseEvent): void => {
     if (!wrap.contains(ev.target as Node)) closers.forEach((c) => c());
-  });
+  };
+  document.addEventListener("click", onDocClick);
+  disposers.set(wrap, () => document.removeEventListener("click", onDocClick));
   return wrap;
+}
+
+/** Document-click listener removers, keyed by the element `createMenus` returned. */
+const disposers = new WeakMap<HTMLElement, () => void>();
+
+/** Remove the document click listener of a menus element (no-op for null/unknown). */
+export function destroyMenus(el: HTMLElement | null): void {
+  if (el) disposers.get(el)?.();
 }

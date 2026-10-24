@@ -28,6 +28,11 @@ export function createApi(c: Ctx): App {
       setCell(c.cur.sheet, key, raw);
       touch(c);
     },
+    editMany(cells) {
+      pushUndo(c.cur);
+      for (const [k, raw] of Object.entries(cells)) setCell(c.cur.sheet, k, raw);
+      touch(c);
+    },
     undo() { if (step(c.cur, "undo")) { buildGrid(c); setTitle(c, true); } },
     redo() { if (step(c.cur, "redo")) { buildGrid(c); setTitle(c, true); } },
     addSheet() {
@@ -70,8 +75,8 @@ export function createApi(c: Ctx): App {
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},
     toggleSidebar: () => c.sidebar.toggle(),
     insertFunction(name) {
-      const raw = getRaw(c.cur.sheet, firstKey(c));
-      app.edit(firstKey(c), raw.startsWith("=") ? `${raw}${name}(` : `=${name}(`);
+      const key = firstKey(c);
+      if (getRaw(c.cur.sheet, key) === "") app.edit(key, `=${name}()`);
     },
     recents: () => c.recents,
     addRecent(path) {
