@@ -2,8 +2,7 @@
 import { getRaw, setCell } from "../engine/sheet";
 import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
 import { createMacroStore } from "../macros/store";
-import { paintStyle } from "./cellview";
-import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
+import { buildGrid, paintKey, refreshCf, refreshTabs, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
 import { sortColumn } from "./sort";
 import { createRecents } from "../io/recents";
@@ -27,7 +26,7 @@ export function createApi(c: Ctx): App {
   c.recents = store.list().map(toRecent);
   const macros = createMacroStore();
   let loading = false;
-  const paint = (k: string): void => paintStyle(c.gridHost, k, c.cur.styles[k]);
+  const paint = (k: string): void => paintKey(c, k);
   const app: App = {
     hooks: {},
     path: undefined,
@@ -60,7 +59,7 @@ export function createApi(c: Ctx): App {
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
-        ...(e.freeze ? { freeze: { ...e.freeze } } : {}) })),
+        ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
     }),
     loadDoc(doc, path) {
@@ -94,6 +93,13 @@ export function createApi(c: Ctx): App {
       setTitle(c, true); syncInfo(c);
     },
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},
+    cfRules: () => structuredClone(c.cur.cf),
+    setCfRules(rules) {
+      pushUndo(c.cur);
+      c.cur.cf = structuredClone(rules);
+      refreshCf(c);
+      setTitle(c, true); syncInfo(c);
+    },
     toggleSidebar: () => c.sidebar.toggle(),
     insertFunction(name) {
       const key = firstKey(c);
