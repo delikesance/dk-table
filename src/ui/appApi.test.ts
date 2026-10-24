@@ -41,6 +41,20 @@ describe("style / activeStyle", () => {
   });
 });
 
+describe("style color", () => {
+  it("applies, undoes and clears the text color", () => {
+    app.select("D4");
+    app.style({ color: "#c00" });
+    expect(cell("D4").style.color).toBe("rgb(204, 0, 0)");
+    expect(app.activeStyle().color).toBe("#c00");
+    app.undo();
+    expect(cell("D4").style.color).toBe("");
+    app.redo();
+    app.style({ color: undefined });
+    expect(cell("D4").style.color).toBe("");
+  });
+});
+
 describe("insertFunction", () => {
   it("writes =NAME() in an empty cell", () => {
     app.select("A1");
