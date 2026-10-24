@@ -47,13 +47,19 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   }
   host.appendChild(root);
 
-  /** Render one cell: hook element if provided, else display text. */
+  const sigs = new Map<string, string>();
+
+  /** Render one cell (hook element if provided, else text); skips the DOM write when unchanged. */
   function paint(key: string): void {
     const el = cells.get(key);
     if (!el) return;
     const custom = opts.renderCell?.(key) ?? null;
+    const text = custom ? "" : opts.getDisplay(key);
+    const sig = custom ? `h:${custom.outerHTML}` : `t:${text}`;
+    if (sigs.get(key) === sig) return;
+    sigs.set(key, sig);
     if (custom) el.replaceChildren(custom);
-    else el.textContent = opts.getDisplay(key);
+    else el.textContent = text;
   }
 
   const clamp = (p: Pos): Pos => ({
@@ -103,6 +109,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     const input = document.createElement("input");
     input.className = "dkg-editor";
     input.value = initial ?? opts.getRaw(key);
+    sigs.delete(key);
     el.replaceChildren(input);
     editor = { input, typed: initial !== undefined };
     input.addEventListener("keydown", onEditorKey);
