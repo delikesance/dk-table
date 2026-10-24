@@ -43,7 +43,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const fz = createFreezeCtl(root, view, cols, rows, (r) => ctl.hidden(r));
   colHeads.forEach((h, c) => fz.decorate(h, c, -1, true));
   addResizers(colHeads, {
-    view, apply: () => { applyWidths(); fz.layout(); },
+    view, fit: opts.onFitColumn, apply: () => { applyWidths(); fz.layout(); },
     columnTexts: (c) => Array.from({ length: rows }, (_, r) => opts.getDisplay(keyOf(c, r))),
   });
   const ctl = createFilterCtl(root, colHeads, rows, view, (c, r) => opts.getDisplay(keyOf(c, r)), () => {
@@ -180,6 +180,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
       render();
     },
     focus: () => root.focus(),
+    relayout: () => { applyWidths(); fz.layout(); },
     destroy() {
       ctl.close();
       unbindMouse();

@@ -68,6 +68,8 @@ export interface App {
   insertCols(): void;
   /** Delete the columns spanned by the selection (one undo step). */
   deleteCols(): void;
+  /** Fit columns to their content ("Ajuster à la largeur du contenu"): the given ones, else those of the selection. */
+  fitColumns(cols?: number[]): void;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
   /** Freeze the top `rows` rows / left `cols` columns of the active sheet (0,0 = unfreeze); persisted, not undoable. */

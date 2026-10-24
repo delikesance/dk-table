@@ -1,7 +1,7 @@
 /** Palette commands, keyboard shortcuts and the cell context menu. */
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
-import { headerMenu } from "./headerMenu";
+import { headerMenu, FIT_LABEL } from "./headerMenu";
 import type { App } from "./appTypes";
 import { openSettings } from "./dialogs/settings";
 import { openAbout } from "./dialogs/about";
@@ -71,6 +71,7 @@ function cellMenu(app: App): MenuItem[] {
     { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) },
     { separator: true },
     ...structureItems(app),
+    { label: FIT_LABEL, action: () => app.fitColumns() },
     { separator: true },
     { label: "Effacer le contenu", danger: true, action: () => clearSelection(app) },
     { label: "Annuler", shortcut: "Ctrl+Z", action: () => app.undo() },
@@ -115,6 +116,7 @@ export function installCommands(app: App): void {
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const [id, label, m, sc] of STRUCTURE) run(id, label, () => app[m](), sc, ["ligne", "colonne", "insérer", "supprimer"]);
   const fk = ["figer", "volets", "freeze", "geler"];
+  run("view.fit-columns", FIT_LABEL, () => app.fitColumns(), undefined, ["largeur", "colonne", "auto", "fit"]);
   run("view.freeze-row", "Figer la première ligne", () => app.setFreeze({ rows: 1, cols: 0 }), undefined, fk);
   run("view.freeze-col", "Figer la première colonne", () => app.setFreeze({ rows: 0, cols: 1 }), undefined, fk);
   run("view.freeze-cell", "Figer jusqu'à la cellule active", () => freezeAtCell(app), undefined, fk);

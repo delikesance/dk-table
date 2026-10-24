@@ -8,6 +8,8 @@ import { liveCell, paintCell } from "./cellview";
 import { computeCf } from "../engine/cf/compute";
 import { sheetEnv } from "../engine/cf/env";
 import { formatValue } from "./numfmt";
+import { fitColumns } from "./appFit";
+import { colsOfSelection } from "./grid/fit";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
 /** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files (freeze comes from the entry); `viewOf(entry)` gets/creates it. */
@@ -83,6 +85,7 @@ export function buildGrid(c: Ctx): void {
       setCell(c.cur.sheet, k, raw);
     },
     onSelect: () => syncInfo(c),
+    onFitColumn: (col) => { const sel = colsOfSelection(c.grid.getSelection()); fitColumns(c, sel.length > 1 && sel.includes(col) ? sel : [col]); },
     onSheetStep: (d) => stepSheet(c, d),
     onFreeze: (f) => c.app.setFreeze(f),
     renderCell: (k) => liveCell(c.cur.sheet, k),
