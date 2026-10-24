@@ -2,12 +2,14 @@
 import type { Sheet, Value } from "./types";
 import { isErr } from "./types";
 import { expandRange, inBounds, normKey } from "./address";
-import { getState, recalc, rewire } from "./recalc";
+import { getState, rewire } from "./recalc";
+import { recalcBook } from "./workbook";
 import { displayValue } from "./values";
 import "./wire";
 
 export type { Sheet, Cell, Value, CellError, ErrorCode } from "./types";
 export { registerFunction } from "./functions";
+export { bindWorkbook, type NamedSheet } from "./workbook";
 
 /** Create an empty default sheet (26 columns x 100 rows). */
 export function createSheet(): Sheet {
@@ -16,7 +18,8 @@ export function createSheet(): Sheet {
 
 /**
  * Set a cell's raw input ("" clears it; "=..." is a formula) and
- * automatically recalculate it and all its dependents. Out-of-bounds keys are ignored.
+ * automatically recalculate it and all its dependents (also on other sheets of its
+ * workbook, see `bindWorkbook`). Out-of-bounds keys are ignored.
  */
 export function setCell(sheet: Sheet, key: string, raw: string): void {
   key = normKey(key);
@@ -24,7 +27,7 @@ export function setCell(sheet: Sheet, key: string, raw: string): void {
   if (raw === "") delete sheet.cells[key];
   else sheet.cells[key] = { raw };
   rewire(sheet, key);
-  recalc(sheet, key);
+  recalcBook(sheet, key);
 }
 
 /** Raw user input of a cell ("" if empty). */

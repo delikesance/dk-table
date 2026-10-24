@@ -17,8 +17,16 @@ describe("fillPlan", () => {
   it("bas: ligne unique en haut -> rien", () => {
     expect(fillPlan({ col: 0, row: 0 }, { col: 0, row: 0 }, "down", get)).toEqual({});
   });
-  it("droite: la première colonne est recopiée; formules telles quelles", () => {
-    expect(fillPlan({ col: 0, row: 1 }, { col: 2, row: 1 }, "right", get)).toEqual({ B2: "=A1+1", C2: "=A1+1" });
+  it("droite: la première colonne est recopiée; références relatives décalées", () => {
+    expect(fillPlan({ col: 0, row: 1 }, { col: 2, row: 1 }, "right", get)).toEqual({ B2: "=B1+1", C2: "=C1+1" });
+  });
+  it("bas: formules décalées par ligne, parties $ fixes", () => {
+    const g = (k: string) => (k === "A1" ? "=$B$1+B1+C$1" : "");
+    expect(fillPlan({ col: 0, row: 0 }, { col: 0, row: 2 }, "down", g))
+      .toEqual({ A2: "=$B$1+B2+C$1", A3: "=$B$1+B3+C$1" });
+  });
+  it("bas: cellule unique -> formule du dessus décalée d'une ligne", () => {
+    expect(fillPlan({ col: 0, row: 2 }, { col: 0, row: 2 }, "down", get)).toEqual({ A3: "=A2+1" });
   });
   it("droite: cellule unique -> recopie celle de gauche", () => {
     expect(fillPlan({ col: 1, row: 0 }, { col: 1, row: 0 }, "right", get)).toEqual({ B1: "1" });

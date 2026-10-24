@@ -1,5 +1,5 @@
 /** Workbook model: sheets with per-sheet styles and undo/redo snapshot stacks. */
-import { createSheet, setCell, type Sheet } from "../engine/sheet";
+import { bindWorkbook, createSheet, setCell, type Sheet } from "../engine/sheet";
 import type { CellStyle, DocSheet } from "../io/types";
 
 /** Visual/format style of one cell (persisted in .dktable; `format` = number-format code). */
@@ -22,6 +22,8 @@ export interface Entry {
   styles: Record<string, CellStyle>;
   undo: State[];
   redo: State[];
+  /** Frozen panes (top rows / left cols), persisted in .dktable; absent = none. Not part of undo. */
+  freeze?: { rows: number; cols: number };
 }
 
 const MAX_UNDO = 100;
@@ -30,6 +32,14 @@ let seq = 0;
 /** Unique sheet id. */
 export function uid(): string {
   return `s${Date.now().toString(36)}${(seq++).toString(36)}`;
+}
+
+/**
+ * Bind the workbook's sheets so qualified refs (`'Feuille 2'!A1`) resolve by tab name.
+ * Call after any change of the sheet list, a sheet object or a name (recomputes cross-sheet formulas).
+ */
+export function linkBook(entries: () => Entry[]): void {
+  bindWorkbook(() => entries().map((e) => ({ name: e.name, sheet: e.sheet })));
 }
 
 /** Build an engine sheet (>= 26x100) filled from raw cells. */
@@ -46,6 +56,7 @@ export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
   return {
     id: doc?.id ?? uid(), name, styles: structuredClone(doc?.styles ?? {}), undo: [], redo: [],
     sheet: buildSheet(doc?.cells ?? {}, doc?.cols, doc?.rows),
+    ...(doc?.freeze ? { freeze: { ...doc.freeze } } : {}),
   };
 }
 
@@ -70,4 +81,14 @@ export function step(e: Entry, from: "undo" | "redo"): boolean {
   e.styles = snap.styles;
   e.sheet = buildSheet(snap.cells, e.sheet.cols, e.sheet.rows);
   return true;
+}
+
+/** Run direct engine writes on the entry's sheet as one undo step; returns false (no step kept) if nothing changed. */
+export function batchEdit(e: Entry, fn: (sheet: Sheet) => void): boolean {
+  const before = JSON.stringify(e.sheet.cells);
+  pushUndo(e);
+  fn(e.sheet);
+  if (JSON.stringify(e.sheet.cells) !== before) return true;
+  e.undo.pop();
+  return false;
 }

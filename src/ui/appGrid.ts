@@ -8,9 +8,9 @@ import { liveCell, paintStyle } from "./cellview";
 import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
-/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files. */
+/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files (freeze comes from the entry); `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
-const viewOf = (e: object): GridView => {
+export const viewOf = (e: object): GridView => {
   let v = views.get(e);
   if (!v) views.set(e, (v = { widths: {}, filters: {} }));
   return v;
@@ -23,7 +23,7 @@ export function syncInfo(c: Ctx): void {
   c.fbar.setCell(key, raw);
   c.sidebar.setCellInfo({ ref: key, raw, display: getDisplay(c.cur.sheet, key), format: "Standard" });
   const st = c.cur.styles[key] ?? {};
-  c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, align: st.align ?? "left",
+  c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, underline: !!st.underline, wrap: !!st.wrap, align: st.align ?? "left",
     format: st.format ?? "general", canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
 }
 
@@ -40,8 +40,10 @@ export function buildGrid(c: Ctx): void {
   c.grid?.destroy();
   c.gridHost.replaceChildren();
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
+  const view = viewOf(c.cur);
+  view.freeze = c.cur.freeze;
   c.grid = createGrid(c.gridHost, {
-    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view: viewOf(c.cur),
+    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
     onEdit: (k, raw) => {
@@ -53,6 +55,7 @@ export function buildGrid(c: Ctx): void {
       setCell(c.cur.sheet, k, raw);
     },
     onSelect: () => syncInfo(c),
+    onSheetStep: (d) => stepSheet(c, d),
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k) => { const st = c.cur.styles[k]; if (st) paintStyle(c.gridHost, k, st); },
@@ -61,6 +64,12 @@ export function buildGrid(c: Ctx): void {
   if (prevSel) c.grid.select(prevSel);
   c.grid.focus();
   syncInfo(c);
+}
+
+/** Ctrl+PageUp/PageDown: activate the previous (-1) / next (+1) sheet in tab order; no wrap-around. */
+export function stepSheet(c: Ctx, dir: -1 | 1): void {
+  const next = c.entries[c.entries.indexOf(c.cur) + dir];
+  if (next) c.app.switchSheet(next.id);
 }
 
 /** Push the sheet list and active sheet to the tab bar. */

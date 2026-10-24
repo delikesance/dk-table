@@ -7,7 +7,7 @@ let onEdit: Mock<(key: string, raw: string) => void>;
 let grid: Grid;
 
 const root = () => host.querySelector(".dkg") as HTMLElement;
-const input = () => host.querySelector("input.dkg-editor") as HTMLInputElement | null;
+const input = () => host.querySelector(".dkg-editor") as HTMLTextAreaElement | null;
 const key = (el: Element, k: string, init: KeyboardEventInit = {}) =>
   el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true, ...init }));
 

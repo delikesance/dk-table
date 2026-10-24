@@ -1,5 +1,5 @@
 /**
- * Logical / information functions: AND, OR, NOT, ISNUMBER, ISBLANK.
+ * Logical / information functions: AND, OR, XOR, NOT, ISNUMBER, ISBLANK.
  *
  * Exported as `logicFunctions` (name -> Builtin, same shape as the registry in
  * functions.ts); to be wired there with `for (const [k, v] of Object.entries(logicFunctions)) def(k, v)`.
@@ -53,6 +53,8 @@ export const logicFunctions: Record<string, Builtin> = {
   AND: reduceBools((b) => b.every(Boolean)),
   /** OR(a, b, ...): TRUE if any logical value is true. */
   OR: reduceBools((b) => b.some(Boolean)),
+  /** XOR(a, b, ...): TRUE if an odd number of logical values are true. */
+  XOR: reduceBools((b) => b.filter(Boolean).length % 2 === 1),
   /** NOT(x): logical negation of one value. */
   NOT: (args) => {
     const b = toBool(scalar(args));

@@ -32,4 +32,13 @@ describe("grid.css", () => {
     expect(rule(".dkg-corner, .dkg-colh, .dkg-rowh")).toMatch(/font-family:\s*var\(--font-mono\)/);
   });
   it("column header edge uses strong line", () => expect(rule(".dkg-colh")).toMatch(/--c-line-strong/));
+  it("frozen cells are sticky and opaque", () => {
+    const r = rule(".dkg-frozen");
+    expect(r).toMatch(/position:\s*sticky/);
+    expect(r).toMatch(/background:\s*var\(--c-surface\)/);
+  });
+  it("frozen separators use the strong line", () => {
+    expect(rule(".dkg-frozen-b")).toMatch(/border-bottom-color:\s*var\(--c-line-strong\)/);
+    expect(rule(".dkg-frozen-r")).toMatch(/border-right-color:\s*var\(--c-line-strong\)/);
+  });
 });

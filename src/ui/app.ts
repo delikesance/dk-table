@@ -17,7 +17,8 @@ import { installUnloadGuard } from "./fileops";
 import { buildGrid, refreshTabs } from "./appGrid";
 import { createApi } from "./appApi";
 import { createWidgets } from "./appWidgets";
-import type { Ctx } from "./appState";
+import { installMacros } from "./macros/wire";
+import { relink, type Ctx } from "./appState";
 import type { App } from "./appTypes";
 
 export type { App, Hooks } from "./appTypes";
@@ -41,8 +42,10 @@ export function mount(root: HTMLElement): App {
     gridHost: root.querySelector<HTMLElement>(".dk-app__grid")!,
     entries: [first], cur: first, recents: [], coalescing: false,
   } as unknown as Ctx;
+  relink(c);
   c.app = createApi(c);
   createWidgets(c, root);
+  c.macroUi = installMacros(c.app, root.querySelector<HTMLElement>(".dk-app__main")!);
   c.sidebar.setRecent(c.recents);
   const palette = createPalette({ hotkey: true });
   const menus = createMenuBar(buildMenuSpec(c.app, menuDeps(c.app, palette.open)));

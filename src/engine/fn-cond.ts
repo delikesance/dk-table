@@ -8,6 +8,11 @@ type Pred = (v: Value) => boolean;
 
 /** Regex from an Excel wildcard pattern (`*`, `?`, `~` escape), case-insensitive, anchored. */
 function wildcard(p: string): RegExp {
+  return new RegExp(`^${wildcardSource(p)}$`, "i");
+}
+
+/** Unanchored regex source of an Excel wildcard pattern (also used by SEARCH). */
+export function wildcardSource(p: string): string {
   let re = "";
   for (let i = 0; i < p.length; i++) {
     const c = p[i];
@@ -16,7 +21,7 @@ function wildcard(p: string): RegExp {
     else if (c === "?") re += "[\\s\\S]";
     else re += c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
-  return new RegExp(`^${re}$`, "i");
+  return re;
 }
 
 /** Numeric value of a string if it is a plain decimal number, else null. */
@@ -61,7 +66,7 @@ function scalar(a: Arg): Value {
 }
 
 /** Row-major flat view of an argument: scalar = one cell, matrix (rows) flattened. */
-function list(a: Arg): Value[] {
+export function list(a: Arg): Value[] {
   return Array.isArray(a) ? (a as unknown[]).flat() as Value[] : [a];
 }
 
@@ -72,7 +77,7 @@ function dims(a: Arg): [number, number] {
 }
 
 /** `sum` re-read with the shape of `rng` anchored at its top-left (Excel SUMIF sum_range rule). */
-function resize(sum: Arg, rng: Arg): Value[] {
+export function resize(sum: Arg, rng: Arg): Value[] {
   const [h, w] = dims(rng);
   const rows = (Array.isArray(sum) ? sum : [sum]) as unknown[];
   if (!Array.isArray(rows[0])) return list(sum);
@@ -85,7 +90,7 @@ function resize(sum: Arg, rng: Arg): Value[] {
  * Evaluate (range, criterion) pairs from `args` (starting at `from`); returns the matching
  * row indexes, or an error value (odd arg count, size mismatch, error criterion).
  */
-function matches(args: Arg[], from: number): number[] | Value {
+export function matches(args: Arg[], from: number): number[] | Value {
   const n = args.length - from;
   if (n < 2 || n % 2 !== 0) return err("#VALUE!");
   const first = list(args[from]);

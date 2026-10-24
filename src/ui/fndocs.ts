@@ -3,6 +3,8 @@ import type { FnDoc } from "./sidebar/sidebar";
 import { FN_DOCS_MATH } from "./fndocs-math";
 import { FN_DOCS_TEXT } from "./fndocs-text";
 import { FN_DOCS_MORE } from "./fndocs-more";
+import { FN_DOCS_MATH2 } from "./fndocs-math2";
+import { FN_DOCS_TEXT2 } from "./fndocs-text2";
 
 /** Documented functions; `name` is inserted as `=NAME(`. */
 export const FN_DOCS: FnDoc[] = [
@@ -21,4 +23,6 @@ export const FN_DOCS: FnDoc[] = [
   ...FN_DOCS_MATH,
   ...FN_DOCS_TEXT,
   ...FN_DOCS_MORE,
+  ...FN_DOCS_MATH2,
+  ...FN_DOCS_TEXT2,
 ];

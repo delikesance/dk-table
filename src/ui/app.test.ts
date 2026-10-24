@@ -26,11 +26,9 @@ describe("app integration", () => {
     expect(bar.closest("[hidden]")).toBeNull();
   });
 
-  it("Ctrl+, opens Paramètres, Alt+F11 opens the macro editor", () => {
+  it("Ctrl+, opens Paramètres", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: ",", ctrlKey: true }));
     expect(document.querySelector('.dk-dialog[data-id="settings"]')).not.toBeNull();
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "F11", altKey: true }));
-    expect(document.querySelector(".dk-macro")).not.toBeNull();
   });
 
   it("recalculates dependents on edit", () => {

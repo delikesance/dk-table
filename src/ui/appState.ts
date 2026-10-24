@@ -4,8 +4,9 @@ import type { Grid } from "./grid/grid";
 import type { Toolbar, FormulaBar } from "./toolbar";
 import type { SheetTabs } from "./tabs/tabs";
 import type { Sidebar, RecentFile } from "./sidebar/sidebar";
-import type { Entry } from "./model";
+import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
+import type { MacroUi } from "./macros/wire";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
 export interface Ctx {
@@ -22,6 +23,8 @@ export interface Ctx {
   sidebar: Sidebar;
   tabs: SheetTabs;
   app: App;
+  /** Lazy macro panel/runner (set in mount, after the layout exists). */
+  macroUi: MacroUi;
   /** Autosave controller (set by setupAutosave); touched on every modification. */
   autosave?: { touch(): void };
   /** Last autosave state, shown in the title. */
@@ -29,6 +32,9 @@ export interface Ctx {
   /** Counter bumped on every modification (detects edits made during a write). */
   version?: number;
 }
+
+/** Re-bind the workbook (after sheets are added, removed, renamed or rebuilt by undo/redo). */
+export const relink = (c: Ctx): void => linkBook(() => c.entries);
 
 /** Expand a selection ("A1" or "A1:B3") into its cell keys. */
 export function keysOf(sel: string): string[] {
