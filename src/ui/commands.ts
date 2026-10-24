@@ -23,9 +23,9 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
   };
 }
 
-/** Clear selected cells (one undo step is recorded per cell; fine for small ranges). */
+/** Clear selected cells as a single undo step. */
 function clearSelection(app: App): void {
-  app.selectedKeys().forEach((k) => app.edit(k, ""));
+  app.editMany(Object.fromEntries(app.selectedKeys().map((k) => [k, ""])));
 }
 
 /** Context menu items for the grid. */
@@ -45,7 +45,7 @@ function cellMenu(app: App): MenuItem[] {
 /** Current global keydown listener, replaced on each install. */
 let onKey: ((e: KeyboardEvent) => void) | null = null;
 
-/** Register palette commands, global shortcuts, context menu and file command hooks. */
+/** Register palette commands, global shortcuts, context menu and file command hooks (a remount replaces the keydown listener). */
 export function installCommands(app: App): void {
   const run = (id: string, label: string, fn: () => void, shortcut?: string, keywords: string[] = []) =>
     registerCommand({ id, label, run: fn, shortcut, keywords });
