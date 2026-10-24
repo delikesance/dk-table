@@ -27,7 +27,7 @@ test("minimal by default: only the sheet and the discreet button are visible", a
   await expect(tools(page)).toBeHidden();
   await expect(side(page)).toBeHidden();
   await expect(btn(page)).toBeVisible();
-  await expect(btn(page)).toHaveAttribute("aria-label", "Afficher les outils");
+  await expect(btn(page)).toHaveAttribute("aria-label", "Outils (Ctrl+J)");
   await expect(page.locator(".dk-app")).toHaveClass(/dk-app--minimal/);
 });
 
@@ -42,11 +42,11 @@ test("Ctrl+J flips tools and sidebar together, and back", async ({ page }) => {
 
 test("the discreet button toggles and updates its label", async ({ page }) => {
   if (await tools(page).isHidden()) await btn(page).click();
-  await expect(btn(page)).toHaveAttribute("aria-label", "Masquer les outils");
+  await expect(btn(page)).toHaveAttribute("aria-label", "Outils (Ctrl+J)");
   await expect(tools(page)).toBeVisible();
   await expect(page.locator(".dk-toolbar")).toBeVisible();
   await btn(page).click();
-  await expect(btn(page)).toHaveAttribute("aria-label", "Afficher les outils");
+  await expect(btn(page)).toHaveAttribute("aria-label", "Outils (Ctrl+J)");
   await expect(tools(page)).toBeHidden();
 });
 
