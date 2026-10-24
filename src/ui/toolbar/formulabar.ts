@@ -1,3 +1,5 @@
+import { cycleRefIn } from "../grid/refcycle";
+
 /** Formula bar callbacks. */
 export interface FormulaBarOpts {
   /** Jump request: normalized (uppercase) cell key or range, e.g. "C3" or "C3:D4". */
@@ -21,7 +23,7 @@ function mkInput(cls: string, label: string): HTMLInputElement {
 
 /**
  * Builds name box + fx input in `host`. Name box: type a key/range, Enter jumps
- * (invalid text reverts), Esc reverts. fx: Enter commits, Esc reverts.
+ * (invalid text reverts), Esc reverts. fx: Enter commits, Esc reverts, F4 cycles $ on the reference at the caret.
  */
 export function createFormulaBar(host: HTMLElement, opts: FormulaBarOpts): FormulaBar {
   const el = document.createElement("div");
@@ -43,6 +45,7 @@ export function createFormulaBar(host: HTMLElement, opts: FormulaBarOpts): Formu
   fx.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); raw = fx.value; opts.onCommit(fx.value); }
     else if (e.key === "Escape") { fx.value = raw; }
+    else if (e.key === "F4") { e.preventDefault(); cycleRefIn(fx); }
   });
   return {
     el,
