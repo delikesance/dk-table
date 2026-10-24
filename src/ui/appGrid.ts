@@ -86,6 +86,7 @@ export function buildGrid(c: Ctx): void {
     onSelect: () => syncInfo(c),
     onSheetStep: (d) => stepSheet(c, d),
     onFreeze: (f) => c.app.setFreeze(f),
+    onCopy: (ref, text) => { c.lastCopy = ref ? { text, sheet: c.cur.id, ref } : undefined; },
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k, el) => {

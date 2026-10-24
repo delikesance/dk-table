@@ -34,6 +34,8 @@ export interface GridOptions {
   onFreeze?(f: Freeze): void;
   /** Ctrl+PageUp (-1) / Ctrl+PageDown (+1): switch to the previous / next sheet. */
   onSheetStep?(dir: -1 | 1): void;
+  /** A range was copied (ref null for a cut): lets documents paste it as a live link. */
+  onCopy?(ref: string | null, text: string): void;
 }
 
 /** Public grid API. */

@@ -164,7 +164,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
     put: (k, v) => { opts.onEdit(k, v); paint(k); },
-    clear,
+    clear, onCopy: opts.onCopy,
   });
 
   root.addEventListener("scroll", sync);

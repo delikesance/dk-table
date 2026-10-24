@@ -53,3 +53,24 @@ describe("références dans le document ouvert", () => {
     await vi.waitFor(() => expect(chip()?.textContent).toBe("40"));
   });
 });
+
+describe("coller une plage copiée dans la feuille", () => {
+  /** Fire a copy / paste event on `el` carrying `data`. */
+  function fire(el: Element, type: "copy" | "paste", data: Map<string, string>): void {
+    const e = new Event(type, { bubbles: true, cancelable: true });
+    Object.defineProperty(e, "clipboardData", { value: { setData: (t: string, v: string) => data.set(t, v), getData: (t: string) => data.get(t) ?? "", types: ["text/plain"] } });
+    el.dispatchEvent(e);
+  }
+  it("une plage copiée dans la grille devient un bloc lié qui suit la feuille", async () => {
+    app.edit("A1", "Nom"); app.edit("B1", "CA"); app.edit("A2", "Bob"); app.edit("B2", "40");
+    app.select("A1:B2");
+    const data = new Map<string, string>();
+    fire(root.querySelector(".dkg")!, "copy", data);
+    app.addDoc();
+    await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+    fire(app.docEditor()!.view.dom, "paste", data);
+    expect(root.querySelectorAll(".dk-block th")).toHaveLength(2);
+    app.edit("B2", "77");
+    expect(root.querySelector(".dk-block")!.textContent).toContain("77");
+  });
+});
