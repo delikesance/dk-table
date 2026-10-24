@@ -1,15 +1,24 @@
-/* Onboarding / home screen: full-cover overlay, tokens --ob-* (see end of tokens.css). */
-.ob { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: var(--ob-gap);
-  background: var(--ob-paper); color: var(--ob-ink); font-family: var(--font-ui); }
-.ob__panel { width: min(480px, 100%); display: flex; flex-direction: column; gap: 16px; }
-.ob__label { margin: 0; font: var(--fw-medium) var(--fs-sm) var(--ob-font-label); color: var(--ob-ink-2); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
-.ob__title { margin: 0; font-size: 32px; font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
-.ob__list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ob-hairline); border-radius: var(--ob-radius-lg); max-height: 50vh; overflow: auto; }
-.ob__list li + li { border-top: 1px solid var(--ob-hairline); }
-.ob__item { display: block; width: 100%; padding: 12px 16px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.ob__item:hover { background: var(--ob-hover); }
-.ob__empty { margin: 0; padding: 24px 16px; border: 1px dashed var(--ob-hairline); border-radius: var(--ob-radius-lg); color: var(--ob-ink-2); }
-.ob__create { align-self: flex-start; padding: 10px 24px; border: 1px solid var(--ob-accent); border-radius: var(--ob-radius);
-  background: var(--ob-accent); color: var(--ob-on-accent); font: var(--fw-medium) var(--fs-lg) var(--font-ui); cursor: pointer; }
-.ob__create:hover { filter: brightness(1.1); }
-.ob__item:focus-visible, .ob__create:focus-visible { outline: 2px solid var(--ob-accent); outline-offset: 2px; }
+/* Accueil (refonte Hermes) : deux colonnes sur le bleu chrome (nuit en sombre), Atlas à droite. */
+.ob { position: fixed; inset: 0; z-index: 100; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--c-chrome); color: var(--c-chrome-text); font-family: var(--font-ui); }
+.ob__side { display: flex; flex-direction: column; gap: 48px; padding: 56px 72px; min-width: 0; overflow: auto; }
+.ob__mark { display: flex; flex-direction: column; font: var(--fw-medium) 40px/.82 var(--font-display);
+  letter-spacing: -0.02em; text-transform: uppercase; }
+.ob__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ob__btn { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; border-radius: var(--r-xs);
+  border: 1px solid var(--c-chrome-line); background: transparent; color: inherit; cursor: pointer;
+  font: var(--fw-medium) 19px var(--font-display); letter-spacing: .08em; text-transform: uppercase; }
+.ob__btn--primary { background: var(--c-chrome-text); color: var(--c-chrome); border-color: var(--c-chrome-text); font-weight: var(--fw-semibold); }
+.ob__btn:hover { background: var(--c-chrome-hover); }
+.ob__btn--primary:hover { background: var(--c-chrome-text); opacity: .9; }
+.ob__kbd { font: 11px var(--font-mono); letter-spacing: 0; opacity: .75; }
+.ob__h { margin: 0 0 12px; font: 400 11px var(--font-mono); text-transform: uppercase; }
+.ob__list { list-style: none; margin: 0; padding: 0; }
+.ob__recent { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 14px 0; border: 0;
+  border-top: 1px solid var(--c-chrome-line); background: none; color: inherit; text-align: left; cursor: pointer; }
+.ob__recent:hover .ob__name { text-decoration: underline; text-underline-offset: 4px; }
+.ob__name { font: 300 32px/1 var(--font-display); letter-spacing: -0.01em; }
+.ob__path { font: 11px var(--font-mono); opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ob__art { border-left: 1px solid var(--c-chrome-line); }
+.ob__btn:focus-visible, .ob__recent:focus-visible { outline: 2px solid var(--c-chrome-text); outline-offset: 2px; }
+@media (max-width: 760px) { .ob { grid-template-columns: 1fr; } .ob__art { display: none; } .ob__side { padding: 32px 24px; } }

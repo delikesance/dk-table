@@ -1,56 +1,63 @@
 // @vitest-environment jsdom
+/** Accueil (refonte Hermes, H4) : actions + fichiers récents à gauche, Atlas à droite, aucun texte décoratif. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { showOnboarding } from "./onboarding";
+import { showOnboarding, type HomeActions } from "./onboarding";
 
 let host: HTMLElement;
-let sheets: { id: string; name: string }[];
-const api = () => ({
-  sheets: () => sheets,
-  addSheet: vi.fn(() => { sheets.push({ id: "n", name: "Feuille 2" }); }),
-  switchSheet: vi.fn(),
+let recents: { path: string; name: string }[];
+const actions = (): HomeActions => ({
+  recents: () => recents, onNew: vi.fn(), onOpen: vi.fn(), onImportCsv: vi.fn(), onOpenRecent: vi.fn(),
 });
+const act = (a: string) => host.querySelector<HTMLElement>(`[data-action="${a}"]`)!;
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="h"></div>';
   host = document.getElementById("h")!;
-  sheets = [{ id: "a", name: "Budget" }, { id: "b", name: "Notes" }];
+  recents = [{ path: "/d/budget.dktable", name: "budget.dktable" }, { path: "/d/t3.csv", name: "t3.csv" }];
 });
 
-describe("onboarding", () => {
-  it("renders an ARIA list of the sheets and a create button", () => {
-    showOnboarding(host, api());
-    const items = host.querySelectorAll('[role="list"] [role="listitem"] button');
-    expect([...items].map((i) => i.textContent)).toEqual(["Budget", "Notes"]);
-    expect(host.querySelector('[data-action="create"]')).not.toBeNull();
-    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+describe("accueil", () => {
+  it("dialogue modal avec trois actions, focus sur « Nouveau classeur »", () => {
+    showOnboarding(host, actions());
+    expect(host.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
+    expect(["new", "open", "import"].map((a) => act(a)?.textContent)).toEqual([
+      expect.stringContaining("Nouveau classeur"), expect.stringContaining("Ouvrir"), expect.stringContaining("Importer CSV"),
+    ]);
+    expect(document.activeElement).toBe(act("new"));
   });
-
-  it("create adds a sheet, enters the grid and closes the screen", () => {
-    const a = api();
-    showOnboarding(host, a);
-    host.querySelector<HTMLElement>('[data-action="create"]')!.click();
-    expect(a.addSheet).toHaveBeenCalledOnce();
+  it("chaque action ferme l'accueil puis la lance", () => {
+    for (const [a, fn] of [["new", "onNew"], ["open", "onOpen"], ["import", "onImportCsv"]] as const) {
+      const h = actions();
+      showOnboarding(host, h);
+      act(a).click();
+      expect(host.querySelector(".ob")).toBeNull();
+      expect(h[fn]).toHaveBeenCalledOnce();
+    }
+  });
+  it("liste des récents (nom + chemin) ; clic = ouverture", () => {
+    const h = actions();
+    showOnboarding(host, h);
+    const items = host.querySelectorAll<HTMLElement>("[data-recent]");
+    expect([...items].map((i) => i.querySelector(".ob__name")!.textContent)).toEqual(["budget.dktable", "t3.csv"]);
+    expect(items[1].textContent).toContain("/d/t3.csv");
+    items[1].click();
+    expect(h.onOpenRecent).toHaveBeenCalledWith("/d/t3.csv");
     expect(host.querySelector(".ob")).toBeNull();
   });
-
-  it("clicking an item selects that sheet and closes", () => {
-    const a = api();
-    showOnboarding(host, a);
-    host.querySelectorAll<HTMLElement>("[data-sheet]")[1].click();
-    expect(a.switchSheet).toHaveBeenCalledWith("b");
-    expect(host.querySelector(".ob")).toBeNull();
+  it("sans récents : pas de section ni de texte de remplissage", () => {
+    recents = [];
+    showOnboarding(host, actions());
+    expect(host.querySelector(".ob__recents")).toBeNull();
+    expect(host.querySelector(".ob__empty")).toBeNull();
   });
-
-  it("shows an empty state when there is no project", () => {
-    sheets = [];
-    showOnboarding(host, api());
-    expect(host.querySelector('[role="list"]')).toBeNull();
-    expect(host.querySelector(".ob__empty")).not.toBeNull();
+  it("Atlas en clair et en nuit, avec crédit ; pas de libellé décoratif", () => {
+    showOnboarding(host, actions());
+    expect(host.querySelectorAll(".ob img.dk-art__img")).toHaveLength(2);
+    expect(host.querySelector("figcaption")!.textContent).toContain("domaine public");
+    expect(host.textContent).not.toContain("//");
   });
-
-  it("is keyboard accessible: focus on create, Escape closes", () => {
-    showOnboarding(host, api());
-    expect(document.activeElement).toBe(host.querySelector('[data-action="create"]'));
+  it("Échap ferme", () => {
+    showOnboarding(host, actions());
     host.querySelector<HTMLElement>(".ob")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(host.querySelector(".ob")).toBeNull();
   });

@@ -62,3 +62,13 @@
   --c-text-on-accent: var(--paper-on-accent);
   color: var(--c-text);
 }
+
+/* Barre de menus (refonte Hermes) : première ligne du chrome, toujours visible, libellés en capitales. */
+.dk-app__menubar { display: flex; align-items: center; height: 36px; padding: 0 var(--s-2); border-bottom: 1px solid var(--c-chrome-line); }
+.dk-app__menubar .dk-menu__trigger { height: 28px; padding: 0 var(--s-2); gap: 0; }
+.dk-menu__item--sep { border-top: 1px solid var(--c-line); }
+.dk-menu__item > .dk-icon { display: inline-flex; align-items: center; }
+.dk-menu__item[role="menuitemradio"] .dk-icon::before { content: ""; display: block; width: 6px; height: 6px; margin: auto; border-radius: 50%; }
+.dk-menu__item[aria-checked="true"] .dk-icon::before { background: currentColor; }
+.dk-menu__list .dk-menu__hint { font-family: var(--font-mono); font-size: 11px; }
+.dk-menubar .dk-menu { z-index: auto; } /* .dk-menu (menu contextuel) vaut 1100 : la barre ne doit pas passer au-dessus de l'accueil */

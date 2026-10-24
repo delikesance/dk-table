@@ -79,10 +79,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
 - Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
 
-## Decisions (onboarding)
+## Decisions (accueil, menus, dialogues — refonte Hermes)
 
-- `ui/onboarding/` (`showOnboarding(host, app)`): écran d'accueil modal (role=dialog, liste ARIA des feuilles, « Créer » = `addSheet`, clic = `switchSheet`, Échap ferme, état vide). Affiché par `main.ts` après `mount()`, ignoré avec `?onboarding=0` (utilisé par `e2e/helpers.ts` `openApp`). `mount()` reste inchangé.
-- Tokens `--ob-*` : alias des tokens sémantiques (fin de `styles/tokens.css`), suivent donc les thèmes Hermes clair/sombre.
+- `ui/onboarding/` (`showOnboarding(host, actions: HomeActions)`): accueil modal sur le bleu chrome (nuit en sombre) : nom, Nouveau classeur / Ouvrir / Importer CSV, récents (nom + chemin, section absente si vide), Atlas à droite (`ui/art.ts`, `src/assets/atlas-bleu.png` / `atlas-nuit.png`, version choisie par `data-theme`). Chaque choix ferme puis lance l'action, Échap ferme. Affiché par `main.ts` sauf `?onboarding=0` (e2e `openApp`) ou réglage « accueil au démarrage » décoché (`dk-table.home`).
+- Barre de menus : `ui/menubar/spec.ts` (`buildMenuSpec(app, deps)`, 8 menus à un niveau, seul « Récents » se déplie, aucun libellé en double, actions réellement implémentées seulement), `ui/menubar/deps.ts` (branchement fileops/dialogues/palette/macros), rendu `createMenuBar` (`toolbar/menus.ts`, entrées `sep` et radio `checked`). Montée dans `.dk-app__menubar` (première ligne du chrome, toujours visible, même en mode minimal).
+- Répartition sans doublon : barre de menus = catalogue complet ; barre d'outils = actions fréquentes (plus de Fichier ni Ouvrir/Enregistrer) ; palette Ctrl+K = recherche. Thème dans Affichage ; Paramètres (Fichier, Ctrl+,) = réglages persistants (accueil au démarrage). Alt+F11 = éditeur de macros.
+- `ui/dialogs/` : `openDialog` (modale commune, une instance par id, Échap/voile/Fermer), `settings.ts`, `about.ts` (Atlas + crédits polices/icônes).
+- Tokens `--ob-*` : alias des tokens sémantiques (fin de `styles/tokens.css`).
 
 ## Decisions (intégration I8)
 

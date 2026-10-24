@@ -3,6 +3,8 @@ import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
 import { openMacroDialog } from "../macros/dialog";
+import { openSettings } from "./dialogs/settings";
+import { openAbout } from "./dialogs/about";
 import { autosum } from "./autosum";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
@@ -22,6 +24,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => newDocument(app),
     j: () => toggleTools(),
+    ",": () => openSettings(),
   };
 }
 
@@ -74,7 +77,9 @@ export function installCommands(app: App): void {
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
   run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
-  run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
+  run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), "Alt+F11", ["macro", "lua", "script"]);
+  run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
+  run("app.about", "À propos de dk-table", openAbout);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
@@ -96,6 +101,7 @@ export function installCommands(app: App): void {
   const map = shortcuts(app);
   if (onKey) document.removeEventListener("keydown", onKey); // remount: avoid stacked listeners
   onKey = (e: KeyboardEvent) => {
+    if (e.altKey && e.key === "F11") { e.preventDefault(); openMacroDialog(app); return; }
     if (e.altKey && e.key === "=" && !e.ctrlKey && !e.metaKey && !inTextField(e.target)) {
       e.preventDefault(); autosum(app); return;
     }

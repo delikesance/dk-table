@@ -19,6 +19,20 @@ describe("app integration", () => {
     }
   });
 
+  it("menu bar (8 menus) heads the top bar and stays visible in minimal mode", () => {
+    const bar = root.querySelector<HTMLElement>(".dk-app__top > .dk-app__menubar .dk-menubar")!;
+    expect(bar.querySelectorAll(".dk-menu__trigger")).toHaveLength(8);
+    expect(root.querySelector(".dk-app")!.classList.contains("dk-app--minimal")).toBe(true);
+    expect(bar.closest("[hidden]")).toBeNull();
+  });
+
+  it("Ctrl+, opens Paramètres, Alt+F11 opens the macro editor", () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: ",", ctrlKey: true }));
+    expect(document.querySelector('.dk-dialog[data-id="settings"]')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "F11", altKey: true }));
+    expect(document.querySelector(".dk-macro")).not.toBeNull();
+  });
+
   it("recalculates dependents on edit", () => {
     app.edit("A1", "2");
     app.edit("B1", "3");
