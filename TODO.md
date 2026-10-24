@@ -79,8 +79,9 @@ P1 : qualité visible (beauté, praticité)
 
 P2 : perf et fonctions
 - [x] Perf grille : rendu incrémental (écritures DOM évitées si inchangé) ; limite : renderCell/getDisplay toujours appelés pour 2600 cellules
-- [ ] Perf grille : virtualisation, taille dynamique
-- [ ] Fonctions et features supplémentaires selon priorités de `docs/recherche-tableur.md`
+- [x] Perf grille : virtualisation (`perf-grid-virtual`, MAX_ROWS=1000) ; reste : rendu à vérifier à la main
+- [x] Fonctions : fn-math/text/logic/date/finance/cond/iferror câblées (`engine/wire.ts`), fn-lookup partiel (2D à venir), engine-range, engine-sort
+- [ ] Autres features selon priorités de `docs/recherche-tableur.md`
 - [x] Split de `app.ts` en `appState/appGrid/appApi/appWidgets` (split-app) ; contrôle > 200 lignes à refaire à chaque vague
 
 P3 : livraison
@@ -89,6 +90,17 @@ P3 : livraison
 - [ ] T4.1 Analyser LibreOffice Calc via REA, sans copier de code (optionnel ; "Libre Fiscal" à confirmer)
 - [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : section Status encore "no app code")
 - [ ] Décision pépites 1 (flèches) / 2 (voyage dans le temps) : abandon ou bonus si le temps le permet
+
+## Phase 8 : Modules intégrés, câblage à faire
+
+- [x] Modules sans câblage UI : wf-sort-model (tri), toast, colors, floating (mini-barre), filter-logic, autosave-logic
+- [x] numfmt-date (format Date), alignement `DATE`/`YEAR`/`MONTH`/`DAY`/`serialToISO` sur la convention 1900 de `numfmt.ts`
+- [x] Tests unitaires ajoutés : engine-functions, ui-cellview-model, ui-palette-formulabar, ui-app-api-state, `functions.wired.test.ts`, `dateConsistency.test.ts`
+- [ ] engine-matrix-na : plages 2D dans l'évaluateur (VLOOKUP, HLOOKUP, INDEX 2D : 3 `it.todo` dans `functions.wired.test.ts`) + code `#N/A` (IFNA, lookups)
+- [ ] style-textcolor : `CellStyle.color` (couleur du texte) manquant
+- [ ] Câblage UI : barre N1, Σ, tri, filtre, couleurs, mini-barre flottante, toast, autosave
+- [ ] Câblage UI : menu Fichier unique, largeur de colonnes, Ctrl+D / Ctrl+R
+- [ ] Tests e2e par fonctionnalité (worktree `e2e-playwright-setup` en cours)
 
 ## Later (non planifié)
 

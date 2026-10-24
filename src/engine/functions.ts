@@ -48,6 +48,21 @@ export function registerFunction(name: string, fn: NumFn): void {
   });
 }
 
+/** Register (or replace) a raw-args builtin by name (used by the fn-*.ts modules, see wire.ts). */
+export function registerBuiltin(name: string, fn: Builtin): void {
+  def(name, fn);
+}
+
+/** Special forms evaluated lazily by the evaluator (not in the registry). */
+const SPECIAL = ["IF", "IFERROR", "IFNA"];
+/** Live-chart functions (registered by `registerLive`; listed even before it runs). */
+const LIVE = ["SPARKLINE", "BAR", "TREND"];
+
+/** Sorted names of every callable function: registry + special forms + live charts. */
+export function listFunctionNames(): string[] {
+  return [...new Set([...registry.keys(), ...SPECIAL, ...LIVE])].sort();
+}
+
 /** Look up a function by (upper-case) name. */
 export function getFunction(name: string): Builtin | undefined {
   return registry.get(name.toUpperCase());
