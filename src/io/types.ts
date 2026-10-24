@@ -11,6 +11,8 @@ export interface CellStyle {
   italic?: boolean;
   align?: "left" | "center" | "right";
   fill?: string;
+  /** Text color, `#rgb` or `#rrggbb`. */
+  color?: string;
   format?: string;
 }
 
