@@ -30,9 +30,24 @@ describe("toolbar", () => {
     const sel = host.querySelector<HTMLSelectElement>("select")!;
     sel.value = sel.options[1].value; sel.dispatchEvent(new Event("change"));
     expect(h.onFormat).toHaveBeenCalledWith(sel.options[1].value);
-    const col = host.querySelector<HTMLInputElement>('input[type="color"]')!;
-    col.value = "#ff0000"; col.dispatchEvent(new Event("input"));
-    expect(h.onFill).toHaveBeenCalledWith("#ff0000");
+  });
+  it("fill button opens the colour picker; swatch emits colour, Aucune emits null", () => {
+    const { host, h } = mkToolbar();
+    const pop = host.querySelector<HTMLElement>(".color-picker")!;
+    expect(pop.hidden).toBe(true);
+    btn(host, "fill").click();
+    expect(pop.hidden).toBe(false);
+    pop.querySelector<HTMLButtonElement>(".color-swatch")!.click();
+    expect(h.onFill).toHaveBeenCalledWith("#fde2e0");
+    expect(pop.hidden).toBe(true);
+    btn(host, "fill").click();
+    pop.querySelector<HTMLButtonElement>('[aria-label="Aucune"]')!.click();
+    expect(h.onFill).toHaveBeenLastCalledWith(null);
+  });
+  it("text colour button is prepared but disabled and hidden", () => {
+    const { host } = mkToolbar();
+    const t = btn(host, "text-color");
+    expect(t.disabled).toBe(true); expect(t.hidden).toBe(true);
   });
   it("choosing percent emits onFormat('percent')", () => {
     const { host, h } = mkToolbar();

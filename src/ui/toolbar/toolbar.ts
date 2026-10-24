@@ -1,5 +1,6 @@
 /** Formatting toolbar (undo/redo, bold/italic, align, number format, fill) plus the File/Insert menus. */
 import { icon } from "../icons";
+import { createColorPicker } from "./colors";
 import { createMenus, type MenuHandlers } from "./menus";
 import "./toolbar.css";
 
@@ -9,7 +10,7 @@ export type Align = "left" | "center" | "right";
 /** Action callbacks emitted by the toolbar. */
 export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
-  onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string): void;
+  onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
   onOpen(): void; onSave(): void;
   /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
   menus?: MenuHandlers;
@@ -70,12 +71,19 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   for (const [v, l] of FORMATS) sel.add(new Option(l, v));
   sel.addEventListener("change", () => h.onFormat(sel.value));
 
-  const fillBtn = document.createElement("label");
-  fillBtn.className = "dk-iconbtn dk-fillbtn"; fillBtn.title = "Couleur de fond"; fillBtn.innerHTML = icon("fill");
-  const color = document.createElement("input");
-  color.type = "color"; color.value = "#ffff00"; color.setAttribute("aria-label", "Couleur de fond");
-  color.addEventListener("input", () => h.onFill(color.value));
-  fillBtn.append(color);
+  // Fill colour: icon button + Palette popover ("Aucune" -> null clears the fill).
+  const fillWrap = document.createElement("div");
+  fillWrap.className = "dk-colorwrap";
+  const picker = createColorPicker({ kind: "fill", root: fillWrap, onPick: (c) => { picker.hidden = true; h.onFill(c); } });
+  picker.hidden = true;
+  const fillBtn = mkBtn("fill", "Couleur de fond", () => { picker.hidden = !picker.hidden; });
+  fillWrap.prepend(fillBtn);
+  document.addEventListener("mousedown", (e) => {
+    if (!picker.hidden && !fillWrap.contains(e.target as Node)) picker.hidden = true;
+  });
+  // Text colour: prepared only; stays disabled/hidden until CellStyle.color exists.
+  const textBtn = mkBtn("text-color", "Couleur du texte", () => {});
+  textBtn.disabled = true; textBtn.hidden = true;
 
   // N2 (File/Import menus, extras): hidden until the chevron deploys it; N1 is always visible.
   const n2 = document.createElement("div");
@@ -84,7 +92,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel), sep(), group(fillBtn), sep(),
+    group(sel), sep(), group(fillWrap, textBtn), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
   );
   host.append(el);
