@@ -48,10 +48,30 @@ describe("functions wired into cells", () => {
       if (want !== "") expect(got).toBe(want);
     });
   }
-  /** 2D ranges are flattened by the evaluator: tracked by task engine-matrix-na. */
-  it.todo("VLOOKUP from a formula (needs 2D ranges)");
-  it.todo("HLOOKUP from a formula (needs 2D ranges)");
-  it.todo("INDEX(range; row; col) 2D from a formula (needs 2D ranges)");
+  /** 2D ranges reach matrix-aware functions (wantsMatrix); #N/A for not-found lookups. */
+  it("VLOOKUP 2D", () => expect(ev("=VLOOKUP(2,A1:B3,2,FALSE)")).toBe("20"));
+  it("HLOOKUP 2D", () => expect(ev("=HLOOKUP(20,A1:B3,2,FALSE)")).toBe("#N/A"));
+  it("HLOOKUP row", () => expect(ev("=HLOOKUP(1,A1:B3,3,FALSE)")).toBe("3"));
+  it("INDEX 2D", () => expect(ev("=INDEX(A1:B3,2,2)")).toBe("20"));
+  it("MATCH", () => expect(ev("=MATCH(30,B1:B3,0)")).toBe("3"));
+  it("XLOOKUP 2D col", () => expect(ev("=XLOOKUP(3,A1:A3,C1:C3)")).toBe("c"));
+  it("SUMIF different columns", () => expect(ev('=SUMIF(A1:A3,">0",B1:B3)')).toBe("60"));
+  it("SUMIF sum_range resized", () => expect(ev('=SUMIF(A1:A2,">0",B1:B3)')).toBe("30"));
+  it("SUMIFS 2D", () => expect(ev('=SUMIFS(B1:B3,A1:A3,">1",C1:C3,"c")')).toBe("30"));
+  it("COUNTIF 2D range", () => expect(ev('=COUNTIF(A1:B3,">2")')).toBe("4"));
+  it("VLOOKUP not found is #N/A", () => expect(ev("=VLOOKUP(9,A1:B3,2,FALSE)")).toBe("#N/A"));
+  it("IFNA catches #N/A", () => expect(ev('=IFNA(VLOOKUP(9,A1:B3,2,FALSE),"absent")')).toBe("absent"));
+  it("IFNA ignores other errors", () => expect(ev('=IFNA(1/0,"x")')).toBe("#DIV/0!"));
+  it("IFERROR catches #N/A", () => expect(ev('=IFERROR(MATCH(9,A1:A3,0),"x")')).toBe("x"));
+  it("#N/A propagates", () => expect(ev("=1+MATCH(9,A1:A3,0)")).toBe("#N/A"));
+  it("lookup recalcs on range change", () => {
+    const s = createSheet();
+    setCell(s, "A1", "1"); setCell(s, "B1", "10"); setCell(s, "A2", "2"); setCell(s, "B2", "20");
+    setCell(s, "D1", "=VLOOKUP(2,A1:B2,2,FALSE)");
+    expect(getDisplay(s, "D1")).toBe("20");
+    setCell(s, "B2", "99");
+    expect(getDisplay(s, "D1")).toBe("99");
+  });
   it("listFunctionNames covers every case", () => {
     const names = listFunctionNames();
     for (const [n] of CASES) expect(names, n).toContain(n);

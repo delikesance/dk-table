@@ -4,6 +4,8 @@ import { toNum, toText } from "./values";
 
 /** Evaluated argument: scalar, or a flattened range of cell values. */
 export type Arg = Value | Value[];
+/** Matrix argument (rows of cells) given to functions registered with `{ matrix: true }`. */
+export type Matrix = Value[][];
 /** Internal builtin: receives evaluated args. */
 export type Builtin = (args: Arg[]) => Value;
 /** Plug-in function: receives all numeric args flattened; returns text or number. */
@@ -48,9 +50,22 @@ export function registerFunction(name: string, fn: NumFn): void {
   });
 }
 
-/** Register (or replace) a raw-args builtin by name (used by the fn-*.ts modules, see wire.ts). */
-export function registerBuiltin(name: string, fn: Builtin): void {
+/** Names (upper case) of builtins that receive ranges as `Value[][]` (rows) instead of flat `Value[]`. */
+const matrixFns = new Set<string>();
+
+/**
+ * Register (or replace) a raw-args builtin by name (used by the fn-*.ts modules, see wire.ts).
+ * With `{ matrix: true }` the evaluator passes range args as `Value[][]` (keeps width/height).
+ */
+export function registerBuiltin(name: string, fn: Builtin, opts?: { matrix?: boolean }): void {
   def(name, fn);
+  if (opts?.matrix) matrixFns.add(name.toUpperCase());
+  else matrixFns.delete(name.toUpperCase());
+}
+
+/** True when the function wants 2D range args (see `registerBuiltin`). */
+export function wantsMatrix(name: string): boolean {
+  return matrixFns.has(name.toUpperCase());
 }
 
 /** Special forms evaluated lazily by the evaluator (not in the registry). */

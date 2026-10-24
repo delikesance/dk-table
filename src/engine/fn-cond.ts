@@ -55,14 +55,30 @@ function compile(crit: Value): Pred {
   };
 }
 
-/** Scalar view of an argument (first cell of a range). */
+/** Scalar view of an argument (first cell of a range, matrix or flat). */
 function scalar(a: Arg): Value {
-  return Array.isArray(a) ? (a.length ? a[0] : "") : a;
+  return list(a)[0] ?? "";
 }
 
-/** Range view of an argument (scalar becomes a one-cell list). */
+/** Row-major flat view of an argument: scalar = one cell, matrix (rows) flattened. */
 function list(a: Arg): Value[] {
-  return Array.isArray(a) ? a : [a];
+  return Array.isArray(a) ? (a as unknown[]).flat() as Value[] : [a];
+}
+
+/** Height and width of a matrix arg (flat list = one column, scalar = 1x1). */
+function dims(a: Arg): [number, number] {
+  if (!Array.isArray(a)) return [1, 1];
+  return Array.isArray(a[0]) ? [a.length, (a[0] as Value[]).length] : [a.length, 1];
+}
+
+/** `sum` re-read with the shape of `rng` anchored at its top-left (Excel SUMIF sum_range rule). */
+function resize(sum: Arg, rng: Arg): Value[] {
+  const [h, w] = dims(rng);
+  const rows = (Array.isArray(sum) ? sum : [sum]) as unknown[];
+  if (!Array.isArray(rows[0])) return list(sum);
+  const out: Value[] = [];
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) out.push(((rows[r] as Value[] | undefined) ?? [])[c] ?? "");
+  return out;
 }
 
 /**
@@ -115,7 +131,7 @@ const SUMIF: Builtin = (args) => {
   if (args.length < 2 || args.length > 3) return err("#VALUE!");
   const r = matches(args.slice(0, 2), 0);
   if (!Array.isArray(r)) return r as Value;
-  const sum = args.length === 3 ? list(args[2]) : list(args[0]);
+  const sum = args.length === 3 ? resize(args[2], args[0]) : list(args[0]);
   if (sum.length !== list(args[0]).length) return err("#VALUE!");
   return sumAt(sum, r);
 };
