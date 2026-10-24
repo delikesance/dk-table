@@ -6,6 +6,7 @@ import type { SheetTabs } from "./tabs/tabs";
 import type { Sidebar, RecentFile } from "./sidebar/sidebar";
 import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
+import type { MacroUi } from "./macros/wire";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
 export interface Ctx {
@@ -22,6 +23,8 @@ export interface Ctx {
   sidebar: Sidebar;
   tabs: SheetTabs;
   app: App;
+  /** Lazy macro panel/runner (set in mount, after the layout exists). */
+  macroUi: MacroUi;
   /** Autosave controller (set by setupAutosave); touched on every modification. */
   autosave?: { touch(): void };
   /** Last autosave state, shown in the title. */
