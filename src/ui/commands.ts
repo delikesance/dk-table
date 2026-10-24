@@ -90,8 +90,8 @@ export function installCommands(app: App): void {
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
-    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing.
-    if (inTextField(e.target) && "zybi".includes(e.key.toLowerCase())) return;
+    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing; Ctrl+J (tools) is ignored there too.
+    if (inTextField(e.target) && "zybij".includes(e.key.toLowerCase())) return;
     e.preventDefault();
     fn(e);
   };
