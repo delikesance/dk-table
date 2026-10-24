@@ -15,7 +15,7 @@ const fakeApp = () => ({
 const deps = (macros: { id: string; name: string }[] = []): MenuDeps => ({
   file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(), onExportFec: vi.fn() },
   openSettings: vi.fn(), openMacros: vi.fn(), macros: () => macros, runMacro: vi.fn(),
-  openPalette: vi.fn(), openAbout: vi.fn(), autosum: vi.fn(),
+  openPalette: vi.fn(), openAbout: vi.fn(), autosum: vi.fn(), exportDoc: vi.fn(),
 });
 const items = (spec: ReturnType<typeof buildMenuSpec>, menu: string) => {
   const m = spec.find((d) => d.label === menu)!;

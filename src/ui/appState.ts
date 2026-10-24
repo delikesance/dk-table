@@ -25,6 +25,10 @@ export interface Ctx {
   backDoc?: string;
   /** Editor of the open document. */
   docEd?: DocEditor;
+  /** Sheet and document side by side (Ctrl+\\). */
+  split?: boolean;
+  /** Rebuild the menu bar (set by mount; called when a document opens or closes). */
+  rebuildMenus?(): void;
   /** Last range copied in the grid (documents paste it as a live reference). */
   lastCopy?: CopyInfo;
   entries: Entry[];
