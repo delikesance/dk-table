@@ -3,7 +3,7 @@ import { getRaw, setCell } from "../engine/sheet";
 import { newEntry, pushUndo, step, type Entry } from "./model";
 import { paintStyle } from "./cellview";
 import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
-import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
+import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
 import { sortColumn } from "./sort";
 import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
@@ -42,12 +42,12 @@ export function createApi(c: Ctx): App {
       pushUndo(c.cur);
       try { return await fn(c.cur.sheet); } finally { touch(c); }
     },
-    undo() { if (step(c.cur, "undo")) { buildGrid(c); setTitle(c, true); } },
-    redo() { if (step(c.cur, "redo")) { buildGrid(c); setTitle(c, true); } },
+    undo() { if (step(c.cur, "undo")) { relink(c); buildGrid(c); setTitle(c, true); } },
+    redo() { if (step(c.cur, "redo")) { relink(c); buildGrid(c); setTitle(c, true); } },
     addSheet() {
       c.cur = newEntry(`Feuille ${c.entries.length + 1}`);
       c.entries.push(c.cur);
-      refreshTabs(c); buildGrid(c); setTitle(c, true);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
     switchSheet(id) {
       const e = c.entries.find((x) => x.id === id);
@@ -65,12 +65,12 @@ export function createApi(c: Ctx): App {
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
       app.path = path;
-      refreshTabs(c); buildGrid(c); setTitle(c, false);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
     },
     importSheet(name, sheet) {
       c.cur = newEntry(name, sheet);
       c.entries.push(c.cur);
-      refreshTabs(c); buildGrid(c); setTitle(c, true);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
     selection: () => c.grid.getSelection(),
     selectedKeys: () => keysOf(c.grid.getSelection()),

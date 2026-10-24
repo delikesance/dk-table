@@ -4,7 +4,7 @@ import type { Grid } from "./grid/grid";
 import type { Toolbar, FormulaBar } from "./toolbar";
 import type { SheetTabs } from "./tabs/tabs";
 import type { Sidebar, RecentFile } from "./sidebar/sidebar";
-import type { Entry } from "./model";
+import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
@@ -29,6 +29,9 @@ export interface Ctx {
   /** Counter bumped on every modification (detects edits made during a write). */
   version?: number;
 }
+
+/** Re-bind the workbook (after sheets are added, removed, renamed or rebuilt by undo/redo). */
+export const relink = (c: Ctx): void => linkBook(() => c.entries);
 
 /** Expand a selection ("A1" or "A1:B3") into its cell keys. */
 export function keysOf(sel: string): string[] {

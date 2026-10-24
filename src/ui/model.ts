@@ -1,5 +1,5 @@
 /** Workbook model: sheets with per-sheet styles and undo/redo snapshot stacks. */
-import { createSheet, setCell, type Sheet } from "../engine/sheet";
+import { bindWorkbook, createSheet, setCell, type Sheet } from "../engine/sheet";
 import type { CellStyle, DocSheet } from "../io/types";
 
 /** Visual/format style of one cell (persisted in .dktable; `format` = number-format code). */
@@ -30,6 +30,14 @@ let seq = 0;
 /** Unique sheet id. */
 export function uid(): string {
   return `s${Date.now().toString(36)}${(seq++).toString(36)}`;
+}
+
+/**
+ * Bind the workbook's sheets so qualified refs (`'Feuille 2'!A1`) resolve by tab name.
+ * Call after any change of the sheet list, a sheet object or a name (recomputes cross-sheet formulas).
+ */
+export function linkBook(entries: () => Entry[]): void {
+  bindWorkbook(() => entries().map((e) => ({ name: e.name, sheet: e.sheet })));
 }
 
 /** Build an engine sheet (>= 26x100) filled from raw cells. */
