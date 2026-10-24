@@ -46,23 +46,17 @@
 .dk-macros .cm-activeLine, .dk-macros .cm-activeLineGutter { background: transparent; }
 .dk-macros .cm-selectionBackground, .dk-macros .cm-focused .cm-selectionBackground { background: var(--c-code-selection, var(--c-accent-soft-2)) !important; }
 .dk-macros .cm-matchingBracket { background: var(--c-code-selection, var(--c-accent-soft)); color: inherit; }
-.dk-macros .tok-keyword { color: var(--c-code-keyword, var(--c-accent)); font-weight: 500; }
-.dk-macros .tok-string { color: var(--c-code-string, var(--c-success)); }
-.dk-macros .tok-number, .dk-macros .tok-atom, .dk-macros .tok-bool { color: var(--c-code-number, var(--c-dep-out)); }
-.dk-macros .tok-comment { color: var(--c-code-comment, var(--c-text-3)); font-style: italic; }
-.dk-macros .tok-variableName2, .dk-macros .tok-variableName.tok-standard { color: var(--c-code-keyword, var(--c-accent)); }
-
-/* Completion popup: paper background, accent ink, selected row filled, typed prefix in medium weight. */
-.dk-macros .cm-tooltip.cm-tooltip-autocomplete {
+/* Completion popup (attached to <body>, so not under .dk-macros): paper background, accent ink, selected row filled, typed prefix in medium weight. */
+.cm-tooltip.cm-tooltip-autocomplete {
   border: 1px solid var(--c-line-strong); border-radius: 2px; background: var(--c-surface); color: var(--c-accent);
   font: 13px var(--font-mono); box-shadow: none;
 }
-.dk-macros .cm-tooltip-autocomplete > ul { min-width: 260px; max-height: 14em; font-family: var(--font-mono); }
-.dk-macros .cm-tooltip-autocomplete > ul > li { display: flex; padding: 2px var(--s-2); }
-.dk-macros .cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--c-accent); color: var(--c-text-on-accent); }
-.dk-macros .cm-completionMatchedText { text-decoration: none; font-weight: 500; }
-.dk-macros .cm-completionDetail { margin-left: auto; padding-left: var(--s-4); font-style: normal; opacity: 0.7; }
-.dk-macros .cm-tooltip.cm-completionInfo.dk-cm-info-below {
+.cm-tooltip.cm-tooltip-autocomplete > ul { min-width: 260px; max-height: 14em; font-family: var(--font-mono); }
+.cm-tooltip.cm-tooltip-autocomplete > ul > li { display: flex; padding: 2px var(--s-2); }
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--c-accent); color: var(--c-text-on-accent); }
+.cm-tooltip .cm-completionMatchedText { text-decoration: none; font-weight: 500; }
+.cm-tooltip .cm-completionDetail { margin-left: auto; padding-left: var(--s-4); font-style: normal; opacity: 0.7; }
+.cm-tooltip.cm-completionInfo.dk-cm-info-below {
   top: 100%; left: -1px; width: calc(100% + 2px); box-sizing: border-box; max-width: none; margin-top: -1px; padding: var(--s-1) var(--s-2);
   border: 1px solid var(--c-line-strong); border-radius: 0 0 2px 2px; background: var(--c-surface);
   color: var(--c-text-2); font: var(--fs-xs)/1.4 var(--font-ui); white-space: normal;
