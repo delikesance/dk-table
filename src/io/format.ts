@@ -10,6 +10,8 @@ export class DktParseError extends Error {
 }
 
 const REF = /^[A-Z]+[1-9]\d*$/;
+/** Accepted text colors: `#rgb` / `#rrggbb` (palette values are all in this form). */
+const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 /** True for plain (non-array, non-null) objects. */
 function isObj(v: unknown): v is Record<string, unknown> {
@@ -35,6 +37,12 @@ function checkStyle(v: unknown, at: string): CellStyle {
       throw new DktParseError(`${at}.align must be left, center or right`);
     }
     st.align = v.align;
+  }
+  if (v.color !== undefined) {
+    if (typeof v.color !== "string" || !HEX.test(v.color)) {
+      throw new DktParseError(`${at}.color must be #rgb or #rrggbb`);
+    }
+    st.color = v.color;
   }
   for (const k of ["fill", "format"] as const) {
     if (v[k] === undefined) continue;
