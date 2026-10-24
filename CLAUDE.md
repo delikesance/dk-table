@@ -52,6 +52,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
 - `src-tauri/icons/` = placeholder flat icon, to replace.
 
+- `npm run test:e2e` (Playwright, Chrome headless, `e2e/`, hors vitest). Prérequis: `npx playwright install chromium` (ou `E2E_CHANNEL=chrome` pour le Chrome système). Lance Vite sur le port 1421 (`E2E_PORT`) et le réutilise s'il tourne; pas de Tauri (dialog/fs absents). Helpers: `e2e/helpers.ts` (cellules = `.dkg-cell[data-key="A1"]`).
+
 ## Structure (src/)
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
