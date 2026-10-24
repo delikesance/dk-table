@@ -1,8 +1,7 @@
 /**
  * Lookup functions: VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP.
  * Ranges arrive as `Value[]` (flat, width lost) or, for 2D-aware callers, as `Value[][]` (rows).
- * A flat array is treated as a single column. "Not found" is #N/A in Excel; the engine has no
- * such code, so #VALUE! is used.
+ * A flat array is treated as a single column. "Not found" is #N/A. Registered with `matrix: true` (wire.ts).
  */
 import { err, isErr, type Value } from "./types";
 import { toBool, toNum } from "./values";
@@ -10,8 +9,8 @@ import type { Arg, Builtin } from "./functions";
 
 type Matrix = Value[][];
 
-/** Not-found error (no #N/A in ErrorCode). */
-const NOT_FOUND = () => err("#VALUE!");
+/** Not-found error. */
+const NOT_FOUND = () => err("#N/A");
 
 /** Normalize an arg to a matrix: nested arrays as-is, flat array = one column, scalar = 1x1. */
 function toMatrix(a: Arg | undefined): Matrix {
