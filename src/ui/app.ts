@@ -9,6 +9,7 @@ import { createGrid, type Grid } from "./grid/grid";
 import { parseKey, rangeKeys } from "./grid/keys";
 import { createToolbar, createFormulaBar, type Toolbar, type FormulaBar } from "./toolbar";
 import { createSheetTabs, type SheetTabs } from "./tabs/tabs";
+import { createRecents } from "../io/recents";
 import { createSidebar, type Sidebar, type RecentFile } from "./sidebar/sidebar";
 import { createPalette } from "./palette/palette";
 import { FN_DOCS } from "./fndocs";
@@ -33,7 +34,9 @@ export function mount(root: HTMLElement): App {
   let entries: Entry[] = [newEntry("Feuille 1")];
   let cur = entries[0];
   let grid: Grid;
-  let recents: RecentFile[] = [];
+  const store = createRecents(typeof localStorage === "undefined" ? null : localStorage, 8);
+  const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\\/]/).pop() ?? path });
+  let recents: RecentFile[] = store.list().map(toRecent);
   let coalescing = false;
 
   const keysOf = (sel: string): string[] => {
@@ -146,7 +149,8 @@ export function mount(root: HTMLElement): App {
     },
     recents: () => recents,
     addRecent(path) {
-      recents = [{ path, name: path.split(/[\\/]/).pop() ?? path }, ...recents.filter((r) => r.path !== path)].slice(0, 8);
+      store.add(path);
+      recents = store.list().map(toRecent);
       sidebar.setRecent(recents);
     },
     markSaved: () => setTitle(false),
@@ -188,6 +192,7 @@ export function mount(root: HTMLElement): App {
     onReorder: (ids) => { entries = ids.map((i) => entries.find((e) => e.id === i)!).filter(Boolean); },
   });
   createPalette({ hotkey: true });
+  sidebar.setRecent(recents);
   refreshTabs();
   buildGrid();
   installCommands(app);
