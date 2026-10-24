@@ -10,7 +10,7 @@ const app = (sel: string) => {
   return {
     selection: () => s, select: vi.fn((k: string) => { s = k; }), setFreeze: vi.fn(), getFreeze: () => ({ rows: 0, cols: 0 }),
     activeDoc: () => ({ cols: 26, rows: 1000 }), insertCols: vi.fn(), deleteCols: vi.fn(), insertRows: vi.fn(),
-    deleteRows: vi.fn(), sortColumn: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["B1"],
+    deleteRows: vi.fn(), fitColumns: vi.fn(), sortColumn: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["B1"],
   } as unknown as App & Record<string, ReturnType<typeof vi.fn>>;
 };
 const head = (cls: string, attr: string, v: number) => {
@@ -31,7 +31,7 @@ describe("headerMenu", () => {
     const items = headerMenu(a, head("dkg-colh", "col", 2));
     expect(a.select).toHaveBeenCalledWith("C1:C1000");
     expect(labels(items)).toEqual(["Insérer une colonne à gauche", "Supprimer les colonnes", "Trier A→Z", "Trier Z→A",
-      "Figer jusqu'à la colonne C", "Effacer le contenu"]);
+      "Ajuster à la largeur du contenu", "Figer jusqu'à la colonne C", "Effacer le contenu"]);
   });
   it("keeps a multi-column selection containing the clicked column", () => {
     const a = app("B1:D1000");

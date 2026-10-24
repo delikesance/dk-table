@@ -29,6 +29,8 @@ export interface ResizeHooks {
   view: GridView;
   /** Textes affichés de la colonne (pour le double-clic). */
   columnTexts(col: number): string[];
+  /** Remplace l'ajustement intégré (estimation) par celui de l'application. */
+  fit?(col: number): void;
   /** Appliquer la nouvelle template de colonnes. */
   apply(): void;
 }
@@ -56,6 +58,7 @@ export function addResizers(heads: HTMLElement[], h: ResizeHooks): void {
     });
     grip.addEventListener("dblclick", (e) => {
       e.stopPropagation();
+      if (h.fit) { h.fit(c); return; }
       h.view.widths[c] = fitWidth(h.columnTexts(c));
       h.apply();
     });
