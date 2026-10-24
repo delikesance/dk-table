@@ -1,5 +1,5 @@
 /** `.dktable` JSON format: pure serialize / strict parse with clear errors. */
-import { FORMAT_VERSION, type CellStyle, type DktDoc, type DocSheet } from "./types";
+import { FORMAT_VERSION, type CellStyle, type DktDoc, type DocMacro, type DocSheet } from "./types";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export class DktParseError extends Error {
@@ -85,6 +85,19 @@ function checkSheet(s: unknown, i: number): DocSheet {
   return sheet;
 }
 
+/** Validates the optional macros list, throwing a located DktParseError. */
+function checkMacros(v: unknown): DocMacro[] {
+  if (!Array.isArray(v)) throw new DktParseError("macros must be an array");
+  return v.map((m, i) => {
+    const at = `macros[${i}]`;
+    if (!isObj(m)) throw new DktParseError(`${at} must be an object`);
+    if (typeof m.id !== "string" || !m.id) throw new DktParseError(`${at}.id must be a non-empty string`);
+    if (typeof m.name !== "string") throw new DktParseError(`${at}.name must be a string`);
+    if (typeof m.code !== "string") throw new DktParseError(`${at}.code must be a string`);
+    return { id: m.id, name: m.name, code: m.code };
+  });
+}
+
 /** Serializes a document to pretty JSON text. */
 export function serialize(doc: DktDoc): string {
   return JSON.stringify(doc, null, 2);
@@ -118,5 +131,6 @@ export function parse(text: string): DktDoc {
     }
     doc.active = data.active;
   }
+  if (data.macros !== undefined) doc.macros = checkMacros(data.macros);
   return doc;
 }

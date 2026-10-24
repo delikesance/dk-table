@@ -2,7 +2,6 @@
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
-import { openMacroDialog } from "../macros/dialog";
 import { autosum } from "./autosum";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
@@ -50,7 +49,7 @@ function cellMenu(app: App): MenuItem[] {
 /** True when the event target is an editable text field (input, textarea, contenteditable). */
 function inTextField(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null;
-  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable === true);
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable === true || !!el.closest?.(".cm-editor"));
 }
 
 /** Current global keydown listener, replaced on each install. */
@@ -74,7 +73,6 @@ export function installCommands(app: App): void {
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
   run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
-  run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
