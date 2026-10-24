@@ -66,7 +66,19 @@ describe("createGrid", () => {
     key(root(), "ArrowDown"); expect(grid.getSelection()).toBe("B2");
     key(root(), "Tab"); expect(grid.getSelection()).toBe("C2");
     key(root(), "Tab", { shiftKey: true }); expect(grid.getSelection()).toBe("B2");
-    key(root(), "Enter"); expect(grid.getSelection()).toBe("B3");
+    key(root(), "Enter", { shiftKey: true }); expect(grid.getSelection()).toBe("B1");
+  });
+  it("Enter on a non-edited cell opens it in edit mode (like F2); modifiers ignored", () => {
+    grid.select("B1");
+    key(root(), "Enter", { ctrlKey: true });
+    key(root(), "Enter", { altKey: true });
+    expect(input()).toBeNull();
+    key(root(), "Enter");
+    expect(input()!.value).toBe("=A1*2");
+    expect(grid.getSelection()).toBe("B1");
+    key(input()!, "Enter");
+    expect(input()).toBeNull();
+    expect(grid.getSelection()).toBe("B2");
   });
   it("shift+arrow extends range", () => {
     grid.select("A1");
