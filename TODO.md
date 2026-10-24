@@ -156,7 +156,9 @@ Classement par gravité (P0 = pire)
 
 - [x] H1 Tokens bleu #0000F2 + papier, thème sombre nuit #19192F (`theme-dark.css`, `ui/theme.ts`), chrome bleu (`chrome.css`), polices locales (`fonts.ts`), tokens `--c-code-*` pour l'éditeur de macros. Tests : `styles/hermes.test.ts`, `ui/theme.test.ts`, `styles/styles.test.ts` (contrastes chrome).
 - [x] H2 Onglets actifs pleins bleus en capitales condensées ; en-têtes de grille en DM Mono ; fonds pleins via `--c-accent-solid` (menus, palette, filtre).
-- [ ] H3 Barre de menus à un niveau (Fichier, Édition, Format, Feuille, Données, Scripts, Affichage, Aide) ; Scripts branché sur `app.openMacros` / `app.runMacro` (PR macros #1) ; Paramètres dans Fichier (Ctrl ,) ; thème dans Affichage.
-- [ ] H4 Accueil : actions + récents à gauche, Atlas à droite (`atlas-bleu.png` / `atlas-nuit.png`), sans libellé décoratif ; splash et À propos.
-- [ ] H5 Retirer de la barre d'outils ce que la barre de menus couvre (éviter les doublons) une fois H3 livrée.
+- [x] H3 Barre de menus à un niveau (`ui/menubar/spec.ts` + `deps.ts`, rendu `createMenuBar` dans `toolbar/menus.ts`), toujours visible ; Paramètres dans Fichier (Ctrl+,, `ui/dialogs/settings.ts`) ; thème dans Affichage ; Alt+F11 = éditeur de macros. Tests : `ui/menubar/menubar.test.ts`, `ui/dialogs/dialogs.test.ts`, `ui/app.test.ts`.
+- [ ] H3b Scripts : brancher `deps.ts` sur `app.openMacros` / `app.macros` / `app.runMacro` quand la PR macros #1 sera fusionnée (aujourd'hui : boîte `openMacroDialog`, liste vide).
+- [x] H4 Accueil : nom, Nouveau classeur / Ouvrir / Importer CSV, récents (nom + chemin), Atlas à droite (`src/assets/atlas-*.png`, `ui/art.ts`), sans libellé décoratif ; réglage « accueil au démarrage ». À propos (Aide) avec l'Atlas et les crédits.
+- [ ] H4b Splash de lancement Tauri et bannière d'installeur avec l'Atlas.
+- [x] H5 Barre d'outils sans Fichier ni Ouvrir/Enregistrer (couverts par la barre de menus et Ctrl+O/S).
 - [ ] e2e Playwright non relancés dans le conteneur cloud (navigateur absent) : à relancer en local.

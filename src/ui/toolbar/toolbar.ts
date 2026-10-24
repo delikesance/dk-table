@@ -1,7 +1,6 @@
-/** Formatting toolbar (undo/redo, bold/italic, align, number format, fill) plus the File/Insert menus. */
+/** Formatting toolbar (undo/redo, bold/italic, align, number format, Σ, colours); file actions live in the menu bar only. */
 import { icon } from "../icons";
 import { createColorPicker } from "./colors";
-import { createMenus, type MenuHandlers } from "./menus";
 import "./toolbar.css";
 
 /** Horizontal alignment values. */
@@ -13,13 +12,10 @@ export interface ToolbarHandlers {
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
   /** Text colour (null = "Aucune"). */
   onTextColor?(color: string | null): void;
-  onOpen(): void; onSave(): void;
   /** Quick sum (Σ). */
   onSum?(): void;
   /** Sort the active column (N2 buttons). */
   onSort?(desc: boolean): void;
-  /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
-  menus?: MenuHandlers;
 }
 
 /** Toolbar reflected state. */
@@ -94,16 +90,14 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   const fillWrap = colorControl("fill", "Couleur de fond", h.onFill);
   const textWrap = colorControl("text", "Couleur du texte", (c) => h.onTextColor?.(c));
 
-  // N2 (File/Import menus, extras): hidden until the chevron deploys it; N1 is always visible.
+  // N2 (extras): hidden until the tools toggle deploys it; N1 is always visible.
   const n2 = document.createElement("div");
   n2.className = "dk-toolbar__n2"; n2.hidden = true;
-  if (h.menus) n2.append(createMenus(h.menus), sep());
   n2.append(group(mkBtn("sort-asc", "Trier A→Z", () => h.onSort?.(false)), mkBtn("sort-desc", "Trier Z→A", () => h.onSort?.(true))), sep());
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap), sep(),
-    group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap),
   );
   host.append(el);
 

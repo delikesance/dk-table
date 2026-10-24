@@ -9,7 +9,9 @@ import "../styles/chrome.css";
 import { registerLive } from "../engine/live/adapter";
 import { createPalette } from "./palette/palette";
 import { newEntry } from "./model";
-import { destroyMenus } from "./toolbar/menus";
+import { createMenuBar, destroyMenus } from "./toolbar/menus";
+import { buildMenuSpec } from "./menubar/spec";
+import { menuDeps } from "./menubar/deps";
 import { installCommands } from "./commands";
 import { installUnloadGuard } from "./fileops";
 import { buildGrid, refreshTabs } from "./appGrid";
@@ -21,7 +23,7 @@ import type { App } from "./appTypes";
 export type { App, Hooks } from "./appTypes";
 
 const LAYOUT =
-  '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
+  '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__menubar"></div><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
   '<div class="dk-app__main"><div class="dk-app__grid"></div></div>' +
   '<div class="dk-app__tabs"></div></div>';
 
@@ -43,7 +45,8 @@ export function mount(root: HTMLElement): App {
   createWidgets(c, root);
   c.sidebar.setRecent(c.recents);
   const palette = createPalette({ hotkey: true });
-  const menus = root.querySelector<HTMLElement>(".dk-menus");
+  const menus = createMenuBar(buildMenuSpec(c.app, menuDeps(c.app, palette.open)));
+  root.querySelector<HTMLElement>(".dk-app__menubar")!.append(menus);
   disposePrev = () => { palette.destroy(); destroyMenus(menus); };
   refreshTabs(c);
   buildGrid(c);
