@@ -17,3 +17,30 @@ describe("formatValue", () => {
     expect(formatValue("#DIV/0!", "number")).toBe("#DIV/0!");
   });
 });
+
+describe("formatValue date", () => {
+  it("serial to DD/MM/YYYY", () => {
+    expect(formatValue("46319", "date")).toBe("24/10/2026");
+    expect(formatValue("45292", "date")).toBe("01/01/2024");
+  });
+  it("Excel 1900 bounds", () => {
+    expect(formatValue("1", "date")).toBe("01/01/1900");
+    expect(formatValue("59", "date")).toBe("28/02/1900");
+    expect(formatValue("60", "date")).toBe("29/02/1900");
+    expect(formatValue("61", "date")).toBe("01/03/1900");
+  });
+  it("time part ignored", () => expect(formatValue("46319.75", "date")).toBe("24/10/2026"));
+  it("ISO text", () => expect(formatValue("2026-11-01", "date")).toBe("01/11/2026"));
+  it("invalid ISO unchanged", () => expect(formatValue("2026-13-45", "date")).toBe("2026-13-45"));
+  it("unchanged cases", () => {
+    expect(formatValue("abc", "date")).toBe("abc");
+    expect(formatValue("", "date")).toBe("");
+    expect(formatValue("-5", "date")).toBe("-5");
+    expect(formatValue("0", "date")).toBe("0");
+    expect(formatValue("99999999999", "date")).toBe("99999999999");
+  });
+  it("max serial 2958465 is 31/12/9999", () => {
+    expect(formatValue("2958465", "date")).toBe("31/12/9999");
+    expect(formatValue("2958466", "date")).toBe("2958466");
+  });
+});
