@@ -22,10 +22,13 @@ import add from "iconoir/icons/regular/page-plus.svg?raw";
 import upload from "iconoir/icons/regular/upload.svg?raw";
 import download from "iconoir/icons/regular/download.svg?raw";
 
+import filter from "iconoir/icons/regular/filter-list.svg?raw";
+
 const RAW: Record<string, string> = {
   add, upload, download, undo, redo, bold, italic, fill, open, save, tools, plus, file,
   chevron: tools, "chevron-right": chevronRight,
   "align-left": alignLeft, "align-center": alignCenter, "align-right": alignRight,
+  filter,
 };
 
 /** Names accepted by {@link icon}. */
