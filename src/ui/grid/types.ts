@@ -20,8 +20,12 @@ export interface GridOptions {
 export interface Grid {
   /** Re-render the given cells (all when omitted). */
   refresh(keys?: string[]): void;
-  /** Select a single cell by key. */
+  /** Select a cell ("A1") or a range ("A1:B3"). */
   select(key: string): void;
+  /** Give keyboard focus to the grid. */
+  focus(): void;
+  /** Remove document listeners and the grid DOM; call before rebuilding. */
+  destroy(): void;
   /** Current selection: "A1" or "A1:B3". */
   getSelection(): string;
 }
