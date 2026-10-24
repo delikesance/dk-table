@@ -69,3 +69,13 @@ export function step(e: Entry, from: "undo" | "redo"): boolean {
   e.sheet = buildSheet(snap, e.sheet.cols, e.sheet.rows);
   return true;
 }
+
+/** Run direct engine writes on the entry's sheet as one undo step; returns false (no step kept) if nothing changed. */
+export function batchEdit(e: Entry, fn: (sheet: Sheet) => void): boolean {
+  const before = JSON.stringify(e.sheet.cells);
+  pushUndo(e);
+  fn(e.sheet);
+  if (JSON.stringify(e.sheet.cells) !== before) return true;
+  e.undo.pop();
+  return false;
+}

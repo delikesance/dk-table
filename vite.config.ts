@@ -9,4 +9,6 @@ export default defineConfig({
   clearScreen: false,
   server: { port: 1420, strictPort: true, watch: { ignored: ["**/src-tauri/**"] } },
   resolve: { alias: { tmp: empty, "readline-sync": empty } },
+  // The lazily loaded macro chunk (Lua VM + CodeMirror) is ~555 kB; startup chunk stays small.
+  build: { chunkSizeWarningLimit: 600 },
 });

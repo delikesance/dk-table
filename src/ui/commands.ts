@@ -72,8 +72,10 @@ export function installCommands(app: App): void {
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
-    // Let inputs keep their native undo/bold-less behaviour while editing text.
-    if ((e.target as HTMLElement)?.tagName === "INPUT" && "zyb i".includes(e.key.toLowerCase())) return;
+    // Let inputs and the macro code editor keep their own undo/redo while editing text.
+    const t = e.target as HTMLElement | null;
+    const typing = t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || !!t?.closest?.(".cm-editor");
+    if (typing && "zybi".includes(e.key.toLowerCase())) return;
     e.preventDefault();
     fn(e);
   });

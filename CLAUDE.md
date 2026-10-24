@@ -51,6 +51,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
 - `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
+- `macros/`: macros Lua sans DOM. `lua.ts` (`runMacro(code, host)`: fengari Lua 5.3, bac à sable, `print` capturé, limite d'instructions), `api.ts` (table `sheet` + interface `MacroHost`), `complete.ts` + `luadocs.ts` (autocomplétion indépendante de l'éditeur), `store.ts` (liste des macros). Référence utilisateur : `docs/macros.md`.
+- `ui/macros/`: `wire.ts` (commandes palette + Alt+F11, chargement paresseux de `kit.ts`), `panel.ts` (panneau droit 440px), `editor.ts` (CodeMirror 6), `run.ts` (exécution sur la feuille active), `macros.css` (tokens `--c-code-*` avec repli).
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
 ## Decisions (intégration I8)
@@ -58,6 +60,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cellules vivantes: le moteur ne gère que des valeurs texte/nombre; `liveResult` détecte `=SPARKLINE|BAR|TREND(plage)` pleine cellule et la grille (hook `renderCell`) affiche le SVG. Le moteur renvoie un texte de repli (ex. TREND: "▲ +10%").
 - Undo/redo: snapshot des cellules brutes par feuille (100 max); les éditions groupées (coller/effacer) = un pas. Styles non annulables ni persistés.
 - Recalcul UI: après chaque édition, `grid.refresh()` complet (26x100).
+
+## Decisions (macros Lua)
+
+- VM Lua = fengari (Lua 5.3 en JS pur, synchrone, testable sous vitest). `tmp`/`readline-sync` (Node) remplacés par un stub dans `vite.config.ts`.
+- Éditeur = CodeMirror 6 (mode Lua legacy). Lua VM + éditeur chargés à la demande (`import("./kit")`) : chunk de démarrage ~46 Ko, chunk macros ~555 Ko.
+- API Lua alignée sur les noms du moteur (`sheet.getValue`, `setCell`...), validée avec le fil design.
+- Accès : palette Ctrl+K (« Éditeur de macros », « Macro : nom ») + Alt+F11. Pas de bouton toolbar : le menu « Scripts » de la refonte design listera les macros (`app.macros`, `app.runMacro`, `app.openMacros`).
+- Une exécution = un pas d'annulation (`app.batch`), aucun pas si rien n'a changé. Macros persistées dans `.dktable` (`macros?: {id,name,code}[]`, format v1 rétrocompatible).
 
 ## Research
 

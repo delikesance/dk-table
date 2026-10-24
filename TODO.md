@@ -101,3 +101,13 @@ P3 : livraison
 - [x] Synthèse de recherche écrite
 - [x] 3 maquettes de pépites créées
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
+
+## Phase 8 : Macros Lua
+
+- [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
+- [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
+- [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
+- [x] M4 Macros persistées dans `.dktable` ; exécution = un pas d'annulation
+- [ ] M5 Menu « Scripts » (refonte design) listant les macros, raccourcis par macro
+- [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
+
