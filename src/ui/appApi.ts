@@ -12,6 +12,7 @@ import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
+import { exportDoc } from "./appDocExport";
 import { addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
@@ -131,6 +132,7 @@ export function createApi(c: Ctx): App {
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
     addDoc: () => addDoc(c),
+    exportDoc: (kind) => exportDoc(c, kind),
     openDoc: (id) => openDocView(c, id),
     removeDoc: (id) => removeDoc(c, id),
     activeDocId: () => c.curDoc,

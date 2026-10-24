@@ -38,6 +38,8 @@ export interface App {
   /** Active sheet as a persistable sheet (CSV export). */
   activeDoc(): DocSheet;
   loadDoc(doc: DktDoc, path?: string): void;
+  /** Export the open document (md / html through the save dialog, pdf through printing). */
+  exportDoc(kind: "md" | "html" | "pdf"): Promise<void>;
   /** Add a sheet from imported cells and activate it. */
   importSheet(name: string, sheet: Pick<DocSheet, "cols" | "rows" | "cells">): void;
   selection(): string;

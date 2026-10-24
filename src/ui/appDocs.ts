@@ -4,7 +4,7 @@ import { setTitle, type Ctx } from "./appState";
 import type { RefBook, RefTarget } from "../doc/refs";
 
 /** The workbook as read by the documents (live view of the entries). */
-const bookOf = (c: Ctx): RefBook => ({ sheets: () => c.entries.map((e) => ({ id: e.id, name: e.name, sheet: e.sheet, styles: e.styles })) });
+export const bookOf = (c: Ctx): RefBook => ({ sheets: () => c.entries.map((e) => ({ id: e.id, name: e.name, sheet: e.sheet, styles: e.styles })) });
 
 /** Follow a reference: show the cited cell in its sheet; Alt+← comes back to the document. */
 function openCell(c: Ctx, t: RefTarget): void {

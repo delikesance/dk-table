@@ -5,6 +5,7 @@ import { headerMenu } from "./headerMenu";
 import type { App } from "./appTypes";
 import { openSettings } from "./dialogs/settings";
 import { openAbout } from "./dialogs/about";
+import { openExportDoc } from "./dialogs/exportDoc";
 import { autosum } from "./autosum";
 import { BORDER_LABELS } from "./borders";
 import { parseKey } from "./grid/keys";
@@ -28,6 +29,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => newDocument(app),
     j: () => toggleTools(),
+    e: () => { if (app.activeDocId()) openExportDoc(app); },
     ",": () => openSettings(),
     "+": () => app.insertRows(),
     "-": () => app.deleteRows(),
@@ -108,6 +110,7 @@ export function installCommands(app: App): void {
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
   run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
+  run("doc.export", "Exporter le document…", () => { if (app.activeDocId()) openExportDoc(app); }, "Ctrl+E", ["markdown", "html", "pdf", "imprimer"]);
   run("doc.new", "Nouveau document", () => void app.addDoc(), undefined, ["dk doc", "texte", "rapport", "word"]);
   run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
   run("app.about", "À propos de dk-table", openAbout);
