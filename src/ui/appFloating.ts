@@ -5,6 +5,7 @@
  * plus grid keyboard/mouse events that start or end an edit.
  */
 import { createFloatingBar, type FloatingActionId, type Rect } from "./toolbar/floating";
+import { autosum } from "./autosum";
 import type { Ctx } from "./appState";
 import type { App } from "./appTypes";
 
@@ -17,6 +18,7 @@ export function floatingAction(app: App, id: FloatingActionId): void {
   if (id === "bold") app.style({ bold: !st.bold });
   else if (id === "italic") app.style({ italic: !st.italic });
   else if (id === "fill") app.style({ fill: st.fill ? undefined : QUICK_FILL });
+  else if (id === "sum") autosum(app);
   else if (id === "percent") app.style({ format: st.format === "percent" ? "general" : "percent" });
 }
 

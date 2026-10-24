@@ -7,6 +7,7 @@ import { buildGrid, refreshTabs } from "./appGrid";
 import { firstKey, type Ctx } from "./appState";
 import { exportCsv, importCsv, newDocument, saveFile } from "./fileops";
 import { floatingAction, installFloating } from "./appFloating";
+import { autosum } from "./autosum";
 import { createToolsToggle, installToolsToggle } from "./appTools";
 
 /** Build the chrome widgets into `root` and store them on `c` (needs `c.app` set). */
@@ -21,6 +22,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onItalic: () => app.style({ italic: !app.activeStyle().italic }),
     onAlign: (align) => app.style({ align }),
     onFormat: (format) => app.style({ format }),
+    onSum: () => void autosum(app),
     onFill: (fill) => app.style({ fill: fill ?? undefined }),
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),

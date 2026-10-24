@@ -12,6 +12,8 @@ export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
   onOpen(): void; onSave(): void;
+  /** Quick sum (Σ). */
+  onSum?(): void;
   /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
   menus?: MenuHandlers;
 }
@@ -92,7 +94,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel), sep(), group(fillWrap, textBtn), sep(),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textBtn), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
   );
   host.append(el);
