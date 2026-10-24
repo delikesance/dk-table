@@ -5,19 +5,16 @@
  * plus grid keyboard/mouse events that start or end an edit.
  */
 import { createFloatingBar, type FloatingActionId, type Rect } from "./toolbar/floating";
+import { createColorPicker, type ColorPicker } from "./toolbar/colors";
 import { autosum } from "./autosum";
 import type { Ctx } from "./appState";
 import type { App } from "./appTypes";
-
-/** Fill applied by the bar's fill action (soft yellow, same as the palette's "Jaune clair"). */
-const QUICK_FILL = "#fdf3c4";
 
 /** Runs a floating-bar action on the current selection. */
 export function floatingAction(app: App, id: FloatingActionId): void {
   const st = app.activeStyle();
   if (id === "bold") app.style({ bold: !st.bold });
   else if (id === "italic") app.style({ italic: !st.italic });
-  else if (id === "fill") app.style({ fill: st.fill ? undefined : QUICK_FILL });
   else if (id === "sum") autosum(app);
   else if (id === "percent") app.style({ format: st.format === "percent" ? "general" : "percent" });
 }
@@ -37,14 +34,24 @@ function selectionRect(host: HTMLElement): Rect | null {
 
 /** Create the floating bar in `root` and keep it in sync with the grid selection of `c`. */
 export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: FloatingActionId) => void): void {
-  const fb = createFloatingBar(root, onAction);
-  fb.setDisabled("text", true); // CellStyle.color is not available yet
+  const pickers = new Map<FloatingActionId, ColorPicker>();
+  /** Opens/closes the popover of a colour action (text); other popovers close. */
+  const togglePicker = (id: FloatingActionId): void => {
+    pickers.forEach((p, k) => { p.hidden = k === id ? !p.hidden : true; });
+  };
+  const fb = createFloatingBar(root, (id) => (pickers.has(id) ? togglePicker(id) : onAction(id)));
+  const addPicker = (id: "fill" | "text", apply: (col: string | null) => void): void => {
+    const p = createColorPicker({ kind: id, root: fb.el, onPick: (col) => { p.hidden = true; apply(col); } });
+    p.hidden = true; pickers.set(id, p);
+  };
+  addPicker("fill", (col) => c.app.style({ fill: col ?? undefined }));
+  addPicker("text", (col) => c.app.style({ color: col ?? undefined }));
   const refresh = (): void => {
     if (!c.grid) return;
     const multi = c.grid.getSelection().includes(":");
     const editing = !!c.gridHost.querySelector(".dkg input");
     const rect = multi && !editing ? selectionRect(c.gridHost) : null;
-    if (!rect) { fb.hide(); return; }
+    if (!rect) { pickers.forEach((p) => { p.hidden = true; }); fb.hide(); return; }
     const st = c.app.activeStyle();
     fb.setPressed("bold", !!st.bold); fb.setPressed("italic", !!st.italic);
     fb.setPressed("fill", !!st.fill); fb.setPressed("percent", st.format === "percent");

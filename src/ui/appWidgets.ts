@@ -25,10 +25,13 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onSort: (desc) => void app.sortColumn(desc),
     onSum: () => void autosum(app),
     onFill: (fill) => app.style({ fill: fill ?? undefined }),
+    onTextColor: (color) => app.style({ color: color ?? undefined }),
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),
     menus: {
       onNew: () => newDocument(app),
+      recents: () => app.recents(),
+      onOpenRecent: (p) => app.hooks.command?.(`recent:${p}`),
       onOpen: () => app.hooks.command?.("open"),
       onSave: () => app.hooks.command?.("save"),
       onSaveAs: () => void saveFile(app, true),
@@ -37,7 +40,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     },
   });
   c.fbar = createFormulaBar(q(".dk-app__bar"), {
-    onGoto: (t) => c.grid.select(t.split(":")[0]),
+    onGoto: (t) => { c.grid.select(t.split(":")[0]); c.grid.focus(); },
     onCommit: (raw) => app.edit(firstKey(c), raw),
   });
   c.sidebar = createSidebar(q(".dk-app__main"), {
