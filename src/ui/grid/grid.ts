@@ -1,8 +1,11 @@
 /**
  * Spreadsheet grid component: headers, selection, inline editing, TSV copy/paste.
- * 26x100 = 2600 plain divs in a CSS grid (sticky headers); refresh() touches only given cells.
+ * Rows are virtualized (see window.ts): only visible rows + overscan exist in the DOM, the full
+ * height is simulated by CSS grid tracks; refresh() touches only given (rendered) cells.
  */
-import { colName, keyOf, parseKey, rangeKeys, type Pos } from "./keys";
+import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
+import { ROW_H, scrollToRow } from "./virtual";
+import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
 import { openEditor, type Editor } from "./editor";
 import type { Grid, GridOptions } from "./types";
@@ -21,32 +24,15 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   let editor: Editor | null = null;
   let dragging = false;
   let marked: HTMLElement[] = [];
-  const cells = new Map<string, HTMLElement>();
-  const colHeads: HTMLElement[] = [];
-  const rowHeads: HTMLElement[] = [];
-
   const root = document.createElement("div");
   root.className = "dkg";
   root.tabIndex = 0;
   root.style.gridTemplateColumns = `var(--row-header-w) repeat(${cols}, var(--cell-w))`;
-  const mk = (cls: string, text = "") => {
-    const d = document.createElement("div");
-    d.className = cls;
-    d.textContent = text;
-    root.appendChild(d);
-    return d;
-  };
-  mk("dkg-corner");
-  for (let c = 0; c < cols; c++) colHeads.push(mk("dkg-colh", colName(c)));
-  for (let r = 0; r < rows; r++) {
-    rowHeads.push(mk("dkg-rowh", String(r + 1)));
-    for (let c = 0; c < cols; c++) {
-      const el = mk("dkg-cell");
-      el.dataset.key = keyOf(c, r);
-      cells.set(el.dataset.key, el);
-    }
-  }
+  root.style.gridTemplateRows = `var(--col-header-h) repeat(${rows}, ${ROW_H}px)`;
+  const colHeads = addHeaders(root, cols);
   host.appendChild(root);
+  const win = createRowWindow(root, cols, rows, (k, el) => opts.onCellCreated?.(k, el));
+  const cells = win.cells;
 
   const sigs = new Map<string, string>();
 
@@ -75,22 +61,42 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     return `${k[0]}:${k[k.length - 1]}`;
   };
 
-  /** Update highlight classes and notify. */
-  function render(notify = true): void {
+  /** Re-apply highlight classes on rendered cells/headers only (selection may span unrendered rows). */
+  function mark(): void {
     marked.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on"));
     marked = [];
-    const mark = (e: HTMLElement | undefined, cls: string) => {
+    const add = (e: HTMLElement | undefined, cls: string) => {
       if (!e) return;
       e.classList.add(cls);
       marked.push(e);
     };
-    const multi = anchor.col !== active.col || anchor.row !== active.row;
-    if (multi) rangeKeys(anchor, active).forEach((k) => mark(cells.get(k), "dkg-range"));
-    const ak = keyOf(active.col, active.row);
-    mark(cells.get(ak), "dkg-active");
-    mark(colHeads[active.col], "dkg-on");
-    mark(rowHeads[active.row], "dkg-on");
-    (cells.get(ak) as HTMLElement & { scrollIntoView?: Function })?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    if (anchor.col !== active.col || anchor.row !== active.row) {
+      const [c0, c1] = [Math.min(anchor.col, active.col), Math.max(anchor.col, active.col)];
+      const [r0, r1] = [Math.min(anchor.row, active.row), Math.max(anchor.row, active.row)];
+      for (const r of win.heads.keys())
+        if (r >= r0 && r <= r1) for (let c = c0; c <= c1; c++) add(cells.get(keyOf(c, r)), "dkg-range");
+    }
+    add(cells.get(keyOf(active.col, active.row)), "dkg-active");
+    add(colHeads[active.col], "dkg-on");
+    add(win.heads.get(active.row), "dkg-on");
+  }
+
+  /** Recompute the rendered row window; paint new rows, forget removed ones. */
+  function sync(): void {
+    const { added, removed } = win.sync(editor ? active.row : undefined);
+    for (const r of removed) for (let c = 0; c < cols; c++) sigs.delete(keyOf(c, r));
+    for (const r of added) for (let c = 0; c < cols; c++) paint(keyOf(c, r));
+    if (added.length || removed.length) mark();
+  }
+
+  /** Scroll the active row into view, refresh the window and highlights, then notify. */
+  function render(notify = true): void {
+    const st = scrollToRow(active.row, root.scrollTop, root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H);
+    if (st !== root.scrollTop) root.scrollTop = st;
+    sync();
+    mark();
+    (cells.get(keyOf(active.col, active.row)) as HTMLElement & { scrollIntoView?: Function })
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     if (notify) opts.onSelect?.(selection());
   }
 
@@ -162,10 +168,11 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     put: (k, v) => { opts.onEdit(k, v); paint(k); },
   });
 
-  cells.forEach((_, k) => paint(k));
+  root.addEventListener("scroll", sync);
+  sync();
   render(false);
   return {
-    refresh: (keys) => (keys ?? [...cells.keys()]).forEach(paint),
+    refresh: (keys) => (keys ?? [...cells.keys()]).forEach(paint), // paint ignores unrendered keys
     select(key) {
       endEdit(true);
       const [a, b] = key.split(":");

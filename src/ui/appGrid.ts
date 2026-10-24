@@ -1,6 +1,7 @@
 /** Grid lifecycle of the app: (re)build, info sync, redraw after edits, tabs refresh. */
 import { getDisplay, getRaw, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
+import { MAX_ROWS } from "./grid/virtual";
 import { pushUndo } from "./model";
 import { liveCell, paintStyle } from "./cellview";
 import { formatValue } from "./numfmt";
@@ -29,6 +30,7 @@ export function buildGrid(c: Ctx): void {
   const prevSel = c.grid?.getSelection();
   c.grid?.destroy();
   c.gridHost.replaceChildren();
+  c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
@@ -43,8 +45,9 @@ export function buildGrid(c: Ctx): void {
     },
     onSelect: () => syncInfo(c),
     renderCell: (k) => liveCell(c.cur.sheet, k),
+    // rows are virtualized: styles are re-applied whenever a cell element is (re)created
+    onCellCreated: (k) => { const st = c.cur.styles[k]; if (st) paintStyle(c.gridHost, k, st); },
   });
-  Object.keys(c.cur.styles).forEach((k) => paintStyle(c.gridHost, k, c.cur.styles[k]));
   c.gridHost.querySelector(".dkg")?.addEventListener("contextmenu", (e) => c.app.hooks.context?.(e as MouseEvent));
   if (prevSel) c.grid.select(prevSel);
   c.grid.focus();
