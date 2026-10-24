@@ -1,3 +1,4 @@
+/** Sidebar: function documentation and recent files lists (collapsible). */
 import "./sidebar.css";
 import { icon } from "../icons";
 

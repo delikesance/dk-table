@@ -32,7 +32,7 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 ## Phase 3 : Documents (après T2.5)
 
-- [x] T3.1 Format JSON `.dktable` `{version:1,cells:{...}}`
+- [x] T3.1 Format JSON `.dktable` `{version:1,active,sheets:[{id,name,cols,rows,cells,styles?}]}`
 - [x] T3.2 Nouveau document
 - [x] T3.3 Ouvrir
 - [x] T3.4 Enregistrer / enregistrer sous
@@ -104,3 +104,4 @@ P3 : livraison
 - [x] Synthèse de recherche écrite
 - [x] 3 maquettes de pépites créées
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
+- [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules

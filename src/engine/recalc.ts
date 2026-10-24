@@ -1,3 +1,4 @@
+/** Dependency graph and recalculation: topological recompute of dependents, #CYCLE detection. */
 import type { Node, Sheet, Value } from "./types";
 import { err } from "./types";
 import { expandRange, inBounds } from "./address";

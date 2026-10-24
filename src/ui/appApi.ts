@@ -13,6 +13,7 @@ import type { App } from "./appTypes";
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
   Object.keys(styles).length ? structuredClone(styles) : undefined;
 
+/** Build a recent-file entry (display name = basename) from a path. */
 const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\\/]/).pop() ?? path });
 
 /** Create the App handle; widgets are read lazily from `c` so order of creation is free. */

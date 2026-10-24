@@ -25,7 +25,7 @@ export function openEditor(el: HTMLElement, value: string, typed: boolean, h: Ed
   input.className = "dkg-editor";
   input.value = value;
   el.replaceChildren(input);
-  input.addEventListener("keydown", (e) => onKey(e, typed, h));
+  input.addEventListener("keydown", (e) => onEditorKey(e, typed, h));
   input.addEventListener("blur", () => h.end(true, false));
   input.focus();
   if (!typed) input.select();
@@ -33,7 +33,7 @@ export function openEditor(el: HTMLElement, value: string, typed: boolean, h: Ed
 }
 
 /** Editor keydown: stop propagation of editing keys only; Ctrl/Meta shortcuts pass through. */
-function onKey(e: KeyboardEvent, typed: boolean, h: EditorHandlers): void {
+function onEditorKey(e: KeyboardEvent, typed: boolean, h: EditorHandlers): void {
   if (e.ctrlKey || e.metaKey) return;
   e.stopPropagation();
   const m = MOVES[e.key];
