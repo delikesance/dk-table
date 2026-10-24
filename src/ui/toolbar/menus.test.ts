@@ -5,7 +5,7 @@ import { createMenus } from "./menus";
 /** Builds the menus with spy handlers. */
 function mk() {
   const h = {
-    onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(),
+    onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(), onExportFec: vi.fn(),
     onOpenRecent: vi.fn(), recents: () => [{ path: "/a/x.dktable", name: "x.dktable" }],
   };
   const el = createMenus(h);
@@ -50,13 +50,13 @@ describe("toolbar menus", () => {
     expect(document.activeElement).toBe(item(el, "Ouvrir"));
     key(document.activeElement as HTMLElement, "ArrowUp");
     key(document.activeElement as HTMLElement, "ArrowUp");
-    expect(document.activeElement).toBe(item(el, "Exporter CSV"));
+    expect(document.activeElement).toBe(item(el, "Exporter FEC…"));
   });
   it("single File menu holds every entry in order, no Import/Export menu", () => {
     const { el } = mk();
     expect(el.querySelectorAll(".dk-menu__trigger").length).toBe(1);
     const labels = [...el.querySelectorAll(".dk-menu__label")].map((l) => l.textContent);
-    expect(labels).toEqual(["Nouveau", "Ouvrir", "Récents", "Enregistrer", "Enregistrer sous…", "Importer CSV", "Exporter CSV"]);
+    expect(labels).toEqual(["Nouveau", "Ouvrir", "Récents", "Enregistrer", "Enregistrer sous…", "Importer CSV", "Exporter CSV", "Exporter FEC…"]);
   });
   it("shortcut hints: Save=Ctrl+S, Save as=Ctrl+Maj+S", () => {
     const { el } = mk();
@@ -67,7 +67,8 @@ describe("toolbar menus", () => {
     const { el, h } = mk();
     trig(el, "Fichier").click(); item(el, "Importer CSV").click();
     trig(el, "Fichier").click(); item(el, "Exporter CSV").click();
-    expect(h.onImportCsv).toHaveBeenCalled(); expect(h.onExportCsv).toHaveBeenCalled();
+    trig(el, "Fichier").click(); item(el, "Exporter FEC…").click();
+    expect(h.onImportCsv).toHaveBeenCalled(); expect(h.onExportCsv).toHaveBeenCalled(); expect(h.onExportFec).toHaveBeenCalled();
   });
   it("Récents expands recent files and opens one", () => {
     const { el, h } = mk();
