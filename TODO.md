@@ -113,14 +113,13 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
 - [x] keys-nav : Ctrl+flèches façon Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A, Ctrl+Espace, Maj+Espace, Ctrl+PgPréc/PgSuiv (feuilles), Ctrl+Entrée, Alt+Entrée, F4
 - [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
-- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
+- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; XLSX
 - [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
 
 - [x] Macros Lua (wasmoon) : remplacées par l'implémentation fengari + éditeur (Phase 8 Macros Lua)
 - [ ] Macros : accès aux styles et à plusieurs feuilles
-
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
 
@@ -140,7 +139,6 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
 - [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules
 - [x] benchmark-captures: docs/benchmark-captures.md (benchmark UI tableurs, patterns à reprendre/éviter)
-
 - [x] Onboarding: écran d'accueil au lancement (`src/ui/onboarding/`, tokens `--ob-*` Hermes en fin de `tokens.css`), liste des feuilles + « Créer », `?onboarding=0` pour l'ignorer (e2e `openApp`), spec `e2e/onboarding.spec.ts`
 
 ## Refonte visuelle UI (revue 1re phase, branche wt/ui-review)
@@ -177,8 +175,16 @@ Classement par gravité (P0 = pire)
 - [x] H5 Barre d'outils sans Fichier ni Ouvrir/Enregistrer (couverts par la barre de menus et Ctrl+O/S).
 - [ ] e2e Playwright non relancés dans le conteneur cloud (navigateur absent) : à relancer en local.
 
-## Phase 8 : Macros Lua
+## Formatage conditionnel
 
+- [x] CF1 Moteur `src/engine/cf/` : valeur (>, ≥, <, ≤, =, ≠, entre, hors de ; opérandes nombre, texte ou =formule), texte (contient, ne contient pas, commence, se termine), vides / non vides, erreurs / sans erreur, doublons / uniques, n (ou n %) plus élevées / basses, au-dessus / en dessous de la moyenne, formule relative, échelles 2-3 couleurs, barres de données ; priorité = ordre de la liste
+- [x] CF2 Persistance `.dktable` (`DocSheet.cf`, validation stricte), annulation (un pas par modification), plages et formules suivent l'insertion / suppression de lignes et colonnes
+- [x] CF3 Rendu grille (par-dessus le style de la cellule, recalcul à chaque édition) + encre contrastée automatique sur les remplissages
+- [x] CF4 Gestionnaire : Format > Formatage conditionnel… et palette (`format.cf`) ; liste (monter, descendre, modifier, supprimer) + éditeur sur la sélection
+- [ ] CF5 Suites : jeux d'icônes, arrêt si vrai, règles sur dates (période), copier le format conditionnel avec le copier-coller, API Lua
+- [ ] CF6 Vérification à la main dans Tauri
+
+## Phase 8 : Macros Lua
 - [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
 - [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
 - [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
@@ -186,11 +192,9 @@ Classement par gravité (P0 = pire)
 - [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
+## Saisie des formules
+- [x] F1 Autocomplétion des fonctions après « = » (cellule + barre de formule) : liste filtrée avec description, signature de la sélection, flèches/Entrée/Tab/Échap, aide de signature avec l'argument courant (`ui/formula/`). Tests : `fnComplete.test.ts`, `fnPopup.test.ts`, `wiring.test.ts`, e2e `feat-fncomplete.spec.ts`.
 
 ## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
-
-- [x] Format Comptabilité (`accounting` : négatifs entre parenthèses, zéro « - € », colonnes alignées)
-- [x] Amortissements SLN, SYD, DB, DDB, VDB, AMORLINC, AMORDEGRC ; emprunts IPMT, PPMT, PV, FV, RATE, NPER, CUMIPMT, CUMPRINC
-- [x] IRR avec estimation, MIRR, XNPV, XIRR ; SUBTOTAL, AGGREGATE ; MROUND, YEARFRAC, DAYS360
-- [x] Export FEC (Fichier) + « Insérer les en-têtes FEC » (Données), validations (colonnes, dates, équilibre par écriture)
+- [x] Format Comptabilité ; SLN, SYD, DB, DDB, VDB, AMORLINC, AMORDEGRC ; IPMT, PPMT, PV, FV, RATE, NPER, CUMIPMT, CUMPRINC ; IRR avec estimation, MIRR, XNPV, XIRR ; SUBTOTAL, AGGREGATE ; MROUND, YEARFRAC, DAYS360 ; export FEC (Fichier) + en-têtes FEC (Données)
 - [ ] Suites : lignes masquées pour SUBTOTAL 101-111 / AGGREGATE ; contrôle FEC avec Test-Compta-Demat (DGFiP) ; tableau croisé simplifié

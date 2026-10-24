@@ -1,22 +1,15 @@
 /** `.dktable` JSON format: pure serialize / strict parse with clear errors. */
 import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacro, type DocSheet } from "./types";
 
+import { DktParseError, isObj } from "./parseError";
+import { checkCf } from "./cfFormat";
+
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
-export class DktParseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DktParseError";
-  }
-}
+export { DktParseError };
 
 const REF = /^[A-Z]+[1-9]\d*$/;
 /** Accepted text colors: `#rgb` / `#rrggbb` (palette values are all in this form). */
 const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-
-/** True for plain (non-array, non-null) objects. */
-function isObj(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
 
 /** True for integers >= 1. */
 function isDim(v: unknown): v is number {
@@ -105,6 +98,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   const sheet: DocSheet = { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
   if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
   if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
+  if (s.cf !== undefined) sheet.cf = checkCf(s.cf, `${at}.cf`);
   return sheet;
 }
 
