@@ -3,6 +3,8 @@ import { err, isErr, type Node, type Sheet, type Value } from "./types";
 import { expandRange, inBounds, parseKey } from "./address";
 import { getFunction, wantsMatrix, type Arg } from "./functions";
 import { toBool, toNum, toText } from "./values";
+import { resolveSheet } from "./book";
+import { getState } from "./state";
 
 /** Reads the current computed value of a cell key ("" if empty). */
 export type Getter = (key: string) => Value;
@@ -49,17 +51,32 @@ function binary(op: string, l: Value, r: Value): Value {
   return Number.isFinite(v) ? v : err("#VALUE!");
 }
 
+/** Values of the rectangle a:b of `sheet` (flat, or rows when `matrix`); #REF! when out of bounds. */
+function rangeArg(sheet: Sheet, get: Getter, a: string, b: string, matrix: boolean): Arg {
+  const keys = expandRange(sheet, a, b);
+  if (!keys) return err("#REF!");
+  const vals = keys.map(get);
+  if (!matrix) return vals;
+  const w = Math.abs(parseKey(a)!.col - parseKey(b)!.col) + 1;
+  const rows: Value[][] = [];
+  for (let i = 0; i < vals.length; i += w) rows.push(vals.slice(i, i + w));
+  return rows as unknown as Arg;
+}
+
+/** Target sheet + value getter of a qualified ref, or undefined when the sheet is unknown. */
+function external(from: Sheet, name: string): { sheet: Sheet; get: Getter } | undefined {
+  const sheet = resolveSheet(from, name);
+  if (!sheet) return undefined;
+  const values = getState(sheet).values;
+  return { sheet, get: (k) => values.get(k) ?? "" };
+}
+
 /** Evaluate a node to an argument: scalar, or Value[] for ranges. */
 function evalArg(n: Node, sheet: Sheet, get: Getter, matrix = false): Arg {
-  if (n.t === "range") {
-    const keys = expandRange(sheet, n.a, n.b);
-    if (!keys) return err("#REF!");
-    const vals = keys.map(get);
-    if (!matrix) return vals;
-    const w = Math.abs(parseKey(n.a)!.col - parseKey(n.b)!.col) + 1;
-    const rows: Value[][] = [];
-    for (let i = 0; i < vals.length; i += w) rows.push(vals.slice(i, i + w));
-    return rows as unknown as Arg;
+  if (n.t === "range") return rangeArg(sheet, get, n.a, n.b, matrix);
+  if (n.t === "xrange") {
+    const x = external(sheet, n.sheet);
+    return x ? rangeArg(x.sheet, x.get, n.a, n.b, matrix) : err("#REF!");
   }
   return evaluate(n, sheet, get);
 }
@@ -86,7 +103,12 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
       return err(n.code);
     case "ref":
       return inBounds(sheet, n.key) ? get(n.key) : err("#REF!");
-    case "range": {
+    case "xref": {
+      const x = external(sheet, n.sheet);
+      return x && inBounds(x.sheet, n.key) ? x.get(n.key) : err("#REF!");
+    }
+    case "range":
+    case "xrange": {
       const v = evalArg(n, sheet, get);
       return isErr(v) ? v : err("#VALUE!");
     }
