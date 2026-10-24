@@ -39,7 +39,11 @@
 }
 .dkg-resizer:hover { background: var(--c-accent-soft-2); }
 .dkg-rowh { left: 0; border-right-color: var(--c-line-strong); }
+/* En-têtes de la sélection: teinte douce + arête accent côté grille; ceux du curseur, plus appuyés. */
 .dkg-colh.dkg-on, .dkg-rowh.dkg-on { background: var(--c-accent-soft); color: var(--c-accent); }
+.dkg-colh.dkg-on { box-shadow: inset 0 -2px 0 var(--c-accent); }
+.dkg-rowh.dkg-on { box-shadow: inset -2px 0 0 var(--c-accent); }
+.dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active { background: var(--c-accent-soft-2); font-weight: var(--fw-semibold); }
 .dkg-cell {
   position: relative;
   padding: 0 var(--cell-px);
@@ -64,12 +68,19 @@
 }
 /* Texte multiligne (Alt+Enter): retours à la ligne visibles, hauteur de ligne inchangée (débordement masqué). */
 .dkg-ml { white-space: pre-wrap; align-items: flex-start; line-height: 1.25; }
-.dkg-range { background: var(--c-accent-soft); }
+/* Plage: teinte légère + contour accent 1,5px posé par les cellules de bord (classes dkg-e-*, voir mark.ts). */
+.dkg-e-t { --e-t: 1.5px; } .dkg-e-b { --e-b: 1.5px; } .dkg-e-l { --e-l: 1.5px; } .dkg-e-r { --e-r: 1.5px; }
+.dkg-range {
+  background: var(--c-accent-soft);
+  box-shadow:
+    inset 0 var(--e-t, 0) 0 0 var(--c-accent), inset 0 calc(-1 * var(--e-b, 0)) 0 0 var(--c-accent),
+    inset var(--e-l, 0) 0 0 0 var(--c-accent), inset calc(-1 * var(--e-r, 0)) 0 0 0 var(--c-accent);
+}
+/* Curseur: cellule sur le papier, anneau plein accent, cran de recopie carré dans le coin bas-droit. */
 .dkg-active {
   background: var(--c-surface);
   box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent);
 }
-/* Cran du curseur (identité DESIGN.md): coin bas-droit, à l'intérieur (la cellule clippe son débordement). */
 .dkg-active::after {
   content: "";
   position: absolute;
@@ -78,7 +89,6 @@
   width: var(--notch);
   height: var(--notch);
   background: var(--c-accent);
-  border-top-left-radius: 2px;
 }
 .dkg-editor {
   position: absolute;

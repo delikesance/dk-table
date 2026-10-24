@@ -28,7 +28,7 @@
   --c-accent-solid: #0000f2;  /* fonds pleins (boutons, onglet actif) dans les deux thèmes */
   --c-text-on-solid: #f2f2f2;
   --c-accent-hover: #0000c2;
-  --c-accent-soft: rgba(0, 0, 242, 0.08);   /* plage sélectionnée */
+  --c-accent-soft: rgba(0, 0, 242, 0.06);   /* plage sélectionnée */
   --c-accent-soft-2: rgba(0, 0, 242, 0.14); /* en-têtes sélectionnés */
 
   /* Chrome bleu (barre de menus, outils, formule) */
@@ -123,7 +123,7 @@
   --tabs-h: 36px;
   --sidebar-w: 260px;
   --cursor-w: 2px;         /* anneau du curseur */
-  --notch: 7px;            /* cran de remplissage */
+  --notch: 6px;            /* cran de remplissage */
   --focus-ring: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-accent);
 }
 

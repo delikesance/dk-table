@@ -65,7 +65,8 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
     const st = c.app.activeStyle();
     fb.setPressed("bold", !!st.bold); fb.setPressed("italic", !!st.italic);
     fb.setPressed("fill", !!st.fill); fb.setPressed("percent", st.format === "percent");
-    fb.show(rect);
+    // keep the bar off the column headers: it goes below the range when it would cover them
+    fb.show(rect, c.gridHost.querySelector(".dkg-colh")?.getBoundingClientRect().bottom);
   };
   const orig = c.toolbar.setState.bind(c.toolbar);
   c.toolbar.setState = (s) => { orig(s); refresh(); };
