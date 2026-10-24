@@ -40,13 +40,11 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 ## Phase 4 : Inspiration
 
-- [ ] T4.1 Analyser LibreOffice Calc (installé localement ; l'utilisateur a écrit "Libre Fiscal", à confirmer) via REA, sans copier de code
 - [x] T4.2 Relire `docs/recherche-tableur.md` pour prioriser les features
 
 ## Phase 5 : Vérification
 
-- [ ] T5.1 Test manuel : créer, remplir, enregistrer, rouvrir
-- [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test)
+(T5.1 et T5.2 : voir Phase 7)
 
 ## Phase 6 : Implémentation (après squelette T1.x)
 
@@ -71,20 +69,21 @@ P0 : bloquant démo
 - [ ] Menu de format de nombre fonctionnel (général/nombre/pourcentage/devise/date) ; `onFormat` de la toolbar est un no-op
 
 P1 : qualité visible (beauté, praticité)
-- [ ] Corriger les alertes hooks design (faible contraste, texte trop petit)
+- [x] Corriger les alertes hooks design (contraste, taille min) : fait (contraste-design, `src/styles/styles.test.ts`)
 - [ ] Icône d'application définitive (placeholder aujourd'hui)
-- [ ] SPARKLINE/BAR/TREND utilisables dans des formules plus larges (aujourd'hui cellule entière seulement) / type de valeur html
+- [x] Formule vivante : tests de verrouillage seulement (`live.test.ts`) ; SVG en formule composée non supporté par le moteur texte/nombre (reste cellule entière)
 - [ ] Fichiers récents persistés entre sessions + scope fs Tauri adapté
 
 P2 : perf et fonctions
 - [ ] Perf grille : redessin partiel (aujourd'hui complet à chaque édition), virtualisation, taille dynamique
 - [ ] Fonctions et features supplémentaires selon priorités de `docs/recherche-tableur.md`
-- [ ] Contrôle des fichiers > 200 lignes (`src/ui/app.ts` ~195)
+- [x] Split de `app.ts` en `appState/appGrid/appApi/appWidgets` (split-app) ; contrôle > 200 lignes à refaire à chaque vague
 
 P3 : livraison
-- [ ] Packaging Linux (AppImage/deb) ; test de l'installeur Windows (MSI/NSIS construits en T1.7)
-- [ ] T4.1 Analyse LibreOffice Calc (optionnel)
-- [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : encore "no app code")
+- [x] Packaging Linux config (deb + AppImage, `release.yml`, `src/config/packaging.test.ts`) ; reste : valider `release.yml` via workflow_dispatch sur GitHub
+- [ ] Test de l'installeur Windows (MSI/NSIS construits en T1.7)
+- [ ] T4.1 Analyser LibreOffice Calc via REA, sans copier de code (optionnel ; "Libre Fiscal" à confirmer)
+- [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : section Status encore "no app code")
 - [ ] Décision pépites 1 (flèches) / 2 (voyage dans le temps) : abandon ou bonus si le temps le permet
 
 ## Later (non planifié)
