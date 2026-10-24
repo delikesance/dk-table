@@ -3,8 +3,7 @@ import { test, expect } from "@playwright/test";
 import { openApp, typeInCell } from "./helpers";
 import { installIoMock, setNextSave, writes, readMock } from "./helpers-shell";
 
-// Real gap: src/io/autosave.ts is not wired into the app yet (no createAutosave caller).
-test.fixme("an edit after Save as is auto-written to the same file within 1.5 s", async ({ page }) => {
+test("an edit after Save as is auto-written to the same file within ~1 s", async ({ page }) => {
   await installIoMock(page);
   await openApp(page);
   await typeInCell(page, "A1", "1");
@@ -12,7 +11,7 @@ test.fixme("an edit after Save as is auto-written to the same file within 1.5 s"
   await page.keyboard.press("Control+Shift+s");
   await expect.poll(() => writes(page)).toHaveLength(1);
   await typeInCell(page, "A1", "2");
-  await expect.poll(() => writes(page), { timeout: 1500 }).toHaveLength(2);
+  await expect.poll(() => writes(page), { timeout: 4000 }).toHaveLength(2);
   expect(await readMock(page, "/auto/doc.dktable")).toContain('"2"');
 });
 

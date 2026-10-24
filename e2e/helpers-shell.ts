@@ -75,3 +75,10 @@ export const toastAction = (page: Page) => page.locator(".dk-toast__action").cli
 
 /** Current document title (carries the file name and the dirty marker). */
 export const title = (page: Page) => page.title();
+
+/** Accept (or dismiss) the next native dialog (confirm/alert); returns a getter of the messages seen. */
+export function autoDialog(page: Page, accept = true): () => string[] {
+  const seen: string[] = [];
+  page.on("dialog", (d) => { seen.push(d.message()); void (accept ? d.accept() : d.dismiss()); });
+  return () => seen;
+}

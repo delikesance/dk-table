@@ -9,7 +9,7 @@ beforeEach(() => {
 
 describe("Ctrl+J in text fields", () => {
   it("is ignored while the focus is in an input, works elsewhere", () => {
-    const tools = document.querySelector<HTMLElement>(".dk-app__tools")!;
+    const tools = document.querySelector<HTMLElement>(".dk-toolbar__n2")!;
     const before = tools.hidden;
     const input = document.querySelector<HTMLInputElement>(".dk-formula input")!;
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "j", ctrlKey: true, bubbles: true, cancelable: true }));
