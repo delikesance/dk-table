@@ -21,7 +21,7 @@ export function setClock(fn: () => number): void {
  * Excel 1900 convention (same as numfmt.ts): 1 = 1900-01-01, 60 = fake 1900-02-29,
  * >= 61 counts days since 1899-12-30.
  */
-function toSerial(y: number, m: number, d: number): number {
+export function toSerial(y: number, m: number, d: number): number {
   if (Math.trunc(y) === 1900 && Math.trunc(m) === 2 && Math.trunc(d) === 29) return 60;
   const t = new Date(0);
   t.setUTCFullYear(Math.trunc(y), Math.trunc(m) - 1, Math.trunc(d));
@@ -31,7 +31,7 @@ function toSerial(y: number, m: number, d: number): number {
 }
 
 /** Serial number -> [year, month, day] (time part dropped; 60 -> 1900-02-29). */
-function fromSerial(serial: number): [number, number, number] {
+export function fromSerial(serial: number): [number, number, number] {
   const s = Math.floor(serial);
   if (s === 60) return [1900, 2, 29];
   const d = new Date((s < 60 ? s + 1 : s) * DAY_MS + Date.UTC(1899, 11, 30));

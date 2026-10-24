@@ -5,6 +5,7 @@ import { getFunction, wantsMatrix, type Arg } from "./functions";
 import { toBool, toNum, toText } from "./values";
 import { resolveSheet } from "./book";
 import { getState } from "./state";
+import { LAZY_FORMS } from "./lazy";
 
 /** Reads the current computed value of a cell key ("" if empty). */
 export type Getter = (key: string) => Value;
@@ -132,6 +133,8 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
         return br ? evaluate(br, sheet, get) : false;
       }
       if (n.name === "IFERROR" || n.name === "IFNA") return lazyCatch(n, sheet, get);
+      const lazy = LAZY_FORMS[n.name];
+      if (lazy) return lazy(n.args, (a) => evaluate(a, sheet, get));
       const fn = getFunction(n.name);
       if (!fn) return err("#NAME?");
       const mx = wantsMatrix(n.name);

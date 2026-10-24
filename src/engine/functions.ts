@@ -69,7 +69,7 @@ export function wantsMatrix(name: string): boolean {
 }
 
 /** Special forms evaluated lazily by the evaluator (not in the registry). */
-const SPECIAL = ["IF", "IFERROR", "IFNA"];
+const SPECIAL = ["IF", "IFERROR", "IFNA", "IFS", "SWITCH"];
 /** Live-chart functions (registered by `registerLive`; listed even before it runs). */
 const LIVE = ["SPARKLINE", "BAR", "TREND"];
 
