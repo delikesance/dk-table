@@ -18,6 +18,11 @@ import chevronRight from "iconoir/icons/regular/nav-arrow-right.svg?raw";
 import file from "iconoir/icons/regular/page.svg?raw";
 import tools from "iconoir/icons/regular/nav-arrow-down.svg?raw";
 
+import percent from "iconoir/icons/regular/percentage.svg?raw";
+import sum from "iconoir/icons/regular/sigma-function.svg?raw";
+import textColor from "iconoir/icons/regular/text-size.svg?raw";
+import sortAsc from "iconoir/icons/regular/sort-up.svg?raw";
+import sortDesc from "iconoir/icons/regular/sort-down.svg?raw";
 import add from "iconoir/icons/regular/page-plus.svg?raw";
 import upload from "iconoir/icons/regular/upload.svg?raw";
 import download from "iconoir/icons/regular/download.svg?raw";
@@ -25,7 +30,7 @@ import download from "iconoir/icons/regular/download.svg?raw";
 import filter from "iconoir/icons/regular/filter-list.svg?raw";
 
 const RAW: Record<string, string> = {
-  add, upload, download, undo, redo, bold, italic, fill, open, save, tools, plus, file,
+  "sort-asc": sortAsc, "sort-desc": sortDesc, percent, sum, "text-color": textColor, add, upload, download, undo, redo, bold, italic, fill, open, save, tools, plus, file,
   chevron: tools, "chevron-right": chevronRight,
   "align-left": alignLeft, "align-center": alignCenter, "align-right": alignRight,
   filter,
