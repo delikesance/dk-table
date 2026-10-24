@@ -31,11 +31,12 @@ const ACTIONS: { id: FloatingActionId; label: string; icon?: string; text?: stri
 
 /**
  * Computes the bar position: above the selection by default, below when there is
- * no room above; horizontally centred on the selection and clamped to the viewport.
+ * no room above (`minTop` = lowest y the bar may cover, e.g. under the column headers); horizontally
+ * centred on the selection and clamped to the viewport.
  */
-export function placeFloating(sel: Rect, bar: Size, vp: Size): Placement {
+export function placeFloating(sel: Rect, bar: Size, vp: Size, minTop = 0): Placement {
   const aboveTop = sel.top - bar.height - MARGIN;
-  const above = aboveTop >= MARGIN;
+  const above = aboveTop >= Math.max(MARGIN, minTop);
   const rawTop = above ? aboveTop : sel.top + sel.height + MARGIN;
   const maxTop = Math.max(MARGIN, vp.height - bar.height - MARGIN);
   const top = Math.min(Math.max(rawTop, MARGIN), maxTop);
@@ -50,7 +51,7 @@ export interface FloatingBar {
   /** Root element of the bar (host for popovers). */
   el: HTMLElement;
   /** Shows the bar next to `rect` (viewport coords). */
-  show(rect: Rect): void;
+  show(rect: Rect, minTop?: number): void;
   /** Hides the bar. */
   hide(): void;
   /** Sets `aria-pressed` of an action button. */
@@ -86,10 +87,10 @@ export function createFloatingBar(root: HTMLElement, onAction: (id: FloatingActi
   root.appendChild(el);
   return {
     el,
-    show(rect) {
+    show(rect, minTop) {
       el.hidden = false;
       const size = { width: el.offsetWidth || 220, height: el.offsetHeight || 40 };
-      const p = placeFloating(rect, size, { width: window.innerWidth, height: window.innerHeight });
+      const p = placeFloating(rect, size, { width: window.innerWidth, height: window.innerHeight }, minTop);
       el.style.top = `${p.top}px`;
       el.style.left = `${p.left}px`;
       el.dataset.placement = p.placement;

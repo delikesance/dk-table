@@ -22,6 +22,15 @@ describe("grid.css", () => {
     expect(r).toMatch(/width:\s*var\(--notch\)/);
     expect(r).toMatch(/background:\s*var\(--c-accent\)/);
   });
+  it("range edges draw a 1.5px accent outline, active cell a full ring", () => {
+    expect(rule(".dkg-e-t")).toMatch(/--e-t/);
+    expect(rule(".dkg-range")).toMatch(/box-shadow:[^;]*var\(--c-accent\)/);
+    expect(rule(".dkg-active")).toMatch(/--cursor-w/);
+  });
+  it("selected headers: soft fill, accent edge toward the grid, active one stronger", () => {
+    expect(rule(".dkg-colh.dkg-on, .dkg-rowh.dkg-on")).toMatch(/--c-accent-soft/);
+    expect(rule(".dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active")).toMatch(/--c-accent-soft-2/);
+  });
   it("range fill uses accent-soft", () => expect(rule(".dkg-range")).toMatch(/--c-accent-soft/));
   it("headers medium weight, text-2", () => {
     const r = rule(".dkg-corner, .dkg-colh, .dkg-rowh");
