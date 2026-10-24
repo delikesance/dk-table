@@ -28,9 +28,22 @@ describe("date functions", () => {
     expect(ev("=MONTH(DATE(2026,1,32))")).toBe("2");
   });
   it("DATE serial numbers", () => {
-    expect(ev("=DATE(1900,1,1)")).toBe("2");
-    expect(ev("=DATE(1899,12,30)")).toBe("0");
+    expect(ev("=DATE(1900,1,1)")).toBe("1");
+    expect(ev("=DATE(1900,2,28)")).toBe("59");
+    expect(ev("=DATE(1900,2,29)")).toBe("60");
+    expect(ev("=DATE(1900,3,1)")).toBe("61");
+    expect(ev("=DATE(1899,12,31)")).toBe("0");
     expect(ev("=DATE(2026,10,24)")).toBe("46319");
+  });
+  it("YEAR/MONTH/DAY follow the 1900 convention", () => {
+    expect(ev("=YEAR(1)")).toBe("1900");
+    expect(ev("=DAY(1)")).toBe("1");
+    expect(ev("=MONTH(59)")).toBe("2");
+    expect(ev("=DAY(59)")).toBe("28");
+    expect(ev("=MONTH(60)")).toBe("2");
+    expect(ev("=DAY(60)")).toBe("29");
+    expect(ev("=MONTH(61)")).toBe("3");
+    expect(ev("=DAY(61)")).toBe("1");
   });
   it("TODAY/NOW use the injected clock", () => {
     setClock(() => new Date(2026, 9, 24, 12, 0, 0).getTime());
@@ -46,7 +59,10 @@ describe("date functions", () => {
   });
   it("serialToISO", () => {
     expect(serialToISO(46319)).toBe("2026-10-24");
-    expect(serialToISO(0)).toBe("1899-12-30");
+    expect(serialToISO(0)).toBe("1899-12-31");
+    expect(serialToISO(1)).toBe("1900-01-01");
+    expect(serialToISO(60)).toBe("1900-02-29");
+    expect(serialToISO(61)).toBe("1900-03-01");
     expect(serialToISO(46319.75)).toBe("2026-10-24");
   });
 });
