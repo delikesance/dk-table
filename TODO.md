@@ -202,7 +202,7 @@ Classement par gravité (P0 = pire)
 - [x] D0 Format : `docs?` dans `.dktable` validé (`io/docsFormat.ts`), dépendances ProseMirror
 - [x] D1 Schéma, magasin, éditeur (chargé à la demande), onglet document, historique, persistance, palette « Nouveau document »
 - [ ] D1b Menu Fichier « Nouveau document » ; menu « Insertion » à la place de Feuille / Données quand un document est ouvert ; renommer / supprimer testés dans l'interface
-- [ ] D2 Références `@` (cellule, recherche par noms), puces vivantes, carte au survol, `#REF!`, `onRecalc`
+- [x] D2 Références `@` (cellule, recherche par noms), puces vivantes, carte au survol, `#REF!`, rafraîchissement après recalcul, clic = ouvrir la cellule, Alt+← = revenir (`doc/refs.ts`, `refView.ts`, `mention.ts`)
 - [ ] D3 Tableaux liés (coller, colonnes affichées, morceau A3:D4), graphiques liés (barres, tendance)
 - [ ] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 

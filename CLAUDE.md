@@ -117,7 +117,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Decisions (dk doc)
 
-- Documents de texte riche dans le classeur (`DktDoc.docs?`), ProseMirror chargé à la demande, références en lecture seule par id de feuille. Détail : `docs/dk-doc.md`. Code : `src/doc/` (schema, store, editor, emptyDoc, doc.css), `ui/appDocs.ts`, `io/docsFormat.ts`. Onglet document = `SheetInfo.kind: "doc"`; `Ctx.docs/docHost/curDoc/docEd`.
+- Documents de texte riche dans le classeur (`DktDoc.docs?`), ProseMirror chargé à la demande, références en lecture seule par id de feuille. Détail : `docs/dk-doc.md`. Code : `src/doc/` (schema, store, editor, emptyDoc, doc.css), `ui/appDocs.ts`, `io/docsFormat.ts`. Références : nœud `cellRef` (id de feuille), `doc/refs.ts`, `refView.ts`, `mention.ts` (`@`). Onglet document = `SheetInfo.kind: "doc"`; `Ctx.docs/docHost/curDoc/docEd`.
 
 ## Docs
 

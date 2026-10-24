@@ -59,6 +59,7 @@ export function touch(c: Ctx): void {
   c.grid.refresh();
   refreshCf(c);
   syncInfo(c);
+  c.docEd?.refresh();
 }
 
 /** Rebuild the grid for the current sheet. */
@@ -111,4 +112,5 @@ export function refreshTabs(c: Ctx): void {
     ...c.docs.list().map(({ id, name }) => ({ id, name, kind: "doc" as const })),
   ]);
   c.tabs.setActive(c.curDoc ?? c.cur.id);
+  c.docEd?.refresh();
 }

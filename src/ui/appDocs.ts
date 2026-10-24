@@ -1,6 +1,18 @@
 /** dk doc in the app shell: open / close the document view, keep the workbook's documents in sync. */
 import { refreshTabs } from "./appGrid";
 import { setTitle, type Ctx } from "./appState";
+import type { RefBook, RefTarget } from "../doc/refs";
+
+/** The workbook as read by the documents (live view of the entries). */
+const bookOf = (c: Ctx): RefBook => ({ sheets: () => c.entries.map((e) => ({ id: e.id, name: e.name, sheet: e.sheet, styles: e.styles })) });
+
+/** Follow a reference: show the cited cell in its sheet; Alt+← comes back to the document. */
+function openCell(c: Ctx, t: RefTarget): void {
+  const doc = c.curDoc;
+  c.app.switchSheet(t.sheet);
+  c.grid.select(t.ref.split(":")[0]);
+  c.backDoc = doc;
+}
 
 /**
  * Show document `id` in place of the grid (replaces any open document). The editor code
@@ -18,7 +30,7 @@ export async function openDocView(c: Ctx, id: string): Promise<void> {
   refreshTabs(c);
   const { createDocEditor } = await import("../doc/editor");
   if (c.curDoc !== id || c.docEd) return; // closed or replaced while loading
-  c.docEd = createDocEditor(c.docHost, d.content, (content) => c.docs.setContent(id, content));
+  c.docEd = createDocEditor(c.docHost, d.content, (content) => c.docs.setContent(id, content), { book: bookOf(c), open: (t) => openCell(c, t) });
   c.docEd.focus();
 }
 
@@ -54,7 +66,18 @@ export function renameDoc(c: Ctx, id: string, name: string): void {
   refreshTabs(c);
 }
 
-/** Every change of the document list marks the workbook modified. */
+/** Current Alt+← listener, replaced on each mount. */
+let onBack: ((e: KeyboardEvent) => void) | null = null;
+
+/** Every change of the document list marks the workbook modified; Alt+← returns to the document a reference was followed from. */
 export function watchDocs(c: Ctx): void {
   c.docs.onChange(() => setTitle(c, true));
+  if (onBack) document.removeEventListener("keydown", onBack);
+  onBack = (e) => {
+    if (!e.altKey || e.key !== "ArrowLeft" || !c.backDoc || c.curDoc) return;
+    const id = c.backDoc;
+    c.backDoc = undefined;
+    if (c.docs.get(id)) { e.preventDefault(); void openDocView(c, id); }
+  };
+  document.addEventListener("keydown", onBack);
 }
