@@ -105,3 +105,4 @@ P3 : livraison
 - [x] 3 maquettes de pépites créées
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
 - [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules
+- [x] benchmark-captures: docs/benchmark-captures.md (benchmark UI tableurs, patterns à reprendre/éviter)
