@@ -10,6 +10,8 @@ import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
+import { fitColumns } from "./appFit";
+import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
 import { addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
@@ -128,6 +130,7 @@ export function createApi(c: Ctx): App {
       c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
       buildGrid(c); setTitle(c, true);
     },
+    fitColumns: (cols) => fitColumns(c, cols ?? colsOfSelection(c.grid.getSelection())),
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
     addDoc: () => addDoc(c),

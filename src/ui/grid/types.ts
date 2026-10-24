@@ -32,6 +32,8 @@ export interface GridOptions {
   onCellCreated?(key: string, el: HTMLElement): void;
   /** Freeze drag handles in the corner (Sheets); called with the dropped freeze. No handles when omitted. */
   onFreeze?(f: Freeze): void;
+  /** Double-click on a column border: fit that column to its content (the app also fits a selected block). Falls back to a built-in estimate. */
+  onFitColumn?(col: number): void;
   /** Ctrl+PageUp (-1) / Ctrl+PageDown (+1): switch to the previous / next sheet. */
   onSheetStep?(dir: -1 | 1): void;
 }
@@ -44,6 +46,8 @@ export interface Grid {
   select(key: string): void;
   /** Give keyboard focus to the grid. */
   focus(): void;
+  /** Re-apply the view state (column widths) to the layout, without rebuilding the grid. */
+  relayout(): void;
   /** Remove document listeners and the grid DOM; call before rebuilding. */
   destroy(): void;
   /** Current selection: "A1" or "A1:B3". */
