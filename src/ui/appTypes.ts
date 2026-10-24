@@ -46,6 +46,8 @@ export interface App {
   insertFunction(name: string): void;
   recents(): RecentFile[];
   addRecent(path: string): void;
+  /** Sort the active column's data block (one undo step); false when nothing to sort. */
+  sortColumn(desc: boolean): boolean;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
 }

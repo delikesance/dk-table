@@ -14,6 +14,8 @@ export interface ToolbarHandlers {
   onOpen(): void; onSave(): void;
   /** Quick sum (Σ). */
   onSum?(): void;
+  /** Sort the active column (N2 buttons). */
+  onSort?(desc: boolean): void;
   /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
   menus?: MenuHandlers;
 }
@@ -91,6 +93,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   const n2 = document.createElement("div");
   n2.className = "dk-toolbar__n2"; n2.hidden = true;
   if (h.menus) n2.append(createMenus(h.menus), sep());
+  n2.append(group(mkBtn("sort-asc", "Trier A→Z", () => h.onSort?.(false)), mkBtn("sort-desc", "Trier Z→A", () => h.onSort?.(true))), sep());
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
