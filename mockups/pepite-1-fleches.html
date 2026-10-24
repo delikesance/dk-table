@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flèches de dépendances vivantes</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#fff; --ink:#1c2333; --muted:#545c76; --line:#e1e6f0;
+    --blue:#2f6fed; --blue-soft:#e3edff; --orange:#f08a1c; --orange-soft:#ffeed8;
+    --green:#17a672; --sel:#1c2333;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#e8eeff,transparent),var(--bg);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);padding:28px 16px}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 22px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:16px;box-shadow:0 2px 8px rgba(30,40,80,.05)}
+  .legend span{display:flex;align-items:center;gap:8px}
+  .sw{width:22px;height:0;border-top:3px solid;position:relative}
+  .sw.b{border-color:var(--blue)} .sw.o{border-color:var(--orange)}
+  .dot{width:14px;height:14px;border-radius:4px}
+  .dot.b{background:var(--blue-soft);border:2px solid var(--blue)}
+  .dot.o{background:var(--orange-soft);border:2px solid var(--orange)}
+  .dot.f{background:#d6f5e8;border:2px solid var(--green)}
+  .formula{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:14px;box-shadow:0 2px 8px rgba(30,40,80,.05)}
+  .formula b{color:var(--muted);font-weight:600;min-width:34px}
+  .formula code{font-family:ui-monospace,Consolas,monospace}
+  .stage{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:12px;box-shadow:0 6px 24px rgba(30,40,80,.08);overflow-x:auto}
+  .grid{position:relative;display:grid;grid-template-columns:44px repeat(6,minmax(96px,1fr));gap:0;min-width:660px}
+  .hdr{background:#f0f3fa;color:var(--muted);font-size:12px;font-weight:600;text-align:center;
+    padding:8px 0;border:1px solid var(--line);margin:0 -1px -1px 0}
+  .cell{position:relative;margin:0 -1px -1px 0;border:1px solid var(--line);height:52px;background:#fff;
+    transition:background .25s,box-shadow .25s,border-color .25s}
+  .cell input{width:100%;height:100%;border:0;background:transparent;font:inherit;font-size:15px;
+    padding:0 10px;text-align:right;outline:none;color:var(--ink);cursor:cell}
+  .cell.text input{text-align:left}
+  .cell.has-f::after{content:"ƒ";position:absolute;top:2px;left:5px;font-size:10px;color:var(--muted);font-style:italic}
+  .cell.prec{background:var(--blue-soft);border-color:var(--blue);z-index:2}
+  .cell.dep{background:var(--orange-soft);border-color:var(--orange);z-index:2}
+  .cell.sel{border-color:var(--sel);box-shadow:0 0 0 2px var(--sel);z-index:3}
+  .cell.flash{animation:flash .7s ease-out;z-index:4}
+  .cell.queued{outline:2px dashed var(--green);outline-offset:-4px}
+  @keyframes flash{0%{background:#7ee0b8;box-shadow:0 0 0 3px var(--green)}100%{box-shadow:0 0 0 0 transparent}}
+  svg.arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;overflow:visible}
+  .arrow{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:7 6;animation:dash .8s linear infinite}
+  .arrow.b{stroke:var(--blue)} .arrow.o{stroke:var(--orange)}
+  @keyframes dash{to{stroke-dashoffset:-26}}
+  .arrow-in{animation:dash .8s linear infinite,appear .35s ease-out}
+  @keyframes appear{from{opacity:0}to{opacity:1}}
+  .status{margin-top:12px;background:#1c2333;color:#e8ecf8;border-radius:10px;padding:10px 14px;font-size:13px;min-height:40px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .chip{background:#2c3550;border-radius:6px;padding:2px 8px;font-family:ui-monospace,Consolas,monospace}
+  .chip.done{background:var(--green);color:#fff}
+  .tip{color:var(--muted);font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Flèches de dépendances vivantes</h1>
+  <p class="sub">Maquette interactive : survolez ou cliquez une cellule, puis modifiez A1 ou A2.</p>
+
+  <div class="legend">
+    <span><i class="sw b"></i> Flèche bleue : d'où vient la valeur (précédents)</span>
+    <span><i class="sw o"></i> Flèche orange : qui en dépend (dépendants)</span>
+    <span><i class="dot b"></i> Cellule précédente</span>
+    <span><i class="dot o"></i> Cellule dépendante</span>
+    <span><i class="dot f"></i> Recalcul en cours (dans l'ordre)</span>
+  </div>
+
+  <div class="formula"><b id="fRef">—</b><code id="fTxt">Sélectionnez une cellule</code></div>
+
+  <div class="stage" id="stage">
+    <div class="grid" id="grid"></div>
+    <svg class="arrows" id="svg">
+      <defs>
+        <marker id="mb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2f6fed"/></marker>
+        <marker id="mo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f08a1c"/></marker>
+      </defs>
+      <g id="lines"></g>
+    </svg>
+  </div>
+
+  <div class="status" id="status">Prêt. Changez la valeur de A1 (ex. 10 → 40) et appuyez sur Entrée.</div>
+  <div class="tip">Astuce : A1 et A2 sont des valeurs ; A3, B1 et B2 sont des formules (lecture seule dans cette maquette).</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var COLS = ["A","B","C","D","E","F"], ROWS = 5;
+  // Contenu brut : nombre, texte ou formule (commence par "=")
+  var raw = { A1:"10", A2:"20", A3:"=SUM(A1:A2)", B1:"=A3*2", B2:'=IF(B1>50,"OK","Non")' };
+  var values = {}, precs = {}, deps = {}, els = {};
+  var selected = null, hovered = null, busy = false;
+
+  var grid = document.getElementById("grid");
+  var svg = document.getElementById("svg");
+  var lines = document.getElementById("lines");
+  var stage = document.getElementById("stage");
+  var status = document.getElementById("status");
+  var fRef = document.getElementById("fRef");
+  var fTxt = document.getElementById("fTxt");
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  // ---- Analyse des formules ----
+  function expandRange(a, b){
+    var c1 = a.charCodeAt(0), c2 = b.charCodeAt(0), r1 = +a.slice(1), r2 = +b.slice(1), out = [];
+    for (var c = Math.min(c1,c2); c <= Math.max(c1,c2); c++)
+      for (var r = Math.min(r1,r2); r <= Math.max(r1,r2); r++) out.push(String.fromCharCode(c) + r);
+    return out;
+  }
+  function parseRefs(f){
+    var refs = [];
+    var noRange = f.replace(/([A-F][1-9])\s*:\s*([A-F][1-9])/g, function(_, a, b){
+      refs = refs.concat(expandRange(a, b)); return " ";
+    });
+    noRange.replace(/"[^"]*"/g, " ").replace(/\b([A-F][1-9])\b/g, function(_, a){ refs.push(a); return a; });
+    return refs.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+  }
+  function buildDeps(){
+    precs = {}; deps = {};
+    Object.keys(raw).forEach(function(k){
+      precs[k] = []; if (!deps[k]) deps[k] = [];
+    });
+    Object.keys(raw).forEach(function(k){
+      if (raw[k].charAt(0) === "=") {
+        precs[k] = parseRefs(raw[k].slice(1));
+        precs[k].forEach(function(p){ (deps[p] = deps[p] || []).push(k); });
+      }
+    });
+  }
+  function evalCell(k){
+    var r = raw[k];
+    if (r === undefined || r === "") return "";
+    if (r.charAt(0) !== "=") { var n = Number(r); return r.trim() !== "" && !isNaN(n) ? n : r; }
+    var f = r.slice(1);
+    f = f.replace(/([A-F][1-9])\s*:\s*([A-F][1-9])/g, 'RNG("$1","$2")');
+    f = f.replace(/"[^"]*"|\b([A-F][1-9])\b/g, function(m, ref){ return ref ? 'V("' + ref + '")' : m; });
+    try {
+      var fn = new Function("V","RNG","SUM","IF", "return (" + f + ");");
+      var V = function(c){ var x = values[c]; return x === "" || x === undefined ? 0 : x; };
+      var RNG = function(a, b){ return expandRange(a, b).map(V); };
+      var SUM = function(){ var t = 0; Array.prototype.slice.call(arguments).forEach(function(a){
+        [].concat(a).forEach(function(x){ t += Number(x) || 0; }); }); return t; };
+      var IF = function(c, a, b){ return c ? a : b; };
+      return fn(V, RNG, SUM, IF);
+    } catch (e) { return "#ERREUR"; }
+  }
+  // Ordre topologique des dépendants transitifs d'une cellule
+  function affectedOrder(start){
+    var seen = {}, order = [];
+    function visit(k){
+      if (seen[k]) return; seen[k] = true;
+      (deps[k] || []).forEach(visit);
+      order.unshift(k);
+    }
+    (deps[start] || []).forEach(visit);
+    return order;
+  }
+
+  // ---- Construction de la grille ----
+  function buildGrid(){
+    var corner = document.createElement("div"); corner.className = "hdr"; grid.appendChild(corner);
+    COLS.forEach(function(c){ var h = document.createElement("div"); h.className = "hdr"; h.textContent = c; grid.appendChild(h); });
+    for (var r = 1; r <= ROWS; r++){
+      var rh = document.createElement("div"); rh.className = "hdr"; rh.textContent = r; grid.appendChild(rh);
+      COLS.forEach(function(c){
+        var key = c + r;
+        var cell = document.createElement("div"); cell.className = "cell"; cell.dataset.k = key;
+        var inp = document.createElement("input"); inp.spellcheck = false; inp.autocomplete = "off";
+        inp.setAttribute("aria-label", "Cellule " + key);
+        cell.appendChild(inp); grid.appendChild(cell); els[key] = { cell: cell, inp: inp };
+        cell.addEventListener("mouseenter", function(){ hovered = key; refreshHighlight(); });
+        cell.addEventListener("mouseleave", function(){ hovered = null; refreshHighlight(); });
+        inp.addEventListener("focus", function(){ select(key); showEditText(key); });
+        inp.addEventListener("click", function(){ select(key); });
+        inp.addEventListener("keydown", function(e){
+          if (e.key === "Enter") { inp.blur(); }
+          if (e.key === "Escape") { renderCell(key); inp.blur(); }
+        });
+        inp.addEventListener("blur", function(){ commit(key); });
+      });
+    }
+  }
+  function showEditText(k){
+    // En édition on montre la formule brute si présente
+    if (raw[k] && raw[k].charAt(0) === "=") els[k].inp.value = raw[k];
+    els[k].inp.readOnly = !!(raw[k] && raw[k].charAt(0) === "=");
+  }
+  function renderCell(k){
+    var v = values[k], e = els[k];
+    e.inp.value = v === undefined ? "" : v;
+    var isF = raw[k] && raw[k].charAt(0) === "=";
+    e.cell.classList.toggle("has-f", !!isF);
+    e.cell.classList.toggle("text", typeof v === "string");
+  }
+  function computeAll(){
+    Object.keys(raw).forEach(function(k){ if (raw[k].charAt(0) !== "=") values[k] = evalCell(k); });
+    var order = [];
+    Object.keys(raw).forEach(function(k){ if (raw[k].charAt(0) !== "=") affectedOrder(k).forEach(function(d){ if (order.indexOf(d) < 0) order.push(d); }); });
+    // tri topologique simple par répétition
+    var guard = 0;
+    while (guard++ < 10) Object.keys(raw).forEach(function(k){ if (raw[k].charAt(0) === "=") values[k] = evalCell(k); });
+  }
+
+  // ---- Sélection et mise en évidence ----
+  function select(k){ selected = k; refreshHighlight(); }
+  function focusKey(){ return hovered || selected; }
+  function refreshHighlight(){
+    var k = focusKey();
+    Object.keys(els).forEach(function(key){ els[key].cell.classList.remove("prec","dep","sel"); });
+    lines.innerHTML = "";
+    if (selected) els[selected].cell.classList.add("sel");
+    if (!k) { fRef.textContent = "—"; fTxt.textContent = "Sélectionnez une cellule"; return; }
+    fRef.textContent = k;
+    fTxt.textContent = raw[k] !== undefined ? raw[k] : "(vide)";
+    var p = precs[k] || [], d = deps[k] || [];
+    p.forEach(function(x){ els[x].cell.classList.add("prec"); drawArrow(x, k, "b"); });
+    d.forEach(function(x){ els[x].cell.classList.add("dep"); drawArrow(k, x, "o"); });
+    if (!busy) {
+      status.innerHTML = "";
+      var t = document.createElement("span");
+      t.textContent = k + " : " + (p.length ? "lit " : "aucun précédent") + (p.length ? p.join(", ") : "") +
+        " — " + (d.length ? "alimente " + d.join(", ") : "aucun dépendant");
+      status.appendChild(t);
+    }
+  }
+  function center(k){
+    var s = stage.getBoundingClientRect(), r = els[k].cell.getBoundingClientRect();
+    return { x: r.left - s.left + stage.scrollLeft, y: r.top - s.top + stage.scrollTop, w: r.width, h: r.height };
+  }
+  function drawArrow(from, to, cls){
+    var a = center(from), b = center(to);
+    var ax = a.x + a.w/2, ay = a.y + a.h/2, bx = b.x + b.w/2, by = b.y + b.h/2;
+    var sx, sy, ex, ey, dx = bx - ax, dy = by - ay;
+    // points d'ancrage sur les bords selon l'axe dominant
+    if (Math.abs(dx) > Math.abs(dy)) {
+      sx = ax + Math.sign(dx) * a.w/2; sy = ay; ex = bx - Math.sign(dx) * b.w/2; ey = by;
+    } else {
+      sx = ax; sy = ay + Math.sign(dy) * a.h/2; ex = bx; ey = by - Math.sign(dy) * b.h/2;
+    }
+    var path;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      var m = (sx + ex) / 2; path = "M" + sx + " " + sy + " C" + m + " " + sy + "," + m + " " + ey + "," + ex + " " + ey;
+    } else {
+      var m2 = (sy + ey) / 2; path = "M" + sx + " " + sy + " C" + sx + " " + m2 + "," + ex + " " + m2 + "," + ex + " " + ey;
+    }
+    var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", path);
+    p.setAttribute("class", "arrow arrow-in " + cls);
+    p.setAttribute("marker-end", "url(#" + (cls === "b" ? "mb" : "mo") + ")");
+    lines.appendChild(p);
+  }
+
+  // ---- Édition et recalcul animé ----
+  async function commit(k){
+    var e = els[k], isF = raw[k] && raw[k].charAt(0) === "=";
+    if (isF) { renderCell(k); return; }
+    var txt = e.inp.value;
+    if (txt === String(values[k] === undefined ? "" : values[k])) { renderCell(k); return; }
+    if (busy) { renderCell(k); return; }
+    raw[k] = txt; values[k] = evalCell(k);
+    if (txt === "") { delete raw[k]; values[k] = ""; }
+    renderCell(k);
+    var order = affectedOrder(k);
+    if (!order.length) { status.textContent = k + " modifiée : aucune formule n'en dépend."; return; }
+    await propagate(k, order);
+  }
+  async function propagate(k, order){
+    busy = true;
+    status.innerHTML = "";
+    var head = document.createElement("span"); head.textContent = k + " a changé → recalcul dans l'ordre :"; status.appendChild(head);
+    var chips = {};
+    order.forEach(function(x){
+      var c = document.createElement("span"); c.className = "chip"; c.textContent = x; status.appendChild(c); chips[x] = c;
+      els[x].cell.classList.add("queued");
+    });
+    await sleep(500);
+    for (var i = 0; i < order.length; i++){
+      var x = order[i];
+      els[x].cell.classList.remove("queued");
+      // flèches vers la cellule en cours : montre l'origine du calcul
+      selected = x; refreshHighlightQuiet(x);
+      values[x] = evalCell(x);
+      renderCell(x);
+      els[x].cell.classList.remove("flash"); void els[x].cell.offsetWidth; els[x].cell.classList.add("flash");
+      chips[x].classList.add("done"); chips[x].textContent = x + " = " + values[x];
+      await sleep(850);
+      els[x].cell.classList.remove("flash");
+    }
+    busy = false;
+    var done = document.createElement("span"); done.textContent = "Terminé."; status.appendChild(done);
+    refreshHighlightKeepStatus();
+  }
+  function refreshHighlightQuiet(x){
+    // surligne x pendant le recalcul sans écraser le bandeau
+    Object.keys(els).forEach(function(key){ els[key].cell.classList.remove("prec","dep","sel"); });
+    lines.innerHTML = "";
+    els[x].cell.classList.add("sel");
+    (precs[x] || []).forEach(function(p){ els[p].cell.classList.add("prec"); drawArrow(p, x, "b"); });
+    (deps[x] || []).forEach(function(d){ els[d].cell.classList.add("dep"); drawArrow(x, d, "o"); });
+    fRef.textContent = x; fTxt.textContent = raw[x];
+  }
+  function refreshHighlightKeepStatus(){
+    var keep = status.innerHTML; refreshHighlight(); status.innerHTML = keep;
+  }
+
+  // ---- Démarrage ----
+  buildGrid();
+  buildDeps();
+  computeAll();
+  Object.keys(els).forEach(renderCell);
+  select("A3");
+  window.addEventListener("resize", refreshHighlight);
+  stage.addEventListener("scroll", refreshHighlight);
+})();
+</script>
+</body>
+</html>

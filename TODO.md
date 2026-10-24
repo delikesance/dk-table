@@ -4,23 +4,23 @@ Source de vérité des tâches (voir CLAUDE.md). À mettre à jour à chaque cha
 
 ## Phase 0 : Préparation
 
-- [ ] T0.1 Vérifier prérequis (node, npm, rustc, cargo, WebView2)
-- [ ] T0.2 Copier les 3 maquettes dans `mockups/` et corriger les chemins de CLAUDE.md (en attente d'accord)
-- [ ] T0.3 Installer Docker Desktop (PowerShell admin, voir CLAUDE.md) puis valider `docker compose build`
+- [x] T0.1 Vérifier prérequis : node v24.22.1, npm 11.19.1, rustc 1.99.0, cargo 1.99.0, WebView2 155.0.4283.62
+- [x] T0.2 Maquettes copiées dans `mockups/`, chemins de CLAUDE.md corrigés (exemption 200 lignes pour pepite-1/2, maquettes uniquement)
+- [x] T0.3 Docker Desktop 4.96.3 installé; `docker compose build` (service dev) OK (CI non validée)
 - [x] T0.4 Commiter et pousser les fichiers non commités (Dockerfile, docker-compose.yml, .dockerignore, ci.yml, CLAUDE.md, docs/recherche-tableur.md, TODO.md)
-- [ ] T0.5 Vérifier le premier run de la CI sur GitHub (après T0.4)
+- [ ] T0.5 Vérifier le premier run de la CI sur GitHub (après T0.4) (CI epingle sur ubuntu-24.04: ubuntu-latest=26.04 bloquait sur apt)
 
 ## Phase 1 : Squelette Tauri (après T0.1)
 
 Chaque tâche : écrire le test d'abord (TDD).
 
-- [ ] T1.1 Init Tauri v2 + Vite TypeScript vanilla
-- [ ] T1.2 Structure `src/`, `src-tauri/`, `src/engine/`, `src/ui/` (après T1.1)
-- [ ] T1.3 Fenêtre principale dk-table 1200x800 (après T1.1)
-- [ ] T1.4 Plugin dialog (après T1.1)
-- [ ] T1.5 Plugin fs, permissions minimales (après T1.1)
-- [ ] T1.6 `npm run tauri dev` OK (après T1.2 à T1.5)
-- [ ] T1.7 Premier `tauri build` (installeur Windows) (après T1.6)
+- [x] T1.1 Init Tauri v2 + Vite TypeScript vanilla
+- [x] T1.2 Structure `src/`, `src-tauri/`, `src/engine/`, `src/ui/` (après T1.1)
+- [x] T1.3 Fenêtre principale dk-table 1200x800 (après T1.1)
+- [x] T1.4 Plugin dialog (après T1.1)
+- [x] T1.5 Plugin fs, permissions minimales (après T1.1)
+- [x] T1.6 `npm run tauri dev` OK (après T1.2 à T1.5)
+- [x] T1.7 Premier `tauri build` OK (MSI 3.1 MiB + NSIS 2.06 MiB, `src-tauri/target/release/bundle/`)
 
 ## Phase 2 : Tableur de base (après T1.2)
 
@@ -52,7 +52,7 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 Chaque tâche : test d'abord (TDD). Le squelette (T1.x) passe en premier ; ensuite les tâches I1 à I7 sont parallélisables (fichiers disjoints, worktrees séparés).
 
-- [ ] I1 Modèle Sheet + tests (`src/engine`) (parallèle)
+- [ ] I1 Modèle Sheet + tests (`createSheet()` smoke fait) (`src/engine`) (parallèle)
 - [ ] I2 Grille UI (`src/ui/grid`) (parallèle)
 - [ ] I3 Barre d'outils + barre de formule (parallèle)
 - [ ] I4 Sidebar + onglets de feuilles (parallèle)

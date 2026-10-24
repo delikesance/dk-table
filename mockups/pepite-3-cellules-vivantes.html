@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cellules vivantes</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #ffffff; --ink: #1f2937; --muted: #6b7280;
+    --line: #e3e7ef; --head: #eef1f8; --accent: #4f46e5; --accent-soft: #eef0ff;
+    --up: #16a34a; --down: #dc2626; --bar: #6366f1; --bar-hi: #4338ca;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1220; --card: #181c30; --ink: #e5e7f0; --muted: #98a0b8;
+      --line: #2a3050; --head: #20253f; --accent: #8b87ff; --accent-soft: #23284a;
+      --up: #4ade80; --down: #f87171; --bar: #7c83ff; --bar-hi: #a5a9ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 16px; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .legend { background: var(--accent-soft); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+  .legend b { color: var(--accent); }
+  .legend ul { margin: 6px 0 0; padding-left: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    overflow-x: auto; box-shadow: 0 4px 18px rgba(30,40,90,.07); }
+  table { border-collapse: collapse; width: 100%; min-width: 900px; }
+  th, td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0; text-align: right; }
+  th:last-child, td:last-child { border-right: 0; }
+  thead th { background: var(--head); color: var(--muted); font-weight: 600; font-size: 12px;
+    padding: 10px 12px; text-align: center; letter-spacing: .04em; }
+  tbody th { background: var(--head); color: var(--muted); font-size: 12px; width: 36px; text-align: center; }
+  td.lbl { text-align: left; padding: 10px 12px; font-weight: 600; white-space: nowrap; }
+  td.num input { width: 100%; min-width: 58px; border: 0; background: transparent; color: var(--ink);
+    font: inherit; text-align: right; padding: 12px; outline: none; }
+  td.num input:focus { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+  td.num input.bad { box-shadow: inset 0 0 0 2px var(--down); }
+  td.live { background: color-mix(in srgb, var(--accent-soft) 55%, var(--card)); text-align: center;
+    padding: 12px; min-width: 150px; }
+  td.live svg { display: block; margin: 0 auto; }
+  .trend { font-weight: 700; font-size: 16px; }
+  .trend.up { color: var(--up); } .trend.down { color: var(--down); } .trend.flat { color: var(--muted); }
+  td.f { text-align: left; padding: 10px 12px; min-width: 180px; }
+  code { font: 13px ui-monospace, Consolas, monospace; color: var(--accent); background: var(--accent-soft);
+    padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+  .foot { color: var(--muted); font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cellules vivantes</h1>
+  <p class="sub">Des formules qui dessinent le graphique directement dans la cellule.</p>
+
+  <div class="legend">
+    <b>Ce qui se passe à l'écran :</b> chaque cellule de la colonne I contient une formule qui lit les valeurs B à H de sa ligne.
+    <ul>
+      <li><code>=SPARKLINE</code> trace une courbe, <code>=BAR</code> des mini-barres, <code>=TREND</code> une flèche et le % d'évolution.</li>
+      <li>Cliquez sur une valeur, modifiez-la : le mini-graphique se redessine instantanément.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I : cellule vivante</th><th>Formule affichée</th>
+        </tr>
+        <tr>
+          <th></th><th style="text-align:left">Ventes (k€)</th>
+          <th>Janv</th><th>Févr</th><th>Mars</th><th>Avr</th><th>Mai</th><th>Juin</th><th>Juil</th><th></th><th></th>
+        </tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <p class="foot">Maquette autonome : aucune dépendance, aucun appel réseau.</p>
+</div>
+
+<script>
+(function () {
+  var ROWS = [
+    { label: "Produit Alpha", fn: "SPARKLINE", vals: [12, 18, 15, 24, 30, 28, 41] },
+    { label: "Produit Bêta",  fn: "BAR",       vals: [30, 22, 35, 27, 40, 33, 38] },
+    { label: "Produit Gamma", fn: "TREND",     vals: [50, 47, 44, 40, 41, 36, 32] }
+  ];
+  var NS = "http://www.w3.org/2000/svg";
+  var COLS = ["B", "C", "D", "E", "F", "G", "H"];
+  var body = document.getElementById("body");
+
+  function el(name, attrs) {
+    var n = document.createElementNS(NS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  function sparkline(vals) {
+    var w = 140, h = 36, p = 4;
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var span = (max - min) || 1;
+    var step = (w - 2 * p) / (vals.length - 1);
+    var pts = vals.map(function (v, i) {
+      return [p + i * step, h - p - ((v - min) / span) * (h - 2 * p)];
+    });
+    var svg = el("svg", { width: w, height: h, viewBox: "0 0 " + w + " " + h });
+    svg.appendChild(el("polyline", {
+      points: pts.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" "),
+      fill: "none", stroke: "var(--bar)", "stroke-width": 2,
+      "stroke-linecap": "round", "stroke-linejoin": "round"
+    }));
+    var last = pts[pts.length - 1];
+    svg.appendChild(el("circle", { cx: last[0], cy: last[1], r: 3.2, fill: "var(--bar-hi)" }));
+    return svg;
+  }
+
+  function bars(vals) {
+    var w = 140, h = 36, gap = 4;
+    var max = Math.max.apply(null, vals);
+    if (max <= 0) max = 1;
+    var bw = (w - gap * (vals.length - 1)) / vals.length;
+    var svg = el("svg", { width: w, height: h, viewBox: "0 0 " + w + " " + h });
+    var top = vals.indexOf(Math.max.apply(null, vals));
+    vals.forEach(function (v, i) {
+      var bh = Math.max(2, (Math.max(v, 0) / max) * (h - 2));
+      svg.appendChild(el("rect", {
+        x: i * (bw + gap), y: h - bh, width: bw, height: bh, rx: 2,
+        fill: i === top ? "var(--bar-hi)" : "var(--bar)"
+      }));
+    });
+    return svg;
+  }
+
+  function trend(vals) {
+    var first = vals[0], last = vals[vals.length - 1];
+    var span = document.createElement("span");
+    var pct = first === 0 ? 0 : ((last - first) / Math.abs(first)) * 100;
+    var cls = pct > 0.05 ? "up" : (pct < -0.05 ? "down" : "flat");
+    var arrow = cls === "up" ? "↑" : (cls === "down" ? "↓" : "→");
+    span.className = "trend " + cls;
+    span.textContent = arrow + " " + (pct > 0 ? "+" : "") + pct.toFixed(1).replace(".", ",") + " %";
+    return span;
+  }
+
+  var RENDER = { SPARKLINE: sparkline, BAR: bars, TREND: trend };
+
+  function readVals(tr) {
+    var inputs = tr.querySelectorAll("input"), out = [], ok = true;
+    for (var i = 0; i < inputs.length; i++) {
+      var v = parseFloat(inputs[i].value.replace(",", "."));
+      if (isNaN(v)) { ok = false; inputs[i].classList.add("bad"); v = 0; }
+      else inputs[i].classList.remove("bad");
+      out.push(v);
+    }
+    return out;
+  }
+
+  function refresh(tr, fn) {
+    var cell = tr.querySelector("td.live");
+    cell.textContent = "";
+    cell.appendChild(RENDER[fn](readVals(tr)));
+  }
+
+  ROWS.forEach(function (row, idx) {
+    var n = idx + 2;
+    var tr = document.createElement("tr");
+    var th = document.createElement("th"); th.textContent = n; tr.appendChild(th);
+    var lbl = document.createElement("td"); lbl.className = "lbl"; lbl.textContent = row.label; tr.appendChild(lbl);
+    row.vals.forEach(function (v) {
+      var td = document.createElement("td"); td.className = "num";
+      var inp = document.createElement("input");
+      inp.type = "text"; inp.inputMode = "decimal"; inp.value = String(v);
+      inp.setAttribute("aria-label", row.label);
+      inp.addEventListener("input", function () { refresh(tr, row.fn); });
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    var live = document.createElement("td"); live.className = "live"; tr.appendChild(live);
+    var f = document.createElement("td"); f.className = "f";
+    var code = document.createElement("code");
+    code.textContent = "=" + row.fn + "(B" + n + ":H" + n + ")";
+    f.appendChild(code); tr.appendChild(f);
+    body.appendChild(tr);
+    refresh(tr, row.fn);
+  });
+})();
+</script>
+</body>
+</html>
