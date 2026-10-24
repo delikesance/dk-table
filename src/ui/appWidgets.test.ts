@@ -91,3 +91,17 @@ describe("formula bar and tabs", () => {
     expect(app.selection()).toBe("C5");
   });
 });
+
+describe('Fichier > Récents', () => {
+  it('lists recents and opens the chosen one via the command hook', () => {
+    app.addRecent('/docs/budget.dktable');
+    const cmd = vi.fn();
+    app.hooks.command = cmd;
+    menuItem('Fichier').click();
+    menuItem('Récents').click();
+    const item = menuItem('budget.dktable');
+    expect(item).toBeTruthy();
+    item.click();
+    expect(cmd).toHaveBeenCalledWith('recent:/docs/budget.dktable');
+  });
+});
