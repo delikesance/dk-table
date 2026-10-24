@@ -22,12 +22,27 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => newDocument(app),
     j: () => toggleTools(),
+    "+": () => app.insertRows(),
+    "-": () => app.deleteRows(),
   };
 }
 
 /** Clear selected cells as a single undo step. */
 function clearSelection(app: App): void {
   app.editMany(Object.fromEntries(app.selectedKeys().map((k) => [k, ""])));
+}
+
+/** Insert/delete rows/cols entries (context menu + palette share labels). */
+const STRUCTURE = [
+  ["struct.insert-row", "Insérer une ligne au-dessus", "insertRows", "Ctrl+Maj+="],
+  ["struct.insert-col", "Insérer une colonne à gauche", "insertCols", undefined],
+  ["struct.delete-rows", "Supprimer les lignes", "deleteRows", "Ctrl+-"],
+  ["struct.delete-cols", "Supprimer les colonnes", "deleteCols", undefined],
+] as const;
+
+/** Context menu entries for structural edits. */
+function structureItems(app: App): MenuItem[] {
+  return STRUCTURE.map(([, label, m, shortcut]) => ({ label, shortcut, action: () => app[m]() }));
 }
 
 /** Context menu items for the grid. */
@@ -41,6 +56,8 @@ function cellMenu(app: App): MenuItem[] {
     { separator: true },
     { label: "Trier A→Z", icon: "sort-asc", action: () => void app.sortColumn(false) },
     { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) },
+    { separator: true },
+    ...structureItems(app),
     { separator: true },
     { label: "Effacer le contenu", danger: true, action: () => clearSelection(app) },
     { label: "Annuler", shortcut: "Ctrl+Z", action: () => app.undo() },
@@ -77,6 +94,7 @@ export function installCommands(app: App): void {
   run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
+  for (const [id, label, m, sc] of STRUCTURE) run(id, label, () => app[m](), sc, ["ligne", "colonne", "insérer", "supprimer"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
     run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);
   }
@@ -100,10 +118,11 @@ export function installCommands(app: App): void {
       e.preventDefault(); autosum(app); return;
     }
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-    const fn = map[e.key.toLowerCase()];
+    const k = e.key === "=" && e.shiftKey ? "+" : e.key.toLowerCase();
+    const fn = map[k];
     if (!fn) return;
-    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing; Ctrl+J (tools) is ignored there too.
-    if (inTextField(e.target) && "zybij".includes(e.key.toLowerCase())) return;
+    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing; Ctrl+J (tools) and Ctrl+Maj+= / Ctrl+- (rows) are ignored there too.
+    if (inTextField(e.target) && "zybij+-".includes(k)) return;
     e.preventDefault();
     fn(e);
   };
