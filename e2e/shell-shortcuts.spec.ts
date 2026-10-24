@@ -57,7 +57,7 @@ test("Ctrl+N resets the workbook (confirms when modified)", async ({ page }) => 
   const seen = autoDialog(page, true);
   await page.keyboard.press("Control+n");
   await expect.poll(() => cellText(page, "A1")).toBe("");
-  expect(seen()).toHaveLength(1);
+  expect(seen()).toHaveLength(0); // no native dialog: undo toast is the safety net
 });
 
 test("Ctrl+Z / Ctrl+Y undo and redo from the grid", async ({ page }) => {

@@ -5,10 +5,8 @@ import { autoDialog } from "./helpers-shell";
 /**
  * Shell / tools bar (minimal mode): default state, Ctrl+J toggle, discreet button,
  * persistence under localStorage `dk-table.tools`, Ctrl+J ignored while typing in an input.
- * NOTE: the default-state test is test.fixme where it encodes today's "minimal by default"
- * behavior, which branch wt/lane-toolbar is changing.
  */
-const tools = (p: Page) => p.locator(".dk-app__tools");
+const tools = (p: Page) => p.locator(".dk-toolbar__n2");
 const side = (p: Page) => p.locator(".dk-sidebar");
 const btn = (p: Page) => p.locator('[data-action="toggle-tools"]');
 const stored = (p: Page) => p.evaluate(() => localStorage.getItem("dk-table.tools"));
@@ -25,8 +23,7 @@ test("initial state is coherent: tools, sidebar, class and button agree", async 
   await expect(btn(page)).toHaveAttribute("aria-expanded", String(!hidden));
 });
 
-// Depends on wt/lane-toolbar (default may become the base bar): re-enable/adapt after that merge.
-test.fixme("minimal by default: only the sheet and the discreet button are visible", async ({ page }) => {
+test("minimal by default: only the sheet and the discreet button are visible", async ({ page }) => {
   await expect(tools(page)).toBeHidden();
   await expect(side(page)).toBeHidden();
   await expect(btn(page)).toBeVisible();
