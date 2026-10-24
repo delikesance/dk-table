@@ -1,0 +1,44 @@
+# CI: guarded steps so it passes on a near-empty repo.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          # Cache only once a lockfile exists (setup-node errors otherwise)
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        if: ${{ hashFiles('src-tauri/Cargo.toml') != '' }}
+        with:
+          workspaces: src-tauri
+
+      # Tauri v2 Linux deps
+      - name: Install Tauri system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev xdg-utils
+
+      - name: npm ci
+        if: ${{ hashFiles('package.json') != '' }}
+        run: npm ci
+
+      - name: npm test
+        if: ${{ hashFiles('package.json') != '' }}
+        run: npm test --if-present
+
+      - name: cargo test
+        if: ${{ hashFiles('src-tauri/Cargo.toml') != '' }}
+        run: cargo test --manifest-path src-tauri/Cargo.toml

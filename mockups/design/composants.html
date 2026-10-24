@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table - composants</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  body { margin: 0; background: var(--c-bg); }
+  .board { max-width: 960px; margin: 0 auto; padding: var(--s-8) var(--s-4); display: grid; gap: var(--s-8); }
+  h1 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-semibold); }
+  h2 { margin: 0 0 var(--s-3); font-size: var(--fs-xs); font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--c-text-3); }
+  .panel { background: var(--c-surface); border: 0.5px solid var(--c-line); border-radius: var(--r-md); padding: var(--s-4); overflow: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: flex-start; }
+  .lbl { display: block; margin-top: var(--s-1); font-size: var(--fs-xs); color: var(--c-text-3); }
+  .grid { display: grid; grid-template-columns: var(--row-header-w) repeat(4, var(--cell-w)); width: max-content; }
+  .frame { padding: var(--s-2); border: 0.5px solid var(--c-line); border-radius: var(--r-md); overflow: hidden; background: var(--c-surface); }
+</style>
+</head>
+<body class="dk-app">
+<main class="board">
+  <h1>dk-table - planche de composants</h1>
+
+  <section><h2>Cellules</h2><div class="panel"><div class="row">
+    <div><div class="dk-cell">Texte</div><span class="lbl">normale</span></div>
+    <div><div class="dk-cell dk-cell--num">1 234,50</div><span class="lbl">numérique</span></div>
+    <div><div class="dk-cell dk-cell--range">Plage</div><span class="lbl">dans la plage</span></div>
+    <div><div class="dk-cell dk-cell--active dk-cell--num">42</div><span class="lbl">active (curseur)</span></div>
+    <div><div class="dk-cell dk-cell--editing">=SUM(A1:A9</div><span class="lbl">édition</span></div>
+    <div><div class="dk-cell dk-cell--error">#REF!</div><span class="lbl">erreur</span></div>
+    <div><div class="dk-cell dk-cell--readonly dk-cell--num">3,14</div><span class="lbl">lecture seule</span></div>
+    <div><div class="dk-cell dk-cell--dep-in dk-cell--num">10</div><span class="lbl">précédent</span></div>
+    <div><div class="dk-cell dk-cell--dep-out dk-cell--num">20</div><span class="lbl">dépendant</span></div>
+  </div></div></section>
+
+  <section><h2>Grille et en-têtes</h2><div class="panel"><div class="frame" style="width:max-content"><div class="grid">
+    <div class="dk-header dk-header--row"></div>
+    <div class="dk-header">A</div><div class="dk-header dk-header--selected">B</div><div class="dk-header">C (survol)</div><div class="dk-header">D</div>
+    <div class="dk-header dk-header--row">1</div>
+    <div class="dk-cell">Produit</div><div class="dk-cell dk-cell--range dk-cell--num">120</div><div class="dk-cell dk-cell--num">8</div><div class="dk-cell dk-cell--readonly dk-cell--num">960</div>
+    <div class="dk-header dk-header--row dk-header--selected">2</div>
+    <div class="dk-cell">Service</div><div class="dk-cell dk-cell--active dk-cell--num">75</div><div class="dk-cell dk-cell--num">4</div><div class="dk-cell dk-cell--error">#DIV/0!</div>
+    <div class="dk-header dk-header--row">3</div>
+    <div class="dk-cell"></div><div class="dk-cell"></div><div class="dk-cell"></div><div class="dk-cell"></div>
+  </div></div>
+  <span class="lbl">En-tête de colonne : normal / sélectionné / survol (forcer :hover à l'inspection). Ligne : normal / sélectionné.</span></div></section>
+
+  <section><h2>Barre d'outils</h2><div class="frame">
+    <div class="dk-toolbar">
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn" title="Annuler"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+        <button class="dk-iconbtn" title="Rétablir"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+      </div>
+      <div class="dk-toolsep"></div>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn dk-iconbtn--active" title="Gras (actif)"><svg viewBox="0 0 24 24"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/></svg></button>
+        <button class="dk-iconbtn" title="Italique"><svg viewBox="0 0 24 24"><path d="M10 5h8M6 19h8M14 5l-4 14"/></svg></button>
+        <button class="dk-iconbtn" title="Aligner à droite"><svg viewBox="0 0 24 24"><path d="M4 6h16M10 12h10M6 18h14"/></svg></button>
+      </div>
+      <div class="dk-toolsep"></div>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn" title="Filtrer"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 8v5l-4 2v-7z"/></svg></button>
+        <button class="dk-iconbtn" disabled title="Désactivé"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></button>
+        <button class="dk-iconbtn" title="Commandes"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></button>
+        <span class="dk-kbd">Ctrl K</span>
+      </div>
+    </div>
+  </div></section>
+
+  <section><h2>Barre de formule</h2><div class="frame">
+    <div class="dk-formula"><div class="dk-formula__name">B2</div><div class="dk-formula__fx">fx</div><input class="dk-formula__input" value="=SUM(B1:B9) * 1,2"></div>
+    <div class="dk-formula dk-formula--error"><div class="dk-formula__name">D2</div><div class="dk-formula__fx">fx</div><input class="dk-formula__input" value="=B2/0"></div>
+  </div></section>
+
+  <section><h2>Barre latérale</h2><div class="frame" style="width:max-content"><aside class="dk-sidebar">
+    <div class="dk-section">
+      <button class="dk-section__head"><svg class="dk-section__chev" viewBox="0 0 12 12"><path d="m3 4.5 3 3 3-3"/></svg>Feuilles</button>
+      <div class="dk-section__body"><ul class="dk-list">
+        <li class="dk-item dk-item--selected">Ventes <span class="dk-item__meta">128</span></li>
+        <li class="dk-item">Budget <span class="dk-item__meta">42</span></li>
+        <li class="dk-item dk-item--disabled">Archive (verrouillée)</li>
+      </ul></div>
+    </div>
+    <div class="dk-section dk-section--closed">
+      <button class="dk-section__head"><svg class="dk-section__chev" viewBox="0 0 12 12"><path d="m3 4.5 3 3 3-3"/></svg>Dépendances</button>
+      <div class="dk-section__body"></div>
+    </div>
+  </aside></div></section>
+
+  <section><h2>Onglets de feuilles</h2><div class="frame"><div class="dk-tabs">
+    <button class="dk-tab dk-tab--active">Ventes</button><button class="dk-tab">Budget</button><button class="dk-tab">Archive</button><button class="dk-tab dk-tab--add" title="Ajouter">+</button>
+  </div></div></section>
+
+  <section><h2>Palette de commandes</h2><div class="dk-scrim" style="border-radius:var(--r-md)"><div class="dk-palette">
+    <input class="dk-palette__input" placeholder="Taper une commande..." value="tri">
+    <ul class="dk-palette__list">
+      <li class="dk-palette__item dk-palette__item--selected">Trier A vers Z <span class="dk-kbd">Alt S</span></li>
+      <li class="dk-palette__item">Trier Z vers A <span class="dk-kbd">Alt Shift S</span></li>
+      <li class="dk-palette__item">Supprimer le tri</li>
+    </ul>
+  </div></div></section>
+
+  <section><h2>Menu contextuel</h2><div class="panel"><div class="dk-menu">
+    <div class="dk-menu__item dk-menu__item--hover">Copier <span class="dk-kbd">Ctrl C</span></div>
+    <div class="dk-menu__item">Coller <span class="dk-kbd">Ctrl V</span></div>
+    <div class="dk-menu__item dk-menu__item--disabled">Coller les valeurs</div>
+    <div class="dk-menu__sep"></div>
+    <div class="dk-menu__item dk-menu__item--danger">Supprimer la ligne</div>
+  </div></div></section>
+</main>
+</body>
+</html>
