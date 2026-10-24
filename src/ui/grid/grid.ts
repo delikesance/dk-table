@@ -14,6 +14,7 @@ import { stepRow } from "./filterView";
 import { openEditor, type Editor } from "./editor";
 import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
+import { markKind } from "./cellkind";
 
 export type { Grid, GridOptions } from "./types";
 
@@ -55,6 +56,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     const sig = custom ? `h:${custom.outerHTML}` : `t:${text}`;
     if (sigs.get(key) === sig) return;
     sigs.set(key, sig);
+    markKind(el, text);
     if (custom) el.replaceChildren(custom);
     else el.textContent = text;
   }

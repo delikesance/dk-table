@@ -24,7 +24,7 @@
   z-index: 2;
 }
 .dkg-corner { top: 0; left: 0; z-index: 3; height: var(--col-header-h); }
-.dkg-colh { top: 0; height: var(--col-header-h); }
+.dkg-colh { top: 0; height: var(--col-header-h); border-bottom-color: var(--c-line-strong); /* séparation en-tête / données */ }
 /* Poignée de redimensionnement: bande sur le bord droit de l'en-tête de colonne. */
 .dkg-resizer {
   position: absolute;
@@ -36,7 +36,7 @@
   z-index: 4;
 }
 .dkg-resizer:hover { background: var(--c-accent-soft-2); }
-.dkg-rowh { left: 0; }
+.dkg-rowh { left: 0; border-right-color: var(--c-line-strong); }
 .dkg-colh.dkg-on, .dkg-rowh.dkg-on { background: var(--c-accent-soft); color: var(--c-accent); }
 .dkg-cell {
   position: relative;
@@ -51,10 +51,30 @@
   font-variant-numeric: tabular-nums;
   cursor: cell;
 }
+/* Valeur numérique: alignée à droite (la cellule est flex, text-align serait ignoré). */
+.dkg-num { justify-content: flex-end; }
+/* Erreur: texte rouge + fond teinté + graisse (jamais la couleur seule); explication en title. */
+.dkg-err {
+  color: var(--c-error);
+  background: var(--c-error-soft);
+  font-weight: var(--fw-semibold);
+  justify-content: center;
+}
 .dkg-range { background: var(--c-accent-soft); }
 .dkg-active {
   background: var(--c-surface);
   box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent);
+}
+/* Cran du curseur (identité DESIGN.md): coin bas-droit, à l'intérieur (la cellule clippe son débordement). */
+.dkg-active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--notch);
+  height: var(--notch);
+  background: var(--c-accent);
+  border-top-left-radius: 2px;
 }
 .dkg-editor {
   position: absolute;
