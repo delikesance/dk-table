@@ -14,6 +14,8 @@ export interface GridOptions {
   onSelect?(sel: string): void;
   /** Hook: return an element to render instead of text (e.g. mini-charts), or null. */
   renderCell?(key: string): HTMLElement | null;
+  /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
+  onCellCreated?(key: string, el: HTMLElement): void;
 }
 
 /** Public grid API. */
