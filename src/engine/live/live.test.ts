@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { sparklineSvg, barSvg, trendInfo, trendHtml, liveFunctions } from "./index";
+import { registerLive, liveResult } from "./adapter";
+import { createSheet, setCell, getValue } from "../sheet";
 
 describe("sparklineSvg", () => {
   it("renders a polyline svg using accent var", () => {
@@ -65,5 +67,28 @@ describe("trendHtml / liveFunctions", () => {
       expect(r.kind).toBe("html");
       expect(r.html.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("live functions nested in formulas", () => {
+  const mk = () => {
+    registerLive();
+    const s = createSheet();
+    [10, 20, 30].forEach((v, i) => setCell(s, `A${i + 1}`, String(v)));
+    return s;
+  };
+  it("nested SPARKLINE/BAR/TREND return fallback text without error", () => {
+    const s = mk();
+    setCell(s, "B1", '="x"&SPARKLINE(A1:A3)&"y"');
+    setCell(s, "B2", '=IF(1,TREND(A1:A3),"no")');
+    setCell(s, "B3", '="b"&BAR(A1:A3)');
+    expect(getValue(s, "B1")).toBe("xy");
+    expect(getValue(s, "B2")).toBe(trendInfo([10, 20, 30]).label);
+    expect(getValue(s, "B3")).toBe("b");
+  });
+  it("liveResult stays correct for whole-cell and null when nested", () => {
+    const r = () => [10, 20, 30];
+    expect(liveResult("=SPARKLINE(A1:A3)", r)).toMatchObject({ kind: "html" });
+    expect(liveResult('="x"&SPARKLINE(A1:A3)', r)).toBeNull();
   });
 });
