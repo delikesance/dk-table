@@ -2,7 +2,7 @@
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
-import { exportCsv, importCsv, openFile, openRecent, saveFile } from "./fileops";
+import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -18,7 +18,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     i: () => app.style({ italic: !app.activeStyle().italic }),
     o: () => void openFile(app),
     s: (e) => void saveFile(app, e.shiftKey),
-    n: () => app.addSheet(),
+    n: () => newDocument(app),
     j: () => toggleTools(),
   };
 }
@@ -42,6 +42,12 @@ function cellMenu(app: App): MenuItem[] {
   ];
 }
 
+/** True when the event target is an editable text field (input, textarea, contenteditable). */
+function inTextField(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable === true);
+}
+
 /** Current global keydown listener, replaced on each install. */
 let onKey: ((e: KeyboardEvent) => void) | null = null;
 
@@ -58,7 +64,8 @@ export function installCommands(app: App): void {
   run("edit.redo", "Rétablir", () => app.redo(), "Ctrl+Y");
   run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
-  run("sheet.add", "Nouvelle feuille", () => app.addSheet(), "Ctrl+N");
+  run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
+  run("sheet.add", "Nouvelle feuille", () => app.addSheet());
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
@@ -83,8 +90,8 @@ export function installCommands(app: App): void {
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
-    // Let inputs keep their native undo/bold-less behaviour while editing text.
-    if ((e.target as HTMLElement)?.tagName === "INPUT" && "zyb i".includes(e.key.toLowerCase())) return;
+    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing.
+    if (inTextField(e.target) && "zybi".includes(e.key.toLowerCase())) return;
     e.preventDefault();
     fn(e);
   };
