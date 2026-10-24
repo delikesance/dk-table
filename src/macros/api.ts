@@ -1,4 +1,5 @@
 /** Binds the `sheet` Lua table (cell read/write API exposed to macros) onto a Lua state. */
+import "./envHide";
 import { lua, lauxlib, to_luastring as L$ } from "fengari";
 import type { LuaState } from "fengari";
 import type { Value } from "../engine/sheet";
