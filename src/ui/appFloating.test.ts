@@ -2,6 +2,7 @@
 /** Floating mini-bar wiring: visible on a range selection, hidden while editing, actions reach the app. */
 import { beforeEach, describe, expect, it } from "vitest";
 import { mount, type App } from "./app";
+import { isWholeLines } from "./appFloating";
 
 let app: App;
 let root: HTMLElement;
@@ -24,6 +25,13 @@ describe("floating bar", () => {
     expect(bar().hidden).toBe(true);
     range();
     expect(bar().hidden).toBe(false);
+  });
+  it("stays hidden for whole columns / rows selected from the headers", () => {
+    key(" ", { ctrlKey: true });
+    expect(bar().hidden).toBe(true);
+    expect(isWholeLines("B1:C1000", 26, 1000)).toBe(true);
+    expect(isWholeLines("A3:Z3", 26, 1000)).toBe(true);
+    expect(isWholeLines("A1:B3", 26, 1000)).toBe(false);
   });
   it("is hidden while editing", async () => {
     range();

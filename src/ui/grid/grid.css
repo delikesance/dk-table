@@ -25,6 +25,7 @@
   z-index: 2;
 }
 .dkg-corner { top: 0; left: 0; z-index: 4; height: var(--col-header-h); }
+.dkg-corner, .dkg-colh, .dkg-rowh { cursor: pointer; } /* clic = colonne / ligne / feuille entière */
 .dkg-colh { top: 0; height: var(--col-header-h); border-bottom-color: var(--c-line-strong); /* séparation en-tête / données */ }
 /* Poignée de redimensionnement: bande sur le bord droit de l'en-tête de colonne. */
 .dkg-resizer {

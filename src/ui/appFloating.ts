@@ -9,6 +9,7 @@ import { createColorPicker, type ColorPicker } from "./toolbar/colors";
 import { autosum } from "./autosum";
 import type { Ctx } from "./appState";
 import type { App } from "./appTypes";
+import { parseKey } from "./grid/keys";
 
 /** Runs a floating-bar action on the current selection. */
 export function floatingAction(app: App, id: FloatingActionId): void {
@@ -17,6 +18,13 @@ export function floatingAction(app: App, id: FloatingActionId): void {
   else if (id === "italic") app.style({ italic: !st.italic });
   else if (id === "sum") autosum(app);
   else if (id === "percent") app.style({ format: st.format === "percent" ? "general" : "percent" });
+}
+
+/** True when `sel` ("A1:B3") spans whole columns or rows of a `cols` x `rows` sheet (header selection). */
+export function isWholeLines(sel: string, cols: number, rows: number): boolean {
+  const [a, b] = sel.split(":").map(parseKey);
+  if (!b) return false;
+  return (a.row === 0 && b.row === rows - 1) || (a.col === 0 && b.col === cols - 1);
 }
 
 /** Union of the selected cells' viewport rects, or null if none is rendered. */
@@ -48,7 +56,9 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
   addPicker("text", (col) => c.app.style({ color: col ?? undefined }));
   const refresh = (): void => {
     if (!c.grid) return;
-    const multi = c.grid.getSelection().includes(":");
+    const sel = c.grid.getSelection();
+    // whole rows/columns (header click): the bar would cover the headers, like Sheets it stays hidden
+    const multi = sel.includes(":") && !isWholeLines(sel, c.cur.sheet.cols, c.cur.sheet.rows);
     const editing = !!c.gridHost.querySelector(".dkg .dkg-editor");
     const rect = multi && !editing ? selectionRect(c.gridHost) : null;
     if (!rect) { pickers.forEach((p) => { p.hidden = true; }); fb.hide(); return; }
