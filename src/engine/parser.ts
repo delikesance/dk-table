@@ -1,10 +1,10 @@
 /** Formula tokenizer and recursive-descent parser: text "=..." to AST, plus `collectRefs` for dependency wiring. */
-import type { Node } from "./types";
+import type { ErrorCode, Node } from "./types";
 import { normKey, parseKey } from "./address";
 
 /** Token: kind + text. */
 interface Tok {
-  k: "num" | "str" | "id" | "op" | "end" | "sheet";
+  k: "num" | "str" | "id" | "op" | "end" | "sheet" | "err";
   v: string;
 }
 
@@ -32,6 +32,9 @@ function tokenize(src: string): Tok[] {
       out.push({ k: "str", v: s });
       continue;
     }
+    // Error literal (#REF! written by structural edits/ref shifts, #N/A...): evaluates to that error.
+    const er = /^#(REF!|N\/A|VALUE!|DIV\/0!|NAME\?|NUM!|CYCLE!)/i.exec(src.slice(i));
+    if (er) { out.push({ k: "err", v: er[0].toUpperCase() }); i += er[0].length; continue; }
     const sh = sheetPrefix(src, i);
     if (sh) { out.push({ k: "sheet", v: sh.name }); i = sh.end; continue; }
     // Absolute/mixed ref ($A$1, $A1, A$1): the "$" only marks absolute parts, it is dropped here.
@@ -111,6 +114,7 @@ class Parser {
     const tk = this.t[this.p++];
     if (tk.k === "num") return { t: "num", v: Number(tk.v) };
     if (tk.k === "str") return { t: "str", v: tk.v };
+    if (tk.k === "err") return { t: "err", code: tk.v as ErrorCode };
     if (tk.k === "op" && tk.v === "(") {
       const n = this.cmp();
       this.eat(")");
