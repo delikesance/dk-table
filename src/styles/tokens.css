@@ -146,3 +146,29 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
+
+/* Onboarding (--ob-*) : adapté de hermes-agent.nousresearch.com (papier #fdfdfd, encre #1a1a1a,
+   accent bleu #0847c4, filets 20 % d'encre, rayons secs 2-6px, libellés mono « // », nuit bleutée). */
+:root {
+  --ob-paper: #fdfdfd;
+  --ob-ink: #1a1a1a;            /* 17:1 sur paper */
+  --ob-ink-2: #55575c;          /* 7:1 */
+  --ob-accent: #0847c4;         /* 8:1 sur paper */
+  --ob-on-accent: #ffffff;
+  --ob-hairline: rgba(26, 26, 26, 0.2);
+  --ob-hover: rgba(8, 71, 196, 0.07);
+  --ob-radius: 2px;
+  --ob-radius-lg: 6px;
+  --ob-gap: 24px;
+  --ob-font-label: var(--font-mono);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ob-paper: #0b1220; --ob-ink: #f2f4f8; --ob-ink-2: #aab2c2; --ob-accent: #8fb4ff;
+    --ob-on-accent: #0b1220; --ob-hairline: rgba(242, 244, 248, 0.2); --ob-hover: rgba(143, 180, 255, 0.1);
+  }
+}
+:root[data-theme="dark"] {
+  --ob-paper: #0b1220; --ob-ink: #f2f4f8; --ob-ink-2: #aab2c2; --ob-accent: #8fb4ff;
+  --ob-on-accent: #0b1220; --ob-hairline: rgba(242, 244, 248, 0.2); --ob-hover: rgba(143, 180, 255, 0.1);
+}
