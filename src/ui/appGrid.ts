@@ -8,9 +8,9 @@ import { liveCell, paintStyle } from "./cellview";
 import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
-/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files. */
+/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files; `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
-const viewOf = (e: object): GridView => {
+export const viewOf = (e: object): GridView => {
   let v = views.get(e);
   if (!v) views.set(e, (v = { widths: {}, filters: {} }));
   return v;
