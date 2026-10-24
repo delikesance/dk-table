@@ -24,7 +24,7 @@ function dropdown(label: string, entries: Entry[], closers: Closer[]): HTMLEleme
   root.className = "dk-menu";
   const trigger = document.createElement("button");
   trigger.type = "button"; trigger.className = "dk-menu__trigger";
-  trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false"); trigger.title = `Menu ${label}`;
   trigger.innerHTML = `<span>${label}</span>${icon("tools")}`;
   const list = document.createElement("div");
   list.className = "dk-menu__list"; list.setAttribute("role", "menu"); list.setAttribute("aria-label", label);
