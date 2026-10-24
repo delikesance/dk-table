@@ -53,6 +53,7 @@ export function buildGrid(c: Ctx): void {
       setCell(c.cur.sheet, k, raw);
     },
     onSelect: () => syncInfo(c),
+    onSheetStep: (d) => stepSheet(c, d),
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k) => { const st = c.cur.styles[k]; if (st) paintStyle(c.gridHost, k, st); },
@@ -61,6 +62,12 @@ export function buildGrid(c: Ctx): void {
   if (prevSel) c.grid.select(prevSel);
   c.grid.focus();
   syncInfo(c);
+}
+
+/** Ctrl+PageUp/PageDown: activate the previous (-1) / next (+1) sheet in tab order; no wrap-around. */
+export function stepSheet(c: Ctx, dir: -1 | 1): void {
+  const next = c.entries[c.entries.indexOf(c.cur) + dir];
+  if (next) c.app.switchSheet(next.id);
 }
 
 /** Push the sheet list and active sheet to the tab bar. */

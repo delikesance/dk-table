@@ -22,8 +22,12 @@ const HINTS: Record<string, string> = {
   "#NUM!": "Nombre invalide dans la formule.",
 };
 
-/** Set the `dkg-num` / `dkg-err` classes and the error tooltip on a cell element for display text `text`. */
+/**
+ * Set the `dkg-num` / `dkg-err` classes and the error tooltip on a cell element for display text `text`;
+ * `dkg-ml` marks multi-line text (Alt+Enter) so only those cells wrap with pre-wrap.
+ */
 export function markKind(el: HTMLElement, text: string): void {
+  el.classList.toggle("dkg-ml", text.includes("\n"));
   const kind = cellKind(text);
   el.classList.toggle("dkg-num", kind === "num");
   el.classList.toggle("dkg-err", kind === "err");
