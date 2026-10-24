@@ -115,6 +115,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Rendu `cellview.paintCell(el, style, cf)` : le style conditionnel recouvre le style de la cellule sans le modifier (`activeStyle` inchangé). Un remplissage sans couleur de texte reçoit une encre contrastée (bleu #0000F2 sur clair, papier #F2F2F2 sur foncé, `isDark`) dans les deux thèmes.
 - UI `ui/cf/` : `panel.ts` (`openCfDialog`, liste par priorité, aperçu, Monter/Descendre/Modifier/Supprimer, chaque action appliquée tout de suite), `form.ts` (éditeur, champs selon le type, palette `FILL_COLORS`/`TEXT_COLORS`), `describe.ts` (libellés FR). Accès : Format > Formatage conditionnel… + palette `format.cf`; pas de bouton de barre d'outils (fréquence faible).
 
+## Decisions (dk doc)
+
+- Documents de texte riche dans le classeur (`DktDoc.docs?`), ProseMirror chargé à la demande, références en lecture seule par id de feuille. Détail : `docs/dk-doc.md`. Code : `src/doc/` (schema, store, editor, emptyDoc, doc.css), `ui/appDocs.ts`, `io/docsFormat.ts`. Onglet document = `SheetInfo.kind: "doc"`; `Ctx.docs/docHost/curDoc/docEd`.
+
 ## Docs
 
 - `docs/demo.md`: script de la démo de 5 minutes (installation puis tour des fonctions).

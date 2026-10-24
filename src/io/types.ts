@@ -47,6 +47,13 @@ export interface DocMacro {
   code: string;
 }
 
+/** Rich-text document (dk doc) stored in the workbook; `content` is a ProseMirror doc as JSON. */
+export interface DocText {
+  id: string;
+  name: string;
+  content: { type: "doc"; content?: unknown[] };
+}
+
 /** Whole document persisted as JSON. */
 export interface DktDoc {
   version: 1;
@@ -55,6 +62,8 @@ export interface DktDoc {
   active?: string;
   /** Lua macros of the workbook (optional, absent in older files). */
   macros?: DocMacro[];
+  /** Rich-text documents of the workbook, shown as tabs after the sheets (optional). */
+  docs?: DocText[];
 }
 
 /** Current `.dktable` format version. */
