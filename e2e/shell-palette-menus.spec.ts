@@ -94,7 +94,7 @@ test("File menu opens with the keyboard and lists its entries", async ({ page })
   const list = page.locator('[role="menu"][aria-label="Fichier"]');
   await expect(list).toBeVisible();
   await expect(list.locator(".dk-menu__item")).toHaveText([
-    /Nouveau/, /Ouvrir/, /Récents/, /Enregistrer/, /Enregistrer sous/, /Importer CSV/, /Exporter CSV/,
+    /Nouveau/, /Ouvrir/, /Récents/, /Enregistrer/, /Enregistrer sous/, /Importer CSV/, /Exporter CSV/, /Paramètres/,
   ]);
   await expect(list.locator(".dk-menu__item").first()).toBeFocused();
   await page.keyboard.press("End");
@@ -104,8 +104,9 @@ test("File menu opens with the keyboard and lists its entries", async ({ page })
   await expect(trigger).toBeFocused();
 });
 
-test("there is a single Fichier menu (no separate Import / Export)", async ({ page }) => {
-  await ensureTools(page);
-  await expect(page.locator(".dk-menu__trigger")).toHaveCount(1);
+test("the menu bar shows the 8 one-level menus, even in minimal mode", async ({ page }) => {
+  await expect(page.locator(".dk-menubar .dk-menu__trigger")).toHaveText([
+    "Fichier", "Édition", "Format", "Feuille", "Données", "Scripts", "Affichage", "Aide",
+  ]);
   await expect(page.locator(".dk-menu__trigger", { hasText: "Import / Export" })).toHaveCount(0);
 });
