@@ -34,6 +34,12 @@ describe("toolbar", () => {
     col.value = "#ff0000"; col.dispatchEvent(new Event("input"));
     expect(h.onFill).toHaveBeenCalledWith("#ff0000");
   });
+  it("choosing percent emits onFormat('percent')", () => {
+    const { host, h } = mkToolbar();
+    const sel = host.querySelector<HTMLSelectElement>("select")!;
+    sel.value = "percent"; sel.dispatchEvent(new Event("change"));
+    expect(h.onFormat).toHaveBeenCalledWith("percent");
+  });
   it("setState updates pressed/disabled/selected", () => {
     const { host, tb } = mkToolbar();
     tb.setState({ bold: true, italic: false, align: "right", format: "percent", canUndo: false, canRedo: true });

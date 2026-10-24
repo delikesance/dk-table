@@ -67,7 +67,7 @@ P0 : bloquant démo
 - [ ] Script de démo 5 min : installation puis tour des fonctionnalités (cellules vivantes en final)
 - [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
 - [ ] refonte-apple : refonte UI style Apple sobre, icônes noires, par défaut seule la feuille visible, outils/menus déployables à la demande
-- [ ] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise/date) via `app.style({format})` ; `CellStyle.format` existe déjà, rendu à implémenter ; `onFormat` de la toolbar est un no-op
+- [x] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise) via `app.style({format})` ; limite connue : l option "Date" du menu est sans effet
 
 P1 : qualité visible (beauté, praticité)
 - [x] Corriger les alertes hooks design (contraste, taille min) : fait (contraste-design, `src/styles/styles.test.ts`)
