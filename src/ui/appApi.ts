@@ -1,10 +1,15 @@
 /** Builds the public `App` handle (edit, undo, sheets, docs, styles, recents) over the shared `Ctx`. */
 import { getRaw, setCell } from "../engine/sheet";
-import { newEntry, pushUndo, step } from "./model";
+import { newEntry, pushUndo, step, type Entry } from "./model";
 import { paintStyle } from "./cellview";
 import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
+import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
+
+/** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
+const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
+  Object.keys(styles).length ? structuredClone(styles) : undefined;
 
 /** Create the App handle; widgets are read lazily from `c` so order of creation is free. */
 export function createApi(c: Ctx): App {
@@ -30,11 +35,11 @@ export function createApi(c: Ctx): App {
       c.cur = e; refreshTabs(c); buildGrid(c);
     },
     sheets: () => c.entries.map(({ id, name }) => ({ id, name })),
-    activeDoc: () => ({ id: c.cur.id, name: c.cur.name, cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, cells: c.cur.sheet.cells }),
+    activeDoc: () => ({ id: c.cur.id, name: c.cur.name, cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, cells: c.cur.sheet.cells, styles: stylesOf(c.cur.styles) }),
     toDoc: () => ({
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
-        cells: JSON.parse(JSON.stringify(e.sheet.cells)) })),
+        cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles) })),
     }),
     loadDoc(doc, path) {
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
@@ -51,8 +56,9 @@ export function createApi(c: Ctx): App {
     selectedKeys: () => keysOf(c.grid.getSelection()),
     select: (k) => c.grid.select(k),
     style(patch) {
+      pushUndo(c.cur);
       for (const k of keysOf(c.grid.getSelection())) { c.cur.styles[k] = { ...c.cur.styles[k], ...patch }; paint(k); }
-      syncInfo(c);
+      setTitle(c, true); syncInfo(c);
     },
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},
     toggleSidebar: () => c.sidebar.toggle(),

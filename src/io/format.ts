@@ -1,5 +1,5 @@
 /** `.dktable` JSON format: pure serialize / strict parse with clear errors. */
-import { FORMAT_VERSION, type DktDoc, type DocSheet } from "./types";
+import { FORMAT_VERSION, type CellStyle, type DktDoc, type DocSheet } from "./types";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export class DktParseError extends Error {
@@ -21,6 +21,40 @@ function isDim(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && v >= 1;
 }
 
+/** Validates one style object, keeping only known props; throws a located DktParseError. */
+function checkStyle(v: unknown, at: string): CellStyle {
+  if (!isObj(v)) throw new DktParseError(`${at} must be an object`);
+  const st: CellStyle = {};
+  for (const k of ["bold", "italic"] as const) {
+    if (v[k] === undefined) continue;
+    if (typeof v[k] !== "boolean") throw new DktParseError(`${at}.${k} must be a boolean`);
+    st[k] = v[k] as boolean;
+  }
+  if (v.align !== undefined) {
+    if (v.align !== "left" && v.align !== "center" && v.align !== "right") {
+      throw new DktParseError(`${at}.align must be left, center or right`);
+    }
+    st.align = v.align;
+  }
+  for (const k of ["fill", "format"] as const) {
+    if (v[k] === undefined) continue;
+    if (typeof v[k] !== "string") throw new DktParseError(`${at}.${k} must be a string`);
+    st[k] = v[k] as string;
+  }
+  return st;
+}
+
+/** Validates the optional `styles` map of a sheet. */
+function checkStyles(raw: unknown, at: string): Record<string, CellStyle> {
+  if (!isObj(raw)) throw new DktParseError(`${at}.styles must be an object`);
+  const out: Record<string, CellStyle> = {};
+  for (const [ref, v] of Object.entries(raw)) {
+    if (!REF.test(ref)) throw new DktParseError(`${at}.styles: invalid cell reference "${ref}"`);
+    out[ref] = checkStyle(v, `${at}.styles.${ref}`);
+  }
+  return out;
+}
+
 /** Validates one sheet entry, throwing a located DktParseError. */
 function checkSheet(s: unknown, i: number): DocSheet {
   const at = `sheets[${i}]`;
@@ -38,7 +72,9 @@ function checkSheet(s: unknown, i: number): DocSheet {
     }
     cells[ref] = { raw: c.raw };
   }
-  return { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
+  const sheet: DocSheet = { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
+  if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
+  return sheet;
 }
 
 /** Serializes a document to pretty JSON text. */
