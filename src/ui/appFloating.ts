@@ -10,15 +10,11 @@ import { autosum } from "./autosum";
 import type { Ctx } from "./appState";
 import type { App } from "./appTypes";
 
-/** Fill applied by the bar's fill action (soft yellow, same as the palette's "Jaune clair"). */
-const QUICK_FILL = "#fdf3c4";
-
 /** Runs a floating-bar action on the current selection. */
 export function floatingAction(app: App, id: FloatingActionId): void {
   const st = app.activeStyle();
   if (id === "bold") app.style({ bold: !st.bold });
   else if (id === "italic") app.style({ italic: !st.italic });
-  else if (id === "fill") app.style({ fill: st.fill ? undefined : QUICK_FILL });
   else if (id === "sum") autosum(app);
   else if (id === "percent") app.style({ format: st.format === "percent" ? "general" : "percent" });
 }
@@ -44,11 +40,12 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
     pickers.forEach((p, k) => { p.hidden = k === id ? !p.hidden : true; });
   };
   const fb = createFloatingBar(root, (id) => (pickers.has(id) ? togglePicker(id) : onAction(id)));
-  const addPicker = (id: "text", kind: "text", apply: (col: string | null) => void): void => {
-    const p = createColorPicker({ kind, root: fb.el, onPick: (col) => { p.hidden = true; apply(col); } });
+  const addPicker = (id: "fill" | "text", apply: (col: string | null) => void): void => {
+    const p = createColorPicker({ kind: id, root: fb.el, onPick: (col) => { p.hidden = true; apply(col); } });
     p.hidden = true; pickers.set(id, p);
   };
-  addPicker("text", "text", (col) => c.app.style({ color: col ?? undefined }));
+  addPicker("fill", (col) => c.app.style({ fill: col ?? undefined }));
+  addPicker("text", (col) => c.app.style({ color: col ?? undefined }));
   const refresh = (): void => {
     if (!c.grid) return;
     const multi = c.grid.getSelection().includes(":");

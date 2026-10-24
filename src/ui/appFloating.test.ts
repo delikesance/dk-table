@@ -40,9 +40,18 @@ describe("floating bar", () => {
     expect(app.activeStyle().format).toBe("percent");
     fbtn("percent").click();
     expect(app.activeStyle().format).toBe("general");
+  });
+  it("fill button opens a picker; swatch sets the fill, Aucune clears it", () => {
+    range();
+    const pop = bar().querySelector<HTMLElement>('.color-picker[aria-label="Couleur de fond"]')!;
+    expect(pop.hidden).toBe(true);
     fbtn("fill").click();
-    expect(app.activeStyle().fill).toBeTruthy();
+    expect(pop.hidden).toBe(false);
+    pop.querySelector<HTMLButtonElement>(".color-swatch")!.click();
+    expect(app.activeStyle().fill).toBe("#fde2e0");
+    expect(pop.hidden).toBe(true);
     fbtn("fill").click();
+    pop.querySelector<HTMLButtonElement>('[aria-label="Aucune"]')!.click();
     expect(app.activeStyle().fill).toBeUndefined();
   });
   it("uses Iconoir icons, no text glyphs", () => {
