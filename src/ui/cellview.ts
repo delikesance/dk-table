@@ -11,6 +11,7 @@ export function paintStyle(host: HTMLElement, key: string, s: CellStyle = {}): v
   el.style.fontStyle = s.italic ? "italic" : "";
   el.style.textAlign = s.align ?? "";
   el.style.background = s.fill ?? "";
+  el.style.color = s.color ?? "";
 }
 
 /** Grid renderCell hook: live-function html (SPARKLINE/BAR/TREND) or null for plain text. */
