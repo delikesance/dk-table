@@ -13,7 +13,7 @@ export interface Sheet {
 }
 
 /** Spreadsheet error codes. */
-export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!";
+export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!" | "#N/A";
 
 /** Error value carried through evaluation. */
 export interface CellError {

@@ -13,5 +13,5 @@ export const FN_DOCS_MATH: FnDoc[] = [
   { name: "ISNUMBER", signature: "ISNUMBER(x)", description: "Vrai si x est un nombre" },
   { name: "ISBLANK", signature: "ISBLANK(x)", description: "Vrai si x est vide (aussi vrai pour \"\")" },
   { name: "IFERROR", signature: "IFERROR(valeur; si_erreur)", description: "Valeur de repli si la valeur est une erreur" },
-  { name: "IFNA", signature: "IFNA(valeur; si_na)", description: "Sans #N/A dans le moteur : renvoie la valeur" },
+  { name: "IFNA", signature: "IFNA(valeur; si_na)", description: "Renvoie si_na quand la valeur est #N/A, sinon la valeur" },
 ];
