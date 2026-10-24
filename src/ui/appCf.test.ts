@@ -76,3 +76,23 @@ describe("conditional formatting in the app", () => {
     expect(cell("A3").style.background).toBe("rgb(253, 226, 224)");
   });
 });
+
+describe("conditional formatting from the palette", () => {
+  it("palette command opens the dialog; a new rule on the selection paints the grid and survives save/open", async () => {
+    const { defaultRegistry } = await import("./palette/registry");
+    const { parse, serialize } = await import("../io/format");
+    app.select("A1:A2");
+    defaultRegistry.list().find((c) => c.id === "format.cf")!.run();
+    document.querySelector<HTMLElement>('.dk-dialog [data-action="add"]')!.click();
+    const form = document.querySelector<HTMLFormElement>(".dk-cf__form")!;
+    expect((form.elements.namedItem("range") as HTMLInputElement).value).toBe("A1:A2");
+    (form.elements.namedItem("a") as HTMLInputElement).value = "10";
+    form.querySelector<HTMLElement>('[data-action="save"]')!.click();
+    expect(cell("A2").style.background).toBe("rgb(253, 226, 224)");
+    expect(document.querySelectorAll(".dk-cf__item")).toHaveLength(1);
+    const text = serialize(app.toDoc());
+    app.setCfRules([]);
+    app.loadDoc(parse(text));
+    expect(cell("A2").style.background).toBe("rgb(253, 226, 224)");
+  });
+});
