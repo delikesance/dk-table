@@ -63,3 +63,18 @@ describe("renderCell / format", () => {
     expect(cell("A1").textContent).toBe("0.5");
   });
 });
+
+describe("cut", () => {
+  it("Ctrl+X clears the range in one undo step", async () => {
+    app.edit("A1", "1"); app.edit("B1", "2");
+    await Promise.resolve();
+    app.select("A1:B1");
+    const e = new Event("cut", { bubbles: true, cancelable: true }) as Event & { clipboardData: unknown };
+    e.clipboardData = { setData: () => {}, getData: () => "" };
+    root.querySelector(".dkg")!.dispatchEvent(e);
+    expect(cell("A1").textContent).toBe(""); expect(cell("B1").textContent).toBe("");
+    await Promise.resolve();
+    app.undo();
+    expect(cell("A1").textContent).toBe("1"); expect(cell("B1").textContent).toBe("2");
+  });
+});

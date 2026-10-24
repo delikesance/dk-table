@@ -54,8 +54,7 @@ test("copy in one sheet, paste into another sheet", async ({ page }) => {
   expect(await cellText(page, "A1")).toBe("1");
 });
 
-// Ctrl+X is not wired in src/ui (no "cut" listener in grid/clipboard.ts): documented gap.
-test.fixme("Ctrl+X cuts a range (copy + clear)", async ({ page }) => {
+test("Ctrl+X cuts a range (copy + clear)", async ({ page }) => {
   await selectRange(page, "A1", "B1");
   await page.keyboard.press("Control+x");
   expect(await cellText(page, "A1")).toBe("");
