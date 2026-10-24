@@ -42,7 +42,9 @@ export function createRowWindow(root: HTMLElement, cols: number, total: number,
   const heads = new Map<number, HTMLElement>();
 
   const add = (r: number): void => {
-    heads.set(r, mk(root, "dkg-rowh", r + 2, 1, String(r + 1)));
+    const head = mk(root, "dkg-rowh", r + 2, 1, String(r + 1));
+    head.dataset.row = String(r);
+    heads.set(r, head);
     for (let c = 0; c < cols; c++) {
       const el = mk(root, "dkg-cell", r + 2, c + 2);
       const k = keyOf(c, r);
@@ -81,5 +83,9 @@ export function createRowWindow(root: HTMLElement, cols: number, total: number,
 /** Corner plus column headers (static, grid row 1); returns the headers by column. */
 export function addHeaders(root: HTMLElement, cols: number): HTMLElement[] {
   mk(root, "dkg-corner", 1, 1);
-  return Array.from({ length: cols }, (_, c) => mk(root, "dkg-colh", 1, c + 2, colName(c)));
+  return Array.from({ length: cols }, (_, c) => {
+    const h = mk(root, "dkg-colh", 1, c + 2, colName(c));
+    h.dataset.col = String(c);
+    return h;
+  });
 }

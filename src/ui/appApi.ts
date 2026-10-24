@@ -74,7 +74,7 @@ export function createApi(c: Ctx): App {
       c.entries.push(c.cur);
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
-    selection: () => c.grid.getSelection(),
+    selection: () => c.grid?.getSelection() ?? "A1", // the menu bar is built before the grid
     selectedKeys: () => keysOf(c.grid.getSelection()),
     select: (k) => c.grid.select(k),
     style(patch) {
@@ -120,6 +120,7 @@ export function createApi(c: Ctx): App {
       c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
       buildGrid(c); setTitle(c, true);
     },
+    getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
     sheetName: () => c.cur.name,
     runMacro: (id) => c.macroUi.run(id),

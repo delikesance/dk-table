@@ -10,7 +10,7 @@ const fakeApp = () => ({
   sortColumn: vi.fn(), toggleSidebar: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["A1"],
   borders: vi.fn(), insertRows: vi.fn(), insertCols: vi.fn(), deleteRows: vi.fn(), deleteCols: vi.fn(),
   setFreeze: vi.fn(), selection: () => "C3", cfRules: () => [], setCfRules: vi.fn(),
-  activeDoc: () => ({ id: "s", name: "S", cols: 26, rows: 100, cells: {} }),
+  getFreeze: () => ({ rows: 0, cols: 0 }), activeDoc: () => ({ id: "s", name: "S", cols: 26, rows: 1000, cells: {} }),
 }) as unknown as App;
 const deps = (macros: { id: string; name: string }[] = []): MenuDeps => ({
   file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(), onExportFec: vi.fn() },
@@ -45,7 +45,7 @@ describe("contenu des menus", () => {
     const labels = (m: string) => items(spec, m).map((e) => e.label);
     expect(labels("Format")).toEqual(expect.arrayContaining(["Souligné", "Renvoi à la ligne", "Bordures : toutes", "Bordures : aucune"]));
     expect(labels("Feuille")).toEqual(expect.arrayContaining(["Insérer une ligne au-dessus", "Insérer une colonne à gauche", "Supprimer les lignes", "Supprimer les colonnes"]));
-    expect(labels("Affichage")).toEqual(expect.arrayContaining(["Figer la première ligne", "Figer la première colonne", "Figer jusqu'à la cellule active", "Libérer les volets"]));
+    expect(labels("Affichage")).toEqual(expect.arrayContaining(["Figer la première ligne", "Figer la première colonne", "Figer jusqu'à la ligne 3", "Figer jusqu'à la colonne C", "Figer jusqu'à la cellule active", "Libérer les volets"]));
     items(spec, "Affichage").find((e) => e.label === "Figer jusqu'à la cellule active")!.run!();
     expect(app.setFreeze).toHaveBeenCalledWith({ rows: 2, cols: 2 });
     items(spec, "Format").find((e) => e.label === "Bordures : contour")!.run!();

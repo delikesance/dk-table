@@ -19,6 +19,9 @@ import { openEditor, type Editor } from "./editor";
 import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 import { markKind } from "./cellkind";
+import { bindMouse } from "./mouse";
+import { addFreezeHandles } from "./freezeHandle";
+import { clampFreeze, frozenPx } from "./freeze";
 
 export type { Grid, GridOptions } from "./types";
 
@@ -28,7 +31,6 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   let anchor: Pos = { col: 0, row: 0 };
   let active: Pos = { col: 0, row: 0 };
   let editor: Editor | null = null;
-  let dragging = false;
   let marked: HTMLElement[] = [];
   const root = document.createElement("div");
   root.className = "dkg";
@@ -50,6 +52,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     render();
   });
   fz.layout();
+  if (opts.onFreeze) {
+    const f = clampFreeze(view.freeze, cols, rows);
+    addFreezeHandles(root, { freeze: f, widths: view.widths, frozenPx: frozenPx(f, ctl.hidden), rowHeads: () => win.heads.values(), colHeads, onFreeze: opts.onFreeze });
+  }
   const win = createRowWindow(root, cols, rows, (k, el) => {
     const p = parseKey(k);
     fz.decorate(el, p.col, p.row);
@@ -100,12 +106,12 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (added.length || removed.length) mark();
   }
 
-  /** Scroll the active cell into view (frozen panes aware), refresh the window and highlights, then notify. */
-  function render(notify = true): void {
-    fz.scrollRow(Math.max(0, ctl.index(active.row)));
+  /** Scroll the active cell into view when `reveal` (frozen panes aware), refresh the window and highlights, then notify. */
+  function render(notify = true, reveal = true): void {
+    if (reveal) fz.scrollRow(Math.max(0, ctl.index(active.row)));
     sync();
     mark();
-    fz.scrollCol(active.col, cells.get(keyOf(active.col, active.row)));
+    if (reveal) fz.scrollCol(active.col, cells.get(keyOf(active.col, active.row)));
     if (notify) opts.onSelect?.(selection());
   }
 
@@ -122,6 +128,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   function startEdit(initial?: string): void {
     if (editor) return;
     const key = keyOf(active.col, active.row);
+    if (!cells.has(key)) render(false); // header selections do not scroll: bring the cursor cell in first
     sigs.delete(key);
     editor = openEditor(cells.get(key)!, initial ?? opts.getRaw(key), initial !== undefined,
       { end: endEdit, move: (dc, dr) => nav({ kind: "move", dc, dr }), commitAll: () => endEdit(true, true, true) });
@@ -140,38 +147,24 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (refocus) root.focus();
   }
 
+  /** Empty the filled cells of the selection (whole columns/rows: skip the empty ones). */
+  const clear = (): void => rangeKeys(anchor, active).filter((k) => opts.getRaw(k) !== "").forEach((k) => { opts.onEdit(k, ""); paint(k); });
+
   bindKeys(root, {
     busy: () => !!editor, nav, startEdit, sheet: (d) => opts.onSheetStep?.(d),
-    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
+    clear,
     fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
   });
 
-  root.addEventListener("mousedown", (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>(".dkg-cell");
-    if (!t || (editor && t.contains(editor.input))) return;
-    endEdit(true);
-    active = parseKey(t.dataset.key!);
-    if (!e.shiftKey) anchor = active;
-    dragging = true;
-    render();
-    root.focus();
-  });
-  root.addEventListener("mouseover", (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>(".dkg-cell");
-    if (!dragging || !t) return;
-    active = parseKey(t.dataset.key!);
-    render();
-  });
-  const onMouseUp = (): void => { dragging = false; };
-  document.addEventListener("mouseup", onMouseUp);
-  root.addEventListener("dblclick", (e) => {
-    if ((e.target as HTMLElement).closest(".dkg-cell")) startEdit();
+  const unbindMouse = bindMouse(root, {
+    cols, rows, sel: () => ({ anchor, active }), inEditor: (el) => !!editor?.input && editor.input.contains(el),
+    set: (s, reveal) => { ({ anchor, active } = s); render(true, reveal); }, endEdit: () => endEdit(true), startEdit,
   });
 
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
     put: (k, v) => { opts.onEdit(k, v); paint(k); },
-    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
+    clear,
   });
 
   root.addEventListener("scroll", sync);
@@ -182,14 +175,14 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     select(key) {
       endEdit(true);
       const [a, b] = key.split(":");
-      active = clamp(parseKey(b ?? a));
-      anchor = b ? clamp(parseKey(a)) : active;
+      active = clamp(parseKey(a)); // ranges: cursor on the top-left corner (Excel), so restoring "B1:B1000" stays at the top
+      anchor = b ? clamp(parseKey(b)) : active;
       render();
     },
     focus: () => root.focus(),
     destroy() {
       ctl.close();
-      document.removeEventListener("mouseup", onMouseUp);
+      unbindMouse();
       editor = null;
       root.remove();
     },
