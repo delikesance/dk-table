@@ -1,5 +1,5 @@
 /** `.dktable` JSON format: pure serialize / strict parse with clear errors. */
-import { FORMAT_VERSION, type CellStyle, type DktDoc, type DocMacro, type DocSheet } from "./types";
+import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacro, type DocSheet } from "./types";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export class DktParseError extends Error {
@@ -27,7 +27,7 @@ function isDim(v: unknown): v is number {
 function checkStyle(v: unknown, at: string): CellStyle {
   if (!isObj(v)) throw new DktParseError(`${at} must be an object`);
   const st: CellStyle = {};
-  for (const k of ["bold", "italic"] as const) {
+  for (const k of ["bold", "italic", "underline", "wrap"] as const) {
     if (v[k] === undefined) continue;
     if (typeof v[k] !== "boolean") throw new DktParseError(`${at}.${k} must be a boolean`);
     st[k] = v[k] as boolean;
@@ -49,7 +49,20 @@ function checkStyle(v: unknown, at: string): CellStyle {
     if (typeof v[k] !== "string") throw new DktParseError(`${at}.${k} must be a string`);
     st[k] = v[k] as string;
   }
+  if (v.borders !== undefined) st.borders = checkBorders(v.borders, `${at}.borders`);
   return st;
+}
+
+/** Validates a borders object (boolean t/r/b/l edges, unknown keys dropped). */
+function checkBorders(v: unknown, at: string): Borders {
+  if (!isObj(v)) throw new DktParseError(`${at} must be an object`);
+  const out: Borders = {};
+  for (const k of ["t", "r", "b", "l"] as const) {
+    if (v[k] === undefined) continue;
+    if (typeof v[k] !== "boolean") throw new DktParseError(`${at}.${k} must be a boolean`);
+    out[k] = v[k] as boolean;
+  }
+  return out;
 }
 
 /** Validates the optional `styles` map of a sheet. */
@@ -61,6 +74,15 @@ function checkStyles(raw: unknown, at: string): Record<string, CellStyle> {
     out[ref] = checkStyle(v, `${at}.styles.${ref}`);
   }
   return out;
+}
+
+/** Validates the optional `freeze` of a sheet: integers >= 0, unknown props dropped. */
+function checkFreeze(v: unknown, at: string): NonNullable<DocSheet["freeze"]> {
+  const ok = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0;
+  if (!isObj(v) || !ok(v.rows) || !ok(v.cols)) {
+    throw new DktParseError(`${at}.freeze must be {rows, cols} with integers >= 0`);
+  }
+  return { rows: v.rows, cols: v.cols };
 }
 
 /** Validates one sheet entry, throwing a located DktParseError. */
@@ -82,6 +104,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   }
   const sheet: DocSheet = { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
   if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
+  if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
   return sheet;
 }
 

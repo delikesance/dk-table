@@ -4,13 +4,15 @@ import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
 import { createMacroStore } from "../macros/store";
 import { paintStyle } from "./cellview";
 import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
-import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
+import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
 import { sortColumn } from "./sort";
 import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
+import { structOp } from "./appStructure";
+import { borderEdges } from "./borders";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -40,12 +42,12 @@ export function createApi(c: Ctx): App {
       touch(c);
     },
     batch(fn) { if (batchEdit(c.cur, fn)) touch(c); },
-    undo() { if (step(c.cur, "undo")) { buildGrid(c); setTitle(c, true); } },
-    redo() { if (step(c.cur, "redo")) { buildGrid(c); setTitle(c, true); } },
+    undo() { if (step(c.cur, "undo")) { relink(c); buildGrid(c); setTitle(c, true); } },
+    redo() { if (step(c.cur, "redo")) { relink(c); buildGrid(c); setTitle(c, true); } },
     addSheet() {
       c.cur = newEntry(`Feuille ${c.entries.length + 1}`);
       c.entries.push(c.cur);
-      refreshTabs(c); buildGrid(c); setTitle(c, true);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
     switchSheet(id) {
       const e = c.entries.find((x) => x.id === id);
@@ -57,7 +59,8 @@ export function createApi(c: Ctx): App {
     toDoc: () => ({
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
-        cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles) })),
+        cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
+        ...(e.freeze ? { freeze: { ...e.freeze } } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
     }),
     loadDoc(doc, path) {
@@ -65,12 +68,12 @@ export function createApi(c: Ctx): App {
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
       app.path = path;
       loading = true; macros.load(doc.macros ?? []); loading = false;
-      refreshTabs(c); buildGrid(c); setTitle(c, false);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
     },
     importSheet(name, sheet) {
       c.cur = newEntry(name, sheet);
       c.entries.push(c.cur);
-      refreshTabs(c); buildGrid(c); setTitle(c, true);
+      relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
     selection: () => c.grid.getSelection(),
     selectedKeys: () => keysOf(c.grid.getSelection()),
@@ -78,6 +81,15 @@ export function createApi(c: Ctx): App {
     style(patch) {
       pushUndo(c.cur);
       for (const k of keysOf(c.grid.getSelection())) { c.cur.styles[k] = { ...c.cur.styles[k], ...patch }; paint(k); }
+      c.grid.refresh();
+      setTitle(c, true); syncInfo(c);
+    },
+    borders(mode) {
+      pushUndo(c.cur);
+      const st = c.cur.styles;
+      for (const [k, b] of Object.entries(borderEdges(mode, keysOf(c.grid.getSelection()), (k) => st[k]?.borders))) {
+        st[k] = { ...st[k], borders: b }; paint(k);
+      }
       c.grid.refresh();
       setTitle(c, true); syncInfo(c);
     },
@@ -94,6 +106,14 @@ export function createApi(c: Ctx): App {
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
+    insertRows: () => structOp(c, "insertRows"),
+    deleteRows: () => structOp(c, "deleteRows"),
+    insertCols: () => structOp(c, "insertCols"),
+    deleteCols: () => structOp(c, "deleteCols"),
+    setFreeze(f) {
+      c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
+      buildGrid(c); setTitle(c, true);
+    },
     macros,
     sheetName: () => c.cur.name,
     runMacro: (id) => c.macroUi.run(id),

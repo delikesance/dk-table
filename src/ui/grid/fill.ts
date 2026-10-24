@@ -1,8 +1,10 @@
 /**
  * Ctrl+D / Ctrl+R: recopie vers le bas / la droite sur la plage sélectionnée.
- * Limite: les formules sont copiées TELLES QUELLES (références relatives non décalées).
+ * Les formules sont décalées comme dans Excel (`shiftFormula`): parties relatives déplacées
+ * de l'écart source -> cible, parties `$` fixes, référence hors feuille -> `#REF!`.
  */
 import { keyOf, type Pos } from "./keys";
+import { shiftFormula } from "../../engine/refs";
 
 /** Direction de recopie. */
 export type FillDir = "down" | "right";
@@ -20,14 +22,15 @@ export function fillPlan(
   const down = dir === "down";
   const single = down ? r0 === r1 : c0 === c1;
   if (single && (down ? r0 === 0 : c0 === 0)) return {};
-  const src = (c: number, r: number): string =>
-    down ? keyOf(c, single ? r0 - 1 : r0) : keyOf(single ? c0 - 1 : c0, r);
+  const srcCol = (c: number): number => (down ? c : single ? c0 - 1 : c0);
+  const srcRow = (r: number): number => (!down ? r : single ? r0 - 1 : r0);
   const out: Record<string, string> = {};
   for (let r = r0; r <= r1; r++) {
     if (hidden(r)) continue;
     for (let c = c0; c <= c1; c++) {
       if (!single && (down ? r === r0 : c === c0)) continue; // the source line itself
-      out[keyOf(c, r)] = getRaw(src(c, r));
+      const [sc, sr] = [srcCol(c), srcRow(r)];
+      out[keyOf(c, r)] = shiftFormula(getRaw(keyOf(sc, sr)), c - sc, r - sr);
     }
   }
   return out;

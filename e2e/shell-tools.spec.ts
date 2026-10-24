@@ -76,7 +76,7 @@ test("Ctrl+J is ignored while typing in the cell editor", async ({ page }) => {
   const before = await tools(page).isHidden();
   await selectCell(page, "A1");
   await page.keyboard.press("F2");
-  await expect(cell(page, "A1").locator("input")).toBeFocused();
+  await expect(cell(page, "A1").locator(".dkg-editor")).toBeFocused();
   await toggleTools(page);
   expect(await tools(page).isHidden()).toBe(before);
 });

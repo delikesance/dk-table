@@ -1,12 +1,15 @@
 /** Public types of the grid component. */
+import type { Freeze } from "./freeze";
 
 /**
- * View state owned by the caller so it survives grid rebuilds (not persisted in files):
- * custom column widths in px and column filters (selected display values per column).
+ * View state owned by the caller so it survives grid rebuilds: custom column widths in px and column
+ * filters (selected display values per column), not persisted; frozen panes (persisted by the app).
  */
 export interface GridView {
   widths: Record<number, number>;
   filters: Record<number, string[]>;
+  /** Frozen rows/cols (top/left); read at grid creation, rebuild the grid to change it. */
+  freeze?: Freeze;
 }
 
 /** Options for createGrid. */
@@ -27,6 +30,8 @@ export interface GridOptions {
   renderCell?(key: string): HTMLElement | null;
   /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
   onCellCreated?(key: string, el: HTMLElement): void;
+  /** Ctrl+PageUp (-1) / Ctrl+PageDown (+1): switch to the previous / next sheet. */
+  onSheetStep?(dir: -1 | 1): void;
 }
 
 /** Public grid API. */

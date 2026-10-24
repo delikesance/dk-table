@@ -26,12 +26,12 @@ test("Ctrl+C then Ctrl+V duplicates a range elsewhere", async ({ page }) => {
   expect(await cellText(page, "E1")).toBe("2");
 });
 
-test("pasted formula keeps its raw text (references not shifted)", async ({ page }) => {
+test("pasted formula shifts its relative references (Excel)", async ({ page }) => {
   await selectRange(page, "A2", "A2");
   expect(await copyText(page)).toBe("=A1*10");
-  await selectCell(page, "C5");
-  await pasteText(page, "=A1*10");
-  expect(await cellText(page, "C5")).toBe("10");
+  await selectCell(page, "A3");
+  await pasteText(page, "=A1*10"); // same text as the in-app copy: A3 gets =A2*10
+  expect(await cellText(page, "A3")).toBe("100");
 });
 
 test("paste starts at the top-left of the selection", async ({ page }) => {

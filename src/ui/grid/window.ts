@@ -14,8 +14,9 @@ export interface RowWindow {
   /**
    * Re-compute the window from scroll state; `keepRow` stays rendered (editing).
    * `order` = visible row indices (filtered view, ascending): scroll positions then count visible rows only.
+   * `pinned` rows (frozen panes) are always rendered.
    */
-  sync(keepRow?: number, order?: number[] | null): { added: number[]; removed: number[] };
+  sync(keepRow?: number, order?: number[] | null, pinned?: number[]): { added: number[]; removed: number[] };
 }
 
 /** Place `el` at 1-based grid row/column. */
@@ -62,11 +63,12 @@ export function createRowWindow(root: HTMLElement, cols: number, total: number,
 
   return {
     cells, heads,
-    sync(keepRow, order) {
+    sync(keepRow, order, pinned = []) {
       const vh = root.clientHeight || FALLBACK_VIEWPORT_H;
       const { start, end } = visibleRange(root.scrollTop, vh, ROW_H, order ? order.length : total, OVERSCAN);
       const want = new Set<number>();
       for (let i = start; i < end; i++) want.add(order ? order[i] : i);
+      for (const r of pinned) want.add(r);
       const removed = [...heads.keys()].filter((r) => !want.has(r) && r !== keepRow);
       removed.forEach(drop);
       const added = [...want].filter((r) => !heads.has(r));
