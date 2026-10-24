@@ -53,6 +53,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
+## Decisions (macros Lua)
+
+- `src/macros/`: `macro.ts` (`runMacro(code, api, {timeoutMs})` + `sheetApi(sheet)`), `run.ts` (`runMacroOnApp`), `dialog.ts` (boîte textarea), commande palette « Exécuter une macro Lua… » (`macro.run`).
+- Lua exposé: `getValue(addr)`, `getRaw(addr)`, `setCell(addr, v)`, `getRange("A1:A5")` (nombres); passe uniquement par l'API publique de `engine/sheet.ts`.
+- Lib: `wasmoon` (Lua 5.4 en WASM, async). Délai max 2 s via `debug.sethook` (compteur d'instructions, hook posé dans le même chunk que le code: hooks par thread). Erreurs -> `{ok:false,error}` en français, jamais levées.
+- Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
+- Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
+
 ## Decisions (intégration I8)
 
 - Cellules vivantes: le moteur ne gère que des valeurs texte/nombre; `liveResult` détecte `=SPARKLINE|BAR|TREND(plage)` pleine cellule et la grille (hook `renderCell`) affiche le SVG. Le moteur renvoie un texte de repli (ex. TREND: "▲ +10%").
