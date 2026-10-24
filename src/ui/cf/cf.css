@@ -1,0 +1,49 @@
+/* Formatage conditionnel : liste des règles + éditeur (papier du thème, filets fins, rayons 2-4px). */
+.dk-dialog--wide { width: min(600px, calc(100vw - 32px)); }
+.dk-cf { gap: var(--s-3); }
+.dk-cf__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+  max-height: 50vh; overflow: auto; border: 1px solid var(--c-line); border-radius: var(--r-sm); }
+.dk-cf__item { display: flex; align-items: center; gap: var(--s-2); padding: 6px var(--s-2); border-top: 1px solid var(--c-line); }
+.dk-cf__item:first-child { border-top: 0; }
+.dk-cf__preview { flex: none; width: 56px; height: 22px; display: grid; place-items: center; border: 1px solid var(--c-line);
+  border-radius: var(--r-xs); color: var(--c-text); font: var(--fs-sm) var(--font-mono); background: var(--c-surface); }
+.dk-cf__desc { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-cf__range { color: var(--c-text-2); font: var(--fs-sm) var(--font-mono); }
+.dk-cf__icon { flex: none; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0;
+  border-radius: var(--r-sm); background: transparent; color: var(--c-icon, currentColor); cursor: pointer; }
+.dk-cf__icon .dk-icon { width: 16px; height: 16px; }
+.dk-cf__icon:hover:not(:disabled) { background: var(--c-surface-hover); }
+.dk-cf__icon:disabled { opacity: 0.3; cursor: default; }
+.dk-cf__icon:focus-visible, .dk-cf__btn:focus-visible, .dk-cf__swatch:focus-within { outline: none; box-shadow: var(--focus-ring); }
+.dk-cf__empty { margin: 0; color: var(--c-text-2); }
+.dk-cf__btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border: 1px solid var(--c-line-strong); border-radius: var(--r-sm); background: transparent; color: var(--c-text);
+  font: var(--fw-medium) var(--fs-menu) var(--font-display); text-transform: uppercase; letter-spacing: var(--tracking-caps); cursor: pointer; }
+.dk-cf__btn .dk-icon { width: 16px; height: 16px; }
+.dk-cf__btn:hover { background: var(--c-surface-hover); }
+.dk-cf__form { display: flex; flex-direction: column; gap: var(--s-3); }
+.dk-cf__field { display: flex; flex-direction: column; gap: 4px; color: var(--c-text-2); font-size: var(--fs-sm); }
+.dk-cf__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.dk-cf__form [hidden] { display: none; }
+.dk-cf__form input:not([type]), .dk-cf__form input[type="number"], .dk-cf__form select {
+  height: 30px; padding: 0 8px; border: 1px solid var(--c-line-strong); border-radius: var(--r-sm);
+  background: var(--c-surface); color: var(--c-text); font: var(--fs-md) var(--font-ui); }
+.dk-cf__form input[name="range"], .dk-cf__form input[name="formula"], .dk-cf__form input[name="a"],
+.dk-cf__form input[name="b"] { font-family: var(--font-mono); }
+.dk-cf__form input[type="number"] { width: 80px; }
+.dk-cf__form input:focus-visible, .dk-cf__form select:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-cf__format { display: flex; flex-direction: column; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3) var(--s-3);
+  border: 1px solid var(--c-line); border-radius: var(--r-sm); }
+.dk-cf__format legend { padding: 0 4px; color: var(--c-text-2); font-size: var(--fs-sm); }
+.dk-cf__swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.dk-cf__swatch { position: relative; width: 24px; height: 24px; border: 1px solid var(--c-line-strong); border-radius: var(--r-xs); cursor: pointer; }
+.dk-cf__swatch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.dk-cf__swatch:has(input:checked) { box-shadow: 0 0 0 2px var(--c-accent); }
+.dk-cf__swatch--none { background: linear-gradient(135deg, transparent 45%, var(--c-error) 45% 55%, transparent 55%), var(--c-surface); }
+.dk-cf__color { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--c-text-2); }
+.dk-cf__form input[type="color"] { width: 36px; height: 26px; padding: 0 2px; border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-xs); background: var(--c-surface); cursor: pointer; }
+.dk-cf__form input[type="color"]:disabled { opacity: 0.35; cursor: default; }
+.dk-cf__error { margin: 0; min-height: 1em; color: var(--c-error); font-size: var(--fs-sm); }
+.dk-cf__error:empty { display: none; }
+.dk-cf__actions { display: flex; justify-content: flex-end; gap: var(--s-2); }

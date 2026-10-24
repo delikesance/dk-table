@@ -7,6 +7,7 @@ import type { CellStyle } from "./model";
 import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
 import type { RunResult } from "../macros/lua";
+import type { CfRule } from "../engine/cf/types";
 
 /** Hooks set by the command layer (file ops, context menu). */
 export interface Hooks {
@@ -45,8 +46,12 @@ export interface App {
   style(patch: CellStyle): void;
   /** Apply a « Bordures » mode to the selection (per-cell edges, one undo step). */
   borders(mode: BorderMode): void;
-  /** Style of the active cell. */
+  /** Style of the active cell (own style; conditional formats are not included). */
   activeStyle(): CellStyle;
+  /** Conditional formatting rules of the active sheet, by priority (a copy). */
+  cfRules(): CfRule[];
+  /** Replace the active sheet's conditional formatting rules (one undo step, repaints). */
+  setCfRules(rules: CfRule[]): void;
   toggleSidebar(): void;
   /** Write a complete `=NAME()` in the active cell; no-op if the cell is not empty (never overwrites). */
   insertFunction(name: string): void;
