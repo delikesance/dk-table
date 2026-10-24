@@ -12,3 +12,4 @@
 .dk-floating__btn:hover { background: var(--c-hover, transparent); }
 .dk-floating__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .dk-floating__btn[aria-pressed="true"] { background: var(--c-accent-soft, var(--c-hover, transparent)); color: var(--c-accent); }
+.dk-floating .color-picker { position: absolute; top: calc(100% + 4px); left: 0; z-index: 51; }

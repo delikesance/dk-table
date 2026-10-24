@@ -25,6 +25,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onSort: (desc) => void app.sortColumn(desc),
     onSum: () => void autosum(app),
     onFill: (fill) => app.style({ fill: fill ?? undefined }),
+    onTextColor: (color) => app.style({ color: color ?? undefined }),
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),
     menus: {

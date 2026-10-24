@@ -7,7 +7,7 @@ function mkToolbar() {
   const host = document.createElement("div");
   const h = {
     onUndo: vi.fn(), onRedo: vi.fn(), onBold: vi.fn(), onItalic: vi.fn(),
-    onAlign: vi.fn(), onFormat: vi.fn(), onFill: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(),
+    onAlign: vi.fn(), onFormat: vi.fn(), onFill: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onTextColor: vi.fn(),
   };
   const tb = createToolbar(host, h);
   return { host, h, tb };
@@ -44,10 +44,20 @@ describe("toolbar", () => {
     pop.querySelector<HTMLButtonElement>('[aria-label="Aucune"]')!.click();
     expect(h.onFill).toHaveBeenLastCalledWith(null);
   });
-  it("text colour button is prepared but disabled and hidden", () => {
-    const { host } = mkToolbar();
+  it("text colour button is enabled; swatch emits colour, Aucune emits null", () => {
+    const { host, h } = mkToolbar();
     const t = btn(host, "text-color");
-    expect(t.disabled).toBe(true); expect(t.hidden).toBe(true);
+    expect(t.disabled).toBe(false); expect(t.hidden).toBe(false);
+    const pop = host.querySelectorAll<HTMLElement>(".color-picker")[1];
+    expect(pop.hidden).toBe(true);
+    t.click();
+    expect(pop.hidden).toBe(false);
+    pop.querySelector<HTMLButtonElement>(".color-swatch")!.click();
+    expect(h.onTextColor).toHaveBeenCalledWith("#1d1d1f");
+    expect(pop.hidden).toBe(true);
+    t.click();
+    pop.querySelector<HTMLButtonElement>('[aria-label="Aucune"]')!.click();
+    expect(h.onTextColor).toHaveBeenLastCalledWith(null);
   });
   it("choosing percent emits onFormat('percent')", () => {
     const { host, h } = mkToolbar();
