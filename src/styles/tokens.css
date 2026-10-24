@@ -15,6 +15,7 @@
   --c-text-2: #55555c;        /* 7:1 */
   --c-text-3: #6b6b73;        /* 5:1 */
   --c-text-on-accent: #ffffff;
+  --c-icon: #000000;          /* icônes Iconoir : noires (21:1) */
 
   /* Bordures hairline */
   --c-line: rgba(0, 0, 0, 0.09);
@@ -114,6 +115,7 @@
     --c-text-2: #b4b4bb;
     --c-text-3: #9a9aa3;     /* 6:1 */
     --c-text-on-accent: #10122a;
+    --c-icon: #f2f2f4;       /* icônes lisibles en sombre */
 
     --c-line: rgba(255, 255, 255, 0.09);
     --c-line-strong: rgba(255, 255, 255, 0.2);
