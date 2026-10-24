@@ -2,6 +2,7 @@
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
+import { autosum } from "./autosum";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
@@ -65,6 +66,7 @@ export function installCommands(app: App): void {
   run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
+  run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
@@ -87,6 +89,9 @@ export function installCommands(app: App): void {
   const map = shortcuts(app);
   if (onKey) document.removeEventListener("keydown", onKey); // remount: avoid stacked listeners
   onKey = (e: KeyboardEvent) => {
+    if (e.altKey && e.key === "=" && !e.ctrlKey && !e.metaKey && !inTextField(e.target)) {
+      e.preventDefault(); autosum(app); return;
+    }
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
