@@ -1,6 +1,7 @@
 /** Popover de filtre de colonne: cases à cocher (valeurs distinctes + compte), OK, « Effacer le filtre ». */
 import { icon } from "../icons";
-import type { Distinct } from "./filter";
+import { EMPTY_LABEL, type Distinct } from "./filter";
+import "./filterPopover.css";
 
 /** Paramètres du popover. */
 export interface PopoverOpts {
@@ -32,10 +33,17 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   const pop = document.createElement("div");
   pop.className = "dkg-pop";
   pop.setAttribute("role", "dialog");
+  const allLabel = document.createElement("label");
+  allLabel.className = "dkg-pop__all";
+  const all = document.createElement("input");
+  all.type = "checkbox";
+  all.dataset.all = "1";
+  allLabel.append(all, document.createTextNode(" Tout sélectionner"));
   const list = document.createElement("div");
   list.className = "dkg-pop__list";
   for (const d of o.values) {
     const label = document.createElement("label");
+    if (d.value === EMPTY_LABEL) label.className = "dkg-pop__empty";
     const box = document.createElement("input");
     box.type = "checkbox";
     box.dataset.v = d.value;
@@ -58,7 +66,16 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   };
   mk("clear", "Effacer le filtre");
   mk("ok", "OK");
-  pop.append(list, btns);
+  pop.append(allLabel, list, btns);
+  const boxes = (): HTMLInputElement[] => [...list.querySelectorAll<HTMLInputElement>("input")];
+  const syncAll = (): void => {
+    const on = boxes().filter((i) => i.checked).length;
+    all.checked = on === boxes().length;
+    all.indeterminate = on > 0 && on < boxes().length;
+  };
+  syncAll();
+  all.addEventListener("change", () => { boxes().forEach((i) => { i.checked = all.checked; }); });
+  list.addEventListener("change", syncAll);
 
   const r = o.anchor.getBoundingClientRect();
   pop.style.left = `${Math.max(0, r.left)}px`;
@@ -77,7 +94,7 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   pop.addEventListener("click", (e) => {
     const act = (e.target as HTMLElement).closest<HTMLElement>("[data-act]")?.dataset.act;
     if (!act) return;
-    const checked = [...list.querySelectorAll<HTMLInputElement>("input")].filter((i) => i.checked).map((i) => i.dataset.v!);
+    const checked = boxes().filter((i) => i.checked).map((i) => i.dataset.v!);
     close();
     o.onApply(act === "clear" || checked.length === o.values.length ? null : checked);
   });
