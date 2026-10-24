@@ -71,6 +71,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Mode minimal par défaut: seuls grille + barre de formule + onglets visibles; `.dk-app__tools` (toolbar) et `.dk-sidebar` sont `hidden` jusqu'au clic sur `[data-action="toggle-tools"]` (classe `dk-app--minimal`).
 - Icônes: bibliothèque Iconoir (dépendance `iconoir`), toutes via `src/ui/icons.ts` (SVG inline `currentColor`); `--c-icon` noir (clair) / clair (sombre). `mockups/design/` resynchronisé.
 
+## Decisions (macros Lua)
+
+- `src/macros/`: `macro.ts` (`runMacro(code, api, {timeoutMs})` + `sheetApi(sheet)`), `run.ts` (`runMacroOnApp`), `dialog.ts` (boîte textarea), commande palette « Exécuter une macro Lua… » (`macro.run`).
+- Lua exposé: `getValue(addr)`, `getRaw(addr)`, `setCell(addr, v)`, `getRange("A1:A5")` (nombres); passe uniquement par l'API publique de `engine/sheet.ts`.
+- Lib: `wasmoon` (Lua 5.4 en WASM, async). Délai max 2 s via `debug.sethook` (compteur d'instructions, hook posé dans le même chunk que le code: hooks par thread). Erreurs -> `{ok:false,error}` en français, jamais levées.
+- Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
+- Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
+
 ## Decisions (intégration I8)
 
 - Ctrl+N / menu « Nouveau » = nouveau document vierge (confirmation si modifications non enregistrées via `fileops.newDocument`); « Nouvelle feuille » = palette.
