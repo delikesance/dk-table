@@ -25,6 +25,7 @@
   z-index: 2;
 }
 .dkg-corner { top: 0; left: 0; z-index: 4; height: var(--col-header-h); }
+.dkg-corner, .dkg-colh, .dkg-rowh { cursor: pointer; } /* clic = colonne / ligne / feuille entière */
 .dkg-colh { top: 0; height: var(--col-header-h); border-bottom-color: var(--c-line-strong); /* séparation en-tête / données */ }
 /* Poignée de redimensionnement: bande sur le bord droit de l'en-tête de colonne. */
 .dkg-resizer {
@@ -130,3 +131,12 @@
 .dkg-filtered { color: var(--c-accent); background: var(--c-accent-soft-2); }
 
 /* Popover de filtre (monté dans <body>). */
+/* Poignées de gel (Sheets) : barres sur les lignes de gel, ancrées dans le coin ; guide pendant le glisser. */
+.dkg-corner { overflow: visible; }
+.dkg-fz { position: absolute; background: var(--c-line-strong); cursor: grab; z-index: 5; }
+.dkg-fz--rows { left: 0; width: var(--row-header-w); height: 4px; margin-top: -2px; }
+.dkg-fz--cols { top: 0; height: var(--col-header-h); width: 4px; margin-left: -2px; }
+.dkg-fz:hover { background: var(--c-accent); }
+.dkg-fz-guide { position: fixed; background: var(--c-accent); z-index: 10; pointer-events: none; }
+.dkg-fz-guide--rows { height: 2px; }
+.dkg-fz-guide--cols { width: 2px; }

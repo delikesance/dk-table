@@ -8,6 +8,7 @@ import { applyTheme, savedThemePref, type ThemePref } from "../theme";
 import { BORDER_LABELS } from "../borders";
 import { parseKey } from "../grid/keys";
 import { insertFecHeaders } from "../fec";
+import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
 import type { App } from "../appTypes";
 
@@ -82,10 +83,11 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Éditeur de macros", hint: "Alt+F11", run: d.openMacros },
       ...d.macros().map((m, i) => ({ label: m.name, sep: i === 0, run: () => d.runMacro(m.id) })),
     ] },
-    { label: "Affichage", items: [
+    { label: "Affichage", items: () => [ // dynamic: "jusqu'à la ligne/colonne" follows the selection (Sheets)
       theme("Thème automatique", "auto"), theme("Thème clair", "light"), theme("Thème sombre", "dark"),
       { label: "Figer la première ligne", sep: true, run: () => app.setFreeze({ rows: 1, cols: 0 }) },
       { label: "Figer la première colonne", run: () => app.setFreeze({ rows: 0, cols: 1 }) },
+      ...freezeEntries(app, "both"),
       { label: "Figer jusqu'à la cellule active", run: () => freezeAt(app) },
       { label: "Libérer les volets", run: () => app.setFreeze({ rows: 0, cols: 0 }) },
       { label: "Panneau des fonctions", sep: true, run: () => app.toggleSidebar() },

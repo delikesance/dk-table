@@ -20,14 +20,15 @@ export function markSelection(prev: HTMLElement[], t: MarkTargets, anchor: Pos, 
     e.classList.add(cls);
     marked.push(e);
   };
-  if (anchor.col !== active.col || anchor.row !== active.row) {
-    const [c0, c1] = [Math.min(anchor.col, active.col), Math.max(anchor.col, active.col)];
-    const [r0, r1] = [Math.min(anchor.row, active.row), Math.max(anchor.row, active.row)];
-    for (const r of t.rowHeads.keys())
-      if (r >= r0 && r <= r1) for (let c = c0; c <= c1; c++) add(t.cells.get(keyOf(c, r)), "dkg-range");
+  const [c0, c1] = [Math.min(anchor.col, active.col), Math.max(anchor.col, active.col)];
+  const [r0, r1] = [Math.min(anchor.row, active.row), Math.max(anchor.row, active.row)];
+  const multi = c0 !== c1 || r0 !== r1;
+  for (const [r, head] of t.rowHeads) {
+    if (r < r0 || r > r1) continue;
+    add(head, "dkg-on"); // every header of the selection lights up (whole rows/columns included)
+    if (multi) for (let c = c0; c <= c1; c++) add(t.cells.get(keyOf(c, r)), "dkg-range");
   }
+  for (let c = c0; c <= c1; c++) add(t.colHeads[c], "dkg-on");
   add(t.cells.get(keyOf(active.col, active.row)), "dkg-active");
-  add(t.colHeads[active.col], "dkg-on");
-  add(t.rowHeads.get(active.row), "dkg-on");
   return marked;
 }
