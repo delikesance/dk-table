@@ -55,11 +55,14 @@ describe("toolbar -> app", () => {
     btn("redo").click();
     expect(app.toDoc().sheets[0].cells.A1.raw).toBe("1");
   });
-  it("open and save buttons call the command hook", () => {
+  it("Fichier > Ouvrir / Enregistrer call the command hook (no toolbar duplicate)", () => {
     const cmd = vi.fn();
     app.hooks.command = cmd;
-    btn("open").click();
-    btn("save").click();
+    expect(btn("open")).toBeNull();
+    menuItem("Fichier").click();
+    menuItem("Ouvrir").click();
+    menuItem("Fichier").click();
+    [...root.querySelectorAll<HTMLElement>(".dk-menu__label")].find((e) => e.textContent === "Enregistrer")!.click();
     expect(cmd.mock.calls.map((c) => c[0])).toEqual(["open", "save"]);
   });
 });

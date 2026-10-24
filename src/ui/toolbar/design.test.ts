@@ -16,8 +16,7 @@ function rule(sel: string): string {
 }
 const noop = () => {};
 const handlers = {
-  onUndo: noop, onRedo: noop, onBold: noop, onItalic: noop, onAlign: noop, onFormat: noop, onFill: noop, onOpen: noop, onSave: noop,
-  menus: { onNew: noop, onOpen: noop, onSave: noop, onSaveAs: noop, onImportCsv: noop, onExportCsv: noop },
+  onUndo: noop, onRedo: noop, onBold: noop, onItalic: noop, onAlign: noop, onFormat: noop, onFill: noop,
 };
 
 describe("item 3: compact File menu, no layout shift", () => {
@@ -37,11 +36,6 @@ describe("item 3: compact File menu, no layout shift", () => {
   it("toolbar height is fixed, same open and closed", () => {
     expect(rule(".dk-toolbar")).toMatch(/height:\s*var\(--toolbar-h\)/);
     expect(rule(".dk-toolbar")).toMatch(/box-sizing:\s*border-box/);
-  });
-  it("File trigger has a tooltip", () => {
-    const tb = createToolbar(document.body, handlers);
-    const t = tb.el.querySelector<HTMLElement>(".dk-menu__trigger")!;
-    expect(t.title).toMatch(/Fichier/);
   });
 });
 
@@ -64,7 +58,7 @@ describe("item 4: toolbar hierarchy", () => {
   it("tooltips carry shortcuts", () => {
     const tb = createToolbar(document.body, handlers);
     const titles = [...tb.el.querySelectorAll<HTMLElement>(".dk-iconbtn")].map((b) => b.title).join("|");
-    for (const k of ["Ctrl+Z", "Ctrl+Y", "Ctrl+B", "Ctrl+I", "Ctrl+O", "Ctrl+S"]) expect(titles).toContain(k);
+    for (const k of ["Ctrl+Z", "Ctrl+Y", "Ctrl+B", "Ctrl+I"]) expect(titles).toContain(k);
   });
 });
 

@@ -1,0 +1,8 @@
+/* Illustration Atlas (src/ui/art.ts) : version nuit en thème sombre, bleu + papier sinon. */
+.dk-art { position: relative; margin: 0; overflow: hidden; background: var(--c-chrome); }
+.dk-art__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; }
+.dk-art__img--night { display: none; }
+:root[data-theme="dark"] .dk-art__img--light { display: none; }
+:root[data-theme="dark"] .dk-art__img--night { display: block; }
+.dk-art__credit { position: absolute; left: 24px; bottom: 20px; padding: 4px 8px; background: var(--c-chrome);
+  color: var(--c-chrome-text); font: 10px var(--font-mono); text-transform: uppercase; }

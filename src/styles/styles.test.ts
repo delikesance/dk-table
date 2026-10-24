@@ -1,5 +1,5 @@
 /**
- * Garde-fous lisibilité des CSS de design (tokens.css + components.css).
+ * Garde-fous lisibilité des CSS de design (tokens.css + theme-dark.css + components.css).
  * - aucune font-size < 12px (littérale ou via --fs-*)
  * - ratio de contraste WCAG >= 4.5 pour les paires texte/fond, thèmes clair et sombre.
  */
@@ -54,7 +54,7 @@ function vars(block: string): Record<string, string> {
   return out;
 }
 
-const darkBlock = tokens.split('prefers-color-scheme: dark')[1].split('prefers-reduced-motion')[0];
+const darkBlock = read('theme-dark.css');
 const light = vars(tokens.split('@media')[0]);
 const themes: Record<string, Record<string, string>> = {
   clair: light,
@@ -83,6 +83,13 @@ describe('contraste texte/fond >= 4.5', () => {
     it(`${name}: erreur sur fond erreur`, () => {
       const bg = over(c('--c-error-soft'), c('--c-surface'));
       expect(ratio(c('--c-error'), bg)).toBeGreaterThanOrEqual(4.5);
+    });
+    it(`${name}: texte du chrome sur chrome et panneau profond`, () => {
+      for (const bg of ['--c-chrome', '--c-chrome-deep']) expect(ratio(c('--c-chrome-text'), c(bg))).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(over(c('--c-chrome-text-2'), c('--c-chrome')), c('--c-chrome'))).toBeGreaterThanOrEqual(4.5);
+    });
+    it(`${name}: texte papier sur fond plein #0000F2`, () => {
+      expect(ratio(parse('#f2f2f2'), c('--c-accent-solid'))).toBeGreaterThanOrEqual(4.5);
     });
     it(`${name}: accent sur plage sélectionnée`, () => {
       const bg = over(c('--c-accent-soft-2'), c('--c-surface'));

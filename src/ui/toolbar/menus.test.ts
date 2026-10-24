@@ -58,10 +58,10 @@ describe("toolbar menus", () => {
     const labels = [...el.querySelectorAll(".dk-menu__label")].map((l) => l.textContent);
     expect(labels).toEqual(["Nouveau", "Ouvrir", "Récents", "Enregistrer", "Enregistrer sous…", "Importer CSV", "Exporter CSV"]);
   });
-  it("shortcut hints: Save=Ctrl+S, Save as has none", () => {
+  it("shortcut hints: Save=Ctrl+S, Save as=Ctrl+Maj+S", () => {
     const { el } = mk();
     expect(item(el, "Enregistrer").querySelector(".dk-menu__hint")!.textContent).toBe("Ctrl+S");
-    expect(item(el, "Enregistrer sous…").querySelector(".dk-menu__hint")).toBeNull();
+    expect(item(el, "Enregistrer sous…").querySelector(".dk-menu__hint")!.textContent).toBe("Ctrl+Maj+S");
   });
   it("CSV entries call handlers", () => {
     const { el, h } = mk();

@@ -1,0 +1,17 @@
+/* Boîtes modales (Paramètres, À propos) : papier du thème, filet, rayon 4px, ombre de surface flottante. */
+.dk-dialog__scrim { position: fixed; inset: 0; z-index: 900; background: var(--c-scrim); }
+.dk-dialog { position: fixed; z-index: 901; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 16px; padding: 20px 24px;
+  background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-line-strong); border-radius: var(--r-lg);
+  box-shadow: var(--sh-3); font-family: var(--font-ui); }
+.dk-dialog__title { margin: 0; font: var(--fw-medium) 22px var(--font-display); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+.dk-dialog__body { display: flex; flex-direction: column; gap: 12px; font-size: var(--fs-md); }
+.dk-dialog__check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.dk-dialog__check input { accent-color: var(--c-accent-solid); width: 16px; height: 16px; }
+.dk-dialog__foot { display: flex; justify-content: flex-end; }
+.dk-dialog__btn { height: 32px; padding: 0 16px; border: 0; border-radius: var(--r-sm); background: var(--c-accent-solid);
+  color: var(--c-text-on-solid); font: var(--fw-medium) var(--fs-menu) var(--font-display); text-transform: uppercase;
+  letter-spacing: var(--tracking-caps); cursor: pointer; }
+.dk-dialog__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-about__art { height: 260px; border-radius: var(--r-sm); }
+.dk-about__credits { margin: 0; color: var(--c-text-2); font: 11px/1.5 var(--font-mono); }
