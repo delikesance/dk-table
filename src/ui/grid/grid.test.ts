@@ -12,7 +12,7 @@ const cell = (k: string) => host.querySelector(`[data-key="${k}"]`) as HTMLEleme
 const key = (el: Element, k: string, init: KeyboardEventInit = {}) =>
   el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true, ...init }));
 const root = () => host.querySelector(".dkg") as HTMLElement;
-const input = () => host.querySelector("input.dkg-editor") as HTMLInputElement | null;
+const input = () => host.querySelector(".dkg-editor") as HTMLTextAreaElement | null;
 const down = (k: string, init: MouseEventInit = {}) =>
   cell(k).dispatchEvent(new MouseEvent("mousedown", { bubbles: true, ...init }));
 const clip = (type: string, data: string) => {

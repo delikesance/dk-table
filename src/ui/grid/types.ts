@@ -30,6 +30,8 @@ export interface GridOptions {
   renderCell?(key: string): HTMLElement | null;
   /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
   onCellCreated?(key: string, el: HTMLElement): void;
+  /** Ctrl+PageUp (-1) / Ctrl+PageDown (+1): switch to the previous / next sheet. */
+  onSheetStep?(dir: -1 | 1): void;
 }
 
 /** Public grid API. */
