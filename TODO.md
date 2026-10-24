@@ -66,7 +66,7 @@ P0 : bloquant démo
 - [ ] Vérifier la CI : `gh run view 40112430388` (doit rester verte)
 - [ ] Script de démo 5 min : installation puis tour des fonctionnalités (cellules vivantes en final)
 - [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
-- [~] refonte-apple : fait (branche wt/refonte-apple) : mode minimal par défaut (feuille + barre de formule), bouton chevron `toggle-tools` déploie toolbar + sidebar, icônes Iconoir noires (`src/ui/icons.ts`), token `--c-icon`. Reste : vérif visuelle manuelle (Tauri/navigateur), raccourci clavier + commande palette pour déployer, mémoriser l'état déployé, menus pro (fichier/import-export) dans la toolbar déployée, icônes onglets/sidebar/menu contextuel encore non Iconoir
+- [x] refonte-apple : mode minimal par défaut (feuille + barre de formule), bouton chevron `toggle-tools` déploie toolbar + sidebar, icônes Iconoir noires partout (`src/ui/icons.ts`, `--c-icon`; onglets, sidebar, menu contextuel, `composants.html`), menus Fichier + Import/Export dans la toolbar (`toolbar/menus.ts`), déploiement des outils : Ctrl+J + commande palette + état persistant `dk-table.tools`. Reste à la main : vérification visuelle (clair/sombre) dans Tauri
 - [x] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise) via `app.style({format})` ; limite connue : l option "Date" du menu est sans effet
 
 P1 : qualité visible (beauté, praticité)
