@@ -8,10 +8,20 @@ import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
 import type { MacroUi } from "./macros/wire";
 import type { CfStyle } from "../engine/cf/types";
+import type { DocStore } from "../doc/store";
+import type { DocEditor } from "../doc/editor";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
 export interface Ctx {
   gridHost: HTMLElement;
+  /** Host of the document editor (shown instead of the grid while a document is open). */
+  docHost: HTMLElement;
+  /** Rich-text documents of the workbook. */
+  docs: DocStore;
+  /** Id of the open document, or undefined when the grid is shown. */
+  curDoc?: string;
+  /** Editor of the open document. */
+  docEd?: DocEditor;
   entries: Entry[];
   /** Active sheet entry. */
   cur: Entry;

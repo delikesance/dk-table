@@ -12,6 +12,7 @@ import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
+import { addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -41,16 +42,19 @@ export function createApi(c: Ctx): App {
       touch(c);
     },
     batch(fn) { if (batchEdit(c.cur, fn)) touch(c); },
-    undo() { if (step(c.cur, "undo")) { relink(c); buildGrid(c); setTitle(c, true); } },
-    redo() { if (step(c.cur, "redo")) { relink(c); buildGrid(c); setTitle(c, true); } },
+    undo() { if (c.curDoc) { c.docEd?.undo(); return; } if (step(c.cur, "undo")) { relink(c); buildGrid(c); setTitle(c, true); } },
+    redo() { if (c.curDoc) { c.docEd?.redo(); return; } if (step(c.cur, "redo")) { relink(c); buildGrid(c); setTitle(c, true); } },
     addSheet() {
+      leaveDoc(c);
       c.cur = newEntry(`Feuille ${c.entries.length + 1}`);
       c.entries.push(c.cur);
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
     },
     switchSheet(id) {
       const e = c.entries.find((x) => x.id === id);
-      if (!e || e === c.cur) return;
+      if (!e) return;
+      const wasDoc = leaveDoc(c);
+      if (e === c.cur) { if (wasDoc) refreshTabs(c); return; }
       c.cur = e; refreshTabs(c); buildGrid(c);
     },
     sheets: () => c.entries.map(({ id, name }) => ({ id, name })),
@@ -61,8 +65,11 @@ export function createApi(c: Ctx): App {
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
+      ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
     }),
     loadDoc(doc, path) {
+      leaveDoc(c);
+      c.docs.load(doc.docs);
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
       app.path = path;
@@ -70,6 +77,7 @@ export function createApi(c: Ctx): App {
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
     },
     importSheet(name, sheet) {
+      leaveDoc(c);
       c.cur = newEntry(name, sheet);
       c.entries.push(c.cur);
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
@@ -122,6 +130,11 @@ export function createApi(c: Ctx): App {
     },
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
+    addDoc: () => addDoc(c),
+    openDoc: (id) => openDocView(c, id),
+    removeDoc: (id) => removeDoc(c, id),
+    activeDocId: () => c.curDoc,
+    docEditor: () => c.docEd,
     sheetName: () => c.cur.name,
     runMacro: (id) => c.macroUi.run(id),
     openMacros: (id) => c.macroUi.open(id),
@@ -132,6 +145,7 @@ export function createApi(c: Ctx): App {
     },
   };
   macros.onChange(() => { if (!loading) setTitle(c, true); });
+  watchDocs(c);
   setupAutosave(c);
   return app;
 }

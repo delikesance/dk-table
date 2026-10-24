@@ -5,3 +5,6 @@ body { background: var(--c-bg); color: var(--c-text); font: var(--fs-md) var(--f
 .dk-app__main { display: flex; flex: 1; min-height: 0; }
 .dk-app__grid { flex: 1; min-width: 0; }
 .dk-app__top, .dk-app__tabs { flex: none; }
+/* dk doc: the editor takes the place of the grid. */
+.dk-app__doc { flex: 1; min-width: 0; overflow: auto; }
+.dk-app__doc[hidden], .dk-app__grid[hidden] { display: none; }

@@ -106,6 +106,9 @@ export function stepSheet(c: Ctx, dir: -1 | 1): void {
 
 /** Push the sheet list and active sheet to the tab bar. */
 export function refreshTabs(c: Ctx): void {
-  c.tabs.setSheets(c.entries.map(({ id, name }) => ({ id, name })));
-  c.tabs.setActive(c.cur.id);
+  c.tabs.setSheets([
+    ...c.entries.map(({ id, name }) => ({ id, name })),
+    ...c.docs.list().map(({ id, name }) => ({ id, name, kind: "doc" as const })),
+  ]);
+  c.tabs.setActive(c.curDoc ?? c.cur.id);
 }

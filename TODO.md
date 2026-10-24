@@ -197,3 +197,12 @@ Classement par gravité (P0 = pire)
 ## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
 - [x] Format Comptabilité ; SLN, SYD, DB, DDB, VDB, AMORLINC, AMORDEGRC ; IPMT, PPMT, PV, FV, RATE, NPER, CUMIPMT, CUMPRINC ; IRR avec estimation, MIRR, XNPV, XIRR ; SUBTOTAL, AGGREGATE ; MROUND, YEARFRAC, DAYS360 ; export FEC (Fichier) + en-têtes FEC (Données)
 - [ ] Suites : lignes masquées pour SUBTOTAL 101-111 / AGGREGATE ; contrôle FEC avec Test-Compta-Demat (DGFiP) ; tableau croisé simplifié
+
+## dk doc (documents de texte liés aux feuilles, voir `docs/dk-doc.md`)
+- [x] D0 Format : `docs?` dans `.dktable` validé (`io/docsFormat.ts`), dépendances ProseMirror
+- [x] D1 Schéma, magasin, éditeur (chargé à la demande), onglet document, historique, persistance, palette « Nouveau document »
+- [ ] D1b Menu Fichier « Nouveau document » ; menu « Insertion » à la place de Feuille / Données quand un document est ouvert ; renommer / supprimer testés dans l'interface
+- [ ] D2 Références `@` (cellule, recherche par noms), puces vivantes, carte au survol, `#REF!`, `onRecalc`
+- [ ] D3 Tableaux liés (coller, colonnes affichées, morceau A3:D4), graphiques liés (barres, tendance)
+- [ ] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
+
