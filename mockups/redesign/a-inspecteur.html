@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table : variante A, inspecteur latéral</title>
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="../design/components.css">
+<style>
+/* Variante A « Inspecteur latéral » (inspirée de Numbers). Aucune valeur brute hors tokens, sauf les tokens locaux --x-*. */
+:root {
+  /* Tokens locaux (manquants dans tokens.css) */
+  --x-inspector-w: 320px;   /* largeur de l'inspecteur déployé */
+  --x-icon: 20px;           /* taille d'icône demandée (components.css : 18px) */
+  --x-swatch: 28px;         /* pastille de couleur */
+  --x-frame-h: 520px;       /* hauteur de la fenêtre de démo */
+}
+body { margin: 0; padding: var(--s-6) var(--s-4); background: var(--c-bg); color: var(--c-text); font: var(--fw-regular) var(--fs-md)/var(--lh-normal) var(--font-ui); }
+.x-page { max-width: 1240px; margin: 0 auto; }
+.x-page h1 { margin: 0 0 var(--s-1); font-size: var(--fs-xl); line-height: var(--lh-tight); }
+.x-lead { margin: 0 0 var(--s-4); color: var(--c-text-2); }
+.dk-app .dk-iconbtn svg, .dk-app .dk-icon { width: var(--x-icon); height: var(--x-icon); }
+.x-radio { position: absolute; opacity: 0; pointer-events: none; }
+
+/* Commutateur d'états (démo) */
+.x-demo { display: inline-flex; gap: var(--s-1); padding: var(--s-1); margin-bottom: var(--s-4); background: var(--c-surface-2); border: 0.5px solid var(--c-line); border-radius: var(--r-md); }
+.x-demo label { padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); color: var(--c-text-2); cursor: pointer; font-size: var(--fs-md); }
+.x-demo label:hover { background: var(--c-surface-hover); color: var(--c-text); }
+#st-arrival:checked ~ .x-page label[for="st-arrival"], #st-select:checked ~ .x-page label[for="st-select"] { background: var(--c-surface); color: var(--c-accent); font-weight: var(--fw-semibold); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); }
+#st-arrival:focus-visible ~ .x-page label[for="st-arrival"], #st-select:focus-visible ~ .x-page label[for="st-select"] { box-shadow: var(--focus-ring); }
+
+/* Fenêtre */
+.stage { display: flex; flex-direction: column; height: var(--x-frame-h); overflow: hidden; background: var(--c-surface); border: 0.5px solid var(--c-line-strong); border-radius: var(--r-lg); box-shadow: var(--sh-2); }
+.stage__body { display: flex; flex: 1; min-height: 0; }
+.stage__main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
+/* Annotations N1/N2/N3 */
+.x-tag { display: inline-flex; align-items: center; padding: 0 var(--s-2); height: 20px; border-radius: var(--r-pill); background: var(--c-accent-soft-2); color: var(--c-accent); font: var(--fw-semibold) var(--fs-xs) var(--font-ui); letter-spacing: var(--tracking-caps); white-space: nowrap; }
+
+/* Barre supérieure minimale */
+.top { display: flex; align-items: center; gap: var(--s-2); min-height: var(--toolbar-h); padding: var(--s-2) var(--s-3); background: var(--c-surface-2); border-bottom: 0.5px solid var(--c-line); }
+.top__doc { display: flex; align-items: baseline; gap: var(--s-2); min-width: 0; margin: 0 auto 0 var(--s-2); }
+.top__name { font-weight: var(--fw-semibold); font-size: var(--fs-lg); white-space: nowrap; }
+.top__saved { color: var(--c-text-3); font-size: var(--fs-sm); white-space: nowrap; }
+.x-fmtbtn { display: inline-flex; align-items: center; gap: var(--s-2); height: 32px; padding: 0 var(--s-3); border: 0; border-radius: var(--r-md); background: transparent; color: var(--c-text); font: var(--fw-medium) var(--fs-md) var(--font-ui); cursor: pointer; transition: background var(--dur-fast) var(--ease-out); }
+.x-fmtbtn:hover { background: var(--c-surface-hover); }
+.x-fmtbtn svg { width: var(--x-icon); height: var(--x-icon); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; color: var(--c-icon); }
+.x-fmtbtn--on { background: var(--c-accent-soft-2); color: var(--c-accent); }
+.x-fmtbtn--on svg { color: var(--c-accent); }
+#st-select:checked ~ .x-page .x-fmt-open, #st-arrival:checked ~ .x-page .x-fmt-closed { display: none; }
+
+/* Barre de formule */
+.dk-formula .x-fi { display: none; align-items: center; flex: 1; padding: 0 var(--s-2) 0 var(--s-1); font: var(--fw-regular) var(--fs-md) var(--font-mono); }
+.dk-formula .x-nm { display: none; }
+#st-arrival:checked ~ .x-page .x-fi-a, #st-select:checked ~ .x-page .x-fi-s { display: flex; }
+#st-arrival:checked ~ .x-page .x-nm-a, #st-select:checked ~ .x-page .x-nm-s { display: inline; }
+.dk-formula .x-tag { align-self: center; margin-right: var(--s-3); }
+
+/* Grille */
+.grid-wrap { flex: 1; min-height: 0; overflow: auto; background: var(--c-surface); }
+.grid { display: grid; grid-template-columns: var(--row-header-w) repeat(6, var(--cell-w)); width: max-content; }
+.grid .dk-cell--num { justify-content: flex-end; }
+.grid .x-spark { padding: 0 var(--cell-px); }
+.grid .x-spark svg { width: 100%; height: 18px; fill: none; stroke: var(--c-accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.grid .x-hd { justify-content: flex-start; color: var(--c-text); font-weight: var(--fw-semibold); background: var(--c-surface-2); }
+/* Sélection (commutée par radio) */
+#st-arrival:checked ~ .x-page .x-a1, #st-select:checked ~ .x-page .x-b3 { overflow: visible; z-index: 2; border-radius: var(--r-xs); box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent); }
+#st-arrival:checked ~ .x-page .x-a1::after, #st-select:checked ~ .x-page .x-b3::after { content: ""; position: absolute; right: calc(var(--notch) / -2); bottom: calc(var(--notch) / -2); width: var(--notch); height: var(--notch); background: var(--c-accent); border: 1.5px solid var(--c-surface); border-radius: 2px; }
+#st-select:checked ~ .x-page .x-r { background: var(--c-accent-soft); }
+#st-select:checked ~ .x-page .x-b3 { background: var(--c-surface); }
+#st-arrival:checked ~ .x-page .x-ha, #st-select:checked ~ .x-page .x-hs { background: var(--c-accent-soft-2); color: var(--c-accent); font-weight: var(--fw-semibold); }
+.x-dep { color: var(--c-text-3); }
+
+/* Onglets de feuilles + barre d'état */
+.dk-tabs .x-status { margin-left: auto; display: none; align-items: center; gap: var(--s-3); color: var(--c-text-2); font-size: var(--fs-sm); font-variant-numeric: var(--num); }
+#st-select:checked ~ .x-page .x-status { display: flex; }
+.dk-tabs .x-tag { margin-left: var(--s-2); }
+.dk-tab--add { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
+.dk-tab--add svg { width: var(--x-icon); height: var(--x-icon); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dk-tabs .dk-tab { min-height: 28px; font-size: var(--fs-md); }
+
+/* Inspecteur (se déploie à droite) */
+.insp { width: 0; overflow: hidden; background: var(--c-surface-2); border-left: 0.5px solid var(--c-line); transition: width var(--dur-slow) var(--ease-out); }
+#st-select:checked ~ .x-page .insp { width: var(--x-inspector-w); }
+.insp__in { width: var(--x-inspector-w); height: 100%; display: flex; flex-direction: column; overflow-y: auto; padding: var(--s-3); }
+.insp__head { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-1) var(--s-2) var(--s-3); }
+.insp__title { font-weight: var(--fw-semibold); font-size: var(--fs-lg); }
+.insp__sel { margin-left: auto; color: var(--c-text-3); font-size: var(--fs-sm); }
+.insp__tabs { display: flex; gap: var(--s-1); padding: var(--s-1); background: var(--c-surface-hover); border-radius: var(--r-md); }
+.insp__tabs label { flex: 1; padding: var(--s-2); border-radius: var(--r-sm); text-align: center; color: var(--c-text-2); font-size: var(--fs-sm); font-weight: var(--fw-medium); cursor: pointer; }
+.insp__tabs label:hover { color: var(--c-text); }
+.panel { display: none; padding-top: var(--s-3); }
+#tab-cell:checked ~ .x-page .p-cell, #tab-text:checked ~ .x-page .p-text, #tab-num:checked ~ .x-page .p-num, #tab-data:checked ~ .x-page .p-data { display: block; }
+#tab-cell:checked ~ .x-page [for="tab-cell"], #tab-text:checked ~ .x-page [for="tab-text"], #tab-num:checked ~ .x-page [for="tab-num"], #tab-data:checked ~ .x-page [for="tab-data"] { background: var(--c-surface); color: var(--c-accent); font-weight: var(--fw-semibold); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); }
+#tab-cell:focus-visible ~ .x-page [for="tab-cell"], #tab-text:focus-visible ~ .x-page [for="tab-text"], #tab-num:focus-visible ~ .x-page [for="tab-num"], #tab-data:focus-visible ~ .x-page [for="tab-data"] { box-shadow: var(--focus-ring); }
+.field { padding: var(--s-2); }
+.field + .field { border-top: 0.5px solid var(--c-line); }
+.field__lbl { display: block; margin-bottom: var(--s-2); color: var(--c-text-2); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.row { display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap; }
+.seg { display: flex; padding: var(--s-1); gap: var(--s-1); background: var(--c-surface-hover); border-radius: var(--r-md); }
+.seg button { flex: 1; min-height: 28px; padding: 0 var(--s-2); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text); font: var(--fw-medium) var(--fs-sm) var(--font-ui); cursor: pointer; }
+.seg button:hover { background: var(--c-surface); }
+.seg button[aria-pressed="true"] { background: var(--c-surface); color: var(--c-accent); font-weight: var(--fw-semibold); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); }
+.sw { display: inline-block; width: var(--x-swatch); height: var(--x-swatch); padding: 0; border: 0.5px solid var(--c-line-strong); border-radius: var(--r-pill); background: var(--c-surface); cursor: pointer; }
+.sw--sel { box-shadow: var(--focus-ring); }
+.sw--accent { background: var(--c-accent-soft-2); } .sw--in { background: var(--c-dep-in-soft); } .sw--out { background: var(--c-dep-out-soft); } .sw--ok { background: var(--c-success-soft); } .sw--err { background: var(--c-error-soft); }
+.sw--t1 { background: var(--c-text); } .sw--t2 { background: var(--c-accent); } .sw--t3 { background: var(--c-error); } .sw--t4 { background: var(--c-success); } .sw--t5 { background: var(--c-dep-in); } .sw--t6 { background: var(--c-dep-out); }
+.step { display: inline-flex; align-items: center; gap: var(--s-1); }
+.step output { min-width: 32px; text-align: center; font-variant-numeric: var(--num); }
+.sample { margin-top: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--c-surface); border: 0.5px solid var(--c-line); border-radius: var(--r-sm); color: var(--c-text-2); font-size: var(--fs-sm); }
+.sample b { color: var(--c-text); font-variant-numeric: var(--num); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 32px; }
+.switch i { position: relative; width: 36px; height: 20px; border-radius: var(--r-pill); background: var(--c-line-strong); }
+.switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--r-pill); background: var(--c-surface); box-shadow: var(--sh-1); }
+.switch--on i { background: var(--c-accent); } .switch--on i::after { left: 18px; }
+.bigbtn { display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: 36px; padding: var(--s-2) var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text); font: var(--fw-regular) var(--fs-md) var(--font-ui); text-align: left; cursor: pointer; }
+.bigbtn:hover { background: var(--c-surface-hover); }
+.bigbtn svg { width: var(--x-icon); height: var(--x-icon); flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; color: var(--c-icon); }
+.bigbtn .dk-kbd { margin-left: auto; }
+.adv { margin-top: var(--s-3); }
+.adv > summary { list-style: none; }
+.adv > summary::-webkit-details-marker { display: none; }
+.adv .dk-section__chev { transform: rotate(-90deg); }
+.adv[open] .dk-section__chev { transform: none; }
+.adv .x-tag { margin-left: auto; }
+
+/* Tâches et clics */
+.x-notes { margin-top: var(--s-6); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-4); }
+.x-card { padding: var(--s-4); background: var(--c-surface); border: 0.5px solid var(--c-line); border-radius: var(--r-md); }
+.x-card h2 { margin: 0 0 var(--s-2); font-size: var(--fs-lg); }
+.x-card ul { margin: 0; padding-left: var(--s-5); color: var(--c-text-2); }
+.x-card table { width: 100%; border-collapse: collapse; }
+.x-card th, .x-card td { padding: var(--s-2); text-align: left; border-bottom: 0.5px solid var(--c-line); vertical-align: top; }
+.x-card th { color: var(--c-text-2); font-weight: var(--fw-semibold); font-size: var(--fs-sm); }
+.x-card td:nth-child(2) { font-variant-numeric: var(--num); font-weight: var(--fw-semibold); white-space: nowrap; }
+@media (max-width: 760px) { .insp__in { padding: var(--s-2); } :root { --x-inspector-w: 280px; } }
+</style>
+</head>
+<body class="dk-app">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M4.5 8C8.5 8 11 8 15 8C15 8 15 8 15 8C15 8 20 8 20 12.7059C20 18 15 18 15 18C11.5714 18 9.71429 18 6.28571 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.5 11.5C6.13317 10.1332 5.36683 9.36683 4 8C5.36683 6.63317 6.13317 5.86683 7.5 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="M19.5 8C15.5 8 13 8 9 8C9 8 9 8 9 8C9 8 4 8 4 12.7059C4 18 9 18 9 18C12.4286 18 14.2857 18 17.7143 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.5 11.5C17.8668 10.1332 18.6332 9.36683 20 8C18.6332 6.63317 17.8668 5.86683 16.5 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-bold" viewBox="0 0 24 24"><path d="M12 11.6667H8M12 11.6667C12 11.6667 15.3333 11.6667 15.3333 8.33333C15.3333 5.00002 12 5 12 5C12 5 12 5 12 5H8.6C8.26863 5 8 5.26863 8 5.6V11.6667M12 11.6667C12 11.6667 16 11.6667 16 15.3333C16 19 12 19 12 19C12 19 12 19 12 19H8.6C8.26863 19 8 18.7314 8 18.4V11.6667" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="i-italic" viewBox="0 0 24 24"><path d="M11 5L14 5M17 5L14 5M14 5L10 19M10 19L7 19M10 19L13 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-align-left" viewBox="0 0 24 24"><path d="M3 10L17 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 6H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 18L17 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 14H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-align-center" viewBox="0 0 24 24"><path d="M3 6H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 14H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6 10L18 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6 18L18 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-align-right" viewBox="0 0 24 24"><path d="M7 10L21 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 6H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 18L21 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 14H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M6 12H12M18 12H12M12 12V6M12 12V18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12H18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-floppy-disk" viewBox="0 0 24 24"><path d="M3 19V5C3 3.89543 3.89543 3 5 3H16.1716C16.702 3 17.2107 3.21071 17.5858 3.58579L20.4142 6.41421C20.7893 6.78929 21 7.29799 21 7.82843V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19Z" stroke="currentColor" stroke-width="1.5"/>
+<path d="M8.6 9H15.4C15.7314 9 16 8.73137 16 8.4V3.6C16 3.26863 15.7314 3 15.4 3H8.6C8.26863 3 8 3.26863 8 3.6V8.4C8 8.73137 8.26863 9 8.6 9Z" stroke="currentColor" stroke-width="1.5"/>
+<path d="M6 13.6V21H18V13.6C18 13.2686 17.7314 13 17.4 13H6.6C6.26863 13 6 13.2686 6 13.6Z" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="i-nav-arrow-down" viewBox="0 0 24 24"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-sigma-function" viewBox="0 0 24 24"><path d="M4 4L12 4L20 4V7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4 20H12H20V17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4 20L12 12L4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-filter-list" viewBox="0 0 24 24"><path d="M3 6H21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 12L17 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 18L13 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-fill-color" viewBox="0 0 24 24"><path d="M2.63596 10.2927L9.70703 3.22168L18.1923 11.707L11.1212 18.778C10.3402 19.5591 9.07387 19.5591 8.29282 18.778L2.63596 13.1212C1.85492 12.3401 1.85492 11.0738 2.63596 10.2927Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.29297 1.80762L9.70718 3.22183" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M19.9991 15C19.9991 15 22.9991 17.9934 22.9994 19.8865C22.9997 21.5422 21.6552 22.8865 19.9997 22.8865C18.3442 22.8865 17.012 21.5422 17 19.8865C17.0098 17.9924 19.9991 15 19.9991 15Z" stroke="currentColor" stroke-width="1.49993" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-text" viewBox="0 0 24 24"><path d="M19 7V5L5 5V7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 5L12 19M12 19H10M12 19H14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-sidebar-expand" viewBox="0 0 24 24"><path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.5 21V3" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.5 10L7.25 12L5.5 14" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-sidebar-collapse" viewBox="0 0 24 24"><path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.25 10L5.5 12L7.25 14" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.5 21V3" stroke="currentColor"  stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-xmark" viewBox="0 0 24 24"><path d="M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 12L12 17M12 22L12 17M12 17L7.5 14.5M12 17L16.5 19.5M12 17L16.5 14.5M12 17L7.5 19.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 17.6073C21.4937 17.0221 23 15.6889 23 13C23 9 19.6667 8 18 8C18 6 18 2 12 2C6 2 6 6 6 8C4.33333 8 1 9 1 13C1 15.6889 2.50628 17.0221 4 17.6073" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><path d="M16 12H17.4C17.7314 12 18 12.2686 18 12.6V19.4C18 19.7314 17.7314 20 17.4 20H6.6C6.26863 20 6 19.7314 6 19.4V12.6C6 12.2686 6.26863 12 6.6 12H8M16 12V8C16 6.66667 15.2 4 12 4C8.8 4 8 6.66667 8 8V12M16 12H8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-table-rows" viewBox="0 0 24 24"><path d="M3 12H7.5H12H16.5H21M3 12V16.5M3 12V7.5M21 12V16.5M21 12V7.5M3 16.5V20.4C3 20.7314 3.26863 21 3.6 21H7.5H12H16.5H20.4C20.7314 21 21 20.7314 21 20.4V16.5M3 16.5H7.5H12H16.5H21M21 7.5V3.6C21 3.26863 20.7314 3 20.4 3H16.5H12H7.5H3.6C3.26863 3 3 3.26863 3 3.6V7.5M21 7.5H16.5H12H7.5H3" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="i-frame" viewBox="0 0 24 24"><path d="M4.9984 2.00098H2V4.99938H4.9984V2.00098Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.9984 10.502H2V13.5004H4.9984V10.502Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.4978 5.00049V10.503" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.5 5.00049V10.503" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.4978 13.5015V19.004" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.5 13.5015V19.004" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.99902 20.5015H10.4999" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.99902 3.50342H10.4999" stroke="currentColor" stroke-width="1.2195" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.498 20.499H18.9989" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.498 3.50098H18.9989" stroke="currentColor" stroke-width="1.2195" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.9984 19.001H2V21.9994H4.9984V19.001Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21.9974 2.00195H18.999V5.00035H21.9974V2.00195Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.4974 2H10.499V4.9984H13.4974V2Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21.9974 10.5029H18.999V13.5013H21.9974V10.5029Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21.9974 19.002H18.999V22.0004H21.9974V19.002Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.4974 19H10.499V21.9984H13.4974V19Z" stroke="currentColor" stroke-miterlimit="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+<input class="x-radio" type="radio" name="state" id="st-arrival" aria-label="État arrivée">
+<input class="x-radio" type="radio" name="state" id="st-select" aria-label="État sélection avec inspecteur" checked>
+<input class="x-radio" type="radio" name="tab" id="tab-cell" aria-label="Onglet Cellule">
+<input class="x-radio" type="radio" name="tab" id="tab-text" aria-label="Onglet Texte">
+<input class="x-radio" type="radio" name="tab" id="tab-num" aria-label="Onglet Nombre" checked>
+<input class="x-radio" type="radio" name="tab" id="tab-data" aria-label="Onglet Données">
+
+<main class="x-page">
+  <h1>Variante A : inspecteur latéral</h1>
+  <p class="x-lead">Feuille plein cadre, barre minimale, un seul inspecteur contextuel à droite (modèle Numbers). Pro : section « Avancé » repliée.</p>
+  <div class="x-demo" role="group" aria-label="État affiché">
+    <label for="st-arrival">1. Arrivée</label>
+    <label for="st-select">2. Sélection + inspecteur</label>
+  </div>
+
+  <div class="stage">
+    <!-- Barre supérieure minimale -->
+    <header class="top">
+      <button class="dk-iconbtn" aria-label="Enregistrer (Ctrl+S)" title="Enregistrer (Ctrl+S)"><svg><use href="#i-floppy-disk"/></svg></button>
+      <div class="top__doc"><span class="top__name">Budget 2026</span><span class="top__saved">Enregistré</span></div>
+      <button class="dk-iconbtn" aria-label="Annuler (Ctrl+Z)" title="Annuler (Ctrl+Z)"><svg><use href="#i-undo"/></svg></button>
+      <button class="dk-iconbtn" aria-label="Rétablir (Ctrl+Y)" title="Rétablir (Ctrl+Y)"><svg><use href="#i-redo"/></svg></button>
+      <span class="dk-toolsep"></span>
+      <label class="x-fmtbtn x-fmt-closed" for="st-select" role="button" title="Ouvrir l'inspecteur"><svg><use href="#i-sidebar-expand"/></svg>Format</label>
+      <label class="x-fmtbtn x-fmtbtn--on x-fmt-open" for="st-arrival" role="button" title="Fermer l'inspecteur"><svg><use href="#i-sidebar-collapse"/></svg>Format</label>
+      <span class="x-tag" title="Visible d'emblée">N1</span>
+    </header>
+
+    <div class="stage__body">
+      <section class="stage__main">
+        <div class="dk-formula">
+          <span class="dk-formula__name"><span class="x-nm x-nm-a">A1</span><span class="x-nm x-nm-s">B3</span></span>
+          <span class="dk-formula__fx">fx</span>
+          <div class="x-fi x-fi-a">Mois</div>
+          <div class="x-fi x-fi-s">3200</div>
+          <span class="x-tag" title="Visible d'emblée">N1</span>
+        </div>
+        <div class="grid-wrap"><div class="grid" id="grid" role="grid" aria-label="Feuille Budget"></div></div>
+        <footer class="dk-tabs">
+          <button class="dk-tab dk-tab--active">Budget</button>
+          <button class="dk-tab">Prévisions</button>
+          <button class="dk-tab dk-tab--add" aria-label="Ajouter une feuille (Ctrl+N)" title="Ajouter une feuille (Ctrl+N)"><svg><use href="#i-plus"/></svg></button>
+          <span class="x-tag" title="Visible d'emblée">N1</span>
+          <span class="x-status" id="status"></span>
+        </footer>
+      </section>
+
+      <!-- Inspecteur -->
+      <aside class="insp" aria-label="Inspecteur">
+        <div class="insp__in">
+          <div class="insp__head"><span class="insp__title">Format</span><span class="insp__sel">B3:C5 · 6 cellules</span><span class="x-tag" title="Un clic de plus">N2</span></div>
+          <nav class="insp__tabs" aria-label="Sections de l'inspecteur">
+            <label for="tab-cell">Cellule</label><label for="tab-text">Texte</label><label for="tab-num">Nombre</label><label for="tab-data">Données</label>
+          </nav>
+
+          <div class="panel p-cell">
+            <div class="field"><span class="field__lbl">Fond</span><div class="row">
+              <button class="sw sw--sel" aria-label="Aucun fond"></button><button class="sw sw--accent" aria-label="Encre"></button><button class="sw sw--in" aria-label="Ambre"></button><button class="sw sw--out" aria-label="Cyan"></button><button class="sw sw--ok" aria-label="Vert"></button><button class="sw sw--err" aria-label="Rouge"></button></div></div>
+            <div class="field"><span class="field__lbl">Bordures</span><div class="row">
+              <button class="dk-iconbtn" aria-label="Toutes les bordures"><svg><use href="#i-table-rows"/></svg></button><button class="dk-iconbtn" aria-label="Contour"><svg><use href="#i-frame"/></svg></button><button class="dk-iconbtn" aria-label="Aucune bordure"><svg><use href="#i-xmark"/></svg></button></div></div>
+            <div class="field"><div class="switch switch--on"><span>Retour à la ligne</span><i aria-hidden="true"></i></div></div>
+          </div>
+
+          <div class="panel p-text">
+            <div class="field"><span class="field__lbl">Style</span><div class="row">
+              <button class="dk-iconbtn" aria-label="Gras (Ctrl+B)"><svg><use href="#i-bold"/></svg></button><button class="dk-iconbtn" aria-label="Italique (Ctrl+I)"><svg><use href="#i-italic"/></svg></button>
+              <span class="dk-toolsep"></span>
+              <button class="dk-iconbtn" aria-label="Aligner à gauche"><svg><use href="#i-align-left"/></svg></button><button class="dk-iconbtn" aria-label="Centrer"><svg><use href="#i-align-center"/></svg></button><button class="dk-iconbtn dk-iconbtn--active" aria-label="Aligner à droite"><svg><use href="#i-align-right"/></svg></button></div></div>
+            <div class="field"><span class="field__lbl">Taille</span><div class="step"><button class="dk-iconbtn" aria-label="Réduire"><svg><use href="#i-minus"/></svg></button><output>13</output><button class="dk-iconbtn" aria-label="Agrandir"><svg><use href="#i-plus"/></svg></button></div></div>
+            <div class="field"><span class="field__lbl">Couleur du texte</span><div class="row">
+              <button class="sw sw--t1 sw--sel" aria-label="Texte par défaut"></button><button class="sw sw--t2" aria-label="Encre"></button><button class="sw sw--t3" aria-label="Rouge"></button><button class="sw sw--t4" aria-label="Vert"></button><button class="sw sw--t5" aria-label="Ambre"></button><button class="sw sw--t6" aria-label="Cyan"></button></div></div>
+          </div>
+
+          <div class="panel p-num">
+            <div class="field"><span class="field__lbl">Format</span>
+              <div class="seg" role="group" aria-label="Format de nombre"><button aria-pressed="false">Standard</button><button aria-pressed="true">Nombre</button><button aria-pressed="false">%</button><button aria-pressed="false">€</button><button aria-pressed="false">Date</button></div>
+              <div class="sample">Aperçu : <b>3 200</b> devient <b>320 000 %</b> en pourcentage</div></div>
+            <div class="field"><span class="field__lbl">Décimales</span><div class="step"><button class="dk-iconbtn" aria-label="Moins de décimales"><svg><use href="#i-minus"/></svg></button><output>0</output><button class="dk-iconbtn" aria-label="Plus de décimales"><svg><use href="#i-plus"/></svg></button></div></div>
+            <div class="field"><div class="switch switch--on"><span>Séparateur de milliers</span><i aria-hidden="true"></i></div></div>
+          </div>
+
+          <div class="panel p-data">
+            <div class="field"><span class="field__lbl">Trier la colonne B</span><div class="seg"><button>A → Z</button><button>Z → A</button></div></div>
+            <div class="field"><button class="bigbtn"><svg><use href="#i-sigma-function"/></svg>Somme rapide<span class="dk-kbd">Alt+=</span></button>
+              <button class="bigbtn"><svg><use href="#i-filter-list"/></svg>Filtrer la colonne</button></div>
+            <div class="field"><span class="field__lbl">Cellule vivante</span><div class="seg"><button>Courbe</button><button>Barres</button><button>Tendance</button></div></div>
+          </div>
+
+          <details class="adv dk-section">
+            <summary class="dk-section__head"><svg class="dk-section__chev" viewBox="0 0 24 24"><use href="#i-nav-arrow-down"/></svg>Avancé<span class="x-tag" title="Caché, pour qui sait">N3</span></summary>
+            <div class="dk-section__body">
+              <button class="bigbtn"><svg><use href="#i-snow"/></svg>Figer lignes et colonnes</button>
+              <button class="bigbtn"><svg><use href="#i-fill-color"/></svg>Mise en forme conditionnelle</button>
+              <button class="bigbtn"><svg><use href="#i-lock"/></svg>Validation des données</button>
+              <button class="bigbtn"><svg><use href="#i-text"/></svg>Palette de commandes<span class="dk-kbd">Ctrl+K</span></button>
+            </div>
+          </details>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="x-notes">
+    <section class="x-card"><h2>Niveaux</h2><ul>
+      <li><span class="x-tag">N1</span> visible d'emblée : titre, enregistrer, annuler/rétablir, Format, formule, grille, feuilles.</li>
+      <li><span class="x-tag">N2</span> un clic de plus : inspecteur (4 onglets).</li>
+      <li><span class="x-tag">N3</span> caché : section Avancé, raccourcis, palette Ctrl+K.</li></ul></section>
+    <section class="x-card"><h2>Clics par tâche</h2><table>
+      <tr><th>Tâche</th><th>Clics</th><th>Chemin</th></tr>
+      <tr><td>Formater en %</td><td>3</td><td>Format, Nombre, % (2 si l'inspecteur est ouvert et mémorisé sur Nombre)</td></tr>
+      <tr><td>Ajouter une feuille</td><td>1</td><td>Bouton + des onglets (Ctrl+N : 0)</td></tr>
+      <tr><td>Enregistrer</td><td>1</td><td>Disquette de la barre (Ctrl+S : 0)</td></tr></table></section>
+  </div>
+</main>
+
+<script>
+/* Remplit la grille Budget (8 lignes) et la barre d'état ; le reste est du CSS pur. */
+(function () {
+  var mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août'];
+  var rev = [3000, 3200, 3100, 3400, 3300, 3600, 3500, 3800];
+  var dep = [2400, 2600, 2900, 2700, 3100, 2800, 3300, 3000];
+  var fmt = function (n) { return n.toLocaleString('fr-FR'); };
+  var solde = rev.map(function (r, i) { return r - dep[i]; });
+  var cols = ['A', 'B', 'C', 'D', 'E', 'F'];
+  var html = '<div class="dk-header dk-header--row" style="height:var(--col-header-h)"></div>';
+  cols.forEach(function (c) {
+    var sel = (c === 'B' || c === 'C') ? ' x-hs' : '', a = c === 'A' ? ' x-ha' : '';
+    html += '<div class="dk-header' + sel + a + '" role="columnheader">' + c + '</div>';
+  });
+  var spark = (function () { /* points de la courbe SPARKLINE(D2:D9) */
+    var mn = Math.min.apply(null, solde), mx = Math.max.apply(null, solde);
+    return solde.map(function (v, i) { return (i * 100 / 7).toFixed(1) + ',' + (18 - (v - mn) / (mx - mn) * 16 - 1).toFixed(1); }).join(' ');
+  })();
+  for (var r = 1; r <= 12; r++) {
+    var rs = (r >= 3 && r <= 5) ? ' x-hs' : '';
+    html += '<div class="dk-header dk-header--row' + rs + '" role="rowheader">' + r + '</div>';
+    cols.forEach(function (c, ci) {
+      var cls = 'dk-cell', v = '';
+      var i = r - 2; /* index de donnée (ligne 2 = Janvier) */
+      if (r === 1) { cls += ' x-hd'; v = ['Mois', 'Revenus', 'Dépenses', 'Solde', 'Tendance'][ci] || ''; if (ci > 0 && ci < 4) cls += ' dk-cell--num'; }
+      else if (i >= 0 && i < 8) {
+        if (ci === 0) v = mois[i]; else if (ci === 1) { v = fmt(rev[i]); cls += ' dk-cell--num'; }
+        else if (ci === 2) { v = fmt(dep[i]); cls += ' dk-cell--num'; }
+        else if (ci === 3) { v = fmt(solde[i]); cls += ' dk-cell--num'; }
+        else if (ci === 4 && r === 2) { cls += ' x-spark'; v = '<svg viewBox="0 0 100 18" preserveAspectRatio="none" aria-label="Tendance du solde"><polyline points="' + spark + '"/></svg>'; }
+      }
+      if (r === 2 && ci === 3) cls += ' x-dep';
+      if (ci === 1 || ci === 2) { if (r >= 3 && r <= 5) cls += ' x-r'; }
+      if (r === 1 && ci === 0) cls += ' x-a1';
+      if (r === 3 && ci === 1) cls += ' x-b3';
+      html += '<div class="' + cls + '" role="gridcell"' + (r === 2 && ci === 3 ? ' title="=B2-C2"' : '') + '>' + v + '</div>';
+    });
+  }
+  document.getElementById('grid').innerHTML = html;
+  var sel = [3200, 3100, 3400, 2600, 2900, 2700], s = sel.reduce(function (a, b) { return a + b; }, 0);
+  document.getElementById('status').innerHTML = '<span>Somme ' + fmt(s) + '</span><span>Moyenne ' + fmt(Math.round(s / 6)) + '</span><span>6 cellules</span>';
+})();
+</script>
+</body>
+</html>
