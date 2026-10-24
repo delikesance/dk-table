@@ -1,4 +1,5 @@
 import { cycleRefIn } from "../grid/refcycle";
+import { attachFnComplete } from "../formula/fnPopup";
 
 /** Formula bar callbacks. */
 export interface FormulaBarOpts {
@@ -23,7 +24,8 @@ function mkInput(cls: string, label: string): HTMLInputElement {
 
 /**
  * Builds name box + fx input in `host`. Name box: type a key/range, Enter jumps
- * (invalid text reverts), Esc reverts. fx: Enter commits, Esc reverts, F4 cycles $ on the reference at the caret.
+ * (invalid text reverts), Esc reverts. fx: Enter commits, Esc reverts, F4 cycles $ on the reference at the caret;
+ * the function popup (`formula/fnPopup.ts`) takes Enter/Tab/arrows/Esc first while its list is open.
  */
 export function createFormulaBar(host: HTMLElement, opts: FormulaBarOpts): FormulaBar {
   const el = document.createElement("div");
@@ -42,6 +44,7 @@ export function createFormulaBar(host: HTMLElement, opts: FormulaBarOpts): Formu
       if (REF.test(t)) opts.onGoto(t); else name.value = key;
     } else if (e.key === "Escape") { name.value = key; }
   });
+  attachFnComplete(fx);
   fx.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); raw = fx.value; opts.onCommit(fx.value); }
     else if (e.key === "Escape") { fx.value = raw; }
