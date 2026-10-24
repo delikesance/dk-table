@@ -9,7 +9,8 @@ const fakeApp = () => ({
   undo: vi.fn(), redo: vi.fn(), style: vi.fn(), activeStyle: () => ({}), addSheet: vi.fn(),
   sortColumn: vi.fn(), toggleSidebar: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["A1"],
   borders: vi.fn(), insertRows: vi.fn(), insertCols: vi.fn(), deleteRows: vi.fn(), deleteCols: vi.fn(),
-  setFreeze: vi.fn(), selection: () => "C3", activeDoc: () => ({ id: "s", name: "S", cols: 26, rows: 100, cells: {} }),
+  setFreeze: vi.fn(), selection: () => "C3", cfRules: () => [], setCfRules: vi.fn(),
+  activeDoc: () => ({ id: "s", name: "S", cols: 26, rows: 100, cells: {} }),
 }) as unknown as App;
 const deps = (macros: { id: string; name: string }[] = []): MenuDeps => ({
   file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(), onExportFec: vi.fn() },
@@ -72,6 +73,10 @@ describe("contenu des menus", () => {
     expect(f[i + 1].label).toBe("Exporter FEC…");
     f[i + 1].run!();
     expect(d.file.onExportFec).toHaveBeenCalled();
+  });
+  it("Format > Formatage conditionnel… ouvre le gestionnaire de règles", () => {
+    items(buildMenuSpec(fakeApp(), deps()), "Format").find((e) => e.label === "Formatage conditionnel…")!.run!();
+    expect(document.querySelector('.dk-dialog[data-id="cf"] h2')!.textContent).toBe("Formatage conditionnel");
   });
   it("Fichier > Paramètres… (Ctrl+,)", () => {
     const d = deps();

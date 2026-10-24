@@ -4,6 +4,7 @@
  * all move together; the whole operation is ONE undo step.
  */
 import { applyEdit, moveKeys, type StructEdit } from "../engine/structure";
+import { shiftRules } from "../engine/cf/structure";
 import { buildSheet, pushUndo } from "./model";
 import { parseKey } from "./grid/keys";
 import { buildGrid, viewOf } from "./appGrid";
@@ -52,6 +53,7 @@ export function structOp(c: Ctx, op: StructOp): void {
   const snap = Object.fromEntries(Object.entries(next).map(([k, raw]) => [k, { raw }]));
   c.cur.sheet = buildSheet(snap, c.cur.sheet.cols, c.cur.sheet.rows);
   c.cur.styles = moveKeys(c.cur.styles, e);
+  c.cur.cf = shiftRules(c.cur.cf, e);
   if (e.axis === "col") {
     const v = viewOf(c.cur);
     v.widths = shiftCols(v.widths, e);

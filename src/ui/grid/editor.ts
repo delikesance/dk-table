@@ -1,5 +1,6 @@
 /** Inline cell editor: textarea creation and key/blur handling, decoupled from the grid state. */
 import { cycleRefIn } from "./refcycle";
+import { attachFnComplete } from "../formula/fnPopup";
 
 const MOVES: Record<string, [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
@@ -23,6 +24,7 @@ export interface Editor { input: HTMLTextAreaElement; typed: boolean }
  * Enter/Tab commit and move, Ctrl+Enter commits into the whole selection, Alt+Enter inserts a line break,
  * F4 cycles $ on the reference at the caret, Escape cancels, arrows commit+move only when the user typed;
  * other Ctrl/Meta combos are left to bubble up to document; blur commits.
+ * The function popup (`formula/fnPopup.ts`) is attached first so its list takes arrows/Enter/Tab/Escape while open.
  */
 export function openEditor(el: HTMLElement, value: string, typed: boolean, h: EditorHandlers): Editor {
   const input = document.createElement("textarea");
@@ -31,10 +33,13 @@ export function openEditor(el: HTMLElement, value: string, typed: boolean, h: Ed
   input.spellcheck = false;
   input.value = value;
   el.replaceChildren(input);
-  input.addEventListener("keydown", (e) => onEditorKey(e, input, typed, h));
-  input.addEventListener("blur", () => h.end(true, false));
   input.focus();
   if (!typed) input.select();
+  const fns = attachFnComplete(input);
+  const end = h.end;
+  h = { ...h, end: (commit, refocus) => { fns.destroy(); end(commit, refocus); } };
+  input.addEventListener("keydown", (e) => onEditorKey(e, input, typed, h));
+  input.addEventListener("blur", () => h.end(true, false));
   return { input, typed };
 }
 

@@ -1,6 +1,7 @@
 /** Workbook model: sheets with per-sheet styles and undo/redo snapshot stacks. */
 import { bindWorkbook, createSheet, setCell, type Sheet } from "../engine/sheet";
 import type { CellStyle, DocSheet } from "../io/types";
+import type { CfRule } from "../engine/cf/types";
 
 /** Visual/format style of one cell (persisted in .dktable; `format` = number-format code). */
 export type { CellStyle };
@@ -12,6 +13,8 @@ export type Snap = Record<string, { raw: string }>;
 export interface State {
   cells: Snap;
   styles: Record<string, CellStyle>;
+  /** Conditional formatting rules (absent in snapshots = none). */
+  cf?: CfRule[];
 }
 
 /** One sheet of the workbook. */
@@ -20,6 +23,8 @@ export interface Entry {
   name: string;
   sheet: Sheet;
   styles: Record<string, CellStyle>;
+  /** Conditional formatting rules by priority (persisted in .dktable, undoable). */
+  cf: CfRule[];
   undo: State[];
   redo: State[];
   /** Frozen panes (top rows / left cols), persisted in .dktable; absent = none. Not part of undo. */
@@ -55,14 +60,15 @@ export function buildSheet(cells: Snap, cols = 26, rows = 100): Sheet {
 export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
   return {
     id: doc?.id ?? uid(), name, styles: structuredClone(doc?.styles ?? {}), undo: [], redo: [],
+    cf: structuredClone(doc?.cf ?? []),
     sheet: buildSheet(doc?.cells ?? {}, doc?.cols, doc?.rows),
     ...(doc?.freeze ? { freeze: { ...doc.freeze } } : {}),
   };
 }
 
-/** Deep copy of the entry's raw cells and styles. */
+/** Deep copy of the entry's raw cells, styles and conditional formatting rules. */
 export function snapshot(e: Entry): State {
-  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles })) as State;
+  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles, cf: e.cf })) as State;
 }
 
 /** Record the current state before a change (clears redo). */
@@ -79,6 +85,7 @@ export function step(e: Entry, from: "undo" | "redo"): boolean {
   if (!snap) return false;
   dst.push(snapshot(e));
   e.styles = snap.styles;
+  e.cf = snap.cf ?? [];
   e.sheet = buildSheet(snap.cells, e.sheet.cols, e.sheet.rows);
   return true;
 }
