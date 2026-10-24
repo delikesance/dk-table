@@ -2,7 +2,7 @@ import type { Sheet } from "./types";
 
 /** Parse "B12" into 1-based {col,row}; null if malformed. No bounds check. */
 export function parseKey(key: string): { col: number; row: number } | null {
-  const m = /^([A-Za-z]{1,3})(\d+)$/.exec(key);
+  const m = /^([A-Za-z]{1,3})([1-9]\d*)$/.exec(key);
   if (!m) return null;
   let col = 0;
   for (const ch of m[1].toUpperCase()) col = col * 26 + ch.charCodeAt(0) - 64;

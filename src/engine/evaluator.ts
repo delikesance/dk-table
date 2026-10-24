@@ -1,6 +1,7 @@
+/** Formula evaluator: walks a parsed AST against a sheet and returns a Value (errors propagate as #-codes). */
 import { err, isErr, type Node, type Sheet, type Value } from "./types";
-import { expandRange, inBounds } from "./address";
-import { getFunction, type Arg } from "./functions";
+import { expandRange, inBounds, parseKey } from "./address";
+import { getFunction, wantsMatrix, type Arg } from "./functions";
 import { toBool, toNum, toText } from "./values";
 
 /** Reads the current computed value of a cell key ("" if empty). */
@@ -49,12 +50,29 @@ function binary(op: string, l: Value, r: Value): Value {
 }
 
 /** Evaluate a node to an argument: scalar, or Value[] for ranges. */
-function evalArg(n: Node, sheet: Sheet, get: Getter): Arg {
+function evalArg(n: Node, sheet: Sheet, get: Getter, matrix = false): Arg {
   if (n.t === "range") {
     const keys = expandRange(sheet, n.a, n.b);
-    return keys ? keys.map(get) : err("#REF!");
+    if (!keys) return err("#REF!");
+    const vals = keys.map(get);
+    if (!matrix) return vals;
+    const w = Math.abs(parseKey(n.a)!.col - parseKey(n.b)!.col) + 1;
+    const rows: Value[][] = [];
+    for (let i = 0; i < vals.length; i += w) rows.push(vals.slice(i, i + w));
+    return rows as unknown as Arg;
   }
   return evaluate(n, sheet, get);
+}
+
+/**
+ * IFERROR(value, if_error) / IFNA(value, if_na): lazy, the fallback is only evaluated
+ * when needed. IFERROR catches every error (incl. #CYCLE!); IFNA only #N/A.
+ */
+function lazyCatch(n: Extract<Node, { t: "call" }>, sheet: Sheet, get: Getter): Value {
+  if (n.args.length !== 2) return err("#VALUE!");
+  const v = evaluate(n.args[0], sheet, get);
+  if (!isErr(v) || (n.name === "IFNA" && v.error !== "#N/A")) return v;
+  return evaluate(n.args[1], sheet, get);
 }
 
 /** Evaluate an AST to a scalar value (a bare range is #VALUE!). */
@@ -91,9 +109,11 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
         const br = c ? n.args[1] : n.args[2];
         return br ? evaluate(br, sheet, get) : false;
       }
+      if (n.name === "IFERROR" || n.name === "IFNA") return lazyCatch(n, sheet, get);
       const fn = getFunction(n.name);
       if (!fn) return err("#NAME?");
-      return fn(n.args.map((a) => evalArg(a, sheet, get)));
+      const mx = wantsMatrix(n.name);
+      return fn(n.args.map((a) => evalArg(a, sheet, get, mx)));
     }
   }
 }

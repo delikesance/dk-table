@@ -1,4 +1,7 @@
-import { icon } from "./icons";
+/** Formatting toolbar (undo/redo, bold/italic, align, number format, fill) plus the File/Insert menus. */
+import { icon } from "../icons";
+import { createColorPicker } from "./colors";
+import { createMenus, type MenuHandlers } from "./menus";
 import "./toolbar.css";
 
 /** Horizontal alignment values. */
@@ -7,8 +10,16 @@ export type Align = "left" | "center" | "right";
 /** Action callbacks emitted by the toolbar. */
 export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
-  onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string): void;
+  onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
+  /** Text colour (null = "Aucune"). */
+  onTextColor?(color: string | null): void;
   onOpen(): void; onSave(): void;
+  /** Quick sum (Σ). */
+  onSum?(): void;
+  /** Sort the active column (N2 buttons). */
+  onSort?(desc: boolean): void;
+  /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
+  menus?: MenuHandlers;
 }
 
 /** Toolbar reflected state. */
@@ -48,6 +59,19 @@ function sep(): HTMLElement {
   return s;
 }
 
+/** Icon button + colour popover; picking (or "Aucune" -> null) closes the popover and calls `onPick`. */
+function colorControl(kind: "fill" | "text", label: string, onPick: (c: string | null) => void): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "dk-colorwrap";
+  const picker = createColorPicker({ kind, root: wrap, onPick: (c) => { picker.hidden = true; onPick(c); } });
+  picker.hidden = true;
+  wrap.prepend(mkBtn(kind === "fill" ? "fill" : "text-color", label, () => { picker.hidden = !picker.hidden; }));
+  document.addEventListener("mousedown", (e) => {
+    if (!picker.hidden && !wrap.contains(e.target as Node)) picker.hidden = true;
+  });
+  return wrap;
+}
+
 /**
  * Builds the toolbar in `host`. Actions go through `h`; reflect app state
  * back with `setState`. All controls are native buttons/inputs (Tab/Enter/Space).
@@ -66,16 +90,19 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   for (const [v, l] of FORMATS) sel.add(new Option(l, v));
   sel.addEventListener("change", () => h.onFormat(sel.value));
 
-  const fillBtn = document.createElement("label");
-  fillBtn.className = "dk-iconbtn dk-fillbtn"; fillBtn.title = "Couleur de fond"; fillBtn.innerHTML = icon("fill");
-  const color = document.createElement("input");
-  color.type = "color"; color.value = "#ffff00"; color.setAttribute("aria-label", "Couleur de fond");
-  color.addEventListener("input", () => h.onFill(color.value));
-  fillBtn.append(color);
+  // Fill / text colour: icon button + palette popover ("Aucune" -> null clears the colour).
+  const fillWrap = colorControl("fill", "Couleur de fond", h.onFill);
+  const textWrap = colorControl("text", "Couleur du texte", (c) => h.onTextColor?.(c));
 
+  // N2 (File/Import menus, extras): hidden until the chevron deploys it; N1 is always visible.
+  const n2 = document.createElement("div");
+  n2.className = "dk-toolbar__n2"; n2.hidden = true;
+  if (h.menus) n2.append(createMenus(h.menus), sep());
+  n2.append(group(mkBtn("sort-asc", "Trier A→Z", () => h.onSort?.(false)), mkBtn("sort-desc", "Trier Z→A", () => h.onSort?.(true))), sep());
   el.append(
+    n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel), sep(), group(fillBtn), sep(),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
   );
   host.append(el);

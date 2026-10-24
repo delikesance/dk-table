@@ -71,18 +71,25 @@
 .dk-toolsep { width: 1px; height: 18px; margin: 0 var(--s-2); background: var(--c-line-strong); }
 .dk-iconbtn {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-  padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text-2); cursor: pointer;
+  padding: 0; border: 0; border-radius: var(--r-md); background: transparent; color: var(--c-icon); cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
-.dk-iconbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.dk-iconbtn:hover { background: var(--c-surface-hover); color: var(--c-text); }
+.dk-icon, .dk-iconbtn svg { width: 18px; height: 18px; flex: none; color: var(--c-icon); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dk-iconbtn:hover { background: var(--c-surface-hover); }
 .dk-iconbtn:active { background: var(--c-accent-soft-2); }
-.dk-iconbtn--active { background: var(--c-accent-soft-2); color: var(--c-accent); }
+.dk-iconbtn--active { background: var(--c-accent-soft-2); }
 .dk-iconbtn:disabled { opacity: 0.4; cursor: default; background: transparent; }
 .dk-kbd {
   display: inline-block; padding: 1px 6px; border: 0.5px solid var(--c-line-strong); border-radius: var(--r-xs);
   background: var(--c-surface); color: var(--c-text-3); font: var(--fw-medium) var(--fs-xs)/1.5 var(--font-ui);
 }
+
+/* ---------- Mode minimal : barre fine + bouton de déploiement des outils ---------- */
+.dk-app__bar { display: flex; align-items: center; gap: var(--s-1); padding: var(--s-1) var(--s-3); background: var(--c-surface); border-bottom: 0.5px solid var(--c-line); }
+.dk-app__bar .dk-formula { flex: 1; min-width: 0; border-bottom: 0; background: transparent; }
+.dk-app__tools[hidden] { display: none; }
+.dk-toolstoggle .dk-icon { transition: transform var(--dur-base) var(--ease-out); }
+.dk-toolstoggle--open .dk-icon { transform: rotate(180deg); }
 
 /* ---------- Barre de formule ---------- */
 .dk-formula { display: flex; align-items: stretch; height: var(--formula-h); background: var(--c-surface); border-bottom: 0.5px solid var(--c-line); }
