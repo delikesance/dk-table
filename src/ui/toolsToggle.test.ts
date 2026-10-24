@@ -4,7 +4,7 @@ import { mount } from "./app";
 import { defaultRegistry } from "./palette/registry";
 
 let root: HTMLElement;
-const tools = () => root.querySelector<HTMLElement>(".dk-app__tools")!;
+const tools = () => root.querySelector<HTMLElement>(".dk-toolbar__n2")!;
 const side = () => root.querySelector<HTMLElement>(".dk-sidebar")!;
 const fresh = () => {
   document.body.innerHTML = '<div id="app"></div>';
@@ -16,7 +16,12 @@ const key = (k: string) =>
 
 beforeEach(() => { localStorage.clear(); fresh(); });
 
-describe("tools deployment", () => {
+describe("tools deployment (N2 only; base bar stays visible)", () => {
+  it("N1 base bar is visible on arrival", () => {
+    expect(root.querySelector<HTMLElement>(".dk-app__tools")!.hidden).toBe(false);
+    expect(root.querySelector('[data-action="bold"]')!.closest("[hidden]")).toBeNull();
+  });
+
   it("Ctrl+J toggles tools and sidebar", () => {
     key("j");
     expect(tools().hidden).toBe(false);

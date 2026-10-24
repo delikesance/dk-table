@@ -1,4 +1,4 @@
-/** Minimal-mode toggle: by default only the sheet is visible; one discreet button deploys/hides toolbar + sidebar. */
+/** Minimal-mode toggle: the base bar (N1) is always visible; one discreet button deploys/hides the N2 extras + sidebar. */
 import { icon } from "./icons";
 import type { KeyValueStore } from "../io/recents";
 
@@ -19,7 +19,7 @@ export function createToolsToggle(): HTMLButtonElement {
 }
 
 /**
- * Wire the toggle: tools (`.dk-app__tools`) and sidebar (`.dk-sidebar`) start hidden;
+ * Wire the toggle: N2 (`.dk-toolbar__n2`) and sidebar (`.dk-sidebar`) start hidden;
  * each click flips them together and updates aria/title + the `dk-app--minimal` class.
  * The state is persisted under `dk-table.tools` ("1" = deployed) in `store` and restored at install (default hidden).
  * Returns a setter so other code (palette, shortcuts) can drive the same state.
@@ -28,7 +28,7 @@ export function installToolsToggle(
   root: HTMLElement, btn: HTMLButtonElement, store: KeyValueStore | null = defaultStore(),
 ): (open: boolean) => void {
   const app = root.querySelector<HTMLElement>(".dk-app")!;
-  const tools = root.querySelector<HTMLElement>(".dk-app__tools")!;
+  const tools = root.querySelector<HTMLElement>(".dk-toolbar__n2")!;
   const side = root.querySelector<HTMLElement>(".dk-sidebar")!;
   const set = (open: boolean) => {
     tools.hidden = !open; side.hidden = !open;

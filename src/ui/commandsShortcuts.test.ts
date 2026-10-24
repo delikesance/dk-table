@@ -64,7 +64,7 @@ describe("shortcuts", () => {
     expect(app.dirty).toBe(false);
   });
   it("Ctrl+J toggles the tools, Ctrl+K opens the palette", () => {
-    const tools = root.querySelector<HTMLElement>(".dk-app__tools")!;
+    const tools = root.querySelector<HTMLElement>(".dk-toolbar__n2")!;
     const before = tools.hidden;
     key("j");
     expect(tools.hidden).toBe(!before);
@@ -112,7 +112,7 @@ describe("palette commands and clear", () => {
     expect(cell("A1").textContent).toBe("1");
   });
   it("view.tools toggles like Ctrl+J", () => {
-    const tools = root.querySelector<HTMLElement>(".dk-app__tools")!;
+    const tools = root.querySelector<HTMLElement>(".dk-toolbar__n2")!;
     const before = tools.hidden;
     run("view.tools");
     expect(tools.hidden).toBe(!before);

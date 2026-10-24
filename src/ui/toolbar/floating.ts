@@ -24,9 +24,9 @@ const ACTIONS: { id: FloatingActionId; label: string; icon?: string; text?: stri
   { id: "bold", label: "Gras", icon: "bold" },
   { id: "italic", label: "Italique", icon: "italic" },
   { id: "fill", label: "Couleur de fond", icon: "fill" },
-  { id: "text", label: "Couleur du texte", text: "A" }, // no icon in icons.ts
-  { id: "percent", label: "Format pourcentage", text: "%" }, // no icon in icons.ts
-  { id: "sum", label: "Somme rapide", text: "Σ" }, // no icon in icons.ts
+  { id: "text", label: "Couleur du texte", icon: "text-color" },
+  { id: "percent", label: "Format pourcentage", icon: "percent" },
+  { id: "sum", label: "Somme rapide", icon: "sum" },
 ];
 
 /**
@@ -53,6 +53,8 @@ export interface FloatingBar {
   hide(): void;
   /** Sets `aria-pressed` of an action button. */
   setPressed(id: FloatingActionId, on: boolean): void;
+  /** Enables/disables an action button. */
+  setDisabled(id: FloatingActionId, off: boolean): void;
 }
 
 /** Builds the bar inside `root` (hidden at first); clicks call `onAction(id)`. */
@@ -94,5 +96,6 @@ export function createFloatingBar(root: HTMLElement, onAction: (id: FloatingActi
       const b = buttons.get(id);
       if (b) { b.setAttribute("aria-pressed", String(on)); b.classList.toggle("dk-floating__btn--active", on); }
     },
+    setDisabled(id, off) { const b = buttons.get(id); if (b) b.disabled = off; },
   };
 }
