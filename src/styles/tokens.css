@@ -40,13 +40,16 @@
   --c-chrome-hover: rgba(242, 242, 242, 0.14);
   --c-chrome-active: rgba(242, 242, 242, 0.24);
 
-  /* Éditeur de code (macros Lua) : panneau bleu profond, syntaxe en nuances de papier */
+  /* Éditeur de code (macros Lua) : fond bleu profond, une teinte claire par catégorie de syntaxe */
   --c-code-bg: #0000a6;
   --c-code-text: #f2f2f2;
-  --c-code-keyword: #ffffff;
-  --c-code-string: #b3b3ff;
-  --c-code-number: #d9d9ff;
-  --c-code-comment: rgba(242, 242, 242, 0.6);
+  --c-code-keyword: #ffd166;    /* if, for, function, local... (ambre, graisse 500) */
+  --c-code-constant: #ff9ec4;   /* nil, true, false, nombres */
+  --c-code-string: #8ef0a8;
+  --c-code-builtin: #6fdcff;    /* sheet, print, string, math... */
+  --c-code-member: #c4e9ff;     /* getValue dans sheet.getValue */
+  --c-code-operator: #c9c9ff;
+  --c-code-comment: #a9a9e8;
   --c-code-error: #ffb08a;
   --c-code-selection: rgba(242, 242, 242, 0.18);
 
