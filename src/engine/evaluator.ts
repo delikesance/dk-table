@@ -1,3 +1,4 @@
+/** Formula evaluator: walks a parsed AST against a sheet and returns a Value (errors propagate as #-codes). */
 import { err, isErr, type Node, type Sheet, type Value } from "./types";
 import { expandRange, inBounds } from "./address";
 import { getFunction, type Arg } from "./functions";

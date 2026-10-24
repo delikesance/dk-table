@@ -1,3 +1,4 @@
+/** Formula tokenizer and recursive-descent parser: text "=..." to AST, plus `collectRefs` for dependency wiring. */
 import type { Node } from "./types";
 import { normKey, parseKey } from "./address";
 

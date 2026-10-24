@@ -1,3 +1,4 @@
+/** Formatting toolbar (undo/redo, bold/italic, align, number format, fill) plus the File/Insert menus. */
 import { icon } from "../icons";
 import { createMenus, type MenuHandlers } from "./menus";
 import "./toolbar.css";

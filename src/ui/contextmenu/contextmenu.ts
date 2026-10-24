@@ -20,6 +20,7 @@ export interface MenuSeparator { separator: true }
 export type MenuItem = MenuAction | MenuSeparator;
 
 const MARGIN = 8;
+/** Type guard: menu item is a separator. */
 const isSep = (i: MenuItem): i is MenuSeparator => "separator" in i;
 
 /** One open menu panel (root or submenu). */
