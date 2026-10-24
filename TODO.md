@@ -32,7 +32,7 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 ## Phase 3 : Documents (après T2.5)
 
-- [x] T3.1 Format JSON `.dktable` `{version:1,cells:{...}}`
+- [x] T3.1 Format JSON `.dktable` `{version:1,active,sheets:[{id,name,cols,rows,cells,styles?}]}`
 - [x] T3.2 Nouveau document
 - [x] T3.3 Ouvrir
 - [x] T3.4 Enregistrer / enregistrer sous
@@ -64,10 +64,12 @@ Chaque tâche : test d'abord (TDD). Le squelette (T1.x) passe en premier ; ensui
 P0 : bloquant démo
 - [ ] T5.1 Vérification visuelle réelle dans la fenêtre Tauri (`npm run tauri dev`) : créer, remplir, enregistrer, rouvrir, CSV, menu contextuel, Ctrl+K, copier-coller de plages (un seul pas d'annulation) ; corriger les bugs UI
 - [ ] Vérifier la CI : `gh run view 40112430388` (doit rester verte)
-- [ ] Script de démo 5 min : installation puis tour des fonctionnalités (cellules vivantes en final)
+- [ ] demo-5min : doc écrit (`docs/demo.md`, test `src/config/demo.test.ts`) ; reste la répétition à la main (checklist en fin de doc)
 - [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
 - [x] refonte-apple : mode minimal par défaut (feuille + barre de formule), bouton chevron `toggle-tools` déploie toolbar + sidebar, icônes Iconoir noires partout (`src/ui/icons.ts`, `--c-icon`; onglets, sidebar, menu contextuel, `composants.html`), menus Fichier + Import/Export dans la toolbar (`toolbar/menus.ts`), déploiement des outils : Ctrl+J + commande palette + état persistant `dk-table.tools`. Reste à la main : vérification visuelle (clair/sombre) dans Tauri
 - [x] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise) via `app.style({format})` ; limite connue : l option "Date" du menu est sans effet
+- [x] workflow-ux : doc `docs/workflow-ux.md` écrit (benchmark, N1/N2/N3, clics, 12 changements, décisions) + `src/config/workflowUx.test.ts`
+- [ ] workflow-ux : planifier les changements du doc §4 (barre N1 visible, Σ, tri, menu Fichier unique, toast, couleurs, filtre, redim., autosave, Ctrl+D/R, mini-barre, format Date) ; trancher les décisions §5
 
 P1 : qualité visible (beauté, praticité)
 - [x] Corriger les alertes hooks design (contraste, taille min) : fait (contraste-design, `src/styles/styles.test.ts`)
@@ -102,3 +104,4 @@ P3 : livraison
 - [x] Synthèse de recherche écrite
 - [x] 3 maquettes de pépites créées
 - [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
+- [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules

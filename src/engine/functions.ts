@@ -1,3 +1,4 @@
+/** Built-in function registry (SUM, IF, ...) and `registerFunction` for plug-ins such as the live-cell charts. */
 import { err, isErr, type Value } from "./types";
 import { toNum, toText } from "./values";
 

@@ -13,6 +13,7 @@ import type { App } from "./appTypes";
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
   Object.keys(styles).length ? structuredClone(styles) : undefined;
 
+/** Build a recent-file entry (display name = basename) from a path. */
 const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\\/]/).pop() ?? path });
 
 /** Create the App handle; widgets are read lazily from `c` so order of creation is free. */
@@ -26,6 +27,11 @@ export function createApi(c: Ctx): App {
     edit(key, raw) {
       pushUndo(c.cur);
       setCell(c.cur.sheet, key, raw);
+      touch(c);
+    },
+    editMany(cells) {
+      pushUndo(c.cur);
+      for (const [k, raw] of Object.entries(cells)) setCell(c.cur.sheet, k, raw);
       touch(c);
     },
     undo() { if (step(c.cur, "undo")) { buildGrid(c); setTitle(c, true); } },
@@ -70,8 +76,8 @@ export function createApi(c: Ctx): App {
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},
     toggleSidebar: () => c.sidebar.toggle(),
     insertFunction(name) {
-      const raw = getRaw(c.cur.sheet, firstKey(c));
-      app.edit(firstKey(c), raw.startsWith("=") ? `${raw}${name}(` : `=${name}(`);
+      const key = firstKey(c);
+      if (getRaw(c.cur.sheet, key) === "") app.edit(key, `=${name}()`);
     },
     recents: () => c.recents,
     addRecent(path) {

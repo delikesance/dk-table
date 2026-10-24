@@ -1,4 +1,5 @@
 /** CSV import/export as pure functions (RFC 4180 quoting, `,` or `;`). */
+import { createSheet, getDisplay, setCell } from "../engine/sheet";
 import type { DocSheet } from "./types";
 
 /** Supported field delimiters. */
@@ -28,15 +29,30 @@ function quote(v: string, d: Delimiter): string {
   return /["\r\n]/.test(v) || v.includes(d) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
-/** Exports the bounding box of non-empty cells as CSV (CRLF rows). */
-export function toCsv(sheet: DocSheet, delimiter: Delimiter = ","): string {
+/** Cell text getter used by `toCsv`: (ref, raw) -> exported text. */
+export type ValueFn = (ref: string, raw: string) => string;
+
+/** Default getter: formulas export their computed (unformatted) value, others their raw text. */
+function engineValues(sheet: DocSheet): ValueFn {
+  const s = createSheet();
+  s.cols = Math.max(sheet.cols, 26);
+  s.rows = Math.max(sheet.rows, 100);
+  for (const [k, c] of Object.entries(sheet.cells)) setCell(s, k, c.raw);
+  return (ref, raw) => (raw.startsWith("=") ? getDisplay(s, ref) : raw);
+}
+
+/**
+ * Exports the bounding box of non-empty cells as CSV (CRLF rows).
+ * `value` is injectable; by default formulas are exported as computed values.
+ */
+export function toCsv(sheet: DocSheet, delimiter: Delimiter = ",", value: ValueFn = engineValues(sheet)): string {
   const grid = new Map<string, string>();
   let maxC = -1;
   let maxR = -1;
   for (const [ref, cell] of Object.entries(sheet.cells)) {
     const p = parseRef(ref);
     if (!p || cell.raw === "") continue;
-    grid.set(`${p[0]},${p[1]}`, cell.raw);
+    grid.set(`${p[0]},${p[1]}`, value(ref, cell.raw));
     maxC = Math.max(maxC, p[0]);
     maxR = Math.max(maxR, p[1]);
   }
@@ -89,7 +105,8 @@ export function fromCsv(text: string, delimiter?: Delimiter): CsvSheet {
   rows.forEach((fields, r) => {
     cols = Math.max(cols, fields.length);
     fields.forEach((v, c) => {
-      if (v !== "") cells[`${colName(c)}${r + 1}`] = { raw: v };
+      // A leading "=" is never a formula on import (CSV injection): apostrophe forces text.
+      if (v !== "") cells[`${colName(c)}${r + 1}`] = { raw: v.startsWith("=") ? `'${v}` : v };
     });
   });
   return { cols, rows: Math.max(1, rows.length), cells };

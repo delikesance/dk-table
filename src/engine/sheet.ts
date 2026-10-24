@@ -1,3 +1,4 @@
+/** Public sheet API: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues with automatic recalculation. */
 import type { Sheet, Value } from "./types";
 import { isErr } from "./types";
 import { expandRange, inBounds, normKey } from "./address";

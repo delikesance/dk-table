@@ -35,5 +35,6 @@ export const firstKey = (c: Ctx): string => c.grid.getSelection().split(":")[0];
 
 /** Update the window title with the file name and a dirty marker. */
 export function setTitle(c: Ctx, dirty: boolean): void {
+  c.app.dirty = dirty;
   document.title = `${c.app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${dirty ? " •" : ""} — dk-table`;
 }

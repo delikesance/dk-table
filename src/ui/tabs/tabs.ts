@@ -1,3 +1,4 @@
+/** Sheet tab strip: select, add, rename and keyboard navigation of tabs. */
 import "./tabs.css";
 import { icon } from "../icons";
 

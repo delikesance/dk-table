@@ -7,16 +7,40 @@ async function guard(fn: () => Promise<void>): Promise<void> {
   try { await fn(); } catch (e) { window.alert(`Erreur : ${e instanceof Error ? e.message : String(e)}`); }
 }
 
-/** Open a .dktable chosen by the user. */
+let confirmFn: (msg: string) => boolean = (m) => window.confirm(m);
+
+/** Replace the confirmation dialog (tests; default window.confirm). */
+export function setConfirm(fn: (msg: string) => boolean): void { confirmFn = fn; }
+
+/** True when it is safe to replace the workbook (clean, or user agreed). */
+function okToDiscard(app: App): boolean {
+  return !app.dirty || confirmFn("Des modifications non enregistrées seront perdues. Continuer ?");
+}
+
+/** "Nouveau": reset to an empty one-sheet workbook (confirms if unsaved changes). */
+export function newDocument(app: App): void {
+  if (!okToDiscard(app)) return;
+  app.loadDoc({ version: 1, active: "s1", sheets: [{ id: "s1", name: "Feuille 1", cols: 26, rows: 100, cells: {} }] });
+}
+
+/** Warn on window close/reload while the workbook has unsaved changes. */
+export function installUnloadGuard(app: App): void {
+  window.addEventListener("beforeunload", (e) => {
+    if (app.dirty) { e.preventDefault(); e.returnValue = ""; }
+  });
+}
+
+/** Open a .dktable chosen by the user (confirms if unsaved changes). */
 export const openFile = (app: App) => guard(async () => {
   const r = await openDocument();
-  if (!r) return;
+  if (!r || !okToDiscard(app)) return;
   app.loadDoc(r.doc, r.path);
   app.addRecent(r.path);
 });
 
-/** Open a known path (recent files). */
+/** Open a known path (recent files; confirms if unsaved changes). */
 export const openRecent = (app: App, path: string) => guard(async () => {
+  if (!okToDiscard(app)) return;
   app.loadDoc(await openPath(path), path);
   app.addRecent(path);
 });
@@ -34,7 +58,7 @@ export const saveFile = (app: App, as = false) => guard(async () => {
 export const importCsv = (app: App) => guard(async () => {
   const r = await importCsvFile();
   if (!r) return;
-  const name = r.path.split(/[\/]/).pop()?.replace(/\.[^.]+$/, "") ?? "CSV";
+  const name = r.path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, "") ?? "CSV";
   app.importSheet(name, r.sheet);
 });
 
