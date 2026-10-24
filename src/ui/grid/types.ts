@@ -1,7 +1,18 @@
 /** Public types of the grid component. */
 
+/**
+ * View state owned by the caller so it survives grid rebuilds (not persisted in files):
+ * custom column widths in px and column filters (selected display values per column).
+ */
+export interface GridView {
+  widths: Record<number, number>;
+  filters: Record<number, string[]>;
+}
+
 /** Options for createGrid. */
 export interface GridOptions {
+  /** Mutable view state (column widths, filters); the grid keeps a private one when omitted. */
+  view?: GridView;
   cols: number;
   rows: number;
   /** Text shown in a cell (formula result). */

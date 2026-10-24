@@ -7,14 +7,15 @@ import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
 import { ROW_H, scrollToRow } from "./virtual";
 import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
+import { bindKeys } from "./gridKeys";
+import { fillPlan } from "./fill";
+import { createFilterCtl } from "./gridFilter";
+import { stepRow } from "./filterView";
 import { openEditor, type Editor } from "./editor";
+import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 
 export type { Grid, GridOptions } from "./types";
-
-const MOVES: Record<string, [number, number]> = {
-  ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-};
 
 /** Build the grid inside `host` and return its API. */
 export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
@@ -27,10 +28,19 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const root = document.createElement("div");
   root.className = "dkg";
   root.tabIndex = 0;
-  root.style.gridTemplateColumns = `var(--row-header-w) repeat(${cols}, var(--cell-w))`;
-  root.style.gridTemplateRows = `var(--col-header-h) repeat(${rows}, ${ROW_H}px)`;
+  const view = opts.view ?? { widths: {}, filters: {} };
+  const applyWidths = (): void => { root.style.gridTemplateColumns = templateColumns(view.widths, cols); };
+  applyWidths();
   const colHeads = addHeaders(root, cols);
   host.appendChild(root);
+  addResizers(colHeads, {
+    view, apply: applyWidths,
+    columnTexts: (c) => Array.from({ length: rows }, (_, r) => opts.getDisplay(keyOf(c, r))),
+  });
+  const ctl = createFilterCtl(root, colHeads, rows, view, (c, r) => opts.getDisplay(keyOf(c, r)), () => {
+    if (ctl.hidden(active.row)) { active = { col: active.col, row: stepRow(ctl.order(), active.row, 1, rows, false) }; anchor = active; }
+    render();
+  });
   const win = createRowWindow(root, cols, rows, (k, el) => opts.onCellCreated?.(k, el));
   const cells = win.cells;
 
@@ -83,7 +93,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Recompute the rendered row window; paint new rows, forget removed ones. */
   function sync(): void {
-    const { added, removed } = win.sync(editor ? active.row : undefined);
+    const { added, removed } = win.sync(editor ? active.row : undefined, ctl.order());
     for (const r of removed) for (let c = 0; c < cols; c++) sigs.delete(keyOf(c, r));
     for (const r of added) for (let c = 0; c < cols; c++) paint(keyOf(c, r));
     if (added.length || removed.length) mark();
@@ -91,7 +101,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Scroll the active row into view, refresh the window and highlights, then notify. */
   function render(notify = true): void {
-    const st = scrollToRow(active.row, root.scrollTop, root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H);
+    const st = scrollToRow(Math.max(0, ctl.index(active.row)), root.scrollTop, root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H);
     if (st !== root.scrollTop) root.scrollTop = st;
     sync();
     mark();
@@ -102,8 +112,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Move the cursor (extending the range when `extend`). */
   function move(dc: number, dr: number, extend = false, jump = false): void {
-    active = clamp(jump ? { col: dc ? (dc < 0 ? 0 : cols - 1) : active.col, row: dr ? (dr < 0 ? 0 : rows - 1) : active.row }
-      : { col: active.col + dc, row: active.row + dr });
+    active = clamp({
+      col: jump && dc ? (dc < 0 ? 0 : cols - 1) : active.col + dc,
+      row: dr ? stepRow(ctl.order(), active.row, dr, rows, jump) : active.row,
+    });
     if (!extend) anchor = active;
     render();
   }
@@ -128,17 +140,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (refocus) root.focus();
   }
 
-  root.addEventListener("keydown", (e) => {
-    if (editor) return;
-    const m = MOVES[e.key];
-    if (m) { e.preventDefault(); move(m[0], m[1], e.shiftKey, e.ctrlKey || e.metaKey); }
-    else if (e.key === "Tab") { e.preventDefault(); move(e.shiftKey ? -1 : 1, 0); }
-    else if (e.key === "Enter") { e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
-    else if (e.key === "F2") { e.preventDefault(); startEdit(); }
-    else if (e.key === "Delete" || e.key === "Backspace") {
-      e.preventDefault();
-      rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); });
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); startEdit(e.key); }
+  bindKeys(root, {
+    busy: () => !!editor, move, startEdit,
+    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
+    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
   });
 
   root.addEventListener("mousedown", (e) => {
@@ -182,6 +187,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     },
     focus: () => root.focus(),
     destroy() {
+      ctl.close();
       document.removeEventListener("mouseup", onMouseUp);
       editor = null;
       root.remove();
