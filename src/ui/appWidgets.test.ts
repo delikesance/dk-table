@@ -71,13 +71,13 @@ describe("file menus -> fileops", () => {
     expect(files.saveAs).toHaveBeenCalled();
     expect(app.path).toBe("/as.dktable");
   });
-  it("Importer un CSV adds a sheet named after the file", async () => {
-    menuItem("Importer un CSV").click();
+  it("Importer CSV adds a sheet named after the file", async () => {
+    menuItem("Importer CSV").click();
     await flush();
     expect(app.sheets().map((s) => s.name)).toEqual(["Feuille 1", "data"]);
   });
-  it("Exporter en CSV exports the active sheet", async () => {
-    menuItem("Exporter en CSV").click();
+  it("Exporter CSV exports the active sheet", async () => {
+    menuItem("Exporter CSV").click();
     await flush();
     expect(files.exportCsvFile).toHaveBeenCalledTimes(1);
   });
