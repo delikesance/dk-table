@@ -4,6 +4,7 @@ import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
 import { openMacroDialog } from "../macros/dialog";
 import { autosum } from "./autosum";
+import { BORDER_LABELS } from "./borders";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
@@ -18,6 +19,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     y: () => app.redo(),
     b: () => app.style({ bold: !app.activeStyle().bold }),
     i: () => app.style({ italic: !app.activeStyle().italic }),
+    u: () => app.style({ underline: !app.activeStyle().underline }),
     o: () => void openFile(app),
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => newDocument(app),
@@ -86,6 +88,9 @@ export function installCommands(app: App): void {
   run("edit.redo", "Rétablir", () => app.redo(), "Ctrl+Y");
   run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
+  run("format.underline", "Souligné", () => app.style({ underline: !app.activeStyle().underline }), "Ctrl+U");
+  run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
+  for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
   run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
@@ -121,8 +126,8 @@ export function installCommands(app: App): void {
     const k = e.key === "=" && e.shiftKey ? "+" : e.key.toLowerCase();
     const fn = map[k];
     if (!fn) return;
-    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing; Ctrl+J (tools) and Ctrl+Maj+= / Ctrl+- (rows) are ignored there too.
-    if (inTextField(e.target) && "zybij+-".includes(k)) return;
+    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold/underline while editing; Ctrl+J (tools) and Ctrl+Maj+= / Ctrl+- (rows) are ignored there too.
+    if (inTextField(e.target) && "zybiuj+-".includes(k)) return;
     e.preventDefault();
     fn(e);
   };

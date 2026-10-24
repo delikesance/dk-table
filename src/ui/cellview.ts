@@ -2,6 +2,7 @@
 import { getRaw, getRangeValues, type Sheet } from "../engine/sheet";
 import { liveResult } from "../engine/live/adapter";
 import type { CellStyle } from "./model";
+import "./cellview.css";
 
 const ALIGN = { left: "flex-start", center: "center", right: "flex-end" } as const;
 
@@ -15,6 +16,12 @@ export function paintStyle(host: HTMLElement, key: string, s: CellStyle = {}): v
   el.style.justifyContent = s.align ? ALIGN[s.align] : ""; // cells are flex: text-align alone is ignored
   el.style.background = s.fill ?? "";
   el.style.color = s.color ?? "";
+  el.style.textDecoration = s.underline ? "underline" : "";
+  el.style.whiteSpace = s.wrap ? "normal" : ""; // grid row height is fixed: overflow stays hidden
+  el.classList.toggle("dk-wrap", !!s.wrap);
+  const edges = (["t", "r", "b", "l"] as const).filter((e) => s.borders?.[e]).join("");
+  if (edges) el.dataset.borders = edges; // drawn by cellview.css (::after), keeps the cursor box-shadow intact
+  else el.removeAttribute("data-borders");
 }
 
 /** Grid renderCell hook: live-function html (SPARKLINE/BAR/TREND) or null for plain text. */
