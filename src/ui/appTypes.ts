@@ -64,4 +64,6 @@ export interface App {
   deleteCols(): void;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
+  /** Freeze the top `rows` rows / left `cols` columns of the active sheet (0,0 = unfreeze); persisted, not undoable. */
+  setFreeze(f: { rows: number; cols: number }): void;
 }

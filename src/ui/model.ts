@@ -22,6 +22,8 @@ export interface Entry {
   styles: Record<string, CellStyle>;
   undo: State[];
   redo: State[];
+  /** Frozen panes (top rows / left cols), persisted in .dktable; absent = none. Not part of undo. */
+  freeze?: { rows: number; cols: number };
 }
 
 const MAX_UNDO = 100;
@@ -54,6 +56,7 @@ export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
   return {
     id: doc?.id ?? uid(), name, styles: structuredClone(doc?.styles ?? {}), undo: [], redo: [],
     sheet: buildSheet(doc?.cells ?? {}, doc?.cols, doc?.rows),
+    ...(doc?.freeze ? { freeze: { ...doc.freeze } } : {}),
   };
 }
 
