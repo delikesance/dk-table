@@ -26,8 +26,11 @@ export function bindKeys(root: HTMLElement, h: KeyHooks): void {
     if (m) { e.preventDefault(); h.move(m[0], m[1], e.shiftKey, mod); }
     else if (mod && !e.altKey && (e.key === "d" || e.key === "r")) { e.preventDefault(); h.fill(e.key === "d" ? "down" : "right"); }
     else if (e.key === "Tab") { e.preventDefault(); h.move(e.shiftKey ? -1 : 1, 0); }
-    else if (e.key === "Enter") { e.preventDefault(); h.move(0, e.shiftKey ? -1 : 1); }
-    else if (e.key === "F2") { e.preventDefault(); h.startEdit(); }
+    else if (e.key === "Enter" || e.key === "F2") { // Enter/F2 edit; Shift+Enter moves up; Ctrl/Alt ignored
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault();
+      if (e.shiftKey && e.key === "Enter") h.move(0, -1); else h.startEdit();
+    }
     else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); h.clear(); }
     else if (e.key.length === 1 && !mod && !e.altKey) { e.preventDefault(); h.startEdit(e.key); }
   });
