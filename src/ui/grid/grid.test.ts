@@ -38,10 +38,12 @@ beforeEach(() => {
 });
 
 describe("createGrid", () => {
-  it("renders headers and 26x100 cells showing display values", () => {
-    expect(host.querySelectorAll(".dkg-cell").length).toBe(2600);
+  it("renders headers and a window of rows showing display values", () => {
+    const rows = host.querySelectorAll(".dkg-rowh").length;
+    expect(rows).toBeGreaterThan(0);
+    expect(rows).toBeLessThanOrEqual(100);
+    expect(host.querySelectorAll(".dkg-cell").length).toBe(rows * 26);
     expect(host.querySelectorAll(".dkg-colh").length).toBe(26);
-    expect(host.querySelectorAll(".dkg-rowh").length).toBe(100);
     expect(cell("B1").textContent).toBe("2");
     expect(host.querySelector(".dkg-colh")!.textContent).toBe("A");
   });
@@ -64,7 +66,19 @@ describe("createGrid", () => {
     key(root(), "ArrowDown"); expect(grid.getSelection()).toBe("B2");
     key(root(), "Tab"); expect(grid.getSelection()).toBe("C2");
     key(root(), "Tab", { shiftKey: true }); expect(grid.getSelection()).toBe("B2");
-    key(root(), "Enter"); expect(grid.getSelection()).toBe("B3");
+    key(root(), "Enter", { shiftKey: true }); expect(grid.getSelection()).toBe("B1");
+  });
+  it("Enter on a non-edited cell opens it in edit mode (like F2); modifiers ignored", () => {
+    grid.select("B1");
+    key(root(), "Enter", { ctrlKey: true });
+    key(root(), "Enter", { altKey: true });
+    expect(input()).toBeNull();
+    key(root(), "Enter");
+    expect(input()!.value).toBe("=A1*2");
+    expect(grid.getSelection()).toBe("B1");
+    key(input()!, "Enter");
+    expect(input()).toBeNull();
+    expect(grid.getSelection()).toBe("B2");
   });
   it("shift+arrow extends range", () => {
     grid.select("A1");
@@ -129,6 +143,13 @@ describe("createGrid", () => {
     expect(onEdit).toHaveBeenCalledWith("C6", "c");
     expect(onEdit).toHaveBeenCalledWith("D6", "d");
   });
+  it("cut puts TSV on the clipboard and clears the range", () => {
+    grid.select("A1");
+    key(root(), "ArrowRight", { shiftKey: true });
+    expect(clip("cut", "")).toBe("1	=A1*2");
+    expect(onEdit).toHaveBeenCalledWith("A1", "");
+    expect(onEdit).toHaveBeenCalledWith("B1", "");
+  });
   it("refresh updates display; renderCell hook overrides content", () => {
     raw.A1 = "9";
     grid.refresh(["A1"]);
@@ -146,5 +167,28 @@ describe("createGrid", () => {
     expect(h2.querySelector('[data-key="A1"] .spark')).not.toBeNull();
     expect(h2.querySelector('[data-key="B1"]')!.textContent).toBe("t");
     g2.refresh();
+  });
+});
+
+describe("incremental refresh", () => {
+  it("re-renders only changed cells (edited + dependent)", () => {
+    const g = createGrid(host, {
+      cols: 26, rows: 100,
+      getDisplay: (k) => (k === "B1" ? String(Number(raw.A1) * 2) : raw[k] ?? ""),
+      getRaw: (k) => raw[k] ?? "",
+      onEdit: (k, v) => { raw[k] = v; },
+    });
+    const hosts = host.querySelectorAll(".dkg");
+    const mo = new MutationObserver(() => {});
+    mo.observe(hosts[hosts.length - 1], { subtree: true, childList: true, characterData: true });
+    const touched = () => new Set(mo.takeRecords().map((r) => (r.target as Node).parentElement?.closest(".dkg-cell") ?? r.target)
+      .map((n) => (n as HTMLElement).dataset?.key));
+    mo.takeRecords();
+    g.refresh();
+    expect(touched().size).toBe(0);
+    raw.A1 = "5";
+    g.refresh();
+    expect([...touched()].sort()).toEqual(["A1", "B1"]);
+    expect(host.querySelectorAll(".dkg")[hosts.length - 1].querySelector('[data-key="B1"]')!.textContent).toBe("10");
   });
 });

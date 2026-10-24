@@ -1,4 +1,6 @@
+/** Sidebar: function documentation and recent files lists (collapsible). */
 import "./sidebar.css";
+import { icon } from "../icons";
 
 /** Function documentation entry. */
 export interface FnDoc { name: string; signature: string; description: string }
@@ -43,7 +45,9 @@ function activatable(li: HTMLElement, fn: () => void): void {
 /** Collapsible section (`.dk-section`) with a button header; returns [section, body]. */
 function section(title: string): [HTMLElement, HTMLElement] {
   const sec = el("section", "dk-section");
-  const head = el("button", "dk-section__head", title);
+  const head = el("button", "dk-section__head");
+  head.innerHTML = icon("chevron");
+  head.append(title);
   head.type = "button";
   head.setAttribute("aria-expanded", "true");
   head.addEventListener("click", () => {
@@ -113,7 +117,9 @@ export function createSidebar(host: HTMLElement, opts: SidebarOptions): Sidebar 
     setRecent(files) {
       recent.replaceChildren();
       for (const f of files) {
-        const li = el("li", "dk-item", f.name);
+        const li = el("li", "dk-item");
+        li.innerHTML = icon("file");
+        li.append(f.name);
         li.title = f.path;
         activatable(li, () => opts.onOpenRecent(f.path));
         recent.appendChild(li);

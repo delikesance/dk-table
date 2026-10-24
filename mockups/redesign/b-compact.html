@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table - Variante B, barre de base compacte</title>
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="../design/components.css">
+<style>
+/* Variante B : styles locaux. Tout vient des tokens ; seuls les --x-* sont ajoutés ici. */
+:root {
+  --x-icon: 20px;        /* taille d'icône demandée (components.css fixe 18px) */
+  --x-frame-w: 980px;    /* largeur de la fenêtre d'exemple */
+  --x-menu-w: 240px;     /* largeur des menus déroulants */
+  --x-grid-h: 340px;     /* hauteur de la zone grille */
+}
+body { margin: 0; padding: var(--s-6) var(--s-4); background: var(--c-bg); color: var(--c-text); font: var(--fw-regular) var(--fs-md)/var(--lh-normal) var(--font-ui); }
+.x-wrap { max-width: var(--x-frame-w); margin: 0 auto; }
+h1 { margin: 0 0 var(--s-1); font-size: var(--fs-xl); font-weight: var(--fw-semibold); }
+.x-lead { margin: 0 0 var(--s-4); color: var(--c-text-2); }
+
+/* Commutateur d'états en CSS pur (radios) */
+.x-state { position: absolute; opacity: 0; pointer-events: none; }
+.x-switch { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
+.x-switch label { padding: var(--s-2) var(--s-4); border-radius: var(--r-pill); background: var(--c-surface); color: var(--c-text-2); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); cursor: pointer; }
+#st-home:checked ~ .x-switch [for="st-home"],
+#st-data:checked ~ .x-switch [for="st-data"],
+#st-pal:checked ~ .x-switch [for="st-pal"] { background: var(--c-accent); color: var(--c-text-on-accent); font-weight: var(--fw-semibold); }
+#st-home:focus-visible ~ .x-switch [for="st-home"],
+#st-data:focus-visible ~ .x-switch [for="st-data"],
+#st-pal:focus-visible ~ .x-switch [for="st-pal"] { box-shadow: var(--focus-ring); }
+
+/* Fenêtre */
+.x-frame { position: relative; overflow: hidden; background: var(--c-surface); border-radius: var(--r-lg); box-shadow: var(--sh-3); }
+.x-frame svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.x-frame .dk-iconbtn svg { width: var(--x-icon); height: var(--x-icon); }
+
+/* Pastilles de niveau N1/N2/N3 (annotation) */
+.x-tag { display: inline-flex; align-items: center; margin-left: auto; padding: 1px var(--s-2); border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: var(--fw-semibold); letter-spacing: var(--tracking-caps); pointer-events: none; white-space: nowrap; }
+.x-n1 { background: var(--c-success-soft); color: var(--c-success); }
+.x-n2 { background: var(--c-dep-out-soft); color: var(--c-dep-out); }
+.x-n3 { background: var(--c-dep-in-soft); color: var(--c-dep-in); }
+
+/* Barre de menus texte */
+.x-menubar { position: relative; z-index: 10; display: flex; align-items: center; gap: var(--s-1); padding: var(--s-1) var(--s-3); background: var(--c-surface); border-bottom: 0.5px solid var(--c-line); }
+.x-title { margin-right: var(--s-3); font-weight: var(--fw-semibold); }
+.x-mi { position: relative; padding: var(--s-1) var(--s-3); border-radius: var(--r-sm); color: var(--c-text); cursor: pointer; }
+.x-mi:hover { background: var(--c-surface-hover); }
+.x-saved { margin-left: var(--s-3); color: var(--c-text-3); font-size: var(--fs-sm); }
+
+/* Menus déroulants (cachés par défaut) */
+.x-drop { display: none; position: absolute; top: 100%; left: 0; width: var(--x-menu-w); margin-top: var(--s-1); }
+.x-drop .dk-menu { display: block; min-width: 0; }
+.x-sub { display: none; position: absolute; top: 0; left: 100%; margin-left: var(--s-1); width: var(--x-menu-w); }
+.x-sub .dk-menu { display: block; min-width: 0; }
+.x-has-sub { position: relative; }
+.x-chev { width: 16px; height: 16px; margin-left: auto; }
+.x-menu-note { padding: var(--s-1) var(--s-3); color: var(--c-text-3); font-size: var(--fs-xs); }
+#st-data:checked ~ .x-frame .x-drop { display: block; }
+#st-data:checked ~ .x-frame .x-mi--data { background: var(--c-surface-hover); }
+#st-data:checked ~ .x-frame .x-has-sub--open > .x-sub { display: block; }
+
+/* Rangée d'outils unique */
+.x-toolbar { overflow-x: auto; flex-wrap: nowrap; }
+.x-toolbar > * { flex: none; }
+.x-numfmt { display: inline-flex; align-items: center; gap: var(--s-1); height: 32px; padding: 0 var(--s-2) 0 var(--s-3); border-radius: var(--r-md); color: var(--c-text); cursor: pointer; }
+.x-numfmt:hover { background: var(--c-surface-hover); }
+.x-numfmt svg { width: 16px; height: 16px; }
+.x-swatch { position: relative; }
+.x-swatch::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 4px; height: 3px; border-radius: var(--r-xs); background: var(--c-accent); }
+
+/* Formule + grille */
+.x-formula-row { display: flex; align-items: center; border-bottom: 0.5px solid var(--c-line); }
+.x-formula-row .dk-formula { flex: 1; min-width: 0; border-bottom: 0; }
+.x-formula-row .x-tag { margin: 0 var(--s-3); }
+.x-gridwrap { height: var(--x-grid-h); overflow: auto; background: var(--c-surface); }
+.x-grid { display: grid; grid-template-columns: var(--row-header-w) repeat(4, minmax(var(--cell-w), 1fr)) minmax(calc(var(--cell-w) * 1.4), 1.4fr); min-width: calc(var(--row-header-w) + var(--cell-w) * 5.4); }
+.x-grid .dk-cell, .x-grid .dk-header { width: auto; min-width: 0; }
+.x-grid .dk-cell--head { font-weight: var(--fw-semibold); background: var(--c-surface-2); }
+.x-spark { width: 100%; height: 20px; stroke: var(--c-accent); stroke-width: 1.5; }
+.x-frame .x-spark circle { fill: var(--c-accent); stroke: none; }
+
+/* Onglets + barre d'état */
+.x-tabs-row { display: flex; align-items: center; background: var(--c-surface-2); border-top: 0.5px solid var(--c-line); }
+.x-tabs-row .dk-tabs { border-top: 0; background: transparent; }
+.x-status { margin-left: auto; padding-right: var(--s-3); color: var(--c-text-2); font-size: var(--fs-sm); font-variant-numeric: var(--num); }
+.x-tabs-row .x-tag { margin: 0 var(--s-3) 0 0; }
+
+/* Palette Ctrl+K en surcouche */
+.x-overlay { display: none; position: absolute; inset: 0; z-index: 20; }
+#st-pal:checked ~ .x-frame .x-overlay { display: flex; }
+.x-pal-n3 { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-5); color: var(--c-text-2); font-size: var(--fs-xs); border-top: 0.5px solid var(--c-line); }
+.x-pal-n3 .x-tag { margin: 0; }
+.x-palette__q { display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-5); border-bottom: 0.5px solid var(--c-line); }
+.x-palette__q svg { width: var(--x-icon); height: var(--x-icon); flex: none; }
+.x-palette__q .dk-palette__input { border: 0; padding: 0; }
+
+/* Légende des clics */
+.x-notes { margin-top: var(--s-6); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--s-4); }
+.x-card { padding: var(--s-4); background: var(--c-surface); border-radius: var(--r-md); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); }
+.x-card h2 { margin: 0 0 var(--s-2); font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.x-card ul { margin: 0; padding-left: var(--s-5); color: var(--c-text-2); }
+.x-card li + li { margin-top: var(--s-1); }
+.x-card .x-tag { margin: 0 var(--s-1) 0 0; }
+.x-clicks { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2) var(--s-4); margin: 0; }
+.x-clicks dt { color: var(--c-text); }
+.x-clicks dd { margin: 0; color: var(--c-text-2); font-variant-numeric: var(--num); text-align: right; }
+.x-clicks b { color: var(--c-accent); }
+</style>
+</head>
+<body class="dk-app">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Icônes Iconoir (trait 1.5, viewBox 24, currentColor) -->
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-7h8v7"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 9h11a4 4 0 0 1 0 8H8M3 9l4-4M3 9l4 4"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M21 9H10a4 4 0 0 0 0 8h6M21 9l-4-4M21 9l-4 4"/></symbol>
+  <symbol id="i-pct" viewBox="0 0 24 24"><path d="M19 5 5 19M7 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol>
+  <symbol id="i-eur" viewBox="0 0 24 24"><path d="M18 6a7 7 0 1 0 0 12M4 10h9M4 14h9"/></symbol>
+  <symbol id="i-decm" viewBox="0 0 24 24"><path d="M11 8 5 12l6 4M5 12h10M19 7v10"/></symbol>
+  <symbol id="i-decp" viewBox="0 0 24 24"><path d="m13 8 6 4-6 4M19 12H9M5 7v10"/></symbol>
+  <symbol id="i-b" viewBox="0 0 24 24"><path d="M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z"/></symbol>
+  <symbol id="i-i" viewBox="0 0 24 24"><path d="M19 4h-9M14 20H5M15 4 9 20"/></symbol>
+  <symbol id="i-u" viewBox="0 0 24 24"><path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/></symbol>
+  <symbol id="i-tcolor" viewBox="0 0 24 24"><path d="M6 17 12 4l6 13M8.5 12h7"/></symbol>
+  <symbol id="i-fill" viewBox="0 0 24 24"><path d="m4 13 7-8 8 8-7 7zM20 16s2 2 2 3.2a2 2 0 0 1-4 0C18 18 20 16 20 16z"/></symbol>
+  <symbol id="i-al" viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h16"/></symbol>
+  <symbol id="i-ac" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M4 18h16"/></symbol>
+  <symbol id="i-ar" viewBox="0 0 24 24"><path d="M3 6h18M9 12h12M5 18h16"/></symbol>
+  <symbol id="i-border" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 12h16M12 4v16"/></symbol>
+  <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 5H7l6 7-6 7h11"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+</svg>
+
+<div class="x-wrap">
+  <h1>Variante B : barre de base compacte</h1>
+  <p class="x-lead">Familier (Sheets/Excel) : une rangée d'outils fine, toujours visible. Pro dans les menus (N2), Ctrl+K (N3).</p>
+
+  <input class="x-state" type="radio" name="st" id="st-home" checked aria-label="État arrivée">
+  <input class="x-state" type="radio" name="st" id="st-data" aria-label="État menu Données">
+  <input class="x-state" type="radio" name="st" id="st-pal" aria-label="État palette">
+  <div class="x-switch" role="group" aria-label="États">
+    <label for="st-home">Arrivée</label>
+    <label for="st-data">Menu Données</label>
+    <label for="st-pal">Palette Ctrl+K</label>
+  </div>
+
+  <div class="x-frame">
+    <!-- Barre de menus : N2 -->
+    <div class="x-menubar" role="menubar">
+      <span class="x-title">Budget</span>
+      <div class="x-mi" role="menuitem">Fichier</div>
+      <div class="x-mi" role="menuitem">Édition</div>
+      <div class="x-mi" role="menuitem">Insertion</div>
+      <div class="x-mi x-mi--data" role="menuitem">Données
+        <!-- Menu Données déroulant -->
+        <div class="x-drop">
+          <div class="dk-menu" role="menu">
+            <div class="dk-menu__item">Trier A → Z <span class="dk-kbd">Alt+↑</span></div>
+            <div class="dk-menu__item">Trier Z → A <span class="dk-kbd">Alt+↓</span></div>
+            <div class="dk-menu__item">Filtre automatique</div>
+            <div class="dk-menu__sep"></div>
+            <div class="dk-menu__item">Figer les lignes <svg class="x-chev" viewBox="0 0 24 24"><use href="#i-right"/></svg></div>
+            <div class="dk-menu__item">Validation de données</div>
+            <div class="dk-menu__item">Mise en forme conditionnelle</div>
+            <div class="dk-menu__sep"></div>
+            <div class="x-has-sub x-has-sub--open">
+              <div class="dk-menu__item dk-menu__item--hover">Cellules vivantes <svg class="x-chev" viewBox="0 0 24 24"><use href="#i-right"/></svg></div>
+              <div class="x-sub"><div class="dk-menu" role="menu">
+                <div class="dk-menu__item">SPARKLINE <span class="dk-kbd">courbe</span></div>
+                <div class="dk-menu__item">BAR <span class="dk-kbd">barres</span></div>
+                <div class="dk-menu__item">TREND <span class="dk-kbd">▲ %</span></div>
+                <div class="dk-menu__sep"></div>
+                <div class="x-menu-note">Plage B3:C5 prise par défaut</div>
+              </div></div>
+            </div>
+            <div class="dk-menu__sep"></div>
+            <div class="dk-menu__item">Importer un CSV…</div>
+            <div class="dk-menu__item">Exporter <svg class="x-chev" viewBox="0 0 24 24"><use href="#i-right"/></svg></div>
+            <div class="dk-menu__sep"></div>
+            <div class="x-menu-note">Aussi via <span class="dk-kbd">Ctrl+K</span> (N3)</div>
+          </div>
+        </div>
+      </div>
+      <span class="x-saved">Enregistré</span>
+      <span class="x-tag x-n2">N2 menus : 1 clic pour ouvrir, 2 pour agir</span>
+    </div>
+
+    <!-- Rangée d'outils unique : N1 toujours visible -->
+    <div class="dk-toolbar x-toolbar" role="toolbar" aria-label="Outils de base">
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn" title="Enregistrer (Ctrl+S)" aria-label="Enregistrer"><svg viewBox="0 0 24 24"><use href="#i-save"/></svg></button>
+        <button class="dk-iconbtn" title="Annuler (Ctrl+Z)" aria-label="Annuler"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
+        <button class="dk-iconbtn" title="Rétablir (Ctrl+Y)" aria-label="Rétablir"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
+      </div>
+      <span class="dk-toolsep"></span>
+      <div class="dk-toolgroup">
+        <span class="x-numfmt" title="Format de nombre">Standard <svg viewBox="0 0 24 24"><use href="#i-down"/></svg></span>
+        <button class="dk-iconbtn" title="Pourcentage" aria-label="Format pourcentage"><svg viewBox="0 0 24 24"><use href="#i-pct"/></svg></button>
+        <button class="dk-iconbtn" title="Euro" aria-label="Format euro"><svg viewBox="0 0 24 24"><use href="#i-eur"/></svg></button>
+        <button class="dk-iconbtn" title="Moins de décimales" aria-label="Moins de décimales"><svg viewBox="0 0 24 24"><use href="#i-decm"/></svg></button>
+        <button class="dk-iconbtn" title="Plus de décimales" aria-label="Plus de décimales"><svg viewBox="0 0 24 24"><use href="#i-decp"/></svg></button>
+      </div>
+      <span class="dk-toolsep"></span>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn" title="Gras (Ctrl+B)" aria-label="Gras"><svg viewBox="0 0 24 24"><use href="#i-b"/></svg></button>
+        <button class="dk-iconbtn" title="Italique (Ctrl+I)" aria-label="Italique"><svg viewBox="0 0 24 24"><use href="#i-i"/></svg></button>
+        <button class="dk-iconbtn" title="Souligné (Ctrl+U)" aria-label="Souligné"><svg viewBox="0 0 24 24"><use href="#i-u"/></svg></button>
+      </div>
+      <span class="dk-toolsep"></span>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn x-swatch" title="Couleur du texte" aria-label="Couleur du texte"><svg viewBox="0 0 24 24"><use href="#i-tcolor"/></svg></button>
+        <button class="dk-iconbtn x-swatch" title="Couleur de fond" aria-label="Couleur de fond"><svg viewBox="0 0 24 24"><use href="#i-fill"/></svg></button>
+      </div>
+      <span class="dk-toolsep"></span>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn dk-iconbtn--active" title="Aligner à gauche" aria-label="Aligner à gauche"><svg viewBox="0 0 24 24"><use href="#i-al"/></svg></button>
+        <button class="dk-iconbtn" title="Centrer" aria-label="Centrer"><svg viewBox="0 0 24 24"><use href="#i-ac"/></svg></button>
+        <button class="dk-iconbtn" title="Aligner à droite" aria-label="Aligner à droite"><svg viewBox="0 0 24 24"><use href="#i-ar"/></svg></button>
+      </div>
+      <span class="dk-toolsep"></span>
+      <div class="dk-toolgroup">
+        <button class="dk-iconbtn" title="Bordures" aria-label="Bordures"><svg viewBox="0 0 24 24"><use href="#i-border"/></svg></button>
+        <button class="dk-iconbtn" title="Somme (Alt+=)" aria-label="Somme"><svg viewBox="0 0 24 24"><use href="#i-sigma"/></svg></button>
+      </div>
+      <span class="x-tag x-n1" style="margin-left: var(--s-3)">N1 outils de base</span>
+    </div>
+
+    <!-- Barre de formule : N1 -->
+    <div class="x-formula-row">
+      <div class="dk-formula">
+        <div class="dk-formula__name">B3</div>
+        <div class="dk-formula__fx">fx</div>
+        <input class="dk-formula__input" value="2400" aria-label="Contenu de la cellule" readonly>
+      </div>
+      <span class="x-tag x-n1">N1 formule</span>
+    </div>
+
+    <div class="x-gridwrap"><div class="x-grid" id="grid" role="grid" aria-label="Feuille Budget"></div></div>
+
+    <!-- Onglets : N1 -->
+    <div class="x-tabs-row">
+      <div class="dk-tabs">
+        <button class="dk-tab dk-tab--active">Budget</button>
+        <button class="dk-tab">Prévisions</button>
+        <button class="dk-tab dk-tab--add" title="Ajouter une feuille (Ctrl+N)" aria-label="Ajouter une feuille"><svg class="dk-icon" viewBox="0 0 24 24" style="width: var(--x-icon); height: var(--x-icon)"><use href="#i-plus"/></svg></button>
+      </div>
+      <span class="x-status">B3:C5 · Somme 13 250 · Moyenne 2 208</span>
+      <span class="x-tag x-n1">N1 feuilles</span>
+    </div>
+
+    <!-- Palette Ctrl+K : N3 -->
+    <div class="x-overlay dk-scrim">
+      <div class="dk-palette" role="dialog" aria-label="Palette de commandes">
+        <div class="x-palette__q">
+          <svg viewBox="0 0 24 24"><use href="#i-search"/></svg>
+          <input class="dk-palette__input" value="vivante" aria-label="Rechercher une commande" readonly>
+          <span class="dk-kbd">Ctrl+K</span>
+        </div>
+        <ul class="dk-palette__list">
+          <li class="dk-palette__item dk-palette__item--selected">Insérer SPARKLINE sur B3:C5 <span class="dk-kbd">Entrée</span></li>
+          <li class="dk-palette__item">Insérer BAR sur B3:C5</li>
+          <li class="dk-palette__item">Insérer TREND sur B3:C5</li>
+          <li class="dk-palette__item">Données : Cellules vivantes</li>
+        </ul>
+        <div class="x-pal-n3"><span class="x-tag x-n3">N3</span> clavier d'abord : toute commande des menus est atteignable ici</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="x-notes">
+    <section class="x-card">
+      <h2>Niveaux</h2>
+      <ul>
+        <li><span class="x-tag x-n1">N1</span>Rangée d'outils, formule, onglets : visibles en permanence</li>
+        <li><span class="x-tag x-n2">N2</span>Menus Fichier/Édition/Insertion/Données et sous-menus (tri, filtre, figer, vivantes, CSV)</li>
+        <li><span class="x-tag x-n3">N3</span>Palette Ctrl+K et raccourcis (Alt+=, Ctrl+Z/Y/B/I/U/S/N)</li>
+      </ul>
+    </section>
+    <section class="x-card">
+      <h2>Clics par tâche</h2>
+      <dl class="x-clicks">
+        <dt>Formater en % (B3:C5 déjà sélectionné) : bouton %</dt><dd><b>1</b> clic</dd>
+        <dt>Ajouter une feuille : bouton +</dt><dd><b>1</b> clic</dd>
+        <dt>Enregistrer : disquette (menu Fichier : 2 ; Ctrl+S : 0)</dt><dd><b>1</b> clic</dd>
+        <dt>Trier A → Z : Données &gt; Trier</dt><dd><b>2</b> clics</dd>
+        <dt>Cellule vivante : Données &gt; Vivantes &gt; SPARKLINE</dt><dd><b>3</b> clics</dd>
+      </dl>
+    </section>
+    <section class="x-card">
+      <h2>Contenu d'exemple</h2>
+      <ul>
+        <li>Feuille « Budget » : Mois, Revenus, Dépenses, Solde (<code class="dk-mono">=B2-C2</code> en D2), Tendance</li>
+        <li>Sélection B3:C5, curseur en B3</li>
+        <li>Tendance E2 = <code class="dk-mono">=SPARKLINE(D2:D9)</code></li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+// Remplit la grille d'exemple (aucune logique de tableur ici).
+(function () {
+  var months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août'];
+  var rev = [2400,2400,2450,2500,2500,2600,2600,2700];
+  var dep = [1900,2100,1800,2000,2300,1950,2200,2100];
+  var fmt = function (n) { return n.toLocaleString('fr-FR') + ' €'; };
+  var h = '';
+  function cell(txt, cls) { h += '<div class="dk-cell ' + (cls || '') + '" role="gridcell">' + txt + '</div>'; }
+  h += '<div class="dk-header"></div>';
+  ['A','B','C','D','E'].forEach(function (c, i) { h += '<div class="dk-header' + ((i === 1 || i === 2) ? ' dk-header--selected' : '') + '">' + c + '</div>'; });
+  h += '<div class="dk-header dk-header--row">1</div>';
+  ['Mois','Revenus','Dépenses','Solde','Tendance'].forEach(function (t, i) { cell(t, 'dk-cell--head' + (i > 0 && i < 4 ? ' dk-cell--num' : '')); });
+  var solde = rev.map(function (r, i) { return r - dep[i]; });
+  var min = Math.min.apply(null, solde), max = Math.max.apply(null, solde);
+  var pts = solde.map(function (s, i) { return [4 + i * 11.4, 18 - (s - min) / (max - min) * 14]; });
+  var last = pts[pts.length - 1];
+  var spark = '<svg class="x-spark" viewBox="0 0 88 22" preserveAspectRatio="none" role="img" aria-label="Tendance du solde"><polyline points="' + pts.map(function (p) { return p.join(','); }).join(' ') + '"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="2"/></svg>';
+  for (var r = 0; r < 8; r++) {
+    var row = r + 2, inRange = row >= 3 && row <= 5;
+    h += '<div class="dk-header dk-header--row' + (inRange ? ' dk-header--selected' : '') + '">' + row + '</div>';
+    cell(months[r]);
+    cell(fmt(rev[r]), 'dk-cell--num' + (row === 3 ? ' dk-cell--active' : inRange ? ' dk-cell--range' : ''));
+    cell(fmt(dep[r]), 'dk-cell--num' + (inRange ? ' dk-cell--range' : ''));
+    cell(fmt(solde[r]), 'dk-cell--num');
+    cell(r === 0 ? spark : '', '');
+  }
+  document.getElementById('grid').innerHTML = h;
+})();
+</script>
+</body>
+</html>

@@ -3,9 +3,66 @@
   height: 28px; padding: 0 var(--s-2); border: 0.5px solid var(--c-line-strong); border-radius: var(--r-sm);
   background: var(--c-surface); color: var(--c-text); font: var(--fw-regular) var(--fs-sm) var(--font-ui); cursor: pointer;
 }
-.dk-toolselect:focus-visible, .dk-iconbtn:focus-visible, .dk-fillbtn:focus-within { outline: none; box-shadow: var(--focus-ring); }
-.dk-fillbtn { position: relative; overflow: hidden; }
-.dk-fillbtn input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.dk-toolselect:focus-visible, .dk-iconbtn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-colorwrap { position: relative; }
+.dk-colorwrap .color-picker { position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; }
 /* The name box is an input: keep the design's centred accent look. */
 input.dk-formula__name { box-sizing: border-box; border-top: 0; border-bottom: 0; border-left: 0; background: transparent; text-align: center; }
 input.dk-formula__name:focus { outline: none; box-shadow: inset 0 -2px 0 var(--c-accent); }
+/* Dropdown menus (Fichier, Import / Export). The root must not inherit the context-menu box of components.css. */
+.dk-menus { display: flex; gap: var(--s-1); }
+.dk-menus .dk-menu {
+  position: relative; display: block; min-width: 0; padding: 0; background: transparent;
+  box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0;
+}
+.dk-menu__trigger {
+  display: inline-flex; align-items: center; gap: var(--s-1); height: 32px; padding: 0 var(--s-2) 0 var(--s-3);
+  border: 0; border-radius: var(--r-md); background: transparent; color: var(--c-text); cursor: pointer;
+  font: var(--fw-medium) var(--fs-sm) var(--font-ui);
+}
+.dk-menu__trigger svg { width: 16px; height: 16px; }
+.dk-menu__trigger:hover { background: var(--c-surface-hover); }
+.dk-menu__trigger[aria-expanded="true"] { background: var(--c-accent-soft-2); color: var(--c-accent); }
+.dk-menu__trigger:focus-visible, .dk-menu__item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-menu__list {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; min-width: 220px; padding: var(--s-1);
+  background: var(--c-surface); border: 0.5px solid var(--c-line-strong); border-radius: var(--r-md, 8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+.dk-menu__list[hidden] { display: none; }
+.dk-menu__item {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%; padding: 6px var(--s-2); border: 0;
+  border-radius: var(--r-sm); background: transparent; color: var(--c-text); text-align: left; cursor: pointer;
+  font: var(--fw-regular) var(--fs-sm) var(--font-ui);
+}
+.dk-menu__item:hover, .dk-menu__item:focus { background: var(--c-accent); color: var(--c-text-on-accent); }
+.dk-menu__label { flex: 1; }
+.dk-menu__hint { font: inherit; opacity: .6; }
+/* N2 extras share the toolbar row; [hidden] must win over display:flex. */
+.dk-toolbar__n2 { display: contents; }
+.dk-toolbar__n2[hidden] { display: none; }
+
+/* Toolbar hierarchy: fixed height (no jump on toggle), groups split by strong separators, 20px icons. */
+.dk-toolbar { box-sizing: border-box; height: var(--toolbar-h); padding: 0 var(--s-3); border-bottom: 0.5px solid var(--c-line); }
+.dk-toolbar .dk-toolsep { height: 20px; margin: 0 var(--s-2); background: var(--c-line-strong); }
+.dk-toolbar .dk-iconbtn svg { width: 20px; height: 20px; }
+.dk-toolbar .dk-iconbtn--active { background: var(--c-accent-soft-2); color: var(--c-accent); box-shadow: inset 0 -2px 0 var(--c-accent); }
+.dk-toolbar .dk-iconbtn--active svg { color: var(--c-accent); }
+
+/* Formula bar group: name box | fx | input, plus the labelled tools toggle. */
+.dk-app__bar { height: var(--formula-h); box-sizing: content-box; padding-top: var(--s-1); padding-bottom: var(--s-1); }
+.dk-app__bar .dk-formula__name {
+  width: 72px; margin: 0; border: 0.5px solid var(--c-line); border-radius: var(--r-md) 0 0 var(--r-md);
+  background: var(--c-surface-2); color: var(--c-text);
+}
+.dk-app__bar .dk-formula__fx {
+  align-items: center; padding: 0 var(--s-3); border-top: 0.5px solid var(--c-line); border-bottom: 0.5px solid var(--c-line);
+  background: var(--c-surface-2); color: var(--c-accent); font-weight: var(--fw-semibold);
+}
+.dk-app__bar .dk-formula__input { border: 0.5px solid var(--c-line); border-left: 0; border-radius: 0 var(--r-md) var(--r-md) 0; padding-left: var(--s-3); }
+.dk-toolstoggle {
+  width: auto; gap: var(--s-1); padding: 0 var(--s-2) 0 var(--s-3); margin-right: var(--s-2);
+  font: var(--fw-medium) var(--fs-sm) var(--font-ui); color: var(--c-text); border: 0.5px solid var(--c-line-strong);
+}
+.dk-toolstoggle svg { width: 16px; height: 16px; }
+.dk-toolstoggle--open { background: var(--c-accent-soft-2); color: var(--c-accent); border-color: var(--c-accent); }

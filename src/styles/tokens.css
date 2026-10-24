@@ -13,29 +13,30 @@
   /* Texte (AA sur surface) */
   --c-text: #1d1d1f;          /* 16:1 */
   --c-text-2: #55555c;        /* 7:1 */
-  --c-text-3: #6b6b73;        /* 5:1 */
+  --c-text-3: #62626a;        /* >=5:1 sur surface-2 */
   --c-text-on-accent: #ffffff;
+  --c-icon: #000000;          /* icônes Iconoir : noires (21:1) */
 
   /* Bordures hairline */
-  --c-line: rgba(0, 0, 0, 0.09);
+  --c-line: rgba(0, 0, 0, 0.14);
   --c-line-strong: rgba(0, 0, 0, 0.18);
 
   /* Accent unique : encre */
   --c-accent: #3b4fd8;        /* 6.6:1 sur blanc */
   --c-accent-hover: #2f40b8;
-  --c-accent-soft: rgba(59, 79, 216, 0.10);   /* plage sélectionnée */
+  --c-accent-soft: rgba(59, 79, 216, 0.14);   /* plage sélectionnée */
   --c-accent-soft-2: rgba(59, 79, 216, 0.16); /* en-têtes sélectionnés */
 
   /* États */
   --c-error: #c4261d;
   --c-error-soft: rgba(196, 38, 29, 0.08);
-  --c-success: #1a7f45;
+  --c-success: #166b3b;
   --c-success-soft: rgba(26, 127, 69, 0.10);
   --c-readonly-bg: #f6f6f8;
   --c-readonly-text: #55555c;
 
   /* Dépendances (précédents / dépendants) */
-  --c-dep-in: #b45309;        /* précédents : ambre */
+  --c-dep-in: #9a4507;       /* précédents : ambre */
   --c-dep-in-soft: rgba(180, 83, 9, 0.12);
   --c-dep-out: #0e7490;       /* dépendants : cyan */
   --c-dep-out-soft: rgba(14, 116, 144, 0.12);
@@ -43,9 +44,9 @@
   /* Typographie */
   --font-ui: -apple-system, "SF Pro Text", "SF Pro", "Segoe UI", Inter, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
-  --fs-xs: 11px;
+  --fs-xs: 12px;
   --fs-sm: 12px;
-  --fs-md: 13px;   /* cellules, UI */
+  --fs-md: 13.5px;  /* cellules, UI */
   --fs-lg: 15px;
   --fs-xl: 20px;
   --fw-regular: 400;
@@ -70,13 +71,13 @@
   /* Rayons */
   --r-xs: 3px;
   --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 14px;
+  --r-md: 8px;
+  --r-lg: 12px;
   --r-pill: 999px;
 
   /* Ombres */
   --sh-1: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --sh-2: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  --sh-2: 0 6px 20px rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
   --sh-3: 0 16px 48px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.10);
 
   /* Mouvement */
@@ -114,13 +115,14 @@
     --c-text-2: #b4b4bb;
     --c-text-3: #9a9aa3;     /* 6:1 */
     --c-text-on-accent: #10122a;
+    --c-icon: #f2f2f4;       /* icônes lisibles en sombre */
 
-    --c-line: rgba(255, 255, 255, 0.09);
+    --c-line: rgba(255, 255, 255, 0.16);
     --c-line-strong: rgba(255, 255, 255, 0.2);
 
-    --c-accent: #8e9dff;     /* 7:1 sur surface */
+    --c-accent: #9aa7ff;    /* 7:1 sur surface */
     --c-accent-hover: #a9b5ff;
-    --c-accent-soft: rgba(142, 157, 255, 0.14);
+    --c-accent-soft: rgba(142, 157, 255, 0.20);
     --c-accent-soft-2: rgba(142, 157, 255, 0.22);
 
     --c-error: #ff7b72;
@@ -136,11 +138,37 @@
     --c-dep-out-soft: rgba(82, 199, 224, 0.16);
 
     --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --sh-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+    --sh-2: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
     --sh-3: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+}
+
+/* Onboarding (--ob-*) : adapté de hermes-agent.nousresearch.com (papier #fdfdfd, encre #1a1a1a,
+   accent bleu #0847c4, filets 20 % d'encre, rayons secs 2-6px, libellés mono « // », nuit bleutée). */
+:root {
+  --ob-paper: #fdfdfd;
+  --ob-ink: #1a1a1a;            /* 17:1 sur paper */
+  --ob-ink-2: #55575c;          /* 7:1 */
+  --ob-accent: #0847c4;         /* 8:1 sur paper */
+  --ob-on-accent: #ffffff;
+  --ob-hairline: rgba(26, 26, 26, 0.2);
+  --ob-hover: rgba(8, 71, 196, 0.07);
+  --ob-radius: 2px;
+  --ob-radius-lg: 6px;
+  --ob-gap: 24px;
+  --ob-font-label: var(--font-mono);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ob-paper: #0b1220; --ob-ink: #f2f4f8; --ob-ink-2: #aab2c2; --ob-accent: #8fb4ff;
+    --ob-on-accent: #0b1220; --ob-hairline: rgba(242, 244, 248, 0.2); --ob-hover: rgba(143, 180, 255, 0.1);
+  }
+}
+:root[data-theme="dark"] {
+  --ob-paper: #0b1220; --ob-ink: #f2f4f8; --ob-ink-2: #aab2c2; --ob-accent: #8fb4ff;
+  --ob-on-accent: #0b1220; --ob-hairline: rgba(242, 244, 248, 0.2); --ob-hover: rgba(143, 180, 255, 0.1);
 }
