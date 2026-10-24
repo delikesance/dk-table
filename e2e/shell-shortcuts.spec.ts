@@ -88,7 +88,7 @@ test("Ctrl+B / Ctrl+I style the selected cell from the grid", async ({ page }) =
 test("Ctrl+B / Ctrl+I do not style the cell while its editor is open", async ({ page }) => {
   await selectCell(page, "A1");
   await page.keyboard.type("abc"); // editor open with typed text
-  await expect(cell(page, "A1").locator("input")).toBeFocused();
+  await expect(cell(page, "A1").locator(".dkg-editor")).toBeFocused();
   await page.keyboard.press("Control+b");
   await page.keyboard.press("Control+i");
   await page.keyboard.press("Enter");
