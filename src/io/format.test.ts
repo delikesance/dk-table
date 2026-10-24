@@ -40,4 +40,12 @@ describe("serialize/parse", () => {
     expect(() => parse(JSON.stringify({ version: 1, sheets: [s, s] }))).toThrow(/duplicate/);
     expect(() => parse(JSON.stringify({ version: 1, sheets: [s], active: "x" }))).toThrow(/active/);
   });
+  it("round-trips macros and rejects malformed ones", () => {
+    const withMacros: DktDoc = { ...doc, macros: [{ id: "m1", name: "Totaux", code: 'print("ok")' }] };
+    expect(parse(serialize(withMacros))).toEqual(withMacros);
+    const bad = (m: unknown) => JSON.stringify({ ...doc, macros: m });
+    expect(() => parse(bad({}))).toThrow(/macros/);
+    expect(() => parse(bad([{ id: "m1", name: "x", code: 1 }]))).toThrow(/macros\[0\].code/);
+    expect(() => parse(bad([{ id: "", name: "x", code: "" }]))).toThrow(/macros\[0\].id/);
+  });
 });

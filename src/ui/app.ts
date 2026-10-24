@@ -7,14 +7,17 @@ import { getDisplay, getRaw, setCell } from "../engine/sheet";
 import { registerLive } from "../engine/live/adapter";
 import { createGrid, type Grid } from "./grid/grid";
 import { parseKey, rangeKeys } from "./grid/keys";
-import { createToolbar, createFormulaBar, type Toolbar, type FormulaBar } from "./toolbar";
+import { createFormulaBar, type Toolbar, type FormulaBar } from "./toolbar";
+import { createAppToolbar } from "./toolbar/wire";
 import { createSheetTabs, type SheetTabs } from "./tabs/tabs";
 import { createSidebar, type Sidebar, type RecentFile } from "./sidebar/sidebar";
 import { createPalette } from "./palette/palette";
 import { FN_DOCS } from "./fndocs";
-import { newEntry, pushUndo, step, type Entry } from "./model";
+import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
 import { liveCell, paintStyle as paintCell } from "./cellview";
 import { installCommands } from "./commands";
+import { createMacroStore } from "../macros/store";
+import { installMacros } from "./macros/wire";
 import type { App } from "./appTypes";
 
 export type { App, Hooks } from "./appTypes";
@@ -35,11 +38,9 @@ export function mount(root: HTMLElement): App {
   let grid: Grid;
   let recents: RecentFile[] = [];
   let coalescing = false;
+  const macros = createMacroStore();
 
-  const keysOf = (sel: string): string[] => {
-    const [a, b = a] = sel.split(":");
-    return rangeKeys(parseKey(a), parseKey(b));
-  };
+  const keysOf = (sel: string): string[] => { const [a, b = a] = sel.split(":"); return rangeKeys(parseKey(a), parseKey(b)); };
   const first = (): string => grid.getSelection().split(":")[0];
   const setTitle = (dirty: boolean): void => {
     document.title = `${app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${dirty ? " •" : ""} — dk-table`;
@@ -119,11 +120,13 @@ export function mount(root: HTMLElement): App {
       version: 1, active: cur.id,
       sheets: entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)) })),
+      macros: macros.list().map((m) => ({ ...m })),
     }),
     loadDoc(doc, path) {
       entries = doc.sheets.map((s) => newEntry(s.name, s));
       cur = entries.find((e) => e.id === doc.active) ?? entries[0];
       app.path = path;
+      macros.load(doc.macros ?? []);
       refreshTabs(); buildGrid(); setTitle(false);
     },
     importSheet(name, sheet) {
@@ -150,18 +153,14 @@ export function mount(root: HTMLElement): App {
       sidebar.setRecent(recents);
     },
     markSaved: () => setTitle(false),
+    macros,
+    batch(fn) { if (batchEdit(cur, fn)) touch(); },
+    sheetName: () => cur.name,
+    runMacro: (id) => macroUi.run(id),
+    openMacros: (id) => macroUi.open(id),
   };
 
-  const toolbar: Toolbar = createToolbar(q(".dk-app__top"), {
-    onUndo: () => app.undo(), onRedo: () => app.redo(),
-    onBold: () => app.style({ bold: !app.activeStyle().bold }),
-    onItalic: () => app.style({ italic: !app.activeStyle().italic }),
-    onAlign: (align) => app.style({ align }),
-    onFormat: () => {},
-    onFill: (fill) => app.style({ fill }),
-    onOpen: () => app.hooks.command?.("open"),
-    onSave: () => app.hooks.command?.("save"),
-  });
+  const toolbar: Toolbar = createAppToolbar(q(".dk-app__top"), app);
   const fbar: FormulaBar = createFormulaBar(q(".dk-app__top"), {
     onGoto: (t) => grid.select(t.split(":")[0]),
     onCommit: (raw) => app.edit(first(), raw),
@@ -188,6 +187,8 @@ export function mount(root: HTMLElement): App {
     onReorder: (ids) => { entries = ids.map((i) => entries.find((e) => e.id === i)!).filter(Boolean); },
   });
   createPalette({ hotkey: true });
+  const macroUi = installMacros(app, q(".dk-app__main"));
+  macros.onChange(() => setTitle(true));
   refreshTabs();
   buildGrid();
   installCommands(app);
