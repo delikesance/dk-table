@@ -17,6 +17,12 @@ function okToDiscard(app: App): boolean {
   return !app.dirty || confirmFn("Des modifications non enregistrées seront perdues. Continuer ?");
 }
 
+/** "Nouveau": reset to an empty one-sheet workbook (confirms if unsaved changes). */
+export function newDocument(app: App): void {
+  if (!okToDiscard(app)) return;
+  app.loadDoc({ version: 1, active: "s1", sheets: [{ id: "s1", name: "Feuille 1", cols: 26, rows: 100, cells: {} }] });
+}
+
 /** Warn on window close/reload while the workbook has unsaved changes. */
 export function installUnloadGuard(app: App): void {
   window.addEventListener("beforeunload", (e) => {
