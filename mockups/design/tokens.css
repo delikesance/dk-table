@@ -122,7 +122,7 @@
 
     --c-accent: #9aa7ff;    /* 7:1 sur surface */
     --c-accent-hover: #a9b5ff;
-    --c-accent-soft: rgba(142, 157, 255, 0.14);
+    --c-accent-soft: rgba(142, 157, 255, 0.20);
     --c-accent-soft-2: rgba(142, 157, 255, 0.22);
 
     --c-error: #ff7b72;
