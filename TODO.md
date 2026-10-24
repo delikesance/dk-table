@@ -186,3 +186,11 @@ Classement par gravité (P0 = pire)
 - [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
+
+## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
+
+- [x] Format Comptabilité (`accounting` : négatifs entre parenthèses, zéro « - € », colonnes alignées)
+- [x] Amortissements SLN, SYD, DB, DDB, VDB, AMORLINC, AMORDEGRC ; emprunts IPMT, PPMT, PV, FV, RATE, NPER, CUMIPMT, CUMPRINC
+- [x] IRR avec estimation, MIRR, XNPV, XIRR ; SUBTOTAL, AGGREGATE ; MROUND, YEARFRAC, DAYS360
+- [x] Export FEC (Fichier) + « Insérer les en-têtes FEC » (Données), validations (colonnes, dates, équilibre par écriture)
+- [ ] Suites : lignes masquées pour SUBTOTAL 101-111 / AGGREGATE ; contrôle FEC avec Test-Compta-Demat (DGFiP) ; tableau croisé simplifié
