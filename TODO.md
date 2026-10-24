@@ -81,7 +81,7 @@ P2 : perf et fonctions
 - [x] Perf grille : rendu incrémental (écritures DOM évitées si inchangé) ; limite : renderCell/getDisplay toujours appelés pour 2600 cellules
 - [x] Perf grille : virtualisation (`perf-grid-virtual`, MAX_ROWS=1000) ; reste : rendu à vérifier à la main
 - [x] Fonctions : fn-math/text/logic/date/finance/cond/iferror câblées (`engine/wire.ts`), fn-lookup partiel (2D à venir), engine-range, engine-sort
-- [ ] Autres features selon priorités de `docs/recherche-tableur.md`
+- [x] Autres features selon priorités de `docs/recherche-tableur.md` (vague 2, voir section dédiée)
 - [x] Split de `app.ts` en `appState/appGrid/appApi/appWidgets` (split-app) ; contrôle > 200 lignes à refaire à chaque vague
 
 P3 : livraison
@@ -96,11 +96,24 @@ P3 : livraison
 - [x] Modules sans câblage UI : wf-sort-model (tri), toast, colors, floating (mini-barre), filter-logic, autosave-logic
 - [x] numfmt-date (format Date), alignement `DATE`/`YEAR`/`MONTH`/`DAY`/`serialToISO` sur la convention 1900 de `numfmt.ts`
 - [x] Tests unitaires ajoutés : engine-functions, ui-cellview-model, ui-palette-formulabar, ui-app-api-state, `functions.wired.test.ts`, `dateConsistency.test.ts`
-- [ ] engine-matrix-na : plages 2D dans l'évaluateur (VLOOKUP, HLOOKUP, INDEX 2D : 3 `it.todo` dans `functions.wired.test.ts`) + code `#N/A` (IFNA, lookups)
-- [ ] style-textcolor : `CellStyle.color` (couleur du texte) manquant
-- [ ] Câblage UI : barre N1, Σ, tri, filtre, couleurs, mini-barre flottante, toast, autosave
-- [ ] Câblage UI : menu Fichier unique, largeur de colonnes, Ctrl+D / Ctrl+R
-- [ ] Tests e2e par fonctionnalité (worktree `e2e-playwright-setup` en cours)
+- [x] engine-matrix-na : plages 2D dans l'évaluateur (VLOOKUP, HLOOKUP, INDEX 2D : 3 `it.todo` dans `functions.wired.test.ts`) + code `#N/A` (IFNA, lookups)
+- [x] style-textcolor : `CellStyle.color` (couleur du texte) manquant
+- [x] Câblage UI : barre N1, Σ, tri, filtre, couleurs, mini-barre flottante, toast, autosave
+- [x] Câblage UI : menu Fichier unique, largeur de colonnes, Ctrl+D / Ctrl+R
+- [x] Tests e2e par fonctionnalité (worktree `e2e-playwright-setup` en cours)
+
+## Vague 2 : fonctions manquantes du tableur (recherche E/I + IronCalc)
+
+Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolor et e2e de la Phase 8 étaient déjà codées (cochées ici).
+- [x] refs-shift : références `$A$1`/`A$1`/`$A1` + décalage des références à la recopie (Ctrl+D/R) et au copier-coller interne
+- [x] insert-delete : insérer/supprimer lignes et colonnes, références ajustées, `#REF!`, un pas d'undo
+- [x] format-more : souligné (Ctrl+U), bordures (Toutes/Contour/Bas/Aucune), renvoi à la ligne
+- [x] functions-more : 61 fonctions (ROUNDUP, SUMPRODUCT, STDEV, AVERAGEIFS, TEXTJOIN, SUBSTITUTE, ISERROR, IFS, SWITCH, EOMONTH, NETWORKDAYS, CHOOSE…)
+- [x] freeze-panes : figer première ligne / colonne / jusqu'à la cellule active (palette), persisté
+- [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
+- [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
+- [ ] Suites : réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
+- [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
 
@@ -113,7 +126,7 @@ P3 : livraison
 ## E2E (Playwright)
 
 - [x] Infra e2e : `playwright.config.ts`, `e2e/helpers.ts`, `e2e/smoke.spec.ts`, job CI
-- [ ] Tests e2e par fonctionnalité à écrire (édition, formules, undo/redo, CSV, onglets, palette, cellules vivantes)
+- [x] Tests e2e par fonctionnalité à écrire (édition, formules, undo/redo, CSV, onglets, palette, cellules vivantes)
 
 ## Fait
 
