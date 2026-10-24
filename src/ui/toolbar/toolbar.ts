@@ -77,8 +77,12 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   color.addEventListener("input", () => h.onFill(color.value));
   fillBtn.append(color);
 
+  // N2 (File/Import menus, extras): hidden until the chevron deploys it; N1 is always visible.
+  const n2 = document.createElement("div");
+  n2.className = "dk-toolbar__n2"; n2.hidden = true;
+  if (h.menus) n2.append(createMenus(h.menus), sep());
   el.append(
-    ...(h.menus ? [createMenus(h.menus), sep()] : []),
+    n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
     group(sel), sep(), group(fillBtn), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
