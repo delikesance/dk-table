@@ -11,7 +11,7 @@ export const FN_DOCS_MORE: FnDoc[] = [
   { name: "NOW", signature: "NOW()", description: "Date et heure actuelles" },
   { name: "PMT", signature: "PMT(taux; nper; va; vc; type)", description: "Mensualité d'un prêt" },
   { name: "NPV", signature: "NPV(taux; A1:A5)", description: "Valeur actuelle nette" },
-  { name: "IRR", signature: "IRR(A1:A5)", description: "Taux de rendement interne (sans estimation, part de 10 %)" },
+  { name: "IRR", signature: "IRR(A1:A5; estimation)", description: "Taux de rendement interne (estimation par défaut 10 %)" },
   { name: "SUMIF", signature: "SUMIF(plage; critère; somme)", description: "Somme des cellules qui respectent le critère" },
   { name: "SUMIFS", signature: "SUMIFS(somme; plage; critère)", description: "Somme avec plusieurs critères" },
   { name: "COUNTIF", signature: "COUNTIF(plage; critère)", description: "Compte les cellules qui respectent le critère" },
