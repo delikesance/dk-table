@@ -1,4 +1,5 @@
 /** Shared types for the `.dktable` document format. */
+import type { CfRule } from "../engine/cf/types";
 
 /** One cell: only the raw user input is persisted (values are recomputed). */
 export interface DocCell {
@@ -35,6 +36,8 @@ export interface DocSheet {
   styles?: Record<string, CellStyle>;
   /** Optional frozen panes: number of top rows / left columns kept visible (absent = none). */
   freeze?: { rows: number; cols: number };
+  /** Optional conditional formatting rules, by priority (absent = none). */
+  cf?: CfRule[];
 }
 
 /** One Lua macro stored with the document (see src/macros). */
