@@ -8,6 +8,7 @@ import { firstKey, relink, type Ctx } from "./appState";
 import { floatingAction, installFloating } from "./appFloating";
 import { autosum } from "./autosum";
 import { createToolsToggle, installToolsToggle } from "./appTools";
+import { renameDoc } from "./appDocs";
 
 /** Build the chrome widgets into `root` and store them on `c` (needs `c.app` set). */
 export function createWidgets(c: Ctx, root: HTMLElement): void {
@@ -40,21 +41,27 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
   });
   c.tabs = createSheetTabs(q(".dk-app__tabs"), {
     onAdd: () => app.addSheet(),
-    onSwitch: (id) => app.switchSheet(id),
+    onSwitch: (id) => (c.docs.get(id) ? void app.openDoc(id) : app.switchSheet(id)),
     onRename: (id, name) => {
+      if (c.docs.get(id)) { renameDoc(c, id, name); return; }
       const e = c.entries.find((x) => x.id === id);
       if (e) e.name = name;
       relink(c); c.grid.refresh();
       refreshTabs(c);
     },
     onDelete: (id) => {
+      if (c.docs.get(id)) { app.removeDoc(id); return; }
       if (c.entries.length < 2) return;
       c.entries = c.entries.filter((x) => x.id !== id);
       relink(c);
       if (c.cur.id === id) { c.cur = c.entries[0]; buildGrid(c); } else c.grid.refresh();
       refreshTabs(c);
     },
-    onReorder: (ids) => { c.entries = ids.map((i) => c.entries.find((e) => e.id === i)!).filter(Boolean); },
+    onReorder: (ids) => {
+      c.entries = ids.map((i) => c.entries.find((e) => e.id === i)!).filter(Boolean);
+      c.docs.reorder(ids.filter((i) => c.docs.get(i)));
+      refreshTabs(c);
+    },
   });
   installFloating(c, root, (id) => floatingAction(app, id));
   installToolsToggle(root, toggle);

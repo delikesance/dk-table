@@ -8,6 +8,7 @@ import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
+import type { DocEditor } from "../doc/editor";
 
 /** Hooks set by the command layer (file ops, context menu). */
 export interface Hooks {
@@ -83,4 +84,14 @@ export interface App {
   runMacro(id: string): Promise<RunResult>;
   /** Open the macro panel (on `id` if given). */
   openMacros(id?: string): Promise<void>;
+  /** Create a dk doc (rich-text document of the workbook), open it, return its id. */
+  addDoc(): string;
+  /** Show document `id` in place of the grid. */
+  openDoc(id: string): Promise<void>;
+  /** Delete document `id`. */
+  removeDoc(id: string): void;
+  /** Id of the open document, undefined when the grid is shown. */
+  activeDocId(): string | undefined;
+  /** Editor of the open document. */
+  docEditor(): DocEditor | undefined;
 }
