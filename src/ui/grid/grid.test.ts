@@ -148,3 +148,26 @@ describe("createGrid", () => {
     g2.refresh();
   });
 });
+
+describe("incremental refresh", () => {
+  it("re-renders only changed cells (edited + dependent)", () => {
+    const g = createGrid(host, {
+      cols: 26, rows: 100,
+      getDisplay: (k) => (k === "B1" ? String(Number(raw.A1) * 2) : raw[k] ?? ""),
+      getRaw: (k) => raw[k] ?? "",
+      onEdit: (k, v) => { raw[k] = v; },
+    });
+    const hosts = host.querySelectorAll(".dkg");
+    const mo = new MutationObserver(() => {});
+    mo.observe(hosts[hosts.length - 1], { subtree: true, childList: true, characterData: true });
+    const touched = () => new Set(mo.takeRecords().map((r) => (r.target as Node).parentElement?.closest(".dkg-cell") ?? r.target)
+      .map((n) => (n as HTMLElement).dataset?.key));
+    mo.takeRecords();
+    g.refresh();
+    expect(touched().size).toBe(0);
+    raw.A1 = "5";
+    g.refresh();
+    expect([...touched()].sort()).toEqual(["A1", "B1"]);
+    expect(host.querySelectorAll(".dkg")[hosts.length - 1].querySelector('[data-key="B1"]')!.textContent).toBe("10");
+  });
+});
