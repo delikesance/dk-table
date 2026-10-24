@@ -11,6 +11,8 @@ export type Align = "left" | "center" | "right";
 export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
+  /** Text colour (null = "Aucune"). */
+  onTextColor?(color: string | null): void;
   onOpen(): void; onSave(): void;
   /** Quick sum (Σ). */
   onSum?(): void;
@@ -57,6 +59,19 @@ function sep(): HTMLElement {
   return s;
 }
 
+/** Icon button + colour popover; picking (or "Aucune" -> null) closes the popover and calls `onPick`. */
+function colorControl(kind: "fill" | "text", label: string, onPick: (c: string | null) => void): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "dk-colorwrap";
+  const picker = createColorPicker({ kind, root: wrap, onPick: (c) => { picker.hidden = true; onPick(c); } });
+  picker.hidden = true;
+  wrap.prepend(mkBtn(kind === "fill" ? "fill" : "text-color", label, () => { picker.hidden = !picker.hidden; }));
+  document.addEventListener("mousedown", (e) => {
+    if (!picker.hidden && !wrap.contains(e.target as Node)) picker.hidden = true;
+  });
+  return wrap;
+}
+
 /**
  * Builds the toolbar in `host`. Actions go through `h`; reflect app state
  * back with `setState`. All controls are native buttons/inputs (Tab/Enter/Space).
@@ -75,19 +90,9 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   for (const [v, l] of FORMATS) sel.add(new Option(l, v));
   sel.addEventListener("change", () => h.onFormat(sel.value));
 
-  // Fill colour: icon button + Palette popover ("Aucune" -> null clears the fill).
-  const fillWrap = document.createElement("div");
-  fillWrap.className = "dk-colorwrap";
-  const picker = createColorPicker({ kind: "fill", root: fillWrap, onPick: (c) => { picker.hidden = true; h.onFill(c); } });
-  picker.hidden = true;
-  const fillBtn = mkBtn("fill", "Couleur de fond", () => { picker.hidden = !picker.hidden; });
-  fillWrap.prepend(fillBtn);
-  document.addEventListener("mousedown", (e) => {
-    if (!picker.hidden && !fillWrap.contains(e.target as Node)) picker.hidden = true;
-  });
-  // Text colour: prepared only; stays disabled/hidden until CellStyle.color exists.
-  const textBtn = mkBtn("text-color", "Couleur du texte", () => {});
-  textBtn.disabled = true; textBtn.hidden = true;
+  // Fill / text colour: icon button + palette popover ("Aucune" -> null clears the colour).
+  const fillWrap = colorControl("fill", "Couleur de fond", h.onFill);
+  const textWrap = colorControl("text", "Couleur du texte", (c) => h.onTextColor?.(c));
 
   // N2 (File/Import menus, extras): hidden until the chevron deploys it; N1 is always visible.
   const n2 = document.createElement("div");
@@ -97,7 +102,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textBtn), sep(),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
   );
   host.append(el);

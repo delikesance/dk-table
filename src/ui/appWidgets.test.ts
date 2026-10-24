@@ -91,3 +91,28 @@ describe("formula bar and tabs", () => {
     expect(app.selection()).toBe("C5");
   });
 });
+
+describe('Fichier > Récents', () => {
+  it('lists recents and opens the chosen one via the command hook', () => {
+    app.addRecent('/docs/budget.dktable');
+    const cmd = vi.fn();
+    app.hooks.command = cmd;
+    menuItem('Fichier').click();
+    menuItem('Récents').click();
+    const item = menuItem('budget.dktable');
+    expect(item).toBeTruthy();
+    item.click();
+    expect(cmd).toHaveBeenCalledWith('recent:/docs/budget.dktable');
+  });
+});
+
+describe("name box", () => {
+  it("returns focus to the grid after a jump", () => {
+    const name = root.querySelector<HTMLInputElement>("input.dk-formula__name")!;
+    name.focus();
+    name.value = "C7";
+    name.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+    expect(app.selection()).toBe("C7");
+    expect(root.querySelector(".dkg")!.contains(document.activeElement)).toBe(true);
+  });
+});

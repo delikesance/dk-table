@@ -47,6 +47,8 @@ export function placeFloating(sel: Rect, bar: Size, vp: Size): Placement {
 
 /** Handle returned by {@link createFloatingBar}. */
 export interface FloatingBar {
+  /** Root element of the bar (host for popovers). */
+  el: HTMLElement;
   /** Shows the bar next to `rect` (viewport coords). */
   show(rect: Rect): void;
   /** Hides the bar. */
@@ -83,6 +85,7 @@ export function createFloatingBar(root: HTMLElement, onAction: (id: FloatingActi
   }
   root.appendChild(el);
   return {
+    el,
     show(rect) {
       el.hidden = false;
       const size = { width: el.offsetWidth || 220, height: el.offsetHeight || 40 };

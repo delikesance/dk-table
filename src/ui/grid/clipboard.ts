@@ -13,19 +13,23 @@ export interface ClipboardHooks {
   getRaw(key: string): string;
   /** Apply a pasted value to a cell. */
   put(key: string, raw: string): void;
+  /** Clear the selected range (cut); same synchronous event = one undo step. */
+  clear(): void;
 }
 
-/** Wire copy/paste (TSV) listeners on `root`. */
+/** Wire copy/cut/paste (TSV) listeners on `root`. */
 export function bindClipboard(root: HTMLElement, h: ClipboardHooks): void {
-  root.addEventListener("copy", (e) => {
-    if (h.busy()) return;
+  /** Writes the selected range as TSV on the clipboard event. */
+  const copy = (e: ClipboardEvent): void => {
     const { anchor: a, active: b } = h.sel();
     const w = Math.abs(a.col - b.col) + 1;
     const k = rangeKeys(a, b).map(h.getRaw);
     const m = Array.from({ length: k.length / w }, (_, r) => k.slice(r * w, (r + 1) * w));
     e.clipboardData?.setData("text/plain", toTsv(m));
     e.preventDefault();
-  });
+  };
+  root.addEventListener("copy", (e) => { if (!h.busy()) copy(e); });
+  root.addEventListener("cut", (e) => { if (!h.busy()) { copy(e); h.clear(); } });
   root.addEventListener("paste", (e) => {
     if (h.busy()) return;
     const text = e.clipboardData?.getData("text/plain");
