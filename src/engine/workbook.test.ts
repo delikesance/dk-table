@@ -87,6 +87,15 @@ describe("cross-sheet recalc", () => {
     expect(getDisplay(b.Feuille1, "A1")).toBe("#CYCLE!");
     expect(getDisplay(b.Feuille2, "A1")).toBe("#CYCLE!");
   });
+  it("renaming the target sheet then re-binding gives #REF! (formulas are not rewritten)", () => {
+    const list = [{ name: "Src", sheet: createSheet() }, { name: "Dst", sheet: createSheet() }];
+    bindWorkbook(() => list);
+    setCell(list[0].sheet, "A1", "1");
+    setCell(list[1].sheet, "A1", "=Src!A1");
+    list[0].name = "Autre";
+    bindWorkbook(() => list);
+    expect(getDisplay(list[1].sheet, "A1")).toBe("#REF!");
+  });
   it("binding after build recomputes external refs", () => {
     const s1 = createSheet(), s2 = createSheet();
     setCell(s2, "A1", "=Feuille1!A1");
