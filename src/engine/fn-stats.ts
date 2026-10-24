@@ -6,19 +6,19 @@ import { collectNums, type Arg, type Builtin } from "./functions";
 import { err, isErr, type Value } from "./types";
 import { cells, numArg } from "./fn-args";
 
-/** Build a builtin over the numbers of all args. */
-function overNums(f: (n: number[]) => Value): Builtin {
+/** Build a builtin over the numbers of all args (errors propagate). Reused by fn-subtotal.ts. */
+export function overNums(f: (n: number[]) => Value): Builtin {
   return (args) => {
     const n = collectNums(args);
     return Array.isArray(n) ? f(n) : (n as Value);
   };
 }
 
-/** Sample variance; fewer than 2 numbers -> #DIV/0!. */
-function variance(n: number[]): Value {
-  if (n.length < 2) return err("#DIV/0!");
+/** Sample variance (population with `pop`); fewer than 2 numbers (1 for `pop`) -> #DIV/0!. Reused by fn-subtotal.ts. */
+export function variance(n: number[], pop = false): Value {
+  if (n.length < (pop ? 1 : 2)) return err("#DIV/0!");
   const m = n.reduce((a, b) => a + b, 0) / n.length;
-  return n.reduce((a, b) => a + (b - m) ** 2, 0) / (n.length - 1);
+  return n.reduce((a, b) => a + (b - m) ** 2, 0) / (n.length - (pop ? 0 : 1));
 }
 
 /** Most frequent number (first one seen on ties); no repeated value -> #N/A. */
@@ -75,7 +75,7 @@ const countblank: Builtin = (args: Arg[]) => {
 export const statsFunctions: Record<string, Builtin> = {
   COUNTBLANK: countblank,
   MODE: overNums(mode),
-  VAR: overNums(variance),
+  VAR: overNums((n) => variance(n)),
   STDEV: overNums((n) => {
     const v = variance(n);
     return typeof v === "number" ? Math.sqrt(v) : v;
