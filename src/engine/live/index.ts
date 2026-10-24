@@ -52,8 +52,8 @@ export function sparklineSvg(values: number[], opts: LiveOpts = {}): string {
   const last = v.length - 1;
   return (
     open(w, h) +
-    `<polyline points="${pts}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>` +
-    `<circle cx="${r2(x(last))}" cy="${r2(y(v[last]))}" r="2" fill="${ACCENT}"/></svg>`
+    `<polyline points="${pts}" fill="none" stroke="${ACCENT}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<circle cx="${r2(x(last))}" cy="${r2(y(v[last]))}" r="2.5" fill="${ACCENT}"/></svg>`
   );
 }
 
@@ -64,7 +64,7 @@ export function barSvg(values: number[], opts: LiveOpts = {}): string {
   if (v.length === 0) return open(w, h) + "</svg>";
   const lo = Math.min(0, ...v), hi = Math.max(0, ...v), span = hi - lo || 1;
   const zero = ((hi - 0) / span) * (h - 2 * pad) + pad;
-  const slot = (w - 2 * pad) / v.length, bw = Math.max(1, slot - 1);
+  const slot = (w - 2 * pad) / v.length, bw = Math.max(1, slot - 2);
   const rects = v.map((n, i) => {
     const bh = Math.max(1, (Math.abs(n) / span) * (h - 2 * pad));
     const top = n >= 0 ? zero - bh : zero;
@@ -88,7 +88,8 @@ export function trendInfo(values: number[]): TrendInfo {
 export function trendHtml(values: number[]): string {
   const t = trendInfo(values);
   const c = t.direction === "up" ? SUCCESS : t.direction === "down" ? ERROR : MUTED;
-  return `<span class="live-trend" style="color:${c};font-weight:600;font-variant-numeric:tabular-nums">${t.label}</span>`;
+  const word = t.direction === "up" ? `Hausse de ${t.pct} %` : t.direction === "down" ? `Baisse de ${Math.abs(t.pct)} %` : "Stable";
+  return `<span class="live-trend" title="${word}" style="color:${c};font-weight:600;font-variant-numeric:tabular-nums">${t.label}</span>`;
 }
 
 /** Functions to register in the engine: name -> (numbers) => html result. */
