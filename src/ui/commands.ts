@@ -4,6 +4,11 @@ import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
 import { exportCsv, importCsv, openFile, openRecent, saveFile } from "./fileops";
 
+/** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
+function toggleTools(): void {
+  document.querySelector<HTMLButtonElement>('[data-action="toggle-tools"]')?.click();
+}
+
 /** Keyboard shortcuts (Ctrl/Cmd + key) -> action. Ctrl+K is owned by the palette. */
 function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
   return {
@@ -14,6 +19,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     o: () => void openFile(app),
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => app.addSheet(),
+    j: () => toggleTools(),
   };
 }
 
@@ -36,6 +42,9 @@ function cellMenu(app: App): MenuItem[] {
   ];
 }
 
+/** Current global keydown listener, replaced on each install. */
+let onKey: ((e: KeyboardEvent) => void) | null = null;
+
 /** Register palette commands, global shortcuts, context menu and file command hooks. */
 export function installCommands(app: App): void {
   const run = (id: string, label: string, fn: () => void, shortcut?: string, keywords: string[] = []) =>
@@ -51,6 +60,7 @@ export function installCommands(app: App): void {
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("sheet.add", "Nouvelle feuille", () => app.addSheet(), "Ctrl+N");
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
+  run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
     run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);
   }
@@ -68,7 +78,8 @@ export function installCommands(app: App): void {
   };
 
   const map = shortcuts(app);
-  document.addEventListener("keydown", (e) => {
+  if (onKey) document.removeEventListener("keydown", onKey); // remount: avoid stacked listeners
+  onKey = (e: KeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
@@ -76,6 +87,7 @@ export function installCommands(app: App): void {
     if ((e.target as HTMLElement)?.tagName === "INPUT" && "zyb i".includes(e.key.toLowerCase())) return;
     e.preventDefault();
     fn(e);
-  });
+  };
+  document.addEventListener("keydown", onKey);
 }
 
