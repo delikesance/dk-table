@@ -63,7 +63,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Fonctions: `engine/fn-{math,text,logic,date,finance,cond,lookup}.ts` enregistrées par `engine/wire.ts` (import côté `sheet.ts`, évite le cycle avec `functions.ts`) via `registerBuiltin(name, fn)` (args bruts) ou `registerFunction` (nombres). `listFunctionNames()` = liste réelle (registre + IF/IFERROR/IFNA + SPARKLINE/BAR/TREND), utilisée par `fndocs.test.ts`. Docs FR: `ui/fndocs.ts` + `fndocs-{math,text,more}.ts`.
 - Grille virtualisée: `ui/grid/virtual.ts` + `window.ts`, MAX_ROWS=1000.
 - Dates: convention 1900 unique (`numfmt.ts` = `fn-date.ts`): 1 = 01/01/1900, 60 = faux 29/02/1900, dès 61 = 1899-12-30 + n.
-- Limites connues: VLOOKUP/HLOOKUP/INDEX 2D inutilisables en formule (évaluateur aplatit les plages, `it.todo`); pas de `#N/A` (IFNA renvoie la valeur, lookups -> #VALUE!); IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; pas de couleur de texte (`CellStyle.color`).
+- Fonctions ajoutées (vague « fonctions manquantes »): `engine/fn-{math2,stats,cond2,text2,info,date2}.ts`, helpers `fn-args.ts`, IFS/SWITCH paresseux dans `engine/lazy.ts` (branché dans `evaluator.ts` comme IF/IFERROR); docs FR `ui/fndocs-{math2,text2}.ts`. Codes d'erreur: `#N/A`, `#NUM!` existent; les littéraux d'erreur (`=#REF!`, `#N/A`) sont lus par le parseur.
+- Limites connues: IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; RAND/RANDBETWEEN non volatiles; CHOOSE ne renvoie pas de plage; une référence d'une seule cellule reste un scalaire (texte -> #VALUE! dans SUM).
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
 ## Decisions (refonte Apple)
@@ -93,6 +94,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Recalcul UI: `grid.refresh()` incrémental: parcourt les 2600 cellules (renderCell/getDisplay) mais n'écrit le DOM que si le contenu change.
 - Fichiers récents: `io/recents.ts` (liste persistée dans localStorage, store injectable), câblé dans `appApi.ts`.
 - Format de nombre: `ui/numfmt.ts` `formatValue` (fr-FR: number/percent/currency), format par cellule via `CellStyle.format`; "Date" non implémenté (sans effet).
+
+## Decisions (fonctions tableur, vague 2)
+
+- Références `$A$1`/`$A1`/`A$1`: le tokenizer retire le `$` (évaluation identique). `engine/refs.ts` `shiftFormula(raw, dCol, dRow)`: décalage à la recopie (parties `$` fixes, hors feuille -> `#REF!`, chaînes et noms de fonction intacts). Utilisé par Ctrl+D/R (`ui/grid/fill.ts`) et le copier-coller interne (`ui/grid/clipboard.ts`, `pasteMatrix`); couper-coller et texte externe collés tels quels.
+- Insérer/supprimer lignes et colonnes: `engine/structure.ts` (déplace les cellules, réécrit les références; `$` bouge aussi; réf. supprimée -> `#REF!`; plages réduites/agrandies), `ui/appStructure.ts` `structOp` (styles, largeurs, filtres, un pas d'undo). Menu contextuel + palette + Ctrl+Maj+= / Ctrl+-, sur les lignes/colonnes de la sélection. Limite: les réf. inter-feuilles ne sont pas réécrites.
+- Formats: `CellStyle.underline` (Ctrl+U), `wrap` (classe `dk-wrap`, hauteur de ligne fixe), `borders {t,r,b,l}` (`ui/borders.ts` modes Toutes/Contour/Bas/Aucune, `App.borders(mode)`, rendu `data-borders` + `::after` dans `ui/cellview.css`); menu « Bordures » = `ui/toolbar/bordersMenu.ts`. Persistés dans `.dktable`.
+- Volets figés: `ui/grid/freeze.ts` (calculs) + `freezeView.ts` (sticky, variables `--dkg-t<r>`/`--dkg-l<c>` sur `.dkg`); `ui/grid/mark.ts` (surbrillance sortie de `grid.ts`). État par feuille `Entry.freeze`, sauvé en `DocSheet.freeze?: {rows, cols}`, non annulable; `App.setFreeze`; palette `view.freeze-*` / `view.unfreeze`, pas de bouton.
+- Références inter-feuilles: `Feuille2!A1`, `'Feuille 1'!A1:B3` (`''` échappe; noms avec espace à citer). Nœuds `xref`/`xrange`, `engine/book.ts` (registre nom -> feuille), `engine/state.ts` (état dérivé + `xprec`), `engine/workbook.ts` (`bindWorkbook`, `recalcBook`: propagation DFS entre feuilles, cycle -> #CYCLE!). UI: `relink(c)` (appState) après mount/ajout/import/chargement/undo/redo/renommage/suppression. Limite: renommer/supprimer une feuille ne réécrit pas les formules (-> #REF!).
 
 ## Docs
 
