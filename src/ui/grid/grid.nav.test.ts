@@ -83,6 +83,14 @@ describe("editor keys", () => {
     expect(ed()).toBeNull();
     expect(grid.getSelection()).toBe("B1:C2");
   });
+  it("Ctrl+Enter shifts relative refs from the active cell (Excel)", () => {
+    grid.select("B1:B3");
+    key(root(), "=");
+    const t = ed()!;
+    t.value = "=A5+$A$1"; // typed for the edited (active) cell, B3 here
+    key(t, "Enter", { ctrlKey: true });
+    expect([raw.B1, raw.B2, raw.B3]).toEqual(["=A3+$A$1", "=A4+$A$1", "=A5+$A$1"]);
+  });
   it("Alt+Enter inserts a line break; the cell wraps it", () => {
     key(root(), "a");
     const t = ed()!;
