@@ -65,20 +65,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Dates: convention 1900 unique (`numfmt.ts` = `fn-date.ts`): 1 = 01/01/1900, 60 = faux 29/02/1900, dès 61 = 1899-12-30 + n.
 - Fonctions ajoutées (vague « fonctions manquantes »): `engine/fn-{math2,stats,cond2,text2,info,date2}.ts`, helpers `fn-args.ts`, IFS/SWITCH paresseux dans `engine/lazy.ts` (branché dans `evaluator.ts` comme IF/IFERROR); docs FR `ui/fndocs-{math2,text2}.ts`. Codes d'erreur: `#N/A`, `#NUM!` existent; les littéraux d'erreur (`=#REF!`, `#N/A`) sont lus par le parseur.
 - Limites connues: IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; RAND/RANDBETWEEN non volatiles; CHOOSE ne renvoie pas de plage; une référence d'une seule cellule reste un scalaire (texte -> #VALUE! dans SUM).
+- `macros/`: macros Lua sans DOM. `lua.ts` (`runMacro(code, host)`: fengari Lua 5.3, bac à sable, `print` capturé, limite d'instructions), `api.ts` (table `sheet` + interface `MacroHost`), `complete.ts` + `luadocs.ts` (autocomplétion indépendante de l'éditeur), `store.ts` (liste des macros). Référence utilisateur : `docs/macros.md`.
+- `ui/macros/`: `wire.ts` (commandes palette + Alt+F11, chargement paresseux de `kit.ts`), `panel.ts` (panneau droit 440px), `editor.ts` (CodeMirror 6), `run.ts` (exécution sur la feuille active), `macros.css` (tokens `--c-code-*` avec repli).
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
 ## Decisions (refonte Apple)
 
 - Mode minimal par défaut: seuls grille + barre de formule + onglets visibles; `.dk-app__tools` (toolbar) et `.dk-sidebar` sont `hidden` jusqu'au clic sur `[data-action="toggle-tools"]` (classe `dk-app--minimal`).
 - Icônes: bibliothèque Iconoir (dépendance `iconoir`), toutes via `src/ui/icons.ts` (SVG inline `currentColor`); `--c-icon` noir (clair) / clair (sombre). `mockups/design/` resynchronisé.
-
-## Decisions (macros Lua)
-
-- `src/macros/`: `macro.ts` (`runMacro(code, api, {timeoutMs})` + `sheetApi(sheet)`), `run.ts` (`runMacroOnApp`), `dialog.ts` (boîte textarea), commande palette « Exécuter une macro Lua… » (`macro.run`).
-- Lua exposé: `getValue(addr)`, `getRaw(addr)`, `setCell(addr, v)`, `getRange("A1:A5")` (nombres); passe uniquement par l'API publique de `engine/sheet.ts`.
-- Lib: `wasmoon` (Lua 5.4 en WASM, async). Délai max 2 s via `debug.sethook` (compteur d'instructions, hook posé dans le même chunk que le code: hooks par thread). Erreurs -> `{ok:false,error}` en français, jamais levées.
-- Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
-- Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
 
 ## Decisions (onboarding)
 
@@ -108,6 +102,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `docs/demo.md`: script de la démo de 5 minutes (installation puis tour des fonctions).
 - `docs/workflow-ux.md`: workflow UX casual-first (niveaux N1/N2/N3, coût en clics); maquette `mockups/workflow-ux.html` (4 écrans commutables, exemptée de la limite de 200 lignes).
+
+## Decisions (macros Lua)
+
+- VM Lua = fengari (Lua 5.3 en JS pur, synchrone, testable sous vitest). `tmp`/`readline-sync` (Node) remplacés par un stub dans `vite.config.ts`.
+- Éditeur = CodeMirror 6 (mode Lua legacy). Lua VM + éditeur chargés à la demande (`import("./kit")`) : chunk de démarrage ~46 Ko, chunk macros ~555 Ko.
+- API Lua alignée sur les noms du moteur (`sheet.getValue`, `setCell`...), validée avec le fil design.
+- Accès : palette Ctrl+K (« Éditeur de macros », « Macro : nom ») + Alt+F11. Pas de bouton toolbar : le menu « Scripts » de la refonte design listera les macros (`app.macros`, `app.runMacro`, `app.openMacros`).
+- Remplace l'implémentation wasmoon (boîte textarea) arrivée en parallèle sur master : même besoin, éditeur et persistance en plus.
+- Une exécution = un pas d'annulation (`app.batch`), aucun pas si rien n'a changé. Macros persistées dans `.dktable` (`macros?: {id,name,code}[]`, format v1 rétrocompatible).
 
 ## Research
 

@@ -12,6 +12,7 @@ import { installUnloadGuard } from "./fileops";
 import { buildGrid, refreshTabs } from "./appGrid";
 import { createApi } from "./appApi";
 import { createWidgets } from "./appWidgets";
+import { installMacros } from "./macros/wire";
 import { relink, type Ctx } from "./appState";
 import type { App } from "./appTypes";
 
@@ -39,6 +40,7 @@ export function mount(root: HTMLElement): App {
   relink(c);
   c.app = createApi(c);
   createWidgets(c, root);
+  c.macroUi = installMacros(c.app, root.querySelector<HTMLElement>(".dk-app__main")!);
   c.sidebar.setRecent(c.recents);
   const palette = createPalette({ hotkey: true });
   const menus = root.querySelector<HTMLElement>(".dk-menus");

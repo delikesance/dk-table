@@ -118,8 +118,8 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 
 ## Later (non planifié)
 
-- [x] Macros Lua (wasmoon) : API cellules, délai max, palette « Exécuter une macro Lua… », undo en un pas (branche `wt/lua-macros`)
-- [ ] Macros : enregistrer/réutiliser des scripts, accès aux styles et à plusieurs feuilles
+- [x] Macros Lua (wasmoon) : remplacées par l'implémentation fengari + éditeur (Phase 8 Macros Lua)
+- [ ] Macros : accès aux styles et à plusieurs feuilles
 
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
@@ -165,3 +165,13 @@ Classement par gravité (P0 = pire)
 - [x] P3 Toasts/statut: non visibles dans les captures (aucun message déclenché); vérifier position/contraste (`toast/`). Test: toast `role=status`, fond `--c-overlay` contraste >= 4.5:1.
 - [ ] P3 Cellules vivantes: sparkline fine (1px) et barres sans marge, TREND rouge seul sans contexte; en sombre barres pâles saturées. Test: `engine/live` SVG `stroke-width>=1.5`, `gap` barres >= 1px, couleurs via `--c-accent`/`--c-error`. `live/*.ts`.
 - [x] Grille: Entrée sur cellule non éditée = ouvre l'édition (comme F2); Maj+Entrée monte, Ctrl/Alt+Entrée ignoré. Test: `ui/grid/grid.test.ts`. `grid/gridKeys.ts`.
+
+## Phase 8 : Macros Lua
+
+- [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
+- [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
+- [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
+- [x] M4 Macros persistées dans `.dktable` ; exécution = un pas d'annulation
+- [ ] M5 Menu « Scripts » (refonte design) listant les macros, raccourcis par macro
+- [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
+

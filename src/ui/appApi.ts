@@ -1,6 +1,7 @@
 /** Builds the public `App` handle (edit, undo, sheets, docs, styles, recents) over the shared `Ctx`. */
 import { getRaw, setCell } from "../engine/sheet";
-import { newEntry, pushUndo, step, type Entry } from "./model";
+import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
+import { createMacroStore } from "../macros/store";
 import { paintStyle } from "./cellview";
 import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
@@ -24,6 +25,8 @@ const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\\/]/
 export function createApi(c: Ctx): App {
   const store = createRecents(typeof localStorage === "undefined" ? null : localStorage, 8);
   c.recents = store.list().map(toRecent);
+  const macros = createMacroStore();
+  let loading = false;
   const paint = (k: string): void => paintStyle(c.gridHost, k, c.cur.styles[k]);
   const app: App = {
     hooks: {},
@@ -38,10 +41,7 @@ export function createApi(c: Ctx): App {
       for (const [k, raw] of Object.entries(cells)) setCell(c.cur.sheet, k, raw);
       touch(c);
     },
-    async runBatch(fn) {
-      pushUndo(c.cur);
-      try { return await fn(c.cur.sheet); } finally { touch(c); }
-    },
+    batch(fn) { if (batchEdit(c.cur, fn)) touch(c); },
     undo() { if (step(c.cur, "undo")) { relink(c); buildGrid(c); setTitle(c, true); } },
     redo() { if (step(c.cur, "redo")) { relink(c); buildGrid(c); setTitle(c, true); } },
     addSheet() {
@@ -61,11 +61,13 @@ export function createApi(c: Ctx): App {
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}) })),
+      macros: macros.list().map((m) => ({ ...m })),
     }),
     loadDoc(doc, path) {
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
       app.path = path;
+      loading = true; macros.load(doc.macros ?? []); loading = false;
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
     },
     importSheet(name, sheet) {
@@ -112,12 +114,17 @@ export function createApi(c: Ctx): App {
       c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
       buildGrid(c); setTitle(c, true);
     },
+    macros,
+    sheetName: () => c.cur.name,
+    runMacro: (id) => c.macroUi.run(id),
+    openMacros: (id) => c.macroUi.open(id),
     sortColumn(desc) {
       if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
       touch(c);
       return true;
     },
   };
+  macros.onChange(() => { if (!loading) setTitle(c, true); });
   setupAutosave(c);
   return app;
 }
