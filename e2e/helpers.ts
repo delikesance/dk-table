@@ -5,7 +5,7 @@ export const cell = (page: Page, addr: string) => page.locator(`.dkg-cell[data-k
 
 /** Open the app (Tauri dialog/fs are only imported lazily, absent in the browser). */
 export async function openApp(page: Page): Promise<void> {
-  await page.goto("/");
+  await page.goto("/?onboarding=0"); // skip the home screen (covered by onboarding.spec.ts)
   await page.locator(".dkg-cell").first().waitFor();
 }
 
