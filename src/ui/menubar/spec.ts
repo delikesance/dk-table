@@ -59,6 +59,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Nombre", run: fmt("number") },
       { label: "Pourcentage", run: fmt("percent") },
       { label: "Monétaire", run: fmt("currency") },
+      { label: "Comptabilité", run: fmt("accounting") },
       { label: "Date", run: fmt("date") },
     ] },
     { label: "Feuille", items: [

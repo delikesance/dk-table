@@ -5,7 +5,10 @@ describe("cellKind", () => {
   it.each(["12", "-3,5", "1 234,56", "1 234,56 €", "12 %", "3.14", "1,2E+5"])("number %s", (t) => {
     expect(cellKind(t)).toBe("num");
   });
-  it.each(["abc", "A1", "12 abc", ""])("text %j", (t) => {
+  it.each(["(1 234,50 €)", "1 234,50 € ", "- € ", "(12)"])("accounting number %j", (t) => {
+    expect(cellKind(t)).toBe("num");
+  });
+  it.each(["abc", "A1", "12 abc", "", "(abc)", "-", "()"])("text %j", (t) => {
     expect(cellKind(t)).toBe("text");
   });
   it.each(["#CYCLE!", "#DIV/0!", "#N/A", "#VALUE!", "#REF!"])("error %s", (t) => {

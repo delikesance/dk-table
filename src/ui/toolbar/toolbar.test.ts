@@ -77,6 +77,12 @@ describe("toolbar", () => {
     sel.value = "date"; sel.dispatchEvent(new Event("change"));
     expect(h.onFormat).toHaveBeenCalledWith("date");
   });
+  it("offers Comptabilité right after Monétaire", () => {
+    const { host } = mkToolbar();
+    const opts = [...host.querySelector<HTMLSelectElement>("select")!.options];
+    const i = opts.findIndex((o) => o.value === "currency");
+    expect([opts[i + 1].value, opts[i + 1].text]).toEqual(["accounting", "Comptabilité"]);
+  });
   it("setState updates pressed/disabled/selected", () => {
     const { host, tb } = mkToolbar();
     tb.setState({ bold: true, italic: false, align: "right", format: "percent", canUndo: false, canRedo: true });

@@ -33,13 +33,31 @@ function isoToDate(text: string): string | null {
   return ok ? `${m[3]}/${m[2]}/${m[1]}` : null;
 }
 
+/** Figure space: pads positives/zero to the width of the ")" closing a negative. */
+const FIGURE_SPACE = " ";
+
+/**
+ * Accounting ("Comptabilité"): `1 234,50 € ` / `(1 234,50 €)` / `- € `; amounts that round
+ * to 0,00 show the dash. The trailing figure space keeps digits and € aligned in a column.
+ */
+function accounting(n: number): string {
+  const cents = Math.round(Math.abs(n) * 100);
+  if (cents === 0) return `- €${FIGURE_SPACE}`;
+  const s = fmts.currency.format(cents / 100);
+  return n < 0 ? `(${s})` : s + FIGURE_SPACE;
+}
+
 /**
  * Format a displayed cell `text` according to format code `format`
- * ("general" | "number" | "percent" | "currency" | "date"). Non numeric text,
- * empty text, unknown or missing formats are returned unchanged. "date"
+ * ("general" | "number" | "percent" | "currency" | "accounting" | "date"). Non numeric
+ * text, empty text, unknown or missing formats are returned unchanged. "date"
  * accepts an Excel serial (see `serialToDate`) or ISO text.
  */
 export function formatValue(text: string, format?: string): string {
+  if (format === "accounting") {
+    const n = Number(text);
+    return text.trim() !== "" && Number.isFinite(n) ? accounting(n) : text;
+  }
   if (format === "date") {
     if (text.trim() === "") return text;
     const n = Number(text);

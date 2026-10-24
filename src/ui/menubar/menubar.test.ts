@@ -50,6 +50,14 @@ describe("contenu des menus", () => {
     items(spec, "Format").find((e) => e.label === "Bordures : contour")!.run!();
     expect(app.borders).toHaveBeenCalledWith("outer");
   });
+  it("Format : Comptabilité juste après Monétaire", () => {
+    const app = fakeApp();
+    const f = items(buildMenuSpec(app, deps()), "Format");
+    const i = f.findIndex((e) => e.label === "Monétaire");
+    expect(f[i + 1].label).toBe("Comptabilité");
+    f[i + 1].run!();
+    expect(app.style).toHaveBeenCalledWith({ format: "accounting" });
+  });
   it("Fichier > Paramètres… (Ctrl+,)", () => {
     const d = deps();
     const p = items(buildMenuSpec(fakeApp(), d), "Fichier").find((e) => e.label === "Paramètres…")!;
