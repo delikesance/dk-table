@@ -10,6 +10,7 @@ import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
+import { structOp } from "./appStructure";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -92,6 +93,10 @@ export function createApi(c: Ctx): App {
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
+    insertRows: () => structOp(c, "insertRows"),
+    deleteRows: () => structOp(c, "deleteRows"),
+    insertCols: () => structOp(c, "insertCols"),
+    deleteCols: () => structOp(c, "deleteCols"),
     sortColumn(desc) {
       if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
       touch(c);

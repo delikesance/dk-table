@@ -51,6 +51,14 @@ export interface App {
   addRecent(path: string): void;
   /** Sort the active column's data block (one undo step); false when nothing to sort. */
   sortColumn(desc: boolean): boolean;
+  /** Insert as many rows as selected, above the selection (one undo step, refs rewritten). */
+  insertRows(): void;
+  /** Delete the rows spanned by the selection (one undo step; refs to them become #REF!). */
+  deleteRows(): void;
+  /** Insert as many columns as selected, left of the selection (one undo step). */
+  insertCols(): void;
+  /** Delete the columns spanned by the selection (one undo step). */
+  deleteCols(): void;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
 }
