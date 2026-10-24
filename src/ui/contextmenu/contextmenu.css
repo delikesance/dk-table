@@ -1,12 +1,15 @@
 /* Context menu (tokens from mockups/design/tokens.css). */
 .dk-menu { position: fixed; z-index: 1100; box-sizing: border-box; min-width: 220px; padding: var(--s-1); background: var(--c-overlay); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); border-radius: var(--r-md); box-shadow: var(--sh-2); font: var(--fs-md) var(--font-ui); }
 .dk-menu__item { display: flex; align-items: center; gap: var(--s-3); min-height: 28px; padding: var(--s-1) var(--s-3); border-radius: var(--r-sm); color: var(--c-text); cursor: pointer; }
-.dk-menu__item--hover { background: var(--c-accent); color: var(--c-text-on-accent); }
-.dk-menu__item--disabled { color: var(--c-text-3); cursor: default; }
+/* Survol = accent doux (pas de plein saturé); texte inchangé. */
+.dk-menu__item--hover { background: var(--c-accent-soft); color: var(--c-text); }
+.dk-menu__item--disabled, .dk-menu__item--disabled.dk-menu__item--hover { background: transparent; color: var(--c-text-3); cursor: default; }
 .dk-menu__item--danger { color: var(--c-error); }
-.dk-menu__item--danger.dk-menu__item--hover { color: var(--c-text-on-accent); }
+.dk-menu__item--danger.dk-menu__item--hover { background: var(--c-error-soft); color: var(--c-error); }
+/* Raccourcis: texte discret aligné à droite, sans cadre. */
 .dk-menu__item .dk-kbd, .dk-menu__arrow { margin-left: auto; }
-.dk-menu__item--hover .dk-kbd { background: transparent; border-color: currentColor; color: inherit; }
-.dk-menu__sep { height: 1px; margin: var(--s-1) var(--s-2); background: var(--c-line); }
-.dk-menu__item .dk-icon { width: 16px; height: 16px; }
+.dk-menu .dk-menu__item .dk-kbd, .dk-menu .dk-menu__item--hover .dk-kbd { background: transparent; border-color: transparent; color: var(--c-text-2); padding: 0; }
+.dk-menu__sep { height: 1px; margin: var(--s-1) var(--s-2); background: var(--c-line-strong); }
+.dk-menu__item .dk-icon { width: 16px; height: 16px; color: var(--c-text-2); }
+.dk-menu__item--danger .dk-icon { color: currentColor; }
 .dk-menu__arrow { display: inline-flex; }
