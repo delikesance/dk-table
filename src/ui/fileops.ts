@@ -59,14 +59,20 @@ export const openRecent = (app: App, path: string) => guard(async () => {
   app.addRecent(path);
 });
 
-/** Save (asks a path the first time, or always when `as`). */
-export const saveFile = (app: App, as = false) => guard(async () => {
+/**
+ * Write the workbook (asks a path the first time, or always when `as`); throws on failure.
+ * `finish` runs after a successful write (default: mark saved); shared by Ctrl+S and autosave.
+ */
+export async function writeDoc(app: App, as = false, finish: () => void = () => app.markSaved()): Promise<void> {
   const p = as ? await saveAs(app.toDoc()) : await saveDocument(app.toDoc(), app.path);
   if (!p) return;
   app.path = p;
   app.addRecent(p);
-  app.markSaved();
-});
+  finish();
+}
+
+/** Save with error toast (Ctrl+S / "Enregistrer sous…"). */
+export const saveFile = (app: App, as = false) => guard(() => writeDoc(app, as));
 
 /** Import a CSV file as a new sheet. */
 export const importCsv = (app: App) => guard(async () => {

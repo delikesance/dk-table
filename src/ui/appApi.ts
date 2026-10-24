@@ -8,6 +8,7 @@ import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
+import { setupAutosave } from "./autosaveUi";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -87,5 +88,6 @@ export function createApi(c: Ctx): App {
     },
     markSaved: () => setTitle(c, false),
   };
+  setupAutosave(c);
   return app;
 }
