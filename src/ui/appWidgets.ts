@@ -4,7 +4,7 @@ import { createSheetTabs } from "./tabs/tabs";
 import { createSidebar } from "./sidebar/sidebar";
 import { FN_DOCS } from "./fndocs";
 import { buildGrid, refreshTabs } from "./appGrid";
-import { firstKey, type Ctx } from "./appState";
+import { firstKey, relink, type Ctx } from "./appState";
 import { exportCsv, importCsv, newDocument, saveFile } from "./fileops";
 import { floatingAction, installFloating } from "./appFloating";
 import { autosum } from "./autosum";
@@ -54,12 +54,14 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onRename: (id, name) => {
       const e = c.entries.find((x) => x.id === id);
       if (e) e.name = name;
+      relink(c); c.grid.refresh();
       refreshTabs(c);
     },
     onDelete: (id) => {
       if (c.entries.length < 2) return;
       c.entries = c.entries.filter((x) => x.id !== id);
-      if (c.cur.id === id) { c.cur = c.entries[0]; buildGrid(c); }
+      relink(c);
+      if (c.cur.id === id) { c.cur = c.entries[0]; buildGrid(c); } else c.grid.refresh();
       refreshTabs(c);
     },
     onReorder: (ids) => { c.entries = ids.map((i) => c.entries.find((e) => e.id === i)!).filter(Boolean); },
