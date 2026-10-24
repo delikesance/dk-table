@@ -13,7 +13,7 @@ import type { App } from "./appTypes";
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
   Object.keys(styles).length ? structuredClone(styles) : undefined;
 
-const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\/]/).pop() ?? path });
+const toRecent = (path: string): RecentFile => ({ path, name: path.split(/[\\/]/).pop() ?? path });
 
 /** Create the App handle; widgets are read lazily from `c` so order of creation is free. */
 export function createApi(c: Ctx): App {
@@ -74,7 +74,8 @@ export function createApi(c: Ctx): App {
     },
     recents: () => c.recents,
     addRecent(path) {
-      c.recents = [{ path, name: path.split(/[\\/]/).pop() ?? path }, ...c.recents.filter((r) => r.path !== path)].slice(0, 8);
+      store.add(path);
+      c.recents = store.list().map(toRecent);
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
