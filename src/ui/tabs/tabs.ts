@@ -121,6 +121,7 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
     add.className = "dk-tab dk-tab--add";
     add.innerHTML = icon("plus");
     add.setAttribute("aria-label", "Ajouter une feuille");
+    add.title = "Ajouter une feuille";
     add.addEventListener("click", () => opts.onAdd());
     bar.appendChild(add);
     if (focusId) {
