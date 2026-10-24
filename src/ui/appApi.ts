@@ -57,7 +57,8 @@ export function createApi(c: Ctx): App {
     toDoc: () => ({
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
-        cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles) })),
+        cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
+        ...(e.freeze ? { freeze: { ...e.freeze } } : {}) })),
     }),
     loadDoc(doc, path) {
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
@@ -92,6 +93,10 @@ export function createApi(c: Ctx): App {
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
+    setFreeze(f) {
+      c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
+      buildGrid(c); setTitle(c, true);
+    },
     sortColumn(desc) {
       if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
       touch(c);

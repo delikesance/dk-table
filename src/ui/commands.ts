@@ -4,6 +4,7 @@ import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
 import { openMacroDialog } from "../macros/dialog";
 import { autosum } from "./autosum";
+import { parseKey } from "./grid/keys";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
@@ -23,6 +24,12 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     n: () => newDocument(app),
     j: () => toggleTools(),
   };
+}
+
+/** Freeze rows above and columns left of the selection's top-left cell (the active cell for a single cell). */
+function freezeAtCell(app: App): void {
+  const p = parseKey(app.selection().split(":")[0]);
+  app.setFreeze({ rows: p.row, cols: p.col });
 }
 
 /** Clear selected cells as a single undo step. */
@@ -77,6 +84,11 @@ export function installCommands(app: App): void {
   run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
+  const fk = ["figer", "volets", "freeze", "geler"];
+  run("view.freeze-row", "Figer la première ligne", () => app.setFreeze({ rows: 1, cols: 0 }), undefined, fk);
+  run("view.freeze-col", "Figer la première colonne", () => app.setFreeze({ rows: 0, cols: 1 }), undefined, fk);
+  run("view.freeze-cell", "Figer jusqu'à la cellule active", () => freezeAtCell(app), undefined, fk);
+  run("view.unfreeze", "Libérer les volets", () => app.setFreeze({ rows: 0, cols: 0 }), undefined, ["libérer", "volets", "unfreeze"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
     run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);
   }

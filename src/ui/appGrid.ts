@@ -8,7 +8,7 @@ import { liveCell, paintStyle } from "./cellview";
 import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
-/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files. */
+/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files (freeze comes from the entry). */
 const views = new WeakMap<object, GridView>();
 const viewOf = (e: object): GridView => {
   let v = views.get(e);
@@ -40,8 +40,10 @@ export function buildGrid(c: Ctx): void {
   c.grid?.destroy();
   c.gridHost.replaceChildren();
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
+  const view = viewOf(c.cur);
+  view.freeze = c.cur.freeze;
   c.grid = createGrid(c.gridHost, {
-    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view: viewOf(c.cur),
+    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
     onEdit: (k, raw) => {
