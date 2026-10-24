@@ -51,7 +51,18 @@ describe("floating bar", () => {
       expect(fbtn(a).textContent!.trim()).toBe("");
     }
   });
-  it("text colour is disabled until CellStyle.color exists", () => {
-    expect(fbtn("text").disabled).toBe(true);
+  it("text colour button opens a picker; swatch sets the colour, Aucune clears it", () => {
+    range();
+    expect(fbtn("text").disabled).toBe(false);
+    const pop = bar().querySelector<HTMLElement>('.color-picker[aria-label="Couleur du texte"]')!;
+    expect(pop.hidden).toBe(true);
+    fbtn("text").click();
+    expect(pop.hidden).toBe(false);
+    pop.querySelector<HTMLButtonElement>(".color-swatch")!.click();
+    expect(app.activeStyle().color).toBe("#1d1d1f");
+    expect(pop.hidden).toBe(true);
+    fbtn("text").click();
+    pop.querySelector<HTMLButtonElement>('[aria-label="Aucune"]')!.click();
+    expect(app.activeStyle().color).toBeUndefined();
   });
 });

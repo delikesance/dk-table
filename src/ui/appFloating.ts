@@ -5,6 +5,7 @@
  * plus grid keyboard/mouse events that start or end an edit.
  */
 import { createFloatingBar, type FloatingActionId, type Rect } from "./toolbar/floating";
+import { createColorPicker, type ColorPicker } from "./toolbar/colors";
 import { autosum } from "./autosum";
 import type { Ctx } from "./appState";
 import type { App } from "./appTypes";
@@ -37,14 +38,23 @@ function selectionRect(host: HTMLElement): Rect | null {
 
 /** Create the floating bar in `root` and keep it in sync with the grid selection of `c`. */
 export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: FloatingActionId) => void): void {
-  const fb = createFloatingBar(root, onAction);
-  fb.setDisabled("text", true); // CellStyle.color is not available yet
+  const pickers = new Map<FloatingActionId, ColorPicker>();
+  /** Opens/closes the popover of a colour action (text); other popovers close. */
+  const togglePicker = (id: FloatingActionId): void => {
+    pickers.forEach((p, k) => { p.hidden = k === id ? !p.hidden : true; });
+  };
+  const fb = createFloatingBar(root, (id) => (pickers.has(id) ? togglePicker(id) : onAction(id)));
+  const addPicker = (id: "text", kind: "text", apply: (col: string | null) => void): void => {
+    const p = createColorPicker({ kind, root: fb.el, onPick: (col) => { p.hidden = true; apply(col); } });
+    p.hidden = true; pickers.set(id, p);
+  };
+  addPicker("text", "text", (col) => c.app.style({ color: col ?? undefined }));
   const refresh = (): void => {
     if (!c.grid) return;
     const multi = c.grid.getSelection().includes(":");
     const editing = !!c.gridHost.querySelector(".dkg input");
     const rect = multi && !editing ? selectionRect(c.gridHost) : null;
-    if (!rect) { fb.hide(); return; }
+    if (!rect) { pickers.forEach((p) => { p.hidden = true; }); fb.hide(); return; }
     const st = c.app.activeStyle();
     fb.setPressed("bold", !!st.bold); fb.setPressed("italic", !!st.italic);
     fb.setPressed("fill", !!st.fill); fb.setPressed("percent", st.format === "percent");
