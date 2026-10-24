@@ -1,11 +1,20 @@
 /** Grid lifecycle of the app: (re)build, info sync, redraw after edits, tabs refresh. */
 import { getDisplay, getRaw, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
+import type { GridView } from "./grid/types";
 import { MAX_ROWS } from "./grid/virtual";
 import { pushUndo } from "./model";
 import { liveCell, paintStyle } from "./cellview";
 import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
+
+/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files. */
+const views = new WeakMap<object, GridView>();
+const viewOf = (e: object): GridView => {
+  let v = views.get(e);
+  if (!v) views.set(e, (v = { widths: {}, filters: {} }));
+  return v;
+};
 
 /** Sync formula bar, sidebar info and toolbar state with the active cell. */
 export function syncInfo(c: Ctx): void {
@@ -32,7 +41,7 @@ export function buildGrid(c: Ctx): void {
   c.gridHost.replaceChildren();
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
   c.grid = createGrid(c.gridHost, {
-    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows,
+    cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view: viewOf(c.cur),
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
     onEdit: (k, raw) => {

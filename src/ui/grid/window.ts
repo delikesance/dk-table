@@ -11,8 +11,11 @@ export interface RowWindow {
   cells: Map<string, HTMLElement>;
   /** Rendered row headers by row index. */
   heads: Map<number, HTMLElement>;
-  /** Re-compute the window from scroll state; `keepRow` stays rendered (editing). */
-  sync(keepRow?: number): { added: number[]; removed: number[] };
+  /**
+   * Re-compute the window from scroll state; `keepRow` stays rendered (editing).
+   * `order` = visible row indices (filtered view, ascending): scroll positions then count visible rows only.
+   */
+  sync(keepRow?: number, order?: number[] | null): { added: number[]; removed: number[] };
 }
 
 /** Place `el` at 1-based grid row/column. */
@@ -59,13 +62,15 @@ export function createRowWindow(root: HTMLElement, cols: number, total: number,
 
   return {
     cells, heads,
-    sync(keepRow) {
+    sync(keepRow, order) {
       const vh = root.clientHeight || FALLBACK_VIEWPORT_H;
-      const { start, end } = visibleRange(root.scrollTop, vh, ROW_H, total, OVERSCAN);
-      const removed = [...heads.keys()].filter((r) => (r < start || r >= end) && r !== keepRow);
+      const { start, end } = visibleRange(root.scrollTop, vh, ROW_H, order ? order.length : total, OVERSCAN);
+      const want = new Set<number>();
+      for (let i = start; i < end; i++) want.add(order ? order[i] : i);
+      const removed = [...heads.keys()].filter((r) => !want.has(r) && r !== keepRow);
       removed.forEach(drop);
-      const added: number[] = [];
-      for (let r = start; r < end; r++) if (!heads.has(r)) { add(r); added.push(r); }
+      const added = [...want].filter((r) => !heads.has(r));
+      added.forEach(add);
       return { added, removed };
     },
   };
