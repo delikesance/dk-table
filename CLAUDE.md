@@ -51,8 +51,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
-- `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
+- `ui/`: `icons.ts` (Iconoir `iconoir/icons/regular/*.svg?raw`, `icon(name)`, `currentColor`, noir via `--c-icon`), `appTools.ts` (bouton `toggle-tools`, mode minimal), `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
+
+## Decisions (refonte Apple)
+
+- Mode minimal par défaut: seuls grille + barre de formule + onglets visibles; `.dk-app__tools` (toolbar) et `.dk-sidebar` sont `hidden` jusqu'au clic sur `[data-action="toggle-tools"]` (classe `dk-app--minimal`).
+- Icônes: bibliothèque Iconoir (dépendance `iconoir`), toutes via `src/ui/icons.ts` (SVG inline `currentColor`); `--c-icon` noir (clair) / clair (sombre). `mockups/design/` resynchronisé.
 
 ## Decisions (intégration I8)
 
