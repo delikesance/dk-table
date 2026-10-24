@@ -7,7 +7,14 @@ export function toNum(v: Value): number | CellError {
   if (typeof v === "boolean") return v ? 1 : 0;
   if (v.trim() === "") return 0;
   const n = Number(v);
-  return Number.isFinite(n) ? n : err("#VALUE!");
+  return isDecimal(v) && Number.isFinite(n) ? n : err("#VALUE!");
+}
+
+const DECIMAL = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+
+/** True for plain decimal numeric text (no 0x/0b/0o, no Infinity). */
+export function isDecimal(s: string): boolean {
+  return DECIMAL.test(s.trim());
 }
 
 /** Coerce a non-error value to text (booleans as TRUE/FALSE). */
