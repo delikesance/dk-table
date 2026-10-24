@@ -1,5 +1,6 @@
-/** File actions (open/save/CSV) wired to the app; errors and replacements are reported via toasts. */
-import { exportCsvFile, importCsvFile, openDocument, openPath, saveAs, saveDocument } from "../io/files";
+/** File actions (open/save/CSV/FEC) wired to the app; errors and replacements are reported via toasts. */
+import { exportCsvFile, exportFecFile, importCsvFile, openDocument, openPath, saveAs, saveDocument } from "../io/files";
+import { toFec } from "../io/fec";
 import { showToast } from "./toast/toast";
 import type { DktDoc } from "../io/types";
 import type { App } from "./appTypes";
@@ -84,3 +85,14 @@ export const importCsv = (app: App) => guard(async () => {
 
 /** Export the active sheet as CSV. */
 export const exportCsv = (app: App) => guard(async () => { await exportCsvFile(app.activeDoc()); });
+
+/** Export the active sheet as FEC (see io/fec.ts); invalid data -> one toast with the first error. */
+export const exportFec = (app: App) => guard(async () => {
+  const r = toFec(app.activeDoc());
+  if ("errors" in r) {
+    const more = r.errors.length > 1 ? ` (+${r.errors.length - 1})` : "";
+    showToast({ message: `FEC invalide : ${r.errors[0]}${more}`, duration: 8000 });
+    return;
+  }
+  await exportFecFile(r.text);
+});

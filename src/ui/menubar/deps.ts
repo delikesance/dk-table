@@ -5,7 +5,7 @@
  */
 import type { App } from "../appTypes";
 import type { MenuDeps } from "./spec";
-import { exportCsv, importCsv, newDocument, saveFile } from "../fileops";
+import { exportCsv, exportFec, importCsv, newDocument, saveFile } from "../fileops";
 import { openSettings } from "../dialogs/settings";
 import { openAbout } from "../dialogs/about";
 import { autosum } from "../autosum";
@@ -22,6 +22,7 @@ export function menuDeps(app: App, openPalette: () => void): MenuDeps {
       onSaveAs: () => void saveFile(app, true),
       onImportCsv: () => void importCsv(app),
       onExportCsv: () => void exportCsv(app),
+      onExportFec: () => void exportFec(app),
     },
     openSettings,
     openMacros: () => void app.openMacros(),
