@@ -3,7 +3,10 @@ import { getRaw, getRangeValues, type Sheet } from "../engine/sheet";
 import { liveResult } from "../engine/live/adapter";
 import type { CellStyle } from "./model";
 import type { CfStyle } from "../engine/cf/types";
-import { hexRgb } from "../engine/cf/scale";
+import { hexRgb, isDark } from "../engine/cf/scale";
+
+/** Ink kept readable on any fill in both themes (Hermes blue on light fills, paper on dark ones). */
+const INK = { light: "#0000f2", dark: "#f2f2f2" } as const;
 import "./cellview.css";
 
 const ALIGN = { left: "flex-start", center: "center", right: "flex-end" } as const;
@@ -23,7 +26,8 @@ export function paintCell(el: HTMLElement, base: CellStyle = {}, cf?: CfStyle): 
   el.style.textAlign = s.align ?? "";
   el.style.justifyContent = s.align ? ALIGN[s.align] : ""; // cells are flex: text-align alone is ignored
   el.style.background = s.fill ?? "";
-  el.style.color = s.color ?? "";
+  // a fill without an explicit text color gets a contrasting ink (light theme text is blue, dark theme text is paper)
+  el.style.color = s.color ?? (s.fill && hexRgb(s.fill) ? INK[isDark(s.fill) ? "dark" : "light"] : "");
   // data bar: a gradient layer over the fill (the `background` shorthand above resets it)
   if (bar) {
     const tint = `rgba(${(hexRgb(bar.color) ?? [0, 0, 242]).join(", ")}, 0.3)`;

@@ -10,6 +10,14 @@ export function hexRgb(hex: string): [number, number, number] | null {
   return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
 }
 
+/** True when text should be light on this fill (WCAG relative luminance below 0.3). */
+export function isDark(hex: string): boolean {
+  const c = hexRgb(hex);
+  if (!c) return false;
+  const [r, g, b] = c.map((v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.3;
+}
+
 /** Linear mix of two colors (`t` = 0 gives `a`, 1 gives `b`) as `#rrggbb`. */
 export function mix(a: string, b: string, t: number): string {
   const x = hexRgb(a) ?? [255, 255, 255], y = hexRgb(b) ?? [255, 255, 255];

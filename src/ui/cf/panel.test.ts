@@ -95,3 +95,14 @@ describe("openCfDialog", () => {
     expect(items()).toHaveLength(2);
   });
 });
+
+describe("dialog footer", () => {
+  it("Fermer is hidden while the editor (Annuler / Enregistrer) is shown", () => {
+    openCfDialog(host);
+    const foot = $(".dk-dialog__foot");
+    click('[data-action="add"]');
+    expect(foot.style.display).toBe("none");
+    click('[data-action="cancel"]');
+    expect(foot.style.display).toBe("");
+  });
+});

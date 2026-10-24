@@ -36,6 +36,7 @@ export function openCfDialog(app: CfHost): void {
   if (box.contains(body)) box.classList.add("dk-dialog--wide");
   else return; // already open
 
+  const foot = box.querySelector<HTMLElement>(".dk-dialog__foot")!;
   const save = (rules: CfRule[]) => { app.setCfRules(rules); list(); };
 
   /** Rule list view. */
@@ -72,6 +73,7 @@ export function openCfDialog(app: CfHost): void {
     add.innerHTML = `${icon("plus")}Nouvelle règle`;
     add.addEventListener("click", () => edit(null, rules.length));
     body.replaceChildren(rules.length ? ul : empty, add);
+    foot.style.display = "";
     add.focus();
   }
 
@@ -88,6 +90,7 @@ export function openCfDialog(app: CfHost): void {
       save(next);
     });
     body.replaceChildren(form);
+    foot.style.display = "none"; // the editor has its own Annuler / Enregistrer
     form.querySelector<HTMLElement>("[name=range]")!.focus();
   }
 
