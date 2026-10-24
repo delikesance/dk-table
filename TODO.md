@@ -195,3 +195,6 @@ Classement par gravité (P0 = pire)
 - [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
+## Saisie des formules
+
+- [x] F1 Autocomplétion des fonctions après « = » (cellule + barre de formule) : liste filtrée avec description, signature de la sélection, flèches/Entrée/Tab/Échap, aide de signature avec l'argument courant (`ui/formula/`). Tests : `fnComplete.test.ts`, `fnPopup.test.ts`, `wiring.test.ts`, e2e `feat-fncomplete.spec.ts`.
