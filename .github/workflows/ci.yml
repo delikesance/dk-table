@@ -48,7 +48,6 @@ jobs:
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
   e2e:
-    if: ${{ hashFiles('playwright.config.ts') != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

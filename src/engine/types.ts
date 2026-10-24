@@ -13,7 +13,7 @@ export interface Sheet {
 }
 
 /** Spreadsheet error codes. */
-export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!" | "#N/A";
+export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!" | "#N/A" | "#NUM!";
 
 /** Error value carried through evaluation. */
 export interface CellError {
@@ -40,6 +40,9 @@ export type Node =
   | { t: "bool"; v: boolean }
   | { t: "ref"; key: string }
   | { t: "range"; a: string; b: string }
+  /** Sheet-qualified ref/range (`Feuille2!A1`, `'Ventes 2026'!A1:B3`); `sheet` keeps the typed name. */
+  | { t: "xref"; sheet: string; key: string }
+  | { t: "xrange"; sheet: string; a: string; b: string }
   | { t: "neg"; e: Node }
   | { t: "pct"; e: Node }
   | { t: "bin"; op: string; l: Node; r: Node }

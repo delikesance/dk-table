@@ -24,7 +24,7 @@
   border-bottom: 1px solid var(--c-line);
   z-index: 2;
 }
-.dkg-corner { top: 0; left: 0; z-index: 3; height: var(--col-header-h); }
+.dkg-corner { top: 0; left: 0; z-index: 4; height: var(--col-header-h); }
 .dkg-colh { top: 0; height: var(--col-header-h); border-bottom-color: var(--c-line-strong); /* séparation en-tête / données */ }
 /* Poignée de redimensionnement: bande sur le bord droit de l'en-tête de colonne. */
 .dkg-resizer {
@@ -61,6 +61,8 @@
   font-weight: var(--fw-semibold);
   justify-content: center;
 }
+/* Texte multiligne (Alt+Enter): retours à la ligne visibles, hauteur de ligne inchangée (débordement masqué). */
+.dkg-ml { white-space: pre-wrap; align-items: flex-start; line-height: 1.25; }
 .dkg-range { background: var(--c-accent-soft); }
 .dkg-active {
   background: var(--c-surface);
@@ -81,8 +83,14 @@
   position: absolute;
   inset: 0;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  padding: 0 var(--cell-px);
+  /* textarea (Alt+Enter = saut de ligne): première ligne centrée verticalement, pas de redimensionnement */
+  padding: calc((var(--cell-h) - 1.25em) / 2) var(--cell-px) 0;
+  line-height: 1.25;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
   border: 0;
   outline: var(--cursor-w) solid var(--c-accent);
   outline-offset: calc(-1 * var(--cursor-w));
@@ -91,6 +99,16 @@
   font: inherit;
   user-select: text;
 }
+
+/* Volets figés: cellules collantes (top/left = variables posées par freezeView.ts), opaques, au-dessus
+   des cellules qui défilent dessous; filet renforcé après la dernière ligne/colonne figée. */
+.dkg-frozen { position: sticky; z-index: 1; background: var(--c-surface); }
+.dkg-frozen-x { z-index: 2; }
+.dkg-frozen-h { z-index: 3; }
+.dkg-frozen.dkg-range { background: linear-gradient(var(--c-accent-soft), var(--c-accent-soft)) var(--c-surface); }
+.dkg-frozen.dkg-err { background: linear-gradient(var(--c-error-soft), var(--c-error-soft)) var(--c-surface); }
+.dkg-frozen-b { border-bottom-color: var(--c-line-strong); }
+.dkg-frozen-r { border-right-color: var(--c-line-strong); }
 
 /* Bouton de filtre dans l'en-tête de colonne: visible au survol ou quand la colonne est filtrée. */
 .dkg-filter {

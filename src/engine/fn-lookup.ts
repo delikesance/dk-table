@@ -1,5 +1,5 @@
 /**
- * Lookup functions: VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP.
+ * Lookup functions: VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP, CHOOSE.
  * Ranges arrive as `Value[]` (flat, width lost) or, for 2D-aware callers, as `Value[][]` (rows).
  * A flat array is treated as a single column. "Not found" is #N/A. Registered with `matrix: true` (wire.ts).
  */
@@ -122,6 +122,15 @@ const xlookup: Builtin = ([v, l, r, d]) => {
   return d === undefined || Array.isArray(d) ? NOT_FOUND() : d;
 };
 
+/** CHOOSE(n, v1, v2, ...): n-th value (n truncated); n outside 1..count -> #VALUE!; multi-cell range -> #VALUE!. */
+const choose: Builtin = ([n, ...vals]) => {
+  const i = intArg(n);
+  if (typeof i !== "number") return i;
+  if (i < 1 || i > vals.length) return err("#VALUE!");
+  const cell = toMatrix(vals[i - 1]).flat();
+  return cell.length === 1 ? cell[0] : err("#VALUE!");
+};
+
 /** Lookup builtins to merge into the engine registry (same format as the other function groups). */
 export const lookupFunctions: Record<string, Builtin> = {
   VLOOKUP: vlookup,
@@ -129,4 +138,5 @@ export const lookupFunctions: Record<string, Builtin> = {
   INDEX: index,
   MATCH: match,
   XLOOKUP: xlookup,
+  CHOOSE: choose,
 };

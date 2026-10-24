@@ -81,7 +81,7 @@ P2 : perf et fonctions
 - [x] Perf grille : rendu incrémental (écritures DOM évitées si inchangé) ; limite : renderCell/getDisplay toujours appelés pour 2600 cellules
 - [x] Perf grille : virtualisation (`perf-grid-virtual`, MAX_ROWS=1000) ; reste : rendu à vérifier à la main
 - [x] Fonctions : fn-math/text/logic/date/finance/cond/iferror câblées (`engine/wire.ts`), fn-lookup partiel (2D à venir), engine-range, engine-sort
-- [ ] Autres features selon priorités de `docs/recherche-tableur.md`
+- [x] Autres features selon priorités de `docs/recherche-tableur.md` (vague 2, voir section dédiée)
 - [x] Split de `app.ts` en `appState/appGrid/appApi/appWidgets` (split-app) ; contrôle > 200 lignes à refaire à chaque vague
 
 P3 : livraison
@@ -96,16 +96,30 @@ P3 : livraison
 - [x] Modules sans câblage UI : wf-sort-model (tri), toast, colors, floating (mini-barre), filter-logic, autosave-logic
 - [x] numfmt-date (format Date), alignement `DATE`/`YEAR`/`MONTH`/`DAY`/`serialToISO` sur la convention 1900 de `numfmt.ts`
 - [x] Tests unitaires ajoutés : engine-functions, ui-cellview-model, ui-palette-formulabar, ui-app-api-state, `functions.wired.test.ts`, `dateConsistency.test.ts`
-- [ ] engine-matrix-na : plages 2D dans l'évaluateur (VLOOKUP, HLOOKUP, INDEX 2D : 3 `it.todo` dans `functions.wired.test.ts`) + code `#N/A` (IFNA, lookups)
-- [ ] style-textcolor : `CellStyle.color` (couleur du texte) manquant
-- [ ] Câblage UI : barre N1, Σ, tri, filtre, couleurs, mini-barre flottante, toast, autosave
-- [ ] Câblage UI : menu Fichier unique, largeur de colonnes, Ctrl+D / Ctrl+R
-- [ ] Tests e2e par fonctionnalité (worktree `e2e-playwright-setup` en cours)
+- [x] engine-matrix-na : plages 2D dans l'évaluateur (VLOOKUP, HLOOKUP, INDEX 2D : 3 `it.todo` dans `functions.wired.test.ts`) + code `#N/A` (IFNA, lookups)
+- [x] style-textcolor : `CellStyle.color` (couleur du texte) manquant
+- [x] Câblage UI : barre N1, Σ, tri, filtre, couleurs, mini-barre flottante, toast, autosave
+- [x] Câblage UI : menu Fichier unique, largeur de colonnes, Ctrl+D / Ctrl+R
+- [x] Tests e2e par fonctionnalité (worktree `e2e-playwright-setup` en cours)
+
+## Vague 2 : fonctions manquantes du tableur (recherche E/I + IronCalc)
+
+Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolor et e2e de la Phase 8 étaient déjà codées (cochées ici).
+- [x] refs-shift : références `$A$1`/`A$1`/`$A1` + décalage des références à la recopie (Ctrl+D/R) et au copier-coller interne
+- [x] insert-delete : insérer/supprimer lignes et colonnes, références ajustées, `#REF!`, un pas d'undo
+- [x] format-more : souligné (Ctrl+U), bordures (Toutes/Contour/Bas/Aucune), renvoi à la ligne
+- [x] functions-more : 61 fonctions (ROUNDUP, SUMPRODUCT, STDEV, AVERAGEIFS, TEXTJOIN, SUBSTITUTE, ISERROR, IFS, SWITCH, EOMONTH, NETWORKDAYS, CHOOSE…)
+- [x] freeze-panes : figer première ligne / colonne / jusqu'à la cellule active (palette), persisté
+- [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
+- [x] keys-nav : Ctrl+flèches façon Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A, Ctrl+Espace, Maj+Espace, Ctrl+PgPréc/PgSuiv (feuilles), Ctrl+Entrée, Alt+Entrée, F4
+- [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
+- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
+- [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
 
-- [x] Macros Lua (wasmoon) : API cellules, délai max, palette « Exécuter une macro Lua… », undo en un pas (branche `wt/lua-macros`)
-- [ ] Macros : enregistrer/réutiliser des scripts, accès aux styles et à plusieurs feuilles
+- [x] Macros Lua (wasmoon) : remplacées par l'implémentation fengari + éditeur (Phase 8 Macros Lua)
+- [ ] Macros : accès aux styles et à plusieurs feuilles
 
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
@@ -113,7 +127,7 @@ P3 : livraison
 ## E2E (Playwright)
 
 - [x] Infra e2e : `playwright.config.ts`, `e2e/helpers.ts`, `e2e/smoke.spec.ts`, job CI
-- [ ] Tests e2e par fonctionnalité à écrire (édition, formules, undo/redo, CSV, onglets, palette, cellules vivantes)
+- [x] Tests e2e par fonctionnalité à écrire (édition, formules, undo/redo, CSV, onglets, palette, cellules vivantes)
 
 ## Fait
 
@@ -157,8 +171,18 @@ Classement par gravité (P0 = pire)
 - [x] H1 Tokens bleu #0000F2 + papier, thème sombre nuit #19192F (`theme-dark.css`, `ui/theme.ts`), chrome bleu (`chrome.css`), polices locales (`fonts.ts`), tokens `--c-code-*` pour l'éditeur de macros. Tests : `styles/hermes.test.ts`, `ui/theme.test.ts`, `styles/styles.test.ts` (contrastes chrome).
 - [x] H2 Onglets actifs pleins bleus en capitales condensées ; en-têtes de grille en DM Mono ; fonds pleins via `--c-accent-solid` (menus, palette, filtre).
 - [x] H3 Barre de menus à un niveau (`ui/menubar/spec.ts` + `deps.ts`, rendu `createMenuBar` dans `toolbar/menus.ts`), toujours visible ; Paramètres dans Fichier (Ctrl+,, `ui/dialogs/settings.ts`) ; thème dans Affichage ; Alt+F11 = éditeur de macros. Tests : `ui/menubar/menubar.test.ts`, `ui/dialogs/dialogs.test.ts`, `ui/app.test.ts`.
-- [ ] H3b Scripts : brancher `deps.ts` sur `app.openMacros` / `app.macros` / `app.runMacro` quand la PR macros #1 sera fusionnée (aujourd'hui : boîte `openMacroDialog`, liste vide).
+- [x] H3b Scripts branché sur `app.openMacros` / `app.macros.list()` / `app.runMacro` (menu relu à chaque ouverture).
 - [x] H4 Accueil : nom, Nouveau classeur / Ouvrir / Importer CSV, récents (nom + chemin), Atlas à droite (`src/assets/atlas-*.png`, `ui/art.ts`), sans libellé décoratif ; réglage « accueil au démarrage ». À propos (Aide) avec l'Atlas et les crédits.
 - [ ] H4b Splash de lancement Tauri et bannière d'installeur avec l'Atlas.
 - [x] H5 Barre d'outils sans Fichier ni Ouvrir/Enregistrer (couverts par la barre de menus et Ctrl+O/S).
 - [ ] e2e Playwright non relancés dans le conteneur cloud (navigateur absent) : à relancer en local.
+
+## Phase 8 : Macros Lua
+
+- [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
+- [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
+- [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
+- [x] M4 Macros persistées dans `.dktable` ; exécution = un pas d'annulation
+- [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
+- [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
+

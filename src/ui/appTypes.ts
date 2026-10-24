@@ -4,6 +4,9 @@ import type { SheetInfo } from "./tabs/tabs";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { Sheet } from "../engine/sheet";
 import type { CellStyle } from "./model";
+import type { BorderMode } from "./borders";
+import type { MacroStore } from "../macros/store";
+import type { RunResult } from "../macros/lua";
 
 /** Hooks set by the command layer (file ops, context menu). */
 export interface Hooks {
@@ -23,8 +26,6 @@ export interface App {
   edit(key: string, raw: string): void;
   /** Edit several cells as ONE undo step and ONE refresh (paste/clear). */
   editMany(cells: Record<string, string>): void;
-  /** Run `fn` on the active sheet as ONE undo step (macros), then refresh the grid. */
-  runBatch<T>(fn: (sheet: Sheet) => Promise<T>): Promise<T>;
   undo(): void;
   redo(): void;
   addSheet(): void;
@@ -42,6 +43,8 @@ export interface App {
   select(key: string): void;
   /** Merge a style patch into every selected cell. */
   style(patch: CellStyle): void;
+  /** Apply a « Bordures » mode to the selection (per-cell edges, one undo step). */
+  borders(mode: BorderMode): void;
   /** Style of the active cell. */
   activeStyle(): CellStyle;
   toggleSidebar(): void;
@@ -51,6 +54,26 @@ export interface App {
   addRecent(path: string): void;
   /** Sort the active column's data block (one undo step); false when nothing to sort. */
   sortColumn(desc: boolean): boolean;
+  /** Insert as many rows as selected, above the selection (one undo step, refs rewritten). */
+  insertRows(): void;
+  /** Delete the rows spanned by the selection (one undo step; refs to them become #REF!). */
+  deleteRows(): void;
+  /** Insert as many columns as selected, left of the selection (one undo step). */
+  insertCols(): void;
+  /** Delete the columns spanned by the selection (one undo step). */
+  deleteCols(): void;
   /** Mark the document as saved (clears the title dirty marker). */
   markSaved(): void;
+  /** Freeze the top `rows` rows / left `cols` columns of the active sheet (0,0 = unfreeze); persisted, not undoable. */
+  setFreeze(f: { rows: number; cols: number }): void;
+  /** Lua macros of the workbook (persisted with the document). */
+  macros: MacroStore;
+  /** Apply direct engine writes to the active sheet as one undo step, then redraw. */
+  batch(fn: (sheet: Sheet) => void): void;
+  /** Name of the active sheet. */
+  sheetName(): string;
+  /** Run a macro on the active sheet (Lua VM loaded on first use). */
+  runMacro(id: string): Promise<RunResult>;
+  /** Open the macro panel (on `id` if given). */
+  openMacros(id?: string): Promise<void>;
 }
