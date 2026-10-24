@@ -47,12 +47,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Worktree + vitest: si `node_modules` est une jonction vers le dépôt principal, vitest échoue ("Denied ID" sur `node_modules/iconoir`): lancer `npm install` dans la worktree ou mettre `server.fs.strict=false`.
 - `npm test` (vitest, jsdom pour l'UI), `npx tsc --noEmit`, `npm run build` (tsc + vite), `npm run tauri dev`.
+- `cargo test` (in `src-tauri/`), `npm run tauri build` (MSI + NSIS in `src-tauri/target/release/bundle/`).
+- `src/engine/` (pure logic, e.g. `sheet.ts` + tests), `src/ui/` (DOM), `src/main.ts` (entry), `src-tauri/` (Rust, `lib.rs` registers plugins dialog + fs).
+- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
+- `src-tauri/icons/` = placeholder flat icon, to replace.
 
 ## Structure (src/)
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
-- `ui/`: `icons.ts` (Iconoir `iconoir/icons/regular/*.svg?raw`, `icon(name)`, `currentColor`, noir via `--c-icon`), `appTools.ts` (bouton `toggle-tools`, mode minimal, Ctrl+J, état persistant `dk-table.tools`), `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ (dont `menus.ts`: menus Fichier + Import/Export) tabs/ sidebar/ palette/ contextmenu/`.
+- `ui/`: `icons.ts` (Iconoir `iconoir/icons/regular/*.svg?raw`, `icon(name)`, `currentColor`, noir via `--c-icon`), `appTools.ts` (bouton `toggle-tools`, mode minimal, Ctrl+J, état persistant `dk-table.tools`), `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `numfmt.ts` (formats de nombre), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ (dont `menus.ts`: menus Fichier + Import/Export) tabs/ sidebar/ palette/ contextmenu/`.
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
 
 ## Decisions (refonte Apple)
@@ -62,11 +66,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Decisions (intégration I8)
 
+- Ctrl+N / menu « Nouveau » = nouveau document vierge (confirmation si modifications non enregistrées via `fileops.newDocument`); « Nouvelle feuille » = palette.
+- Apostrophe en préfixe (`'abc`): force le texte, comme Excel; l'apostrophe n'est pas affichée (voir `engine/recalc.ts`).
 - Cellules vivantes: le moteur ne gère que des valeurs texte/nombre; `liveResult` détecte `=SPARKLINE|BAR|TREND(plage)` pleine cellule et la grille (hook `renderCell`) affiche le SVG. Le moteur renvoie un texte de repli (ex. TREND: "▲ +10%").
 - Undo/redo: snapshot des cellules brutes par feuille (100 max); les éditions groupées (coller/effacer) = un pas. Les styles sont aussi annulables (un pas par `app.style`) et persistés dans `.dktable` (`DocSheet.styles`).
 - Recalcul UI: `grid.refresh()` incrémental: parcourt les 2600 cellules (renderCell/getDisplay) mais n'écrit le DOM que si le contenu change.
 - Fichiers récents: `io/recents.ts` (liste persistée dans localStorage, store injectable), câblé dans `appApi.ts`.
 - Format de nombre: `ui/numfmt.ts` `formatValue` (fr-FR: number/percent/currency), format par cellule via `CellStyle.format`; "Date" non implémenté (sans effet).
+
+## Docs
+
+- `docs/demo.md`: script de la démo de 5 minutes (installation puis tour des fonctions).
+- `docs/workflow-ux.md`: workflow UX casual-first (niveaux N1/N2/N3, coût en clics); maquette `mockups/workflow-ux.html` (4 écrans commutables, exemptée de la limite de 200 lignes).
 
 ## Research
 
@@ -82,7 +93,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-**Project**: dk-table = entry for hackathon "War of Code : le Tableur" (build an Excel-like spreadsheet by midnight; AI may write the code but the app must NOT embed AI; auto-recalc of dependents mandatory; installable on Windows + Linux; scored by peers /10 on beauty, practicality, lightness, ease of use; +5 "Pépite" bonus for an original feature; 5-min demo: install then feature tour). Repo still has no app code.
+**Project**: dk-table = entry for hackathon "War of Code : le Tableur" (build an Excel-like spreadsheet by midnight; AI may write the code but the app must NOT embed AI; auto-recalc of dependents mandatory; installable on Windows + Linux; scored by peers /10 on beauty, practicality, lightness, ease of use; +5 "Pépite" bonus for an original feature; 5-min demo: install then feature tour).
 
 **Decisions (user-confirmed)**: stack = Tauri/Rust + web front; time budget = until midnight (not 4h); chosen Pépite direction = "Cellules vivantes".
 
@@ -96,10 +107,3 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cycle handling (#CYCLE)
 - Linux packaging format
 - Whether pépites 1/2 are dropped or kept as stretch
-
-## Commands & structure
-
-- `npm test` (vitest run), `cargo test` (in `src-tauri/`), `npm run tauri dev`, `npm run tauri build` (MSI + NSIS in `src-tauri/target/release/bundle/`).
-- `src/engine/` (pure logic, e.g. `sheet.ts` + tests), `src/ui/` (DOM), `src/main.ts` (entry), `src-tauri/` (Rust, `lib.rs` registers plugins dialog + fs).
-- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
-- `src-tauri/icons/` = placeholder flat icon, to replace.

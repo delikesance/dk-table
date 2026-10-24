@@ -5,7 +5,7 @@ import { createSidebar } from "./sidebar/sidebar";
 import { FN_DOCS } from "./fndocs";
 import { buildGrid, refreshTabs } from "./appGrid";
 import { firstKey, type Ctx } from "./appState";
-import { exportCsv, importCsv, saveFile } from "./fileops";
+import { exportCsv, importCsv, newDocument, saveFile } from "./fileops";
 import { createToolsToggle, installToolsToggle } from "./appTools";
 
 /** Build the chrome widgets into `root` and store them on `c` (needs `c.app` set). */
@@ -24,7 +24,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),
     menus: {
-      onNew: () => app.addSheet(),
+      onNew: () => newDocument(app),
       onOpen: () => app.hooks.command?.("open"),
       onSave: () => app.hooks.command?.("save"),
       onSaveAs: () => void saveFile(app, true),
