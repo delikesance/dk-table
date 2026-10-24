@@ -15,3 +15,6 @@
 .dk-cellinfo__key { color: var(--c-text-3); }
 .dk-cellinfo__val { color: var(--c-text); font-family: var(--font-mono); font-variant-numeric: var(--num); overflow-wrap: anywhere; text-align: right; }
 .dk-cellinfo__empty { margin: 0; color: var(--c-text-3); }
+.dk-section__head .dk-icon { width: 14px; height: 14px; transition: transform var(--dur-base) var(--ease-out); }
+.dk-section--closed .dk-section__head .dk-icon { transform: rotate(-90deg); }
+.dk-item > .dk-icon { width: 14px; height: 14px; margin-right: var(--s-2); vertical-align: -2px; }
