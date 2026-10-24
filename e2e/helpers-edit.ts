@@ -15,7 +15,14 @@ export async function activeKey(page: Page): Promise<string | null> {
   return page.locator(".dkg-cell.dkg-active").getAttribute("data-key");
 }
 
-/** Select the range a1..b1 with a click then a shift+click. */
+/** Jump to `addr` through the name box, then give focus back to the grid (the name box keeps it otherwise). */
+export async function gotoCell(page: Page, addr: string): Promise<void> {
+  await nameBox(page).fill(addr);
+  await nameBox(page).press("Enter");
+  await page.locator(".dkg").focus();
+}
+
+/** Select the range a1..b1with a click then a shift+click. */
 export async function selectRange(page: Page, a1: string, b1: string): Promise<void> {
   await cell(page, a1).click();
   await cell(page, b1).click({ modifiers: ["Shift"] });
