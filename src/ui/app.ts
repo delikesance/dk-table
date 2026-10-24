@@ -1,8 +1,11 @@
 /** App shell: layout + mount. State in appState, grid in appGrid, API in appApi, widgets in appWidgets. */
+import "../styles/fonts";
 import "../styles/tokens.css";
+import "../styles/theme-dark.css";
 import "../styles/components.css";
 import "./app.css";
 import "./grid/grid.css";
+import "../styles/chrome.css";
 import { registerLive } from "../engine/live/adapter";
 import { createPalette } from "./palette/palette";
 import { newEntry } from "./model";

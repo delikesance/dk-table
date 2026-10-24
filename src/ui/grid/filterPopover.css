@@ -13,6 +13,6 @@
 .dkg-pop__btns button { padding: var(--s-1) var(--s-3); border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--c-text-2); font: inherit; cursor: pointer; }
 .dkg-pop__btns button:hover { background: var(--c-surface-hover); color: var(--c-text); }
 .dkg-pop__btns [data-act="clear"] { margin-right: auto; }
-.dkg-pop__btns [data-act="ok"] { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-text-on-accent); font-weight: var(--fw-semibold); }
-.dkg-pop__btns [data-act="ok"]:hover { background: var(--c-accent); color: var(--c-text-on-accent); filter: brightness(1.08); }
+.dkg-pop__btns [data-act="ok"] { background: var(--c-accent-solid); border-color: var(--c-accent-solid); color: var(--c-text-on-solid); font-weight: var(--fw-semibold); }
+.dkg-pop__btns [data-act="ok"]:hover { background: var(--c-accent-solid); color: var(--c-text-on-solid); filter: brightness(1.08); }
 .dkg-pop button:focus-visible { outline: none; box-shadow: var(--focus-ring); }

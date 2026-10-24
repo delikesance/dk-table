@@ -1,0 +1,55 @@
+/* dk-table : thème sombre « nuit Hermes » (mesuré sur hermes-agent.nousresearch.com en sombre).
+   Actif quand <html data-theme="dark"> (posé par src/ui/theme.ts : choix utilisateur ou système). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-bg: #19192f;
+  --c-surface: #141426;
+  --c-surface-2: #1d1d35;
+  --c-surface-hover: #26264a;
+  --c-overlay: #1d1d35;
+  --c-scrim: rgba(5, 5, 20, 0.6);
+
+  --c-text: #f2f2f2;
+  --c-text-2: #b4b4c4;
+  --c-text-3: #9494a2;
+  --c-text-on-accent: #19192f;
+  --c-icon: #f2f2f2;
+
+  --c-line: rgba(148, 148, 162, 0.18);
+  --c-line-strong: rgba(148, 148, 162, 0.32);
+
+  /* #0000F2 reste la couleur des fonds pleins ; en texte/anneau il faut un bleu clair lisible. */
+  --c-accent: #8c8cff;
+  --c-accent-solid: #0000f2;
+  --c-accent-hover: #a5a5ff;
+  --c-accent-soft: rgba(0, 0, 242, 0.22);
+  --c-accent-soft-2: rgba(0, 0, 242, 0.32);
+
+  --c-chrome: #19192f;
+  --c-chrome-text: #f2f2f2;
+  --c-chrome-text-2: #9494a2;
+  --c-chrome-line: rgba(148, 148, 162, 0.28);
+  --c-chrome-deep: #10102a;
+  --c-chrome-hover: rgba(242, 242, 242, 0.08);
+  --c-chrome-active: #0000f2;
+
+  --c-code-bg: #10102a;
+  --c-code-string: #a5a5ff;
+  --c-code-selection: rgba(0, 0, 242, 0.45);
+
+  --c-error: #ff9a6b;
+  --c-error-soft: rgba(255, 154, 107, 0.12);
+  --c-success: #5bd08a;
+  --c-success-soft: rgba(91, 208, 138, 0.14);
+  --c-readonly-bg: #1d1d35;
+  --c-readonly-text: #b4b4c4;
+
+  --c-dep-in: #f0a14a;
+  --c-dep-in-soft: rgba(240, 161, 74, 0.16);
+  --c-dep-out: #52c7e0;
+  --c-dep-out-soft: rgba(82, 199, 224, 0.16);
+
+  --sh-2: 0 0 0 1px rgba(148, 148, 162, 0.28), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --sh-3: 0 0 0 1px rgba(148, 148, 162, 0.32), 0 16px 48px rgba(0, 0, 0, 0.65);
+}

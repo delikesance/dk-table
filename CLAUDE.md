@@ -64,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Grille virtualisée: `ui/grid/virtual.ts` + `window.ts`, MAX_ROWS=1000.
 - Dates: convention 1900 unique (`numfmt.ts` = `fn-date.ts`): 1 = 01/01/1900, 60 = faux 29/02/1900, dès 61 = 1899-12-30 + n.
 - Limites connues: VLOOKUP/HLOOKUP/INDEX 2D inutilisables en formule (évaluateur aplatit les plages, `it.todo`); pas de `#N/A` (IFNA renvoie la valeur, lookups -> #VALUE!); IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; pas de couleur de texte (`CellStyle.color`).
-- `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
+- `styles/`: `tokens.css` (clair, refonte Hermes), `theme-dark.css` (`:root[data-theme="dark"]`, nuit Hermes), `chrome.css` (barres du haut en bleu : remap des tokens sur `--c-chrome-*`, popups repassés sur papier via `--paper-*`), `fonts.ts` (polices @fontsource locales), `components.css`. `ui/theme.ts` pose `data-theme` (préférence `dk-theme` : auto/light/dark).
 
 ## Decisions (refonte Apple)
 
@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Decisions (onboarding)
 
 - `ui/onboarding/` (`showOnboarding(host, app)`): écran d'accueil modal (role=dialog, liste ARIA des feuilles, « Créer » = `addSheet`, clic = `switchSheet`, Échap ferme, état vide). Affiché par `main.ts` après `mount()`, ignoré avec `?onboarding=0` (utilisé par `e2e/helpers.ts` `openApp`). `mount()` reste inchangé.
-- Tokens `--ob-*` (papier/encre/accent bleu, filets 20 %, rayons 2/6px, libellés mono) adaptés de hermes-agent.nousresearch.com, bloc ajouté en fin de `styles/tokens.css` (clair + sombre).
+- Tokens `--ob-*` : alias des tokens sémantiques (fin de `styles/tokens.css`), suivent donc les thèmes Hermes clair/sombre.
 
 ## Decisions (intégration I8)
 
@@ -106,8 +106,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Design
 
-- Reference design = `mockups/design/` (`tokens.css`, `components.css`, `composants.html`, `DESIGN.md`): Apple-like, sober, "ink" indigo accent, system font stack, light + dark.
-- Claude Design artifact: https://claude.ai/artifact/LKoJNjWKUAoJncBU8yt7gK (10 artboards: components + screens, uses Geist). NOT aligned with `mockups/design/`: `mockups/design/` wins, use the system font stack.
+- Reference design (v2, validée le 2026-10-24) = refonte « Hermes » (direction de hermes-agent.nousresearch.com), canvas https://claude.ai/artifact/V1WWvok6xhPzTSruqxpWVk (écran principal, système, accueil Atlas, éditeur de macros, barre de menus, variantes). Code de référence : `src/styles/`.
+- Palette : bleu #0000F2 + papier #F2F2F2 (grille #FAFAFA, encre bleue) ; sombre = nuit #19192F, texte #F2F2F2, fonds pleins #0000F2, anneaux #8C8CFF. Orange seulement pour baisse/erreur. Rayons 2-4px, pas d'ombre hors surfaces flottantes.
+- Polices locales (@fontsource, sous-ensemble latin) : Inter Tight (texte), DM Mono (données, formules, en-têtes), Sofia Sans Extra Condensed (menus, onglets, titres, en capitales).
+- Règles produit (ANGELO) : outil pro, aucun texte décoratif ni astuce ; pas de bouton en double ; accès selon la fréquence (grille > barre d'outils > barre de menus à un niveau > palette Ctrl K). SPARKLINE/BAR/TREND sont des fonctions, pas des boutons.
+- Illustration : gravure de l'Atlas Farnèse (Brendamour, domaine public) en bichromie, uniquement hors écran de travail (accueil, splash, À propos, installeur).
+- `mockups/design/` = design v1 Apple-like, obsolète (conservé pour l'historique).
 - The 3 pépite mockups live in `mockups/` (`pepite-1-fleches.html` 325 lines, `pepite-2-voyage-temps.html` 341, `pepite-3-cellules-vivantes.html` 191).
 - Exemption to the 200-line rule: mockups only (pepite-1 and pepite-2 exceed 200, not split). App code stays ≤200.
 
