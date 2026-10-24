@@ -22,6 +22,12 @@ export interface Ctx {
   sidebar: Sidebar;
   tabs: SheetTabs;
   app: App;
+  /** Autosave controller (set by setupAutosave); touched on every modification. */
+  autosave?: { touch(): void };
+  /** Last autosave state, shown in the title. */
+  autosaveState?: "idle" | "pending" | "saving" | "saved" | "error";
+  /** Counter bumped on every modification (detects edits made during a write). */
+  version?: number;
 }
 
 /** Expand a selection ("A1" or "A1:B3") into its cell keys. */
@@ -33,8 +39,23 @@ export function keysOf(sel: string): string[] {
 /** Top-left cell key of the current selection. */
 export const firstKey = (c: Ctx): string => c.grid.getSelection().split(":")[0];
 
-/** Update the window title with the file name and a dirty marker. */
+/** Status suffix of the window title for the autosave state (empty when nothing to say). */
+function statusOf(c: Ctx, dirty: boolean): string {
+  if (c.autosaveState === "saving") return " · Enregistrement…";
+  if (c.autosaveState === "error") return " · Erreur d'enregistrement";
+  if (c.autosaveState === "saved" && !dirty) return " · Enregistré";
+  return "";
+}
+
+/** Repaint the window title (file name, dirty marker, autosave status) from `c.app`. */
+export function renderTitle(c: Ctx): void {
+  const dirty = !!c.app.dirty;
+  document.title = `${c.app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${dirty ? " •" : ""} — dk-table${statusOf(c, dirty)}`;
+}
+
+/** Set the dirty flag and update the title; a modification also schedules an autosave. */
 export function setTitle(c: Ctx, dirty: boolean): void {
   c.app.dirty = dirty;
-  document.title = `${c.app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${dirty ? " •" : ""} — dk-table`;
+  if (dirty) { c.version = (c.version ?? 0) + 1; c.autosave?.touch(); }
+  renderTitle(c);
 }
