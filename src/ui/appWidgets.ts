@@ -20,7 +20,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onItalic: () => app.style({ italic: !app.activeStyle().italic }),
     onAlign: (align) => app.style({ align }),
     onFormat: (format) => app.style({ format }),
-    onFill: (fill) => app.style({ fill }),
+    onFill: (fill) => app.style({ fill: fill ?? undefined }),
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),
     menus: {
