@@ -2,20 +2,33 @@
 import { getRaw, getRangeValues, type Sheet } from "../engine/sheet";
 import { liveResult } from "../engine/live/adapter";
 import type { CellStyle } from "./model";
+import type { CfStyle } from "../engine/cf/types";
+import { hexRgb } from "../engine/cf/scale";
 import "./cellview.css";
 
 const ALIGN = { left: "flex-start", center: "center", right: "flex-end" } as const;
 
-/** Apply `s` to the DOM cell `key` inside `host` (no-op if absent). */
-export function paintStyle(host: HTMLElement, key: string, s: CellStyle = {}): void {
+/** Apply `s` to the DOM cell `key` inside `host` (no-op if absent); `cf` = conditional style drawn over it. */
+export function paintStyle(host: HTMLElement, key: string, s: CellStyle = {}, cf?: CfStyle): void {
   const el = host.querySelector<HTMLElement>(`.dkg-cell[data-key="${key}"]`);
-  if (!el) return;
+  if (el) paintCell(el, s, cf);
+}
+
+/** Apply the cell style `base`, overridden by the conditional style `cf` (fill, color, bold, italic, data bar). */
+export function paintCell(el: HTMLElement, base: CellStyle = {}, cf?: CfStyle): void {
+  const { bar, ...over } = cf ?? {};
+  const s: CellStyle = { ...base, ...over };
   el.style.fontWeight = s.bold ? "700" : "";
   el.style.fontStyle = s.italic ? "italic" : "";
   el.style.textAlign = s.align ?? "";
   el.style.justifyContent = s.align ? ALIGN[s.align] : ""; // cells are flex: text-align alone is ignored
   el.style.background = s.fill ?? "";
   el.style.color = s.color ?? "";
+  // data bar: a gradient layer over the fill (the `background` shorthand above resets it)
+  if (bar) {
+    const tint = `rgba(${(hexRgb(bar.color) ?? [0, 0, 242]).join(", ")}, 0.3)`;
+    el.style.backgroundImage = `linear-gradient(90deg, ${tint} ${bar.pct}%, transparent ${bar.pct}%)`;
+  }
   el.style.textDecoration = s.underline ? "underline" : "";
   el.style.whiteSpace = s.wrap ? "normal" : ""; // grid row height is fixed: overflow stays hidden
   el.classList.toggle("dk-wrap", !!s.wrap);

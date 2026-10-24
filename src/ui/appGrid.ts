@@ -4,7 +4,9 @@ import { createGrid } from "./grid/grid";
 import type { GridView } from "./grid/types";
 import { MAX_ROWS } from "./grid/virtual";
 import { pushUndo } from "./model";
-import { liveCell, paintStyle } from "./cellview";
+import { liveCell, paintCell } from "./cellview";
+import { computeCf } from "../engine/cf/compute";
+import { sheetEnv } from "../engine/cf/env";
 import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
@@ -27,10 +29,35 @@ export function syncInfo(c: Ctx): void {
     format: st.format ?? "general", canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
 }
 
-/** After a data change: redraw all cells (dependents) and mark modified. */
+/** Rendered DOM cell of `key` in the active grid, if any. */
+const cellEl = (c: Ctx, key: string): HTMLElement | null =>
+  c.gridHost.querySelector<HTMLElement>(`.dkg-cell[data-key="${key}"]`);
+
+/** Repaint the style of one rendered cell (own style + conditional style). */
+export function paintKey(c: Ctx, key: string): void {
+  const el = cellEl(c, key);
+  if (el) paintCell(el, c.cur.styles[key], c.cfMap?.get(key));
+}
+
+/**
+ * Recompute the conditional formatting of the active sheet; with `repaint`, restyle the rendered
+ * cells whose conditional style was or is set (cells never touched by a rule are left alone).
+ */
+export function refreshCf(c: Ctx, repaint = true): void {
+  const prev = c.cfMap;
+  c.cfMap = c.cur.cf.length ? computeCf(c.cur.cf, sheetEnv(c.cur.sheet)) : new Map();
+  if (!repaint || (!prev?.size && !c.cfMap.size)) return;
+  for (const el of c.gridHost.querySelectorAll<HTMLElement>(".dkg-cell[data-key]")) {
+    const k = el.dataset.key!;
+    if (prev?.has(k) || c.cfMap.has(k)) paintCell(el, c.cur.styles[k], c.cfMap.get(k));
+  }
+}
+
+/** After a data change: redraw all cells (dependents), conditional formats, and mark modified. */
 export function touch(c: Ctx): void {
   setTitle(c, true);
   c.grid.refresh();
+  refreshCf(c);
   syncInfo(c);
 }
 
@@ -42,6 +69,7 @@ export function buildGrid(c: Ctx): void {
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
   const view = viewOf(c.cur);
   view.freeze = c.cur.freeze;
+  refreshCf(c, false);
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
@@ -58,7 +86,10 @@ export function buildGrid(c: Ctx): void {
     onSheetStep: (d) => stepSheet(c, d),
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
-    onCellCreated: (k) => { const st = c.cur.styles[k]; if (st) paintStyle(c.gridHost, k, st); },
+    onCellCreated: (k, el) => {
+      const st = c.cur.styles[k], cf = c.cfMap?.get(k);
+      if (st || cf) paintCell(el, st, cf);
+    },
   });
   c.gridHost.querySelector(".dkg")?.addEventListener("contextmenu", (e) => c.app.hooks.context?.(e as MouseEvent));
   if (prevSel) c.grid.select(prevSel);
