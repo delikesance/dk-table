@@ -55,6 +55,13 @@ describe("toolbar", () => {
     sel.value = "percent"; sel.dispatchEvent(new Event("change"));
     expect(h.onFormat).toHaveBeenCalledWith("percent");
   });
+  it("choosing Date emits onFormat('date') and the option is offered", () => {
+    const { host, h } = mkToolbar();
+    const sel = host.querySelector<HTMLSelectElement>("select")!;
+    expect([...sel.options].map((o) => o.value)).toContain("date");
+    sel.value = "date"; sel.dispatchEvent(new Event("change"));
+    expect(h.onFormat).toHaveBeenCalledWith("date");
+  });
   it("setState updates pressed/disabled/selected", () => {
     const { host, tb } = mkToolbar();
     tb.setState({ bold: true, italic: false, align: "right", format: "percent", canUndo: false, canRedo: true });

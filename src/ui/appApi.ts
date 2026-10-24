@@ -4,6 +4,7 @@ import { newEntry, pushUndo, step, type Entry } from "./model";
 import { paintStyle } from "./cellview";
 import { buildGrid, refreshTabs, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
+import { sortColumn } from "./sort";
 import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
@@ -86,6 +87,11 @@ export function createApi(c: Ctx): App {
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
+    sortColumn(desc) {
+      if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
+      touch(c);
+      return true;
+    },
   };
   return app;
 }

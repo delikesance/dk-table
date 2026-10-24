@@ -38,6 +38,9 @@ function cellMenu(app: App): MenuItem[] {
     { label: "Alignement", submenu: (["left", "center", "right"] as const).map((a) => ({
       label: { left: "Gauche", center: "Centre", right: "Droite" }[a], action: () => app.style({ align: a }) })) },
     { separator: true },
+    { label: "Trier A→Z", icon: "sort-asc", action: () => void app.sortColumn(false) },
+    { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) },
+    { separator: true },
     { label: "Effacer le contenu", danger: true, action: () => clearSelection(app) },
     { label: "Annuler", shortcut: "Ctrl+Z", action: () => app.undo() },
   ];
@@ -67,6 +70,8 @@ export function installCommands(app: App): void {
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
   run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);
+  run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
+  run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
