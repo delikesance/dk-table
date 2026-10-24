@@ -87,7 +87,7 @@ describe("editor keys", () => {
     grid.select("B1:B3");
     key(root(), "=");
     const t = ed()!;
-    t.value = "=A5+$A$1"; // typed for the edited (active) cell, B3 here
+    t.value = "=A3+$A$1"; // typed for the edited (active) cell: B1, the top-left corner of a selected range
     key(t, "Enter", { ctrlKey: true });
     expect([raw.B1, raw.B2, raw.B3]).toEqual(["=A3+$A$1", "=A4+$A$1", "=A5+$A$1"]);
   });
