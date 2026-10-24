@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = Number(process.env.E2E_PORT || 1421); // not 1420: avoids reusing a developer's `tauri dev` server
+// Own Vite server per run on a random free-ish port (never 1420, never another worktree's server); E2E_PORT wins.
+// Set in process.env so Playwright workers (which re-load this file) see the same port.
+const PORT = Number(process.env.E2E_PORT || (process.env.E2E_PORT = String(20000 + Math.floor(Math.random() * 30000))));
 
 /** E2E config: Chrome headless against the Vite front (no Tauri). Set E2E_CHANNEL=chrome to use system Chrome. */
 export default defineConfig({
@@ -11,7 +13,7 @@ export default defineConfig({
   webServer: {
     command: `npx vite --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 60_000,
   },
   projects: [

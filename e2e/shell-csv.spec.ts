@@ -22,7 +22,7 @@ const tabNames = (page: import("@playwright/test").Page) => page.locator(".dk-ta
 
 test("import of a Windows path names the sheet after the file", async ({ page }) => {
   await setNextOpen(page, "C:\\data\\ventes 2024.csv");
-  await menuAction(page, "Import / Export", "Importer un CSV");
+  await menuAction(page, "Import / Export", "Importer CSV");
   await expect.poll(() => tabNames(page)).toEqual(["Feuille 1", "ventes 2024"]);
   expect(await cellText(page, "A1")).toBe("a");
   expect(await cellText(page, "B2")).toBe("2");
@@ -30,7 +30,7 @@ test("import of a Windows path names the sheet after the file", async ({ page })
 
 test("import of a POSIX path with ; delimiter names the sheet and splits columns", async ({ page }) => {
   await setNextOpen(page, "/home/u/stock.csv");
-  await menuAction(page, "Import / Export", "Importer un CSV");
+  await menuAction(page, "Import / Export", "Importer CSV");
   await expect.poll(() => tabNames(page)).toEqual(["Feuille 1", "stock"]);
   expect(await cellText(page, "B2")).toBe("4");
 });
@@ -38,14 +38,14 @@ test("import of a POSIX path with ; delimiter names the sheet and splits columns
 test("import keeps the previous sheet untouched", async ({ page }) => {
   await typeInCell(page, "A1", "keep");
   await setNextOpen(page, "/home/u/stock.csv");
-  await menuAction(page, "Import / Export", "Importer un CSV");
+  await menuAction(page, "Import / Export", "Importer CSV");
   await page.locator(".dk-tab", { hasText: "Feuille 1" }).click();
   expect(await cellText(page, "A1")).toBe("keep");
 });
 
 test("imported =1+1 stays literal text, not 2", async ({ page }) => {
   await setNextOpen(page, "/home/u/evil.csv");
-  await menuAction(page, "Import / Export", "Importer un CSV");
+  await menuAction(page, "Import / Export", "Importer CSV");
   await expect.poll(() => tabNames(page)).toContain("evil");
   expect(await cellText(page, "A1")).toBe("=1+1");
   expect(await cellText(page, "B1")).toBe("ok");
@@ -53,7 +53,7 @@ test("imported =1+1 stays literal text, not 2", async ({ page }) => {
 
 test("cancelling the import dialog adds no sheet", async ({ page }) => {
   await setNextOpen(page, null);
-  await menuAction(page, "Import / Export", "Importer un CSV");
+  await menuAction(page, "Import / Export", "Importer CSV");
   expect(await tabNames(page)).toEqual(["Feuille 1"]);
 });
 
@@ -62,7 +62,7 @@ test("export writes computed values, not formulas", async ({ page }) => {
   await typeInCell(page, "B1", "=A1*2");
   await typeInCell(page, "A2", "txt");
   await setNextSave(page, "/out/res");
-  await menuAction(page, "Import / Export", "Exporter en CSV");
+  await menuAction(page, "Import / Export", "Exporter CSV");
   await expect.poll(() => readMock(page, "/out/res.csv")).toBeTruthy();
   expect(await readMock(page, "/out/res.csv")).toBe("4,8\r\ntxt,");
 });
@@ -73,6 +73,6 @@ test("export exports the active sheet only", async ({ page }) => {
   await selectCell(page, "A1");
   await typeInCell(page, "A1", "two");
   await setNextSave(page, "/out/second.csv");
-  await menuAction(page, "Import / Export", "Exporter en CSV");
+  await menuAction(page, "Import / Export", "Exporter CSV");
   await expect.poll(() => readMock(page, "/out/second.csv")).toBe("two");
 });

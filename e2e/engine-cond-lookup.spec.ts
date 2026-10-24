@@ -32,10 +32,12 @@ const cases: [string, string, string][] = [
   ["XLOOKUP", "=XLOOKUP(3,D1:D3,E1:E3)", "z"],
   ["VLOOKUP not found", "=VLOOKUP(9,D1:E3,2,FALSE)", "#N/A"],
   ["MATCH not found", "=MATCH(9,D1:D3,0)", "#N/A"],
+  ["IFNA around lookup", '=IFNA(VLOOKUP(9,D1:E3,2,FALSE),"none")', "none"],
+  ["XLOOKUP not found", '=IFNA(XLOOKUP(9,D1:D3,E1:E3),"none")', "none"],
   ["IFERROR around lookup", '=IFERROR(VLOOKUP(9,D1:E3,2,FALSE),"none")', "none"],
 ];
 
 for (const [name, formula, expected] of cases)
-  (PENDING_MATRIX.has(name) ? test.fixme : test)(`cond/lookup: ${name}`, async ({ page }) => {
+  test(`cond/lookup: ${name}`, async ({ page }) => {
     await scenario(page, { ...data, C1: formula }, { C1: expected });
   });
