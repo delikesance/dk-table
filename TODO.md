@@ -8,7 +8,7 @@ Source de vérité des tâches (voir CLAUDE.md). À mettre à jour à chaque cha
 - [x] T0.2 Maquettes copiées dans `mockups/`, chemins de CLAUDE.md corrigés (exemption 200 lignes pour pepite-1/2, maquettes uniquement)
 - [x] T0.3 Docker Desktop 4.96.3 installé; `docker compose build` (service dev) OK (CI non validée)
 - [x] T0.4 Commiter et pousser les fichiers non commités (Dockerfile, docker-compose.yml, .dockerignore, ci.yml, CLAUDE.md, docs/recherche-tableur.md, TODO.md)
-- [ ] T0.5 Vérifier le premier run de la CI sur GitHub (après T0.4) (CI epingle sur ubuntu-24.04: ubuntu-latest=26.04 bloquait sur apt)
+- [ ] T0.5 Vérifier la CI sur GitHub (run 97dfa55 OK ; run 40112430388 à contrôler, voir P0) (CI epingle sur ubuntu-24.04: ubuntu-latest=26.04 bloquait sur apt)
 
 ## Phase 1 : Squelette Tauri (après T0.1)
 
@@ -24,24 +24,24 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 ## Phase 2 : Tableur de base (après T1.2)
 
-- [ ] T2.1 Modèle Sheet (map clairsemée "A1" -> valeur, conversions colonnes) (parallèle avec T2.2)
-- [ ] T2.2 Grille 26x100 virtualisée (parallèle avec T2.1)
-- [ ] T2.3 Sélection clavier/souris (après T2.2)
-- [ ] T2.4 Édition + barre de formule (après T2.3)
-- [ ] T2.5 Lier grille et modèle (après T2.1 et T2.4)
+- [x] T2.1 Modèle Sheet (map clairsemée "A1" -> valeur, conversions colonnes) (parallèle avec T2.2)
+- [x] T2.2 Grille 26x100 (non virtualisée, voir P2) (parallèle avec T2.1)
+- [x] T2.3 Sélection clavier/souris (après T2.2)
+- [x] T2.4 Édition + barre de formule (après T2.3)
+- [x] T2.5 Lier grille et modèle (après T2.1 et T2.4)
 
 ## Phase 3 : Documents (après T2.5)
 
-- [ ] T3.1 Format JSON `.dktable` `{version:1,cells:{...}}`
-- [ ] T3.2 Nouveau document
-- [ ] T3.3 Ouvrir
-- [ ] T3.4 Enregistrer / enregistrer sous
-- [ ] T3.5 Raccourcis Ctrl+N/O/S et titre avec indicateur de modification
+- [x] T3.1 Format JSON `.dktable` `{version:1,cells:{...}}`
+- [x] T3.2 Nouveau document
+- [x] T3.3 Ouvrir
+- [x] T3.4 Enregistrer / enregistrer sous
+- [x] T3.5 Raccourcis Ctrl+N/O/S et titre avec indicateur de modification
 
 ## Phase 4 : Inspiration
 
 - [ ] T4.1 Analyser LibreOffice Calc (installé localement ; l'utilisateur a écrit "Libre Fiscal", à confirmer) via REA, sans copier de code
-- [ ] T4.2 Relire `docs/recherche-tableur.md` pour prioriser les features
+- [x] T4.2 Relire `docs/recherche-tableur.md` pour prioriser les features
 
 ## Phase 5 : Vérification
 
@@ -61,13 +61,31 @@ Chaque tâche : test d'abord (TDD). Le squelette (T1.x) passe en premier ; ensui
 - [x] I7 E/S fichier document `.dktable` JSON (parallèle)
 - [x] I8 Intégration et branchement des modules (après I1 à I7)
 
-## Phase 7 : Suites de l'intégration (I8)
+## Phase 7 : Lacunes connues et suites (par priorité, échéance minuit)
 
-- [ ] Persister les styles de cellule (gras/italique/alignement/fond) dans `.dktable` (session seulement aujourd'hui)
-- [ ] Formats de nombre (toolbar `onFormat` est un no-op)
-- [ ] Test manuel `npm run tauri dev` : ouvrir/enregistrer/CSV, menu contextuel, Ctrl+K
-- [ ] Fichiers récents persistés entre sessions (en mémoire aujourd'hui)
-- [ ] Copier-coller de plages : un seul pas d'annulation (fait via micro-tâche), à vérifier à la main
+P0 : bloquant démo
+- [ ] T5.1 Vérification visuelle réelle dans la fenêtre Tauri (`npm run tauri dev`) : créer, remplir, enregistrer, rouvrir, CSV, menu contextuel, Ctrl+K, copier-coller de plages (un seul pas d'annulation) ; corriger les bugs UI
+- [ ] Vérifier la CI : `gh run view 40112430388` (doit rester verte)
+- [ ] Script de démo 5 min : installation puis tour des fonctionnalités (cellules vivantes en final)
+- [ ] Persister gras/italique/alignement/fond dans `.dktable` + couverture annulation (undo) (session seulement aujourd'hui)
+- [ ] Menu de format de nombre fonctionnel (général/nombre/pourcentage/devise/date) ; `onFormat` de la toolbar est un no-op
+
+P1 : qualité visible (beauté, praticité)
+- [ ] Corriger les alertes hooks design (faible contraste, texte trop petit)
+- [ ] Icône d'application définitive (placeholder aujourd'hui)
+- [ ] SPARKLINE/BAR/TREND utilisables dans des formules plus larges (aujourd'hui cellule entière seulement) / type de valeur html
+- [ ] Fichiers récents persistés entre sessions + scope fs Tauri adapté
+
+P2 : perf et fonctions
+- [ ] Perf grille : redessin partiel (aujourd'hui complet à chaque édition), virtualisation, taille dynamique
+- [ ] Fonctions et features supplémentaires selon priorités de `docs/recherche-tableur.md`
+- [ ] Contrôle des fichiers > 200 lignes (`src/ui/app.ts` ~195)
+
+P3 : livraison
+- [ ] Packaging Linux (AppImage/deb) ; test de l'installeur Windows (MSI/NSIS construits en T1.7)
+- [ ] T4.1 Analyse LibreOffice Calc (optionnel)
+- [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : encore "no app code")
+- [ ] Décision pépites 1 (flèches) / 2 (voyage dans le temps) : abandon ou bonus si le temps le permet
 
 ## Later (non planifié)
 
