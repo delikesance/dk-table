@@ -16,6 +16,13 @@ describe("placeFloating", () => {
     expect(p.placement).toBe("below");
     expect(p.top).toBeGreaterThanOrEqual(48 + 8);
   });
+  it("never overlaps the column headers: below when above would cross `minTop`", () => {
+    const sel = { top: 160, left: 400, width: 100, height: 28 };
+    expect(placeFloating(sel, bar, vp).placement).toBe("above");
+    const p = placeFloating(sel, bar, vp, 150);
+    expect(p.placement).toBe("below");
+    expect(p.top).toBeGreaterThanOrEqual(160 + 28 + 8);
+  });
   it("clamps left and right inside the viewport", () => {
     const l = placeFloating({ top: 300, left: 0, width: 20, height: 28 }, bar, vp);
     expect(l.left).toBeGreaterThanOrEqual(8);
