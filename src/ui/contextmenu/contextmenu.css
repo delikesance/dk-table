@@ -8,3 +8,5 @@
 .dk-menu__item .dk-kbd, .dk-menu__arrow { margin-left: auto; }
 .dk-menu__item--hover .dk-kbd { background: transparent; border-color: currentColor; color: inherit; }
 .dk-menu__sep { height: 1px; margin: var(--s-1) var(--s-2); background: var(--c-line); }
+.dk-menu__item .dk-icon { width: 16px; height: 16px; }
+.dk-menu__arrow { display: inline-flex; }
