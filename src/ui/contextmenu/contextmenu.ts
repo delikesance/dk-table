@@ -1,9 +1,12 @@
 /** Generic context menu: `showContextMenu(x, y, items)`. */
 import "./contextmenu.css";
+import { icon } from "../icons";
 
 /** A clickable entry. */
 export interface MenuAction {
   label: string;
+  /** Optional Iconoir name (see `icons.ts`) shown before the label. */
+  icon?: string;
   shortcut?: string;
   disabled?: boolean;
   danger?: boolean;
@@ -84,13 +87,14 @@ export function showContextMenu(x: number, y: number, items: MenuItem[]): () => 
       row.className = "dk-menu__item" + (it.disabled ? " dk-menu__item--disabled" : "") + (it.danger ? " dk-menu__item--danger" : "");
       row.setAttribute("role", "menuitem");
       if (it.disabled) row.setAttribute("aria-disabled", "true");
+      if (it.icon) row.insertAdjacentHTML("beforeend", icon(it.icon));
       const label = document.createElement("span");
       label.textContent = it.label;
       row.append(label);
       if (it.submenu) {
         const a = document.createElement("span");
         a.className = "dk-menu__arrow";
-        a.textContent = "›";
+        a.innerHTML = icon("chevron-right");
         row.append(a);
       } else if (it.shortcut) {
         const k = document.createElement("kbd");

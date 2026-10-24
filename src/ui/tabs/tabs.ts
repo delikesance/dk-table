@@ -1,4 +1,5 @@
 import "./tabs.css";
+import { icon } from "../icons";
 
 /** A sheet entry shown as a tab. */
 export interface SheetInfo { id: string; name: string }
@@ -115,7 +116,7 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
     const add = document.createElement("button");
     add.type = "button";
     add.className = "dk-tab dk-tab--add";
-    add.textContent = "+";
+    add.innerHTML = icon("plus");
     add.setAttribute("aria-label", "Ajouter une feuille");
     add.addEventListener("click", () => opts.onAdd());
     bar.appendChild(add);

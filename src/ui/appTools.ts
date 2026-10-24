@@ -1,5 +1,13 @@
 /** Minimal-mode toggle: by default only the sheet is visible; one discreet button deploys/hides toolbar + sidebar. */
 import { icon } from "./icons";
+import type { KeyValueStore } from "../io/recents";
+
+const KEY = "dk-table.tools";
+
+/** Default store: localStorage when available, else null (memory only). */
+function defaultStore(): KeyValueStore | null {
+  try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; }
+}
 
 /** Create the discreet disclosure button placed at the start of the top bar. */
 export function createToolsToggle(): HTMLButtonElement {
@@ -13,9 +21,12 @@ export function createToolsToggle(): HTMLButtonElement {
 /**
  * Wire the toggle: tools (`.dk-app__tools`) and sidebar (`.dk-sidebar`) start hidden;
  * each click flips them together and updates aria/title + the `dk-app--minimal` class.
+ * The state is persisted under `dk-table.tools` ("1" = deployed) in `store` and restored at install (default hidden).
  * Returns a setter so other code (palette, shortcuts) can drive the same state.
  */
-export function installToolsToggle(root: HTMLElement, btn: HTMLButtonElement): (open: boolean) => void {
+export function installToolsToggle(
+  root: HTMLElement, btn: HTMLButtonElement, store: KeyValueStore | null = defaultStore(),
+): (open: boolean) => void {
   const app = root.querySelector<HTMLElement>(".dk-app")!;
   const tools = root.querySelector<HTMLElement>(".dk-app__tools")!;
   const side = root.querySelector<HTMLElement>(".dk-sidebar")!;
@@ -25,8 +36,11 @@ export function installToolsToggle(root: HTMLElement, btn: HTMLButtonElement): (
     const label = open ? "Masquer les outils" : "Afficher les outils";
     btn.setAttribute("aria-expanded", String(open)); btn.setAttribute("aria-label", label); btn.title = label;
     btn.classList.toggle("dk-toolstoggle--open", open);
+    try { store?.setItem(KEY, open ? "1" : "0"); } catch { /* storage unavailable: memory only */ }
   };
   btn.addEventListener("click", () => set(Boolean(tools.hidden)));
-  set(false);
+  let saved = false;
+  try { saved = store?.getItem(KEY) === "1"; } catch { /* ignore */ }
+  set(saved);
   return set;
 }
