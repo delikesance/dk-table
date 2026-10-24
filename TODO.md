@@ -191,6 +191,7 @@ Classement par gravité (P0 = pire)
 
 ## Contrôles de la grille façon Google Sheets
 - [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
+- [x] G1b Rendu de la sélection retravaillé : contour de plage, curseur annulaire + cran carré, en-têtes avec arête, barre flottante hors des en-têtes (clair et sombre).
 - [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
 
 ## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)

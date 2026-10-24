@@ -13,7 +13,7 @@ export interface MarkTargets {
  * (the selection may span unrendered rows). Returns the newly marked elements.
  */
 export function markSelection(prev: HTMLElement[], t: MarkTargets, anchor: Pos, active: Pos): HTMLElement[] {
-  prev.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on"));
+  prev.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on", "dkg-on-active", "dkg-e-t", "dkg-e-b", "dkg-e-l", "dkg-e-r"));
   const marked: HTMLElement[] = [];
   const add = (e: HTMLElement | undefined, cls: string) => {
     if (!e) return;
@@ -26,9 +26,22 @@ export function markSelection(prev: HTMLElement[], t: MarkTargets, anchor: Pos, 
   for (const [r, head] of t.rowHeads) {
     if (r < r0 || r > r1) continue;
     add(head, "dkg-on"); // every header of the selection lights up (whole rows/columns included)
-    if (multi) for (let c = c0; c <= c1; c++) add(t.cells.get(keyOf(c, r)), "dkg-range");
+    if (r === active.row) add(head, "dkg-on-active");
+    if (!multi) continue;
+    for (let c = c0; c <= c1; c++) {
+      const el = t.cells.get(keyOf(c, r));
+      add(el, "dkg-range");
+      // outline of the range on its edge cells (rendered rows only)
+      if (r === r0) add(el, "dkg-e-t");
+      if (r === r1) add(el, "dkg-e-b");
+      if (c === c0) add(el, "dkg-e-l");
+      if (c === c1) add(el, "dkg-e-r");
+    }
   }
-  for (let c = c0; c <= c1; c++) add(t.colHeads[c], "dkg-on");
+  for (let c = c0; c <= c1; c++) {
+    add(t.colHeads[c], "dkg-on");
+    if (c === active.col) add(t.colHeads[c], "dkg-on-active");
+  }
   add(t.cells.get(keyOf(active.col, active.row)), "dkg-active");
   return marked;
 }
