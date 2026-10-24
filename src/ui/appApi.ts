@@ -10,6 +10,7 @@ import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
+import { borderEdges } from "./borders";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -76,6 +77,15 @@ export function createApi(c: Ctx): App {
     style(patch) {
       pushUndo(c.cur);
       for (const k of keysOf(c.grid.getSelection())) { c.cur.styles[k] = { ...c.cur.styles[k], ...patch }; paint(k); }
+      c.grid.refresh();
+      setTitle(c, true); syncInfo(c);
+    },
+    borders(mode) {
+      pushUndo(c.cur);
+      const st = c.cur.styles;
+      for (const [k, b] of Object.entries(borderEdges(mode, keysOf(c.grid.getSelection()), (k) => st[k]?.borders))) {
+        st[k] = { ...st[k], borders: b }; paint(k);
+      }
       c.grid.refresh();
       setTitle(c, true); syncInfo(c);
     },

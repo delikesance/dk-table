@@ -23,7 +23,7 @@ export function syncInfo(c: Ctx): void {
   c.fbar.setCell(key, raw);
   c.sidebar.setCellInfo({ ref: key, raw, display: getDisplay(c.cur.sheet, key), format: "Standard" });
   const st = c.cur.styles[key] ?? {};
-  c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, align: st.align ?? "left",
+  c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, underline: !!st.underline, wrap: !!st.wrap, align: st.align ?? "left",
     format: st.format ?? "general", canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
 }
 
