@@ -1,0 +1,16 @@
+/* Function popup under the cell editor / formula bar: paper surface, blue ink, mono names (Hermes). */
+.dk-fnpop { position: fixed; z-index: 1100; box-sizing: border-box; width: 360px; max-width: calc(100vw - 16px); background: var(--c-overlay); border-radius: var(--r-md); box-shadow: var(--sh-2); color: var(--c-text); font: var(--fs-sm) var(--font-ui); overflow: hidden; }
+.dk-fnpop[hidden] { display: none; }
+.dk-fnpop__list { list-style: none; margin: 0; padding: var(--s-1); max-height: 224px; overflow: auto; }
+.dk-fnpop__item { display: flex; align-items: baseline; gap: var(--s-3); height: 28px; line-height: 28px; padding: 0 var(--s-2); border-radius: var(--r-sm); cursor: pointer; white-space: nowrap; }
+.dk-fnpop__item:hover { background: var(--c-surface-hover); }
+.dk-fnpop__item--selected, .dk-fnpop__item--selected:hover { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
+.dk-fnpop__name { flex: none; min-width: 96px; font: var(--fw-medium) var(--fs-sm) var(--font-mono); }
+.dk-fnpop__desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--c-text-2); }
+.dk-fnpop__item--selected .dk-fnpop__desc { color: inherit; }
+/* Signature of the selected function (list) or of the call around the caret (hint). */
+.dk-fnpop__sig { padding: var(--s-2) var(--s-3); border-top: 0.5px solid var(--c-line-strong); font: var(--fs-sm) var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-fnpop--hint .dk-fnpop__sig { border-top: 0; padding-bottom: 0; }
+.dk-fnpop--hint > .dk-fnpop__desc { display: block; padding: var(--s-1) var(--s-3) var(--s-2); }
+.dk-fnpop__arg--on { font-weight: var(--fw-semibold, 600); text-decoration: underline; text-underline-offset: 3px; }
+.dk-fnpop--hint { width: auto; min-width: 200px; max-width: 480px; }
