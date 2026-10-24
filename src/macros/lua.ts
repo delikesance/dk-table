@@ -3,9 +3,11 @@
  * (no io/package/debug, os limited to time/date/clock/difftime), captures
  * `print` output and stops runaway loops after `maxSteps` VM instructions.
  */
+import "./envHide";
 import { lua, lauxlib, lualib, to_luastring as L$ } from "fengari";
 import type { LuaState } from "fengari";
 import { bindSheet, type MacroHost } from "./api";
+import "./envRestore";
 
 export type { MacroHost } from "./api";
 
