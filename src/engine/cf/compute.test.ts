@@ -108,3 +108,13 @@ describe("computeCf", () => {
     expect(hit(run([r({ type: "formula", formula: "=(" }), r({ type: "cell", op: "gt", a: "x", range: "nope" })]))).toEqual([]);
   });
 });
+
+describe("isDark", () => {
+  it("separates dark fills from pastel ones", async () => {
+    const { isDark } = await import("./scale");
+    expect(isDark("#0000f2")).toBe(true);
+    expect(isDark("#19192f")).toBe(true);
+    expect(isDark("#fde2e0")).toBe(false);
+    expect(isDark("#c6c6ff")).toBe(false);
+  });
+});

@@ -43,7 +43,7 @@ const HTML = `
 </fieldset>
 <div class="dk-cf__row" data-types="scale">
   <label class="dk-cf__color">Minimum<input type="color" name="min" value="#ffffff"></label>
-  <label class="dk-dialog__check"><input type="checkbox" name="useMid"> Milieu</label><input type="color" name="mid" value="#fdf3c4" aria-label="Milieu">
+  <label class="dk-dialog__check"><input type="checkbox" name="useMid"> Milieu</label><input type="color" name="mid" value="#c6c6ff" aria-label="Milieu">
   <label class="dk-cf__color">Maximum<input type="color" name="max" value="#0000f2"></label>
 </div>
 <label class="dk-cf__color" data-types="bar">Couleur<input type="color" name="bar" value="#0000f2"></label>
