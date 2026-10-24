@@ -1,0 +1,19 @@
+/* dk doc: page on the grid background, Hermes type (condensed titles, Inter Tight body, DM Mono for live values). */
+.dk-app__doc { background: var(--c-bg); padding: var(--s-8) var(--s-4); }
+.dk-app__doc .ProseMirror {
+  max-width: 820px; min-height: 100%; margin: 0 auto; box-sizing: border-box; padding: var(--s-10) 56px;
+  background: var(--c-surface); border: 1px solid var(--c-line); color: var(--c-text);
+  font: var(--fw-regular) 18px/1.6 var(--font-ui); outline: none;
+}
+.dk-app__doc .ProseMirror:focus-visible { box-shadow: var(--focus-ring); }
+.dk-app__doc .ProseMirror p { margin: 0 0 var(--s-3); }
+.dk-app__doc .ProseMirror h1, .dk-app__doc .ProseMirror h2, .dk-app__doc .ProseMirror h3 {
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.05; margin: var(--s-6) 0 var(--s-3);
+}
+.dk-app__doc .ProseMirror h1 { font-size: 56px; font-weight: 300; margin-top: 0; }
+.dk-app__doc .ProseMirror h2 { font-size: 30px; font-weight: var(--fw-medium); color: var(--c-accent); }
+.dk-app__doc .ProseMirror h3 { font-size: 22px; font-weight: var(--fw-medium); }
+.dk-app__doc .ProseMirror blockquote { margin: var(--s-4) 0; padding-left: var(--s-4); border-left: 2px solid var(--c-accent); color: var(--c-text-2); }
+.dk-app__doc .ProseMirror hr { border: 0; border-top: 1px solid var(--c-line-strong); margin: var(--s-6) 0; }
+.dk-app__doc .ProseMirror a { color: var(--c-accent); }
+.dk-tab--doc::before { content: ""; display: inline-block; width: 8px; height: 10px; margin-right: 6px; border: 1.5px solid currentColor; border-radius: 1px; }

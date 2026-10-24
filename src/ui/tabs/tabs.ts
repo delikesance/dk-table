@@ -4,7 +4,7 @@ import { icon } from "../icons";
 import { showToast } from "../toast/toast";
 
 /** A sheet entry shown as a tab. */
-export interface SheetInfo { id: string; name: string }
+export interface SheetInfo { id: string; name: string; /** "doc" for a dk doc tab (default: sheet). */ kind?: "doc" }
 
 /** Callbacks and options for {@link createSheetTabs}. */
 export interface SheetTabsOptions {
@@ -103,7 +103,7 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
     sheets.forEach((s, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "dk-tab" + (s.id === active ? " dk-tab--active" : "");
+      b.className = "dk-tab" + (s.id === active ? " dk-tab--active" : "") + (s.kind === "doc" ? " dk-tab--doc" : "");
       b.textContent = s.name;
       b.dataset.id = s.id;
       b.setAttribute("role", "tab");

@@ -108,6 +108,7 @@ export function installCommands(app: App): void {
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
   run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
+  run("doc.new", "Nouveau document", () => void app.addDoc(), undefined, ["dk doc", "texte", "rapport", "word"]);
   run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
   run("app.about", "À propos de dk-table", openAbout);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());

@@ -19,13 +19,15 @@ import { createApi } from "./appApi";
 import { createWidgets } from "./appWidgets";
 import { installMacros } from "./macros/wire";
 import { relink, type Ctx } from "./appState";
+import { createDocStore } from "../doc/store";
+import "../doc/doc.css";
 import type { App } from "./appTypes";
 
 export type { App, Hooks } from "./appTypes";
 
 const LAYOUT =
   '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__menubar"></div><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
-  '<div class="dk-app__main"><div class="dk-app__grid"></div></div>' +
+  '<div class="dk-app__main"><div class="dk-app__grid"></div><div class="dk-app__doc" hidden></div></div>' +
   '<div class="dk-app__tabs"></div></div>';
 
 /** Disposer of the previous mount (palette hotkey, menus click listener), run before a remount. */
@@ -40,6 +42,8 @@ export function mount(root: HTMLElement): App {
   // grid/widgets/app are assigned right below, before any use.
   const c = {
     gridHost: root.querySelector<HTMLElement>(".dk-app__grid")!,
+    docHost: root.querySelector<HTMLElement>(".dk-app__doc")!,
+    docs: createDocStore(),
     entries: [first], cur: first, recents: [], coalescing: false,
   } as unknown as Ctx;
   relink(c);
