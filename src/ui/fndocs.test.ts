@@ -1,18 +1,16 @@
-import src from "../engine/functions.ts?raw";
 import { describe, expect, it } from "vitest";
 import { createSheet, getDisplay, setCell } from "../engine/sheet";
+import { listFunctionNames } from "../engine/functions";
 import { registerLive } from "../engine/live/adapter";
 import { FN_DOCS } from "./fndocs";
 
 /**
  * Consistency of the sidebar function reference (FN_DOCS) with the engine:
- * every engine function (builtins read from functions.ts + IF + live charts)
- * is documented, every doc maps to a real function, FR text and syntax.
+ * every engine function (`listFunctionNames()`) is documented, every doc maps to a real function, FR text and syntax.
  */
 registerLive();
-const BUILTINS = [...src.matchAll(/^def\("([A-Z]+)"/gm)].map((m) => m[1]);
-/** Engine functions: parsed builtins, special form IF, live charts. */
-const ENGINE = [...BUILTINS, "IF", "SPARKLINE", "BAR", "TREND"];
+/** Engine functions: the real registry + special forms + live charts. */
+const ENGINE = listFunctionNames();
 const names = FN_DOCS.map((d) => d.name);
 
 /** True when the engine knows `name` (no #NAME? when called). */
@@ -23,7 +21,7 @@ function known(name: string): boolean {
 }
 
 describe("FN_DOCS", () => {
-  it("sees the real builtins", () => expect(BUILTINS.length).toBeGreaterThanOrEqual(8));
+  it("sees the real functions", () => expect(ENGINE.length).toBeGreaterThanOrEqual(40));
   it("documents every engine function", () => {
     for (const n of ENGINE) expect(names, n).toContain(n);
   });
