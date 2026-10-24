@@ -30,6 +30,8 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onSave: () => app.hooks.command?.("save"),
     menus: {
       onNew: () => newDocument(app),
+      recents: () => app.recents(),
+      onOpenRecent: (p) => app.hooks.command?.(`recent:${p}`),
       onOpen: () => app.hooks.command?.("open"),
       onSave: () => app.hooks.command?.("save"),
       onSaveAs: () => void saveFile(app, true),
