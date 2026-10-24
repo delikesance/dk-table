@@ -5,7 +5,7 @@ import { icon, ICON_NAMES } from "./icons";
 
 let root: HTMLElement;
 const toggle = () => root.querySelector<HTMLButtonElement>('[data-action="toggle-tools"]')!;
-const tools = () => root.querySelector<HTMLElement>(".dk-app__tools")!;
+const tools = () => root.querySelector<HTMLElement>(".dk-toolbar__n2")!;
 const side = () => root.querySelector<HTMLElement>(".dk-sidebar")!;
 
 beforeEach(() => {
@@ -15,9 +15,11 @@ beforeEach(() => {
 });
 
 describe("minimal mode (default)", () => {
-  it("shows only the sheet: tools and sidebar hidden, grid visible", () => {
+  it("base bar visible, N2 and sidebar hidden, grid visible", () => {
     expect(tools().hidden).toBe(true);
     expect(side().hidden).toBe(true);
+    expect(root.querySelector<HTMLElement>(".dk-app__tools")!.hidden).toBe(false);
+    expect(root.querySelector('[data-action="undo"]')!.closest("[hidden]")).toBeNull();
     expect(root.querySelector(".dk-app")!.classList.contains("dk-app--minimal")).toBe(true);
     expect(root.querySelector<HTMLElement>(".dkg")!.closest("[hidden]")).toBeNull();
   });
