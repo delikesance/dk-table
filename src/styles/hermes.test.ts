@@ -47,7 +47,7 @@ describe("thème sombre « nuit Hermes »", () => {
 });
 
 describe("éditeur de code (macros Lua)", () => {
-  const keys = ["--c-code-bg", "--c-code-text", "--c-code-keyword", "--c-code-string", "--c-code-number", "--c-code-comment", "--c-code-error", "--c-code-selection"];
+  const keys = ["--c-code-bg", "--c-code-text", "--c-code-keyword", "--c-code-constant", "--c-code-string", "--c-code-builtin", "--c-code-member", "--c-code-operator", "--c-code-comment", "--c-code-error", "--c-code-selection"];
   it("tokens --c-code-* définis en clair, fond bleu profond", () => {
     for (const k of keys) expect(light[k], k).toBeTruthy();
     expect(light["--c-code-bg"]).toMatch(/#0000a6/i);

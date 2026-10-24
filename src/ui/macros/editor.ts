@@ -1,12 +1,11 @@
 /** Lua code editor (CodeMirror 6): syntax highlighting, autocompletion, Ctrl/Cmd+Enter to run. */
 import { EditorState } from "@codemirror/state";
-import { EditorView, keymap, lineNumbers, drawSelection, highlightActiveLine } from "@codemirror/view";
+import { EditorView, keymap, lineNumbers, drawSelection, highlightActiveLine, tooltips } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { StreamLanguage, syntaxHighlighting, bracketMatching, indentOnInput } from "@codemirror/language";
+import { syntaxHighlighting, bracketMatching, indentOnInput } from "@codemirror/language";
 import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap,
   type Completion, type CompletionContext, type CompletionResult } from "@codemirror/autocomplete";
-import { classHighlighter } from "@lezer/highlight";
-import { lua } from "@codemirror/legacy-modes/mode/lua";
+import { luaHighlight, luaLanguage } from "./luaSyntax";
 import { complete } from "../../macros/complete";
 import type { Doc } from "../../macros/luadocs";
 
@@ -55,7 +54,8 @@ const infoBelow = () => ({ class: "dk-cm-info-below" });
 export function createLuaEditor(host: HTMLElement, o: LuaEditorOptions): LuaEditor {
   const extensions = [
     lineNumbers(), history(), drawSelection(), highlightActiveLine(), indentOnInput(), bracketMatching(), closeBrackets(),
-    StreamLanguage.define(lua), syntaxHighlighting(classHighlighter),
+    luaLanguage, syntaxHighlighting(luaHighlight),
+    tooltips({ parent: document.body }), // popup outside the panel: never clipped nor re-themed by the chrome
     autocompletion({ override: [luaCompletions], icons: false, positionInfo: infoBelow }),
     keymap.of([
       { key: "Mod-Enter", run: () => (o.onRun(), true) },
