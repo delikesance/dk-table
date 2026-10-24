@@ -1,0 +1,77 @@
+# TODO
+
+Source de vérité des tâches (voir CLAUDE.md). À mettre à jour à chaque changement de tâche.
+
+## Phase 0 : Préparation
+
+- [ ] T0.1 Vérifier prérequis (node, npm, rustc, cargo, WebView2)
+- [ ] T0.2 Copier les 3 maquettes dans `mockups/` et corriger les chemins de CLAUDE.md (en attente d'accord)
+- [ ] T0.3 Installer Docker Desktop (PowerShell admin, voir CLAUDE.md) puis valider `docker compose build`
+- [x] T0.4 Commiter et pousser les fichiers non commités (Dockerfile, docker-compose.yml, .dockerignore, ci.yml, CLAUDE.md, docs/recherche-tableur.md, TODO.md)
+- [ ] T0.5 Vérifier le premier run de la CI sur GitHub (après T0.4)
+
+## Phase 1 : Squelette Tauri (après T0.1)
+
+Chaque tâche : écrire le test d'abord (TDD).
+
+- [ ] T1.1 Init Tauri v2 + Vite TypeScript vanilla
+- [ ] T1.2 Structure `src/`, `src-tauri/`, `src/engine/`, `src/ui/` (après T1.1)
+- [ ] T1.3 Fenêtre principale dk-table 1200x800 (après T1.1)
+- [ ] T1.4 Plugin dialog (après T1.1)
+- [ ] T1.5 Plugin fs, permissions minimales (après T1.1)
+- [ ] T1.6 `npm run tauri dev` OK (après T1.2 à T1.5)
+- [ ] T1.7 Premier `tauri build` (installeur Windows) (après T1.6)
+
+## Phase 2 : Tableur de base (après T1.2)
+
+- [ ] T2.1 Modèle Sheet (map clairsemée "A1" -> valeur, conversions colonnes) (parallèle avec T2.2)
+- [ ] T2.2 Grille 26x100 virtualisée (parallèle avec T2.1)
+- [ ] T2.3 Sélection clavier/souris (après T2.2)
+- [ ] T2.4 Édition + barre de formule (après T2.3)
+- [ ] T2.5 Lier grille et modèle (après T2.1 et T2.4)
+
+## Phase 3 : Documents (après T2.5)
+
+- [ ] T3.1 Format JSON `.dktable` `{version:1,cells:{...}}`
+- [ ] T3.2 Nouveau document
+- [ ] T3.3 Ouvrir
+- [ ] T3.4 Enregistrer / enregistrer sous
+- [ ] T3.5 Raccourcis Ctrl+N/O/S et titre avec indicateur de modification
+
+## Phase 4 : Inspiration
+
+- [ ] T4.1 Analyser LibreOffice Calc (installé localement ; l'utilisateur a écrit "Libre Fiscal", à confirmer) via REA, sans copier de code
+- [ ] T4.2 Relire `docs/recherche-tableur.md` pour prioriser les features
+
+## Phase 5 : Vérification
+
+- [ ] T5.1 Test manuel : créer, remplir, enregistrer, rouvrir
+- [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test)
+
+## Phase 6 : Implémentation (après squelette T1.x)
+
+Chaque tâche : test d'abord (TDD). Le squelette (T1.x) passe en premier ; ensuite les tâches I1 à I7 sont parallélisables (fichiers disjoints, worktrees séparés).
+
+- [ ] I1 Modèle Sheet + tests (`src/engine`) (parallèle)
+- [ ] I2 Grille UI (`src/ui/grid`) (parallèle)
+- [ ] I3 Barre d'outils + barre de formule (parallèle)
+- [ ] I4 Sidebar + onglets de feuilles (parallèle)
+- [ ] I5 Palette de commandes (Ctrl+K) + menu contextuel (parallèle)
+- [ ] I6 Cellules vivantes SPARKLINE/BAR/TREND : moteur + rendu (parallèle)
+- [ ] I7 E/S fichier document `.dktable` JSON (parallèle)
+- [ ] I8 Intégration et branchement des modules (après I1 à I7)
+
+## Later (non planifié)
+
+- [ ] Moteur de recalcul (graphe de dépendances, #CYCLE)
+- [ ] Pépite Cellules vivantes (SPARKLINE/BAR/TREND)
+
+## Fait
+
+- [x] Dépôt GitHub privé créé et master poussée
+- [x] CLAUDE.md commité (6e1e34d)
+- [x] Dockerfile / compose / CI écrits (non validés)
+- [x] Section TDD ajoutée
+- [x] Synthèse de recherche écrite
+- [x] 3 maquettes de pépites créées
+- [x] Design : design system `mockups/design/` (tokens, components, composants.html, DESIGN.md) + artefact Claude Design (10 artboards, non aligné : `mockups/design/` prioritaire)
