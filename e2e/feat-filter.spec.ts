@@ -14,7 +14,7 @@ test("popover lists the distinct values with counts", async ({ page }) => {
   await open(page);
   const pop = page.locator(".dkg-pop");
   await expect(pop).toBeVisible();
-  await expect(pop.locator("input[type=checkbox]")).toHaveCount(4); // a, b, c + the empty rows
+  await expect(pop.locator("input[data-v]")).toHaveCount(4); // a, b, c + the empty rows
   await expect(pop.locator("label", { hasText: "a" }).locator(".dkg-pop__n")).toHaveText("2");
 });
 
