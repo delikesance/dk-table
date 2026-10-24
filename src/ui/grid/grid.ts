@@ -4,6 +4,7 @@
  */
 import { colName, keyOf, parseKey, rangeKeys, type Pos } from "./keys";
 import { bindClipboard } from "./clipboard";
+import { openEditor, type Editor } from "./editor";
 import type { Grid, GridOptions } from "./types";
 
 export type { Grid, GridOptions } from "./types";
@@ -17,7 +18,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const { cols, rows } = opts;
   let anchor: Pos = { col: 0, row: 0 };
   let active: Pos = { col: 0, row: 0 };
-  let editor: { input: HTMLInputElement; typed: boolean } | null = null;
+  let editor: Editor | null = null;
   let dragging = false;
   let marked: HTMLElement[] = [];
   const cells = new Map<string, HTMLElement>();
@@ -105,38 +106,20 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   function startEdit(initial?: string): void {
     if (editor) return;
     const key = keyOf(active.col, active.row);
-    const el = cells.get(key)!;
-    const input = document.createElement("input");
-    input.className = "dkg-editor";
-    input.value = initial ?? opts.getRaw(key);
     sigs.delete(key);
-    el.replaceChildren(input);
-    editor = { input, typed: initial !== undefined };
-    input.addEventListener("keydown", onEditorKey);
-    input.focus();
-    if (initial === undefined) input.select();
+    editor = openEditor(cells.get(key)!, initial ?? opts.getRaw(key), initial !== undefined,
+      { end: endEdit, move: (dc, dr) => move(dc, dr) });
   }
 
-  /** Close the editor; commit the value when `commit`. */
-  function endEdit(commit: boolean): void {
+  /** Close the editor; commit the value when `commit`, refocus the grid when `refocus` (not on blur). */
+  function endEdit(commit: boolean, refocus = true): void {
     if (!editor) return;
     const { input } = editor;
     editor = null;
     const key = keyOf(active.col, active.row);
     if (commit) opts.onEdit(key, input.value);
     paint(key);
-    root.focus();
-  }
-
-  function onEditorKey(e: KeyboardEvent): void {
-    e.stopPropagation();
-    const m = MOVES[e.key];
-    if (e.key === "Escape") { e.preventDefault(); endEdit(false); }
-    else if (e.key === "Enter" || e.key === "Tab") {
-      e.preventDefault();
-      endEdit(true);
-      move(e.key === "Tab" ? (e.shiftKey ? -1 : 1) : 0, e.key === "Enter" ? (e.shiftKey ? -1 : 1) : 0);
-    } else if (m && editor?.typed) { e.preventDefault(); endEdit(true); move(m[0], m[1]); }
+    if (refocus) root.focus();
   }
 
   root.addEventListener("keydown", (e) => {
@@ -168,7 +151,8 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     active = parseKey(t.dataset.key!);
     render();
   });
-  document.addEventListener("mouseup", () => { dragging = false; });
+  const onMouseUp = (): void => { dragging = false; };
+  document.addEventListener("mouseup", onMouseUp);
   root.addEventListener("dblclick", (e) => {
     if ((e.target as HTMLElement).closest(".dkg-cell")) startEdit();
   });
@@ -184,8 +168,16 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     refresh: (keys) => (keys ?? [...cells.keys()]).forEach(paint),
     select(key) {
       endEdit(true);
-      active = anchor = clamp(parseKey(key));
+      const [a, b] = key.split(":");
+      active = clamp(parseKey(b ?? a));
+      anchor = b ? clamp(parseKey(a)) : active;
       render();
+    },
+    focus: () => root.focus(),
+    destroy() {
+      document.removeEventListener("mouseup", onMouseUp);
+      editor = null;
+      root.remove();
     },
     getSelection: selection,
   };

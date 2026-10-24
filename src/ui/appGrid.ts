@@ -26,6 +26,8 @@ export function touch(c: Ctx): void {
 
 /** Rebuild the grid for the current sheet. */
 export function buildGrid(c: Ctx): void {
+  const prevSel = c.grid?.getSelection();
+  c.grid?.destroy();
   c.gridHost.replaceChildren();
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows,
@@ -44,6 +46,8 @@ export function buildGrid(c: Ctx): void {
   });
   Object.keys(c.cur.styles).forEach((k) => paintStyle(c.gridHost, k, c.cur.styles[k]));
   c.gridHost.querySelector(".dkg")?.addEventListener("contextmenu", (e) => c.app.hooks.context?.(e as MouseEvent));
+  if (prevSel) c.grid.select(prevSel);
+  c.grid.focus();
   syncInfo(c);
 }
 
