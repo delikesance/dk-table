@@ -12,11 +12,15 @@ function rule(sel: string): string {
 }
 
 describe("sheet tabs visual state", () => {
-  it("active tab: surface bg, ink text, 2px accent underline", () => {
+  it("active tab: solid Hermes blue, paper text (both themes)", () => {
     const r = rule(".dk-tabs .dk-tab--active");
-    expect(r).toContain("var(--c-surface)");
-    expect(r).toContain("var(--c-text)");
-    expect(r).toMatch(/inset 0 -2px 0 var\(--c-accent\)/);
+    expect(r).toContain("background: var(--c-accent-solid)");
+    expect(r).toContain("color: var(--c-text-on-solid)");
+  });
+  it("tab labels: condensed caps (display font)", () => {
+    const r = rule(".dk-tabs .dk-tab ");
+    expect(r).toContain("var(--font-display)");
+    expect(r).toMatch(/text-transform:\s*uppercase/);
   });
   it("inactive tabs use text-2", () => {
     expect(rule(".dk-tabs .dk-tab ")).toContain("var(--c-text-2)");

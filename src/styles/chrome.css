@@ -1,0 +1,64 @@
+/* dk-table : chrome bleu (barres du haut). La zone .dk-app__top remappe les tokens sémantiques
+   sur --c-chrome-* : tous les composants qu'elle contient (menus, outils, formule) passent en
+   « papier sur bleu » sans règle dédiée. Les popups qu'elle ouvre repassent sur papier via --paper-*. */
+
+/* Valeurs papier figées au niveau :root (thème courant inclus) pour les restaurer dans les popups. */
+:root {
+  --paper-text: var(--c-text);
+  --paper-text-2: var(--c-text-2);
+  --paper-text-3: var(--c-text-3);
+  --paper-icon: var(--c-icon);
+  --paper-surface: var(--c-surface);
+  --paper-surface-2: var(--c-surface-2);
+  --paper-hover: var(--c-surface-hover);
+  --paper-line: var(--c-line);
+  --paper-line-strong: var(--c-line-strong);
+  --paper-accent: var(--c-accent);
+  --paper-accent-soft: var(--c-accent-soft);
+  --paper-accent-soft-2: var(--c-accent-soft-2);
+  --paper-on-accent: var(--c-text-on-accent);
+}
+
+.dk-app__top {
+  background: var(--c-chrome);
+  color: var(--c-chrome-text);
+  --c-text: var(--c-chrome-text);
+  --c-text-2: var(--c-chrome-text-2);
+  --c-text-3: var(--c-chrome-text-2);
+  --c-icon: var(--c-chrome-text);
+  --c-surface: var(--c-chrome-deep);
+  --c-surface-2: var(--c-chrome-deep);
+  --c-surface-hover: var(--c-chrome-hover);
+  --c-line: var(--c-chrome-line);
+  --c-line-strong: var(--c-chrome-line);
+  --c-accent: var(--c-chrome-text);
+  --c-accent-soft: var(--c-chrome-hover);
+  --c-accent-soft-2: var(--c-chrome-active);
+  --c-text-on-accent: var(--c-chrome);
+  --focus-ring: 0 0 0 2px var(--c-chrome-text);
+}
+.dk-app__top .dk-toolbar, .dk-app__top .dk-app__bar, .dk-app__top .dk-formula { background: transparent; }
+
+/* Libellés de menus : capitales condensées (Sofia Sans Extra Condensed), comme Hermes. */
+.dk-app__top .dk-menu__trigger, .dk-app__top .dk-toolstoggle {
+  font-family: var(--font-display); font-size: var(--fs-menu); font-weight: var(--fw-medium);
+  text-transform: uppercase; letter-spacing: var(--tracking-caps);
+}
+
+/* Popups ouverts depuis le chrome : retour au papier du thème courant. */
+.dk-app__top .dk-menu__list, .dk-app__top .color-picker {
+  --c-text: var(--paper-text);
+  --c-text-2: var(--paper-text-2);
+  --c-text-3: var(--paper-text-3);
+  --c-icon: var(--paper-icon);
+  --c-surface: var(--paper-surface);
+  --c-surface-2: var(--paper-surface-2);
+  --c-surface-hover: var(--paper-hover);
+  --c-line: var(--paper-line);
+  --c-line-strong: var(--paper-line-strong);
+  --c-accent: var(--paper-accent);
+  --c-accent-soft: var(--paper-accent-soft);
+  --c-accent-soft-2: var(--paper-accent-soft-2);
+  --c-text-on-accent: var(--paper-on-accent);
+  color: var(--c-text);
+}
