@@ -20,6 +20,8 @@ export interface Ctx {
   docs: DocStore;
   /** Id of the open document, or undefined when the grid is shown. */
   curDoc?: string;
+  /** Document to come back to (Alt+←) after following a reference into a sheet. */
+  backDoc?: string;
   /** Editor of the open document. */
   docEd?: DocEditor;
   entries: Entry[];

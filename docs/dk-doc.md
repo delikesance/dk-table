@@ -23,6 +23,12 @@ Un dk doc est un document de texte riche (titres, listes, citation, gras / itali
 - `ui/appDocs.ts` : ouverture / fermeture de la vue document, création, suppression, renommage.
 - API `App` : `addDoc()`, `openDoc(id)`, `removeDoc(id)`, `activeDocId()`, `docEditor()`. Palette : « Nouveau document ».
 
+## Références vivantes (phase 2)
+
+- Nœud inline `cellRef {sheet: id de feuille, ref: "B3" ou "A3:D4"}`. Puce `dk-ref` (valeur formatée comme la cellule, `#REF!` si la cible a disparu), carte au survol (adresse, valeur, formule), clic = ouvrir la cellule, `Alt+←` = revenir au document.
+- `@` dans le texte : `doc/mention.ts` liste les cases trouvées par leurs noms (« bob ca » trouve « Bob · CA_T1 »), par valeur ou par adresse (`searchRefs`). Flèches / Entrée / Tab / Échap.
+- Lecture seule : `doc/refs.ts` lit le moteur (`getDisplay`, `getRaw`) sans entrer dans le graphe de dépendances. Rafraîchissement : `DocEditor.refresh()` appelé par `touch` et `refreshTabs`.
+
 ## Tests
 
 `npx vitest run src/doc src/ui/appDocs.test.ts src/io/format.docs.test.ts`.
