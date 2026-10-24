@@ -1,0 +1,81 @@
+/** Palette commands, keyboard shortcuts and the cell context menu. */
+import { registerCommand } from "./palette/registry";
+import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
+import type { App } from "./appTypes";
+import { exportCsv, importCsv, openFile, openRecent, saveFile } from "./fileops";
+
+/** Keyboard shortcuts (Ctrl/Cmd + key) -> action. Ctrl+K is owned by the palette. */
+function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
+  return {
+    z: (e) => (e.shiftKey ? app.redo() : app.undo()),
+    y: () => app.redo(),
+    b: () => app.style({ bold: !app.activeStyle().bold }),
+    i: () => app.style({ italic: !app.activeStyle().italic }),
+    o: () => void openFile(app),
+    s: (e) => void saveFile(app, e.shiftKey),
+    n: () => app.addSheet(),
+  };
+}
+
+/** Clear selected cells (one undo step is recorded per cell; fine for small ranges). */
+function clearSelection(app: App): void {
+  app.selectedKeys().forEach((k) => app.edit(k, ""));
+}
+
+/** Context menu items for the grid. */
+function cellMenu(app: App): MenuItem[] {
+  return [
+    { label: "Gras", shortcut: "Ctrl+B", action: () => app.style({ bold: !app.activeStyle().bold }) },
+    { label: "Italique", shortcut: "Ctrl+I", action: () => app.style({ italic: !app.activeStyle().italic }) },
+    { separator: true },
+    { label: "Alignement", submenu: (["left", "center", "right"] as const).map((a) => ({
+      label: { left: "Gauche", center: "Centre", right: "Droite" }[a], action: () => app.style({ align: a }) })) },
+    { separator: true },
+    { label: "Effacer le contenu", danger: true, action: () => clearSelection(app) },
+    { label: "Annuler", shortcut: "Ctrl+Z", action: () => app.undo() },
+  ];
+}
+
+/** Register palette commands, global shortcuts, context menu and file command hooks. */
+export function installCommands(app: App): void {
+  const run = (id: string, label: string, fn: () => void, shortcut?: string, keywords: string[] = []) =>
+    registerCommand({ id, label, run: fn, shortcut, keywords });
+  run("file.open", "Ouvrir un fichier", () => void openFile(app), "Ctrl+O");
+  run("file.save", "Enregistrer", () => void saveFile(app), "Ctrl+S");
+  run("file.saveas", "Enregistrer sous", () => void saveFile(app, true), "Ctrl+Shift+S");
+  run("file.import", "Importer un CSV", () => void importCsv(app), undefined, ["csv"]);
+  run("file.export", "Exporter en CSV", () => void exportCsv(app), undefined, ["csv"]);
+  run("edit.undo", "Annuler", () => app.undo(), "Ctrl+Z");
+  run("edit.redo", "Rétablir", () => app.redo(), "Ctrl+Y");
+  run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
+  run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
+  run("sheet.add", "Nouvelle feuille", () => app.addSheet(), "Ctrl+N");
+  run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
+  for (const f of ["SPARKLINE", "BAR", "TREND"]) {
+    run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);
+  }
+
+  app.hooks.command = (id) => {
+    if (id === "open") void openFile(app);
+    else if (id === "save") void saveFile(app);
+    else if (id.startsWith("recent:")) void openRecent(app, id.slice(7));
+  };
+  app.hooks.context = (e) => {
+    e.preventDefault();
+    const t = (e.target as HTMLElement).closest<HTMLElement>(".dkg-cell");
+    if (t?.dataset.key && !app.selectedKeys().includes(t.dataset.key)) app.select(t.dataset.key);
+    showContextMenu(e.clientX, e.clientY, cellMenu(app));
+  };
+
+  const map = shortcuts(app);
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const fn = map[e.key.toLowerCase()];
+    if (!fn) return;
+    // Let inputs keep their native undo/bold-less behaviour while editing text.
+    if ((e.target as HTMLElement)?.tagName === "INPUT" && "zyb i".includes(e.key.toLowerCase())) return;
+    e.preventDefault();
+    fn(e);
+  });
+}
+

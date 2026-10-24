@@ -1,0 +1,11 @@
+/* Command palette overlay (tokens from mockups/design/tokens.css). */
+.dk-palette-scrim { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: center; align-items: flex-start; padding: var(--s-12) var(--s-4); background: var(--c-scrim); }
+.dk-palette { width: 100%; max-width: 560px; overflow: hidden; background: var(--c-overlay); backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4); border-radius: var(--r-lg); box-shadow: var(--sh-3); }
+.dk-palette__input { display: block; box-sizing: border-box; width: 100%; height: 52px; padding: 0 var(--s-5); border: 0; border-bottom: 0.5px solid var(--c-line); background: transparent; color: var(--c-text); font: var(--fw-regular) var(--fs-lg) var(--font-ui); }
+.dk-palette__input::placeholder { color: var(--c-text-3); }
+.dk-palette__input:focus { outline: none; }
+.dk-palette__list { list-style: none; margin: 0; padding: var(--s-2); max-height: 320px; overflow: auto; }
+.dk-palette__item { display: flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-3); border-radius: var(--r-sm); color: var(--c-text); font: var(--fs-md) var(--font-ui); cursor: pointer; }
+.dk-palette__item--selected { background: var(--c-accent); color: var(--c-text-on-accent); }
+.dk-palette__item .dk-kbd { margin-left: auto; }
+.dk-palette__item--selected .dk-kbd { background: transparent; border-color: currentColor; color: inherit; }

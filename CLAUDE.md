@@ -16,6 +16,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Everything is documented: every module/function/component gets a short doc comment, and each implementation is documented (what/why, usage) in the same change.
 - After every implementation, update `CLAUDE.md` when needed (commands, architecture, structure, decisions) and update `TODO.md` (see To-do list).
 
+## Parallel workflow
+
+- Before launching a task, split it into small independent mini-tasks (disjoint files where possible).
+- One worker per mini-task, each in its own git worktree on branch `wt/<mini-task-name>`, run in parallel.
+- TDD per mini-task: write its failing test first; every worker brief includes the test command (`npm test`, plus `cargo test` for Rust).
+- Workers commit small, on their own branch; nothing left uncommitted in a worktree.
+- Merge all `wt/*` into a single branch `integration`, resolve conflicts there, run full `npm test` + `npx tsc --noEmit` (+ `cargo test` if Rust touched).
+- Merge `integration` into main (`master` here) only when green.
+- `TODO.md` is updated in the same change as the work (per mini-task, reconciled at integration).
+- Delete merged worktrees/branches afterwards.
+
 ## To-do list
 
 - `TODO.md` (repo root) is the source of truth for tasks.
@@ -30,6 +41,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## CI
 
 - `.github/workflows/ci.yml` (GitHub Actions, on push + PR): `npm ci`, `npm test`, `cargo test`, each guarded by file existence.
+
+## Commands
+
+- `npm test` (vitest, jsdom pour l'UI), `npx tsc --noEmit`, `npm run build` (tsc + vite), `npm run tauri dev`.
+
+## Structure (src/)
+
+- `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
+- `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
+- `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
+- `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
+
+## Decisions (intégration I8)
+
+- Cellules vivantes: le moteur ne gère que des valeurs texte/nombre; `liveResult` détecte `=SPARKLINE|BAR|TREND(plage)` pleine cellule et la grille (hook `renderCell`) affiche le SVG. Le moteur renvoie un texte de repli (ex. TREND: "▲ +10%").
+- Undo/redo: snapshot des cellules brutes par feuille (100 max); les éditions groupées (coller/effacer) = un pas. Styles non annulables ni persistés.
+- Recalcul UI: après chaque édition, `grid.refresh()` complet (26x100).
 
 ## Research
 

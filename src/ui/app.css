@@ -1,0 +1,7 @@
+/* App shell layout; colors/sizes from src/styles/tokens.css. */
+html, body, #app { height: 100%; margin: 0; }
+body { background: var(--c-bg); color: var(--c-text); font: var(--fs-md) var(--font-ui); }
+.dk-app { display: flex; flex-direction: column; height: 100%; }
+.dk-app__main { display: flex; flex: 1; min-height: 0; }
+.dk-app__grid { flex: 1; min-width: 0; }
+.dk-app__top, .dk-app__tabs { flex: none; }

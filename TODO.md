@@ -52,19 +52,27 @@ Chaque tâche : écrire le test d'abord (TDD).
 
 Chaque tâche : test d'abord (TDD). Le squelette (T1.x) passe en premier ; ensuite les tâches I1 à I7 sont parallélisables (fichiers disjoints, worktrees séparés).
 
-- [ ] I1 Modèle Sheet + tests (`createSheet()` smoke fait) (`src/engine`) (parallèle)
-- [ ] I2 Grille UI (`src/ui/grid`) (parallèle)
-- [ ] I3 Barre d'outils + barre de formule (parallèle)
-- [ ] I4 Sidebar + onglets de feuilles (parallèle)
-- [ ] I5 Palette de commandes (Ctrl+K) + menu contextuel (parallèle)
-- [ ] I6 Cellules vivantes SPARKLINE/BAR/TREND : moteur + rendu (parallèle)
-- [ ] I7 E/S fichier document `.dktable` JSON (parallèle)
-- [ ] I8 Intégration et branchement des modules (après I1 à I7)
+- [x] I1 Modèle Sheet + tests (`createSheet()` smoke fait) (`src/engine`) (parallèle)
+- [x] I2 Grille UI (`src/ui/grid`) (parallèle)
+- [x] I3 Barre d'outils + barre de formule (parallèle)
+- [x] I4 Sidebar + onglets de feuilles (parallèle)
+- [x] I5 Palette de commandes (Ctrl+K) + menu contextuel (parallèle)
+- [x] I6 Cellules vivantes SPARKLINE/BAR/TREND : moteur + rendu (parallèle)
+- [x] I7 E/S fichier document `.dktable` JSON (parallèle)
+- [x] I8 Intégration et branchement des modules (après I1 à I7)
+
+## Phase 7 : Suites de l'intégration (I8)
+
+- [ ] Persister les styles de cellule (gras/italique/alignement/fond) dans `.dktable` (session seulement aujourd'hui)
+- [ ] Formats de nombre (toolbar `onFormat` est un no-op)
+- [ ] Test manuel `npm run tauri dev` : ouvrir/enregistrer/CSV, menu contextuel, Ctrl+K
+- [ ] Fichiers récents persistés entre sessions (en mémoire aujourd'hui)
+- [ ] Copier-coller de plages : un seul pas d'annulation (fait via micro-tâche), à vérifier à la main
 
 ## Later (non planifié)
 
-- [ ] Moteur de recalcul (graphe de dépendances, #CYCLE)
-- [ ] Pépite Cellules vivantes (SPARKLINE/BAR/TREND)
+- [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
+- [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
 
 ## Fait
 
