@@ -71,6 +71,8 @@ export interface App {
   markSaved(): void;
   /** Freeze the top `rows` rows / left `cols` columns of the active sheet (0,0 = unfreeze); persisted, not undoable. */
   setFreeze(f: { rows: number; cols: number }): void;
+  /** Frozen rows/cols of the active sheet ({0,0} when none). */
+  getFreeze(): { rows: number; cols: number };
   /** Lua macros of the workbook (persisted with the document). */
   macros: MacroStore;
   /** Apply direct engine writes to the active sheet as one undo step, then redraw. */
