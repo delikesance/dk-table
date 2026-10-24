@@ -127,6 +127,8 @@ P3 : livraison
 - [x] Intégration fixes: Nouveau confirme les modifications non enregistrées, Ctrl+Z/Y ignorés dans les champs texte, maquette workflow-ux corrigée, docs de modules
 - [x] benchmark-captures: docs/benchmark-captures.md (benchmark UI tableurs, patterns à reprendre/éviter)
 
+- [x] Onboarding: écran d'accueil au lancement (`src/ui/onboarding/`, tokens `--ob-*` Hermes en fin de `tokens.css`), liste des feuilles + « Créer », `?onboarding=0` pour l'ignorer (e2e `openApp`), spec `e2e/onboarding.spec.ts`
+
 ## Refonte visuelle UI (revue 1re phase, branche wt/ui-review)
 
 Captures: scratchpad de session (light/dark, 1200x800). Revue faite sur l'arbre principal (plus récent que ce worktree). Aucune modif de style en phase 1.

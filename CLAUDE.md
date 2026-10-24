@@ -79,6 +79,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
 - Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
 
+## Decisions (onboarding)
+
+- `ui/onboarding/` (`showOnboarding(host, app)`): écran d'accueil modal (role=dialog, liste ARIA des feuilles, « Créer » = `addSheet`, clic = `switchSheet`, Échap ferme, état vide). Affiché par `main.ts` après `mount()`, ignoré avec `?onboarding=0` (utilisé par `e2e/helpers.ts` `openApp`). `mount()` reste inchangé.
+- Tokens `--ob-*` (papier/encre/accent bleu, filets 20 %, rayons 2/6px, libellés mono) adaptés de hermes-agent.nousresearch.com, bloc ajouté en fin de `styles/tokens.css` (clair + sombre).
+
 ## Decisions (intégration I8)
 
 - Ctrl+N / menu « Nouveau » = nouveau document vierge (confirmation si modifications non enregistrées via `fileops.newDocument`); « Nouvelle feuille » = palette.
