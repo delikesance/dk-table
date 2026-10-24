@@ -131,6 +131,13 @@ describe("createGrid", () => {
     expect(onEdit).toHaveBeenCalledWith("C6", "c");
     expect(onEdit).toHaveBeenCalledWith("D6", "d");
   });
+  it("cut puts TSV on the clipboard and clears the range", () => {
+    grid.select("A1");
+    key(root(), "ArrowRight", { shiftKey: true });
+    expect(clip("cut", "")).toBe("1	=A1*2");
+    expect(onEdit).toHaveBeenCalledWith("A1", "");
+    expect(onEdit).toHaveBeenCalledWith("B1", "");
+  });
   it("refresh updates display; renderCell hook overrides content", () => {
     raw.A1 = "9";
     grid.refresh(["A1"]);
