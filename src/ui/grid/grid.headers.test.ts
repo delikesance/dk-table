@@ -69,6 +69,12 @@ describe("header selection", () => {
     fire(rowh(1), "mouseover"); up();
     expect(grid.getSelection()).toBe("A2:Z4");
   });
+  it("a right-click on a header leaves the selection to the context menu", () => {
+    fire(colh(1), "mousedown"); up();
+    fire(colh(3), "mousedown", { shiftKey: true }); up();
+    fire(colh(2), "mousedown", { button: 2 }); up();
+    expect(grid.getSelection()).toBe("B1:D100");
+  });
   it("the corner selects the whole sheet", () => {
     fire(host.querySelector(".dkg-corner")!, "mousedown"); up();
     expect(grid.getSelection()).toBe("A1:Z100");

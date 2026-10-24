@@ -32,7 +32,7 @@ export function headerSel(kind: "col" | "row", from: number, to: number, cols: n
 /** Target of a mouse event; resizers and filter buttons inside headers are not targets. */
 function hit(target: EventTarget | null): Hit | null {
   const el = target as HTMLElement;
-  if (!el?.closest || el.closest(".dkg-resizer, .dkg-filter")) return null;
+  if (!el?.closest || el.closest(".dkg-resizer, .dkg-filter, .dkg-fz")) return null;
   const t = el.closest<HTMLElement>(".dkg-cell, .dkg-colh, .dkg-rowh, .dkg-corner");
   if (!t) return null;
   if (t.classList.contains("dkg-cell")) return { kind: "cell", pos: parseKey(t.dataset.key!) };
@@ -48,6 +48,7 @@ export function bindMouse(root: HTMLElement, h: MouseHooks): () => void {
   root.addEventListener("mousedown", (e) => {
     const t = hit(e.target);
     if (!t || h.inEditor(e.target as Element)) return;
+    if (e.button === 2 && t.kind !== "cell") return; // right-click on a header: its context menu handles the selection
     h.endEdit();
     const { anchor } = h.sel();
     if (t.kind === "cell") {

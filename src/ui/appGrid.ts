@@ -56,6 +56,7 @@ export function buildGrid(c: Ctx): void {
     },
     onSelect: () => syncInfo(c),
     onSheetStep: (d) => stepSheet(c, d),
+    onFreeze: (f) => c.app.setFreeze(f),
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k) => { const st = c.cur.styles[k]; if (st) paintStyle(c.gridHost, k, st); },
