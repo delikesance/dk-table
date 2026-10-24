@@ -1,0 +1,146 @@
+/* dk-table : tokens. Identité : accent unique « encre » + curseur de cellule à cran (voir DESIGN.md). */
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces */
+  --c-bg: #f5f5f7;            /* fond d'app */
+  --c-surface: #ffffff;       /* cellules, panneaux */
+  --c-surface-2: #fafafb;     /* en-têtes, barres */
+  --c-surface-hover: #f0f0f3;
+  --c-overlay: rgba(255, 255, 255, 0.82);
+  --c-scrim: rgba(20, 20, 30, 0.28);
+
+  /* Texte (AA sur surface) */
+  --c-text: #1d1d1f;          /* 16:1 */
+  --c-text-2: #55555c;        /* 7:1 */
+  --c-text-3: #6b6b73;        /* 5:1 */
+  --c-text-on-accent: #ffffff;
+
+  /* Bordures hairline */
+  --c-line: rgba(0, 0, 0, 0.09);
+  --c-line-strong: rgba(0, 0, 0, 0.18);
+
+  /* Accent unique : encre */
+  --c-accent: #3b4fd8;        /* 6.6:1 sur blanc */
+  --c-accent-hover: #2f40b8;
+  --c-accent-soft: rgba(59, 79, 216, 0.10);   /* plage sélectionnée */
+  --c-accent-soft-2: rgba(59, 79, 216, 0.16); /* en-têtes sélectionnés */
+
+  /* États */
+  --c-error: #c4261d;
+  --c-error-soft: rgba(196, 38, 29, 0.08);
+  --c-success: #1a7f45;
+  --c-success-soft: rgba(26, 127, 69, 0.10);
+  --c-readonly-bg: #f6f6f8;
+  --c-readonly-text: #55555c;
+
+  /* Dépendances (précédents / dépendants) */
+  --c-dep-in: #b45309;        /* précédents : ambre */
+  --c-dep-in-soft: rgba(180, 83, 9, 0.12);
+  --c-dep-out: #0e7490;       /* dépendants : cyan */
+  --c-dep-out-soft: rgba(14, 116, 144, 0.12);
+
+  /* Typographie */
+  --font-ui: -apple-system, "SF Pro Text", "SF Pro", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;   /* cellules, UI */
+  --fs-lg: 15px;
+  --fs-xl: 20px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --lh-tight: 1.2;
+  --lh-normal: 1.45;
+  --num: tabular-nums;
+  --tracking-caps: 0.04em;
+
+  /* Espacement (échelle 4px) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Rayons */
+  --r-xs: 3px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  /* Ombres */
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --sh-2: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  --sh-3: 0 16px 48px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.10);
+
+  /* Mouvement */
+  --dur-fast: 80ms;
+  --dur-base: 140ms;
+  --dur-slow: 240ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Tailles de grille */
+  --cell-h: 28px;
+  --cell-w: 96px;
+  --cell-px: 8px;
+  --row-header-w: 48px;
+  --col-header-h: 28px;
+  --toolbar-h: 44px;
+  --formula-h: 36px;
+  --tabs-h: 36px;
+  --sidebar-w: 260px;
+  --cursor-w: 2px;         /* anneau du curseur */
+  --notch: 7px;            /* cran de remplissage */
+  --focus-ring: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #161618;
+    --c-surface: #1e1e21;
+    --c-surface-2: #252528;
+    --c-surface-hover: #2c2c30;
+    --c-overlay: rgba(37, 37, 40, 0.82);
+    --c-scrim: rgba(0, 0, 0, 0.5);
+
+    --c-text: #f2f2f4;
+    --c-text-2: #b4b4bb;
+    --c-text-3: #9a9aa3;     /* 6:1 */
+    --c-text-on-accent: #10122a;
+
+    --c-line: rgba(255, 255, 255, 0.09);
+    --c-line-strong: rgba(255, 255, 255, 0.2);
+
+    --c-accent: #8e9dff;     /* 7:1 sur surface */
+    --c-accent-hover: #a9b5ff;
+    --c-accent-soft: rgba(142, 157, 255, 0.14);
+    --c-accent-soft-2: rgba(142, 157, 255, 0.22);
+
+    --c-error: #ff7b72;
+    --c-error-soft: rgba(255, 123, 114, 0.12);
+    --c-success: #4cc780;
+    --c-success-soft: rgba(76, 199, 128, 0.14);
+    --c-readonly-bg: #222225;
+    --c-readonly-text: #b4b4bb;
+
+    --c-dep-in: #f0a14a;
+    --c-dep-in-soft: rgba(240, 161, 74, 0.16);
+    --c-dep-out: #52c7e0;
+    --c-dep-out-soft: rgba(82, 199, 224, 0.16);
+
+    --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sh-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+    --sh-3: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+}

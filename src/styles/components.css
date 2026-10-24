@@ -1,0 +1,165 @@
+/* dk-table : composants. Uniquement des tokens (tokens.css). */
+*, *::before, *::after { box-sizing: border-box; }
+.dk-app { font: var(--fw-regular) var(--fs-md)/var(--lh-normal) var(--font-ui); color: var(--c-text); background: var(--c-bg); -webkit-font-smoothing: antialiased; }
+.dk-app :focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-mono { font-family: var(--font-mono); }
+
+/* ---------- Cellule ---------- */
+.dk-cell {
+  position: relative; display: flex; align-items: center;
+  width: var(--cell-w); height: var(--cell-h); padding: 0 var(--cell-px);
+  background: var(--c-surface); color: var(--c-text);
+  border-right: 0.5px solid var(--c-line); border-bottom: 0.5px solid var(--c-line);
+  font-size: var(--fs-md); font-variant-numeric: var(--num);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dk-cell--num { justify-content: flex-end; }
+/* Sélection de plage : voile d'accent */
+.dk-cell--range { background: var(--c-accent-soft); }
+/* Curseur signature : anneau fin + cran de remplissage carré, détaché en coin */
+.dk-cell--active {
+  overflow: visible; z-index: 2; background: var(--c-surface);
+  box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent);
+  border-radius: var(--r-xs);
+}
+.dk-cell--active::after {
+  content: ""; position: absolute; right: calc(var(--notch) / -2); bottom: calc(var(--notch) / -2);
+  width: var(--notch); height: var(--notch); background: var(--c-accent);
+  border: 1.5px solid var(--c-surface); border-radius: 2px; cursor: crosshair;
+}
+.dk-cell--editing {
+  overflow: visible; z-index: 3; background: var(--c-surface);
+  box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent), var(--sh-2);
+  border-radius: var(--r-xs); font-family: var(--font-mono);
+}
+.dk-cell--editing::after { content: ""; width: 1px; height: 16px; margin-left: 1px; background: var(--c-accent); animation: dk-blink 1s steps(1) infinite; }
+@keyframes dk-blink { 50% { opacity: 0; } }
+.dk-cell--error { background: var(--c-error-soft); color: var(--c-error); }
+.dk-cell--error::before {
+  content: ""; position: absolute; top: 0; right: 0; border: 4px solid transparent;
+  border-top-color: var(--c-error); border-right-color: var(--c-error);
+}
+.dk-cell--readonly { background: var(--c-readonly-bg); color: var(--c-readonly-text); }
+.dk-cell--dep-in { box-shadow: inset 0 0 0 1px var(--c-dep-in); background: var(--c-dep-in-soft); }
+.dk-cell--dep-out { box-shadow: inset 0 0 0 1px var(--c-dep-out); background: var(--c-dep-out-soft); }
+
+/* ---------- En-têtes ---------- */
+.dk-header {
+  display: flex; align-items: center; justify-content: center; position: relative;
+  height: var(--col-header-h); min-width: var(--cell-w); padding: 0 var(--s-2);
+  background: var(--c-surface-2); color: var(--c-text-2);
+  border-right: 0.5px solid var(--c-line); border-bottom: 0.5px solid var(--c-line);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); user-select: none;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.dk-header--row { width: var(--row-header-w); min-width: 0; height: var(--cell-h); font-variant-numeric: var(--num); }
+.dk-header:hover { background: var(--c-surface-hover); color: var(--c-text); }
+/* Sélectionné : voile + point d'accent (repère de position) */
+.dk-header--selected { background: var(--c-accent-soft-2); color: var(--c-accent); font-weight: var(--fw-semibold); }
+.dk-header--selected::after {
+  content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px;
+  margin-left: -2px; border-radius: var(--r-pill); background: var(--c-accent);
+}
+.dk-header--row.dk-header--selected::after { left: 5px; bottom: auto; top: 50%; margin: -2px 0 0; }
+
+/* ---------- Barre d'outils ---------- */
+.dk-toolbar {
+  display: flex; align-items: center; gap: var(--s-1); min-height: var(--toolbar-h);
+  padding: var(--s-2) var(--s-3); background: var(--c-surface-2); border-bottom: 0.5px solid var(--c-line);
+}
+.dk-toolgroup { display: flex; align-items: center; gap: 2px; }
+.dk-toolsep { width: 1px; height: 18px; margin: 0 var(--s-2); background: var(--c-line-strong); }
+.dk-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text-2); cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.dk-iconbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.dk-iconbtn:hover { background: var(--c-surface-hover); color: var(--c-text); }
+.dk-iconbtn:active { background: var(--c-accent-soft-2); }
+.dk-iconbtn--active { background: var(--c-accent-soft-2); color: var(--c-accent); }
+.dk-iconbtn:disabled { opacity: 0.4; cursor: default; background: transparent; }
+.dk-kbd {
+  display: inline-block; padding: 1px 6px; border: 0.5px solid var(--c-line-strong); border-radius: var(--r-xs);
+  background: var(--c-surface); color: var(--c-text-3); font: var(--fw-medium) var(--fs-xs)/1.5 var(--font-ui);
+}
+
+/* ---------- Barre de formule ---------- */
+.dk-formula { display: flex; align-items: stretch; height: var(--formula-h); background: var(--c-surface); border-bottom: 0.5px solid var(--c-line); }
+.dk-formula__name {
+  display: flex; align-items: center; justify-content: center; width: 88px; padding: 0 var(--s-3);
+  border-right: 0.5px solid var(--c-line); color: var(--c-accent); font: var(--fw-semibold) var(--fs-sm) var(--font-mono);
+}
+.dk-formula__fx { display: flex; align-items: center; padding: 0 var(--s-2) 0 var(--s-3); color: var(--c-text-3); font: italic var(--fw-medium) var(--fs-md) var(--font-mono); }
+.dk-formula__input {
+  flex: 1; min-width: 0; padding: 0 var(--s-3) 0 var(--s-1); border: 0; background: transparent; color: var(--c-text);
+  font: var(--fw-regular) var(--fs-md) var(--font-mono); font-variant-numeric: var(--num);
+}
+.dk-formula__input:focus { outline: none; box-shadow: inset 0 -2px 0 var(--c-accent); }
+.dk-formula--error .dk-formula__input { color: var(--c-error); }
+
+/* ---------- Barre latérale ---------- */
+.dk-sidebar { width: var(--sidebar-w); padding: var(--s-3); background: var(--c-surface-2); border-right: 0.5px solid var(--c-line); }
+.dk-section + .dk-section { margin-top: var(--s-2); }
+.dk-section__head {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%; padding: var(--s-2); border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--c-text-3); cursor: pointer; text-align: left;
+  font: var(--fw-semibold) var(--fs-xs) var(--font-ui); text-transform: uppercase; letter-spacing: var(--tracking-caps);
+}
+.dk-section__head:hover { background: var(--c-surface-hover); color: var(--c-text); }
+.dk-section__chev { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: transform var(--dur-base) var(--ease-out); }
+.dk-section--closed .dk-section__chev { transform: rotate(-90deg); }
+.dk-section--closed .dk-section__body { display: none; }
+.dk-list { list-style: none; margin: var(--s-1) 0 0; padding: 0; }
+.dk-item {
+  display: flex; align-items: center; gap: var(--s-2); height: 30px; padding: 0 var(--s-2); border-radius: var(--r-sm);
+  color: var(--c-text); cursor: pointer; transition: background var(--dur-fast) var(--ease-out);
+}
+.dk-item:hover { background: var(--c-surface-hover); }
+.dk-item--selected { background: var(--c-accent-soft-2); color: var(--c-accent); font-weight: var(--fw-medium); }
+.dk-item--disabled { color: var(--c-text-3); cursor: default; }
+.dk-item__meta { margin-left: auto; color: var(--c-text-3); font-size: var(--fs-sm); font-variant-numeric: var(--num); }
+
+/* ---------- Onglets de feuilles ---------- */
+.dk-tabs { display: flex; align-items: center; gap: var(--s-1); min-height: var(--tabs-h); padding: var(--s-2) var(--s-3); background: var(--c-surface-2); border-top: 0.5px solid var(--c-line); }
+.dk-tab {
+  height: 26px; padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text-2);
+  font: var(--fw-regular) var(--fs-sm) var(--font-ui); cursor: pointer; transition: background var(--dur-fast) var(--ease-out);
+}
+.dk-tab:hover { background: var(--c-surface-hover); color: var(--c-text); }
+.dk-tab--active { background: var(--c-surface); color: var(--c-accent); font-weight: var(--fw-semibold); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line); }
+.dk-tab--add { width: 26px; padding: 0; color: var(--c-text-3); }
+
+/* ---------- Palette de commandes (Ctrl+K) ---------- */
+.dk-scrim { display: flex; justify-content: center; align-items: flex-start; padding: var(--s-12) var(--s-4); background: var(--c-scrim); }
+.dk-palette {
+  width: 100%; max-width: 560px; overflow: hidden; background: var(--c-overlay);
+  backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-radius: var(--r-lg); box-shadow: var(--sh-3);
+}
+.dk-palette__input {
+  display: block; width: 100%; height: 52px; padding: 0 var(--s-5); border: 0; border-bottom: 0.5px solid var(--c-line);
+  background: transparent; color: var(--c-text); font: var(--fw-regular) var(--fs-lg) var(--font-ui);
+}
+.dk-palette__input::placeholder { color: var(--c-text-3); }
+.dk-palette__input:focus { outline: none; }
+.dk-palette__list { list-style: none; margin: 0; padding: var(--s-2); max-height: 320px; overflow: auto; }
+.dk-palette__item { display: flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-3); border-radius: var(--r-sm); color: var(--c-text); cursor: pointer; }
+.dk-palette__item:hover { background: var(--c-surface-hover); }
+.dk-palette__item--selected { background: var(--c-accent); color: var(--c-text-on-accent); }
+.dk-palette__item--selected .dk-kbd { background: transparent; border-color: currentColor; color: inherit; }
+.dk-palette__item .dk-kbd { margin-left: auto; }
+
+/* ---------- Menu contextuel ---------- */
+.dk-menu {
+  display: inline-block; min-width: 220px; padding: var(--s-1); background: var(--c-overlay);
+  backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-radius: var(--r-md); box-shadow: var(--sh-2);
+}
+.dk-menu__item { display: flex; align-items: center; gap: var(--s-3); min-height: 28px; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); color: var(--c-text); cursor: pointer; }
+.dk-menu__item:hover, .dk-menu__item--hover { background: var(--c-accent); color: var(--c-text-on-accent); }
+.dk-menu__item--disabled { color: var(--c-text-3); pointer-events: none; }
+.dk-menu__item--danger { color: var(--c-error); }
+.dk-menu__item .dk-kbd { margin-left: auto; }
+.dk-menu__item:hover .dk-kbd, .dk-menu__item--hover .dk-kbd { background: transparent; border-color: currentColor; color: inherit; }
+.dk-menu__sep { height: 1px; margin: var(--s-1) var(--s-2); background: var(--c-line); }

@@ -1,0 +1,99 @@
+import { err, isErr, type Node, type Sheet, type Value } from "./types";
+import { expandRange, inBounds } from "./address";
+import { getFunction, type Arg } from "./functions";
+import { toBool, toNum, toText } from "./values";
+
+/** Reads the current computed value of a cell key ("" if empty). */
+export type Getter = (key: string) => Value;
+
+/** Rank of a value type for Excel-like ordering: number < text < boolean. */
+const rank = (v: Value) => (typeof v === "number" ? 0 : typeof v === "string" ? 1 : 2);
+
+/** Compare two non-error values; returns <0, 0, >0. */
+function compare(a: Value, b: Value): number {
+  if (a === "" && typeof b === "number") a = 0;
+  if (b === "" && typeof a === "number") b = 0;
+  if (a === "" && typeof b === "boolean") a = false;
+  if (b === "" && typeof a === "boolean") b = false;
+  if (rank(a) !== rank(b)) return rank(a) - rank(b);
+  if (typeof a === "string") {
+    const x = a.toLowerCase();
+    const y = (b as string).toLowerCase();
+    return x < y ? -1 : x > y ? 1 : 0;
+  }
+  return Number(a) - Number(b);
+}
+
+/** Apply a binary operator to two evaluated scalars. */
+function binary(op: string, l: Value, r: Value): Value {
+  if (isErr(l)) return l;
+  if (isErr(r)) return r;
+  if (op === "&") return toText(l) + toText(r);
+  if (["=", "<>", "<", ">", "<=", ">="].includes(op)) {
+    const c = compare(l, r);
+    return { "=": c === 0, "<>": c !== 0, "<": c < 0, ">": c > 0, "<=": c <= 0, ">=": c >= 0 }[op]!;
+  }
+  const a = toNum(l);
+  const b = toNum(r);
+  if (isErr(a)) return a;
+  if (isErr(b)) return b;
+  let v: number;
+  if (op === "+") v = a + b;
+  else if (op === "-") v = a - b;
+  else if (op === "*") v = a * b;
+  else if (op === "/") {
+    if (b === 0) return err("#DIV/0!");
+    v = a / b;
+  } else v = a ** b;
+  return Number.isFinite(v) ? v : err("#VALUE!");
+}
+
+/** Evaluate a node to an argument: scalar, or Value[] for ranges. */
+function evalArg(n: Node, sheet: Sheet, get: Getter): Arg {
+  if (n.t === "range") {
+    const keys = expandRange(sheet, n.a, n.b);
+    return keys ? keys.map(get) : err("#REF!");
+  }
+  return evaluate(n, sheet, get);
+}
+
+/** Evaluate an AST to a scalar value (a bare range is #VALUE!). */
+export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
+  switch (n.t) {
+    case "num":
+    case "str":
+    case "bool":
+      return n.v;
+    case "err":
+      return err(n.code);
+    case "ref":
+      return inBounds(sheet, n.key) ? get(n.key) : err("#REF!");
+    case "range": {
+      const v = evalArg(n, sheet, get);
+      return isErr(v) ? v : err("#VALUE!");
+    }
+    case "neg": {
+      const v = toNum(evaluate(n.e, sheet, get));
+      return isErr(v) ? v : -v;
+    }
+    case "pct": {
+      const v = toNum(evaluate(n.e, sheet, get));
+      return isErr(v) ? v : v / 100;
+    }
+    case "bin":
+      return binary(n.op, evaluate(n.l, sheet, get), evaluate(n.r, sheet, get));
+    case "call": {
+      if (n.name === "IF") {
+        // Lazy: only the taken branch is evaluated.
+        if (n.args.length < 2 || n.args.length > 3) return err("#VALUE!");
+        const c = toBool(evaluate(n.args[0], sheet, get));
+        if (isErr(c)) return c;
+        const br = c ? n.args[1] : n.args[2];
+        return br ? evaluate(br, sheet, get) : false;
+      }
+      const fn = getFunction(n.name);
+      if (!fn) return err("#NAME?");
+      return fn(n.args.map((a) => evalArg(a, sheet, get)));
+    }
+  }
+}

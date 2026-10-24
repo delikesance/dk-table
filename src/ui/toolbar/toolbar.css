@@ -1,0 +1,11 @@
+/* Toolbar extras on top of mockups/design/components.css (.dk-toolbar, .dk-iconbtn, .dk-formula*). */
+.dk-toolselect {
+  height: 28px; padding: 0 var(--s-2); border: 0.5px solid var(--c-line-strong); border-radius: var(--r-sm);
+  background: var(--c-surface); color: var(--c-text); font: var(--fw-regular) var(--fs-sm) var(--font-ui); cursor: pointer;
+}
+.dk-toolselect:focus-visible, .dk-iconbtn:focus-visible, .dk-fillbtn:focus-within { outline: none; box-shadow: var(--focus-ring); }
+.dk-fillbtn { position: relative; overflow: hidden; }
+.dk-fillbtn input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+/* The name box is an input: keep the design's centred accent look. */
+input.dk-formula__name { box-sizing: border-box; border-top: 0; border-bottom: 0; border-left: 0; background: transparent; text-align: center; }
+input.dk-formula__name:focus { outline: none; box-shadow: inset 0 -2px 0 var(--c-accent); }
