@@ -6,6 +6,7 @@ import { FN_DOCS } from "./fndocs";
 import { buildGrid, refreshTabs } from "./appGrid";
 import { firstKey, type Ctx } from "./appState";
 import { exportCsv, importCsv, newDocument, saveFile } from "./fileops";
+import { floatingAction, installFloating } from "./appFloating";
 import { createToolsToggle, installToolsToggle } from "./appTools";
 
 /** Build the chrome widgets into `root` and store them on `c` (needs `c.app` set). */
@@ -57,5 +58,6 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     },
     onReorder: (ids) => { c.entries = ids.map((i) => c.entries.find((e) => e.id === i)!).filter(Boolean); },
   });
+  installFloating(c, root, (id) => floatingAction(app, id));
   installToolsToggle(root, toggle);
 }
