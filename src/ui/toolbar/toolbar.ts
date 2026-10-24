@@ -1,7 +1,9 @@
-/** Formatting toolbar (undo/redo, bold/italic, align, number format, fill) plus the File/Insert menus. */
+/** Formatting toolbar (undo/redo, bold/italic/underline, align/wrap, number format, fill/text colour, borders) plus the File/Insert menus. */
 import { icon } from "../icons";
 import { createColorPicker } from "./colors";
 import { createMenus, type MenuHandlers } from "./menus";
+import { createBordersControl } from "./bordersMenu";
+import type { BorderMode } from "../borders";
 import "./toolbar.css";
 
 /** Horizontal alignment values. */
@@ -11,6 +13,8 @@ export type Align = "left" | "center" | "right";
 export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
+  /** Underline toggle (Ctrl+U), wrap toggle and « Bordures » menu pick. */
+  onUnderline?(): void; onWrap?(): void; onBorders?(mode: BorderMode): void;
   /** Text colour (null = "Aucune"). */
   onTextColor?(color: string | null): void;
   onOpen(): void; onSave(): void;
@@ -24,7 +28,7 @@ export interface ToolbarHandlers {
 
 /** Toolbar reflected state. */
 export interface ToolbarState {
-  bold: boolean; italic: boolean; align: Align; format: string; canUndo: boolean; canRedo: boolean;
+  bold: boolean; italic: boolean; underline: boolean; wrap: boolean; align: Align; format: string; canUndo: boolean; canRedo: boolean;
 }
 
 /** Public toolbar API. */
@@ -85,6 +89,9 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   const undo = mkBtn("undo", "Annuler (Ctrl+Z)", h.onUndo), redo = mkBtn("redo", "Rétablir (Ctrl+Y)", h.onRedo);
   const bold = mkBtn("bold", "Gras (Ctrl+B)", h.onBold), italic = mkBtn("italic", "Italique (Ctrl+I)", h.onItalic);
 
+  const underline = mkBtn("underline", "Souligné (Ctrl+U)", () => h.onUnderline?.());
+  const wrap = mkBtn("wrap", "Renvoi à la ligne", () => h.onWrap?.());
+  const borders = createBordersControl((m) => h.onBorders?.(m));
   const sel = document.createElement("select");
   sel.className = "dk-toolselect"; sel.setAttribute("aria-label", "Format de nombre");
   for (const [v, l] of FORMATS) sel.add(new Option(l, v));
@@ -101,8 +108,8 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   n2.append(group(mkBtn("sort-asc", "Trier A→Z", () => h.onSort?.(false)), mkBtn("sort-desc", "Trier Z→A", () => h.onSort?.(true))), sep());
   el.append(
     n2,
-    group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
-    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap), sep(),
+    group(undo, redo), sep(), group(bold, italic, underline), sep(), group(...alignBtns, wrap), sep(),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap, borders), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
   );
   host.append(el);
@@ -116,6 +123,8 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
     setState(s) {
       if (s.bold !== undefined) press(bold, s.bold);
       if (s.italic !== undefined) press(italic, s.italic);
+      if (s.underline !== undefined) press(underline, s.underline);
+      if (s.wrap !== undefined) press(wrap, s.wrap);
       if (s.align) aligns.forEach((a, i) => press(alignBtns[i], a === s.align));
       if (s.format !== undefined) sel.value = s.format;
       if (s.canUndo !== undefined) undo.disabled = !s.canUndo;
