@@ -32,6 +32,9 @@ function tokenize(src: string): Tok[] {
       out.push({ k: "str", v: s });
       continue;
     }
+    // Absolute/mixed ref ($A$1, $A1, A$1): the "$" only marks absolute parts, it is dropped here.
+    const abs = /^\$?[A-Za-z]{1,3}\$?\d+(?![A-Za-z0-9_.$])/.exec(src.slice(i));
+    if (abs && abs[0].includes("$")) { out.push({ k: "id", v: abs[0].replace(/\$/g, "") }); i += abs[0].length; continue; }
     const id = /^[A-Za-z_][A-Za-z0-9_.]*/.exec(src.slice(i));
     if (id) { out.push({ k: "id", v: id[0] }); i += id[0].length; continue; }
     const op = /^(<>|<=|>=|[-+*/^%&=<>(),:;])/.exec(src.slice(i));
