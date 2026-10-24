@@ -33,13 +33,10 @@ export async function css(page: Page, addr: string, prop: string): Promise<strin
   return cell(page, addr).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
 }
 
-/** Pick a fill color through the toolbar's color input (tools must be deployed). */
-export async function pickFill(page: Page, hex: string): Promise<void> {
-  await page.locator('input[type="color"][aria-label="Couleur de fond"]').evaluate((el, v) => {
-    const i = el as HTMLInputElement;
-    i.value = v;
-    i.dispatchEvent(new Event("input", { bubbles: true }));
-  }, hex);
+/** Pick a fill swatch by its French name (e.g. "Rouge clair") through the base bar's color popover. */
+export async function pickFill(page: Page, name: string): Promise<void> {
+  await page.locator(".dk-colorwrap").getByRole("button", { name: "Couleur de fond", exact: true }).first().click();
+  await page.locator('.color-picker[aria-label="Couleur de fond"]').getByRole("button", { name }).click();
 }
 
 /** Dispatch a paste of `text` (TSV) on the grid. */

@@ -93,7 +93,9 @@ test("File menu opens with the keyboard and lists its entries", async ({ page })
   await page.keyboard.press("ArrowDown");
   const list = page.locator('[role="menu"][aria-label="Fichier"]');
   await expect(list).toBeVisible();
-  await expect(list.locator(".dk-menu__item")).toHaveText([/Nouveau/, /Ouvrir/, /Enregistrer/, /Enregistrer sous/]);
+  await expect(list.locator(".dk-menu__item")).toHaveText([
+    /Nouveau/, /Ouvrir/, /Récents/, /Enregistrer/, /Enregistrer sous/, /Importer CSV/, /Exporter CSV/,
+  ]);
   await expect(list.locator(".dk-menu__item").first()).toBeFocused();
   await page.keyboard.press("End");
   await expect(list.locator(".dk-menu__item").last()).toBeFocused();
@@ -102,23 +104,8 @@ test("File menu opens with the keyboard and lists its entries", async ({ page })
   await expect(trigger).toBeFocused();
 });
 
-test("Import / Export menu opens with the keyboard and navigates", async ({ page }) => {
+test("there is a single Fichier menu (no separate Import / Export)", async ({ page }) => {
   await ensureTools(page);
-  const trigger = page.locator(".dk-menu__trigger", { hasText: "Import / Export" });
-  await trigger.focus();
-  await page.keyboard.press("ArrowDown");
-  const list = page.locator('[role="menu"][aria-label="Import / Export"]');
-  await expect(list.locator(".dk-menu__item")).toHaveText([/Importer un CSV/, /Exporter en CSV/]);
-  await page.keyboard.press("ArrowDown");
-  await expect(list.locator(".dk-menu__item").last()).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(list).toBeHidden();
-});
-
-test("opening one toolbar menu closes the other", async ({ page }) => {
-  await ensureTools(page);
-  await page.locator(".dk-menu__trigger", { hasText: "Fichier" }).click();
-  await page.locator(".dk-menu__trigger", { hasText: "Import / Export" }).click();
-  await expect(page.locator('[role="menu"][aria-label="Fichier"]')).toBeHidden();
-  await expect(page.locator('[role="menu"][aria-label="Import / Export"]')).toBeVisible();
+  await expect(page.locator(".dk-menu__trigger")).toHaveCount(1);
+  await expect(page.locator(".dk-menu__trigger", { hasText: "Import / Export" })).toHaveCount(0);
 });

@@ -48,15 +48,15 @@ export const readMock = (page: Page, path: string) =>
 /** Paths written since page load, in order. */
 export const writes = (page: Page) => page.evaluate(() => window.__e2e.writes.slice());
 
-/** Make sure the tools bar (menus, sidebar) is deployed, whatever the default state. */
+/** Make sure the N2 extras (Fichier menu, sort) + sidebar are deployed; the base bar is always visible. */
 export async function ensureTools(page: Page): Promise<void> {
-  if (await page.locator(".dk-app__tools").isHidden()) await page.locator('[data-action="toggle-tools"]').click();
+  if (await page.locator(".dk-toolbar__n2").isHidden()) await page.locator('[data-action="toggle-tools"]').click();
 }
 
-/** Run an entry of a toolbar menu ("Fichier" or "Import / Export") with the mouse. */
+/** Run an entry of the single "Fichier" toolbar menu (CSV import/export live in it too) with the mouse. */
 export async function menuAction(page: Page, menu: string, item: string): Promise<void> {
   await ensureTools(page);
-  await page.locator(".dk-menu__trigger", { hasText: menu }).click();
+  await page.locator(".dk-menu__trigger", { hasText: menu === "Import / Export" ? "Fichier" : menu }).click();
   await page.locator(".dk-menu__item", { hasText: item }).first().click();
 }
 
@@ -67,12 +67,11 @@ export async function runPalette(page: Page, query: string): Promise<void> {
   await page.keyboard.press("Enter");
 }
 
-/** Accept (or dismiss) the next native dialog (confirm/alert); returns a getter of the messages seen. */
-export function autoDialog(page: Page, accept = true): () => string[] {
-  const seen: string[] = [];
-  page.on("dialog", (d) => { seen.push(d.message()); void (accept ? d.accept() : d.dismiss()); });
-  return () => seen;
-}
+/** The visible toast ("Classeur remplacé" etc.); native confirm/alert dialogs are no longer used. */
+export const toast = (page: Page) => page.locator(".dk-toast");
+
+/** Click the toast action ("Annuler"). */
+export const toastAction = (page: Page) => page.locator(".dk-toast__action").click();
 
 /** Current document title (carries the file name and the dirty marker). */
 export const title = (page: Page) => page.title();
