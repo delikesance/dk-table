@@ -166,12 +166,23 @@ Classement par gravité (P0 = pire)
 - [ ] P3 Cellules vivantes: sparkline fine (1px) et barres sans marge, TREND rouge seul sans contexte; en sombre barres pâles saturées. Test: `engine/live` SVG `stroke-width>=1.5`, `gap` barres >= 1px, couleurs via `--c-accent`/`--c-error`. `live/*.ts`.
 - [x] Grille: Entrée sur cellule non éditée = ouvre l'édition (comme F2); Maj+Entrée monte, Ctrl/Alt+Entrée ignoré. Test: `ui/grid/grid.test.ts`. `grid/gridKeys.ts`.
 
+## Refonte Hermes (v2, canvas https://claude.ai/artifact/V1WWvok6xhPzTSruqxpWVk)
+
+- [x] H1 Tokens bleu #0000F2 + papier, thème sombre nuit #19192F (`theme-dark.css`, `ui/theme.ts`), chrome bleu (`chrome.css`), polices locales (`fonts.ts`), tokens `--c-code-*` pour l'éditeur de macros. Tests : `styles/hermes.test.ts`, `ui/theme.test.ts`, `styles/styles.test.ts` (contrastes chrome).
+- [x] H2 Onglets actifs pleins bleus en capitales condensées ; en-têtes de grille en DM Mono ; fonds pleins via `--c-accent-solid` (menus, palette, filtre).
+- [x] H3 Barre de menus à un niveau (`ui/menubar/spec.ts` + `deps.ts`, rendu `createMenuBar` dans `toolbar/menus.ts`), toujours visible ; Paramètres dans Fichier (Ctrl+,, `ui/dialogs/settings.ts`) ; thème dans Affichage ; Alt+F11 = éditeur de macros. Tests : `ui/menubar/menubar.test.ts`, `ui/dialogs/dialogs.test.ts`, `ui/app.test.ts`.
+- [x] H3b Scripts branché sur `app.openMacros` / `app.macros.list()` / `app.runMacro` (menu relu à chaque ouverture).
+- [x] H4 Accueil : nom, Nouveau classeur / Ouvrir / Importer CSV, récents (nom + chemin), Atlas à droite (`src/assets/atlas-*.png`, `ui/art.ts`), sans libellé décoratif ; réglage « accueil au démarrage ». À propos (Aide) avec l'Atlas et les crédits.
+- [ ] H4b Splash de lancement Tauri et bannière d'installeur avec l'Atlas.
+- [x] H5 Barre d'outils sans Fichier ni Ouvrir/Enregistrer (couverts par la barre de menus et Ctrl+O/S).
+- [ ] e2e Playwright non relancés dans le conteneur cloud (navigateur absent) : à relancer en local.
+
 ## Phase 8 : Macros Lua
 
 - [x] M1 Moteur Lua sandboxé (fengari) + API `sheet` + limite d'instructions (`src/macros/`)
 - [x] M2 Autocomplétion Lua (API feuille, bibliothèque standard, noms locaux)
 - [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
 - [x] M4 Macros persistées dans `.dktable` ; exécution = un pas d'annulation
-- [ ] M5 Menu « Scripts » (refonte design) listant les macros, raccourcis par macro
+- [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 

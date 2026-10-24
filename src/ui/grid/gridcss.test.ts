@@ -28,6 +28,9 @@ describe("grid.css", () => {
     expect(r).toMatch(/--fw-medium/);
     expect(r).toMatch(/--c-text-2/);
   });
+  it("headers set in the mono face (DM Mono), like the Hermes labels", () => {
+    expect(rule(".dkg-corner, .dkg-colh, .dkg-rowh")).toMatch(/font-family:\s*var\(--font-mono\)/);
+  });
   it("column header edge uses strong line", () => expect(rule(".dkg-colh")).toMatch(/--c-line-strong/));
   it("frozen cells are sticky and opaque", () => {
     const r = rule(".dkg-frozen");

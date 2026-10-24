@@ -67,17 +67,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Limites connues: IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; RAND/RANDBETWEEN non volatiles; CHOOSE ne renvoie pas de plage; une référence d'une seule cellule reste un scalaire (texte -> #VALUE! dans SUM).
 - `macros/`: macros Lua sans DOM. `lua.ts` (`runMacro(code, host)`: fengari Lua 5.3, bac à sable, `print` capturé, limite d'instructions), `api.ts` (table `sheet` + interface `MacroHost`), `complete.ts` + `luadocs.ts` (autocomplétion indépendante de l'éditeur), `store.ts` (liste des macros). Référence utilisateur : `docs/macros.md`.
 - `ui/macros/`: `wire.ts` (commandes palette + Alt+F11, chargement paresseux de `kit.ts`), `panel.ts` (panneau droit 440px), `editor.ts` (CodeMirror 6), `run.ts` (exécution sur la feuille active), `macros.css` (tokens `--c-code-*` avec repli).
-- `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
+- `styles/`: `tokens.css` (clair, refonte Hermes), `theme-dark.css` (`:root[data-theme="dark"]`, nuit Hermes), `chrome.css` (barres du haut en bleu : remap des tokens sur `--c-chrome-*`, popups repassés sur papier via `--paper-*`), `fonts.ts` (polices @fontsource locales), `components.css`. `ui/theme.ts` pose `data-theme` (préférence `dk-theme` : auto/light/dark).
 
 ## Decisions (refonte Apple)
 
 - Mode minimal par défaut: seuls grille + barre de formule + onglets visibles; `.dk-app__tools` (toolbar) et `.dk-sidebar` sont `hidden` jusqu'au clic sur `[data-action="toggle-tools"]` (classe `dk-app--minimal`).
 - Icônes: bibliothèque Iconoir (dépendance `iconoir`), toutes via `src/ui/icons.ts` (SVG inline `currentColor`); `--c-icon` noir (clair) / clair (sombre). `mockups/design/` resynchronisé.
 
-## Decisions (onboarding)
+## Decisions (accueil, menus, dialogues — refonte Hermes)
 
-- `ui/onboarding/` (`showOnboarding(host, app)`): écran d'accueil modal (role=dialog, liste ARIA des feuilles, « Créer » = `addSheet`, clic = `switchSheet`, Échap ferme, état vide). Affiché par `main.ts` après `mount()`, ignoré avec `?onboarding=0` (utilisé par `e2e/helpers.ts` `openApp`). `mount()` reste inchangé.
-- Tokens `--ob-*` (papier/encre/accent bleu, filets 20 %, rayons 2/6px, libellés mono) adaptés de hermes-agent.nousresearch.com, bloc ajouté en fin de `styles/tokens.css` (clair + sombre).
+- `ui/onboarding/` (`showOnboarding(host, actions: HomeActions)`): accueil modal sur le bleu chrome (nuit en sombre) : nom, Nouveau classeur / Ouvrir / Importer CSV, récents (nom + chemin, section absente si vide), Atlas à droite (`ui/art.ts`, `src/assets/atlas-bleu.png` / `atlas-nuit.png`, version choisie par `data-theme`). Chaque choix ferme puis lance l'action, Échap ferme. Affiché par `main.ts` sauf `?onboarding=0` (e2e `openApp`) ou réglage « accueil au démarrage » décoché (`dk-table.home`).
+- Barre de menus : `ui/menubar/spec.ts` (`buildMenuSpec(app, deps)`, 8 menus à un niveau, seul « Récents » se déplie, aucun libellé en double, actions réellement implémentées seulement), `ui/menubar/deps.ts` (branchement fileops/dialogues/palette/macros), rendu `createMenuBar` (`toolbar/menus.ts`, entrées `sep` et radio `checked`). Montée dans `.dk-app__menubar` (première ligne du chrome, toujours visible, même en mode minimal).
+- Répartition sans doublon : barre de menus = catalogue complet ; barre d'outils = actions fréquentes (plus de Fichier ni Ouvrir/Enregistrer) ; palette Ctrl+K = recherche. Thème dans Affichage ; Paramètres (Fichier, Ctrl+,) = réglages persistants (accueil au démarrage). Alt+F11 = éditeur de macros.
+- `ui/dialogs/` : `openDialog` (modale commune, une instance par id, Échap/voile/Fermer), `settings.ts`, `about.ts` (Atlas + crédits polices/icônes).
+- Tokens `--ob-*` : alias des tokens sémantiques (fin de `styles/tokens.css`).
 
 ## Decisions (intégration I8)
 
@@ -119,8 +122,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Design
 
-- Reference design = `mockups/design/` (`tokens.css`, `components.css`, `composants.html`, `DESIGN.md`): Apple-like, sober, "ink" indigo accent, system font stack, light + dark.
-- Claude Design artifact: https://claude.ai/artifact/LKoJNjWKUAoJncBU8yt7gK (10 artboards: components + screens, uses Geist). NOT aligned with `mockups/design/`: `mockups/design/` wins, use the system font stack.
+- Reference design (v2, validée le 2026-10-24) = refonte « Hermes » (direction de hermes-agent.nousresearch.com), canvas https://claude.ai/artifact/V1WWvok6xhPzTSruqxpWVk (écran principal, système, accueil Atlas, éditeur de macros, barre de menus, variantes). Code de référence : `src/styles/`.
+- Palette : bleu #0000F2 + papier #F2F2F2 (grille #FAFAFA, encre bleue) ; sombre = nuit #19192F, texte #F2F2F2, fonds pleins #0000F2, anneaux #8C8CFF. Orange seulement pour baisse/erreur. Rayons 2-4px, pas d'ombre hors surfaces flottantes.
+- Polices locales (@fontsource, sous-ensemble latin) : Inter Tight (texte), DM Mono (données, formules, en-têtes), Sofia Sans Extra Condensed (menus, onglets, titres, en capitales).
+- Règles produit (ANGELO) : outil pro, aucun texte décoratif ni astuce ; pas de bouton en double ; accès selon la fréquence (grille > barre d'outils > barre de menus à un niveau > palette Ctrl K). SPARKLINE/BAR/TREND sont des fonctions, pas des boutons.
+- Illustration : gravure de l'Atlas Farnèse (Brendamour, domaine public) en bichromie, uniquement hors écran de travail (accueil, splash, À propos, installeur).
+- `mockups/design/` = design v1 Apple-like, obsolète (conservé pour l'historique).
 - The 3 pépite mockups live in `mockups/` (`pepite-1-fleches.html` 325 lines, `pepite-2-voyage-temps.html` 341, `pepite-3-cellules-vivantes.html` 191).
 - Exemption to the 200-line rule: mockups only (pepite-1 and pepite-2 exceed 200, not split). App code stays ≤200.
 

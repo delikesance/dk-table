@@ -12,30 +12,43 @@ export interface MenuHandlers {
   onOpenRecent?(path: string): void;
 }
 
-/** One menu entry: label, optional icon/shortcut hint, action; `sub` makes it an expandable submenu. */
-interface Entry { label: string; icon?: string; hint?: string; run?(): void; sub?(): Entry[] }
+/**
+ * One menu entry: label, optional icon/shortcut hint, action; `sub` makes it an expandable submenu.
+ * `sep` draws a rule above the entry; `checked` makes it a radio item (aria-checked read at each opening).
+ */
+export interface Entry {
+  label: string; icon?: string; hint?: string; run?(): void; sub?(): Entry[];
+  sep?: boolean; checked?(): boolean;
+}
+
+/** One top-level menu; `items` as a function is re-read each time the menu opens (dynamic lists). */
+export interface MenuDef { label: string; items: Entry[] | (() => Entry[]) }
 
 /** Closers of every menu currently built, so opening one closes the others. */
 type Closer = () => void;
 
 /** Builds one dropdown (trigger + menu); returns its root. */
-function dropdown(label: string, entries: Entry[], closers: Closer[]): HTMLElement {
+function dropdown(label: string, source: MenuDef["items"], closers: Closer[]): HTMLElement {
   const root = document.createElement("div");
   root.className = "dk-menu";
   const trigger = document.createElement("button");
   trigger.type = "button"; trigger.className = "dk-menu__trigger";
   trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false"); trigger.title = `Menu ${label}`;
-  trigger.innerHTML = `<span>${label}</span>${icon("tools")}`;
+  trigger.innerHTML = `<span>${label}</span>`;
   const list = document.createElement("div");
   list.className = "dk-menu__list"; list.setAttribute("role", "menu"); list.setAttribute("aria-label", label);
   list.hidden = true;
   let items: HTMLButtonElement[] = [];
   let expanded: Entry | null = null;
+  let entries: Entry[] = typeof source === "function" ? source() : source;
 
   /** Creates one menuitem button; `depth` 1 = submenu item (indented). */
   function makeItem(e: Entry, depth: number): HTMLButtonElement {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "dk-menu__item"; b.setAttribute("role", "menuitem"); b.tabIndex = -1;
+    b.type = "button"; b.className = "dk-menu__item"; b.tabIndex = -1;
+    b.classList.toggle("dk-menu__item--sep", !!e.sep);
+    b.setAttribute("role", e.checked ? "menuitemradio" : "menuitem");
+    if (e.checked) b.setAttribute("aria-checked", String(e.checked()));
     if (depth) b.style.paddingLeft = "28px";
     const hint = e.sub ? '<span class="dk-menu__hint" aria-hidden="true">▸</span>' : e.hint ? `<kbd class="dk-menu__hint">${e.hint}</kbd>` : "";
     b.innerHTML = `${e.icon ? icon(e.icon) : '<span class="dk-icon"></span>'}<span class="dk-menu__label">${e.label}</span>${hint}`;
@@ -69,7 +82,7 @@ function dropdown(label: string, entries: Entry[], closers: Closer[]): HTMLEleme
   /** Opens this menu (closing the others) and focuses the first item. */
   function open(): void {
     closers.forEach((c) => c());
-    expanded = null; render();
+    expanded = null; entries = typeof source === "function" ? source() : source; render();
     list.hidden = false; trigger.setAttribute("aria-expanded", "true"); items[0].focus();
   }
   closers.push(close);
@@ -96,32 +109,40 @@ function dropdown(label: string, entries: Entry[], closers: Closer[]): HTMLEleme
   return root;
 }
 
+/** Entries of the "Fichier" menu (Récents submenu + CSV import/export); actions are only forwarded to `h`. */
+export function fileEntries(h: MenuHandlers): Entry[] {
+  return [
+    { label: "Nouveau", icon: "add", hint: "Ctrl+N", run: h.onNew },
+    { label: "Ouvrir", icon: "open", hint: "Ctrl+O", run: h.onOpen },
+    { label: "Récents", icon: "open", sub: () => (h.recents?.() ?? []).map((r) => ({ label: r.name, run: () => h.onOpenRecent?.(r.path) })) },
+    { label: "Enregistrer", icon: "save", hint: "Ctrl+S", run: h.onSave, sep: true },
+    { label: "Enregistrer sous…", icon: "save", hint: "Ctrl+Maj+S", run: h.onSaveAs },
+    { label: "Importer CSV", icon: "upload", run: h.onImportCsv, sep: true },
+    { label: "Exporter CSV", icon: "download", run: h.onExportCsv },
+  ];
+}
+
 /**
- * Builds the single "Fichier" dropdown (Récents submenu + CSV import/export).
- * Actions are only forwarded to `h`; no file logic lives here. Keyboard:
- * Arrows/Home/End move, Enter/Space activate, Escape closes and refocuses the trigger.
+ * Builds a one-level menu bar (`.dk-menus.dk-menubar`), one dropdown per definition; opening one closes
+ * the others, a click outside closes all. Keyboard: Arrows/Home/End move, Enter/Space activate,
+ * Escape closes and refocuses the trigger.
  */
-export function createMenus(h: MenuHandlers): HTMLElement {
+export function createMenuBar(defs: MenuDef[]): HTMLElement {
   const wrap = document.createElement("div");
-  wrap.className = "dk-menus"; wrap.setAttribute("role", "group"); wrap.setAttribute("aria-label", "Menus");
+  wrap.className = "dk-menus dk-menubar"; wrap.setAttribute("role", "group"); wrap.setAttribute("aria-label", "Menus");
   const closers: Closer[] = [];
-  wrap.append(
-    dropdown("Fichier", [
-      { label: "Nouveau", icon: "add", hint: "Ctrl+N", run: h.onNew },
-      { label: "Ouvrir", icon: "open", hint: "Ctrl+O", run: h.onOpen },
-      { label: "Récents", icon: "open", sub: () => (h.recents?.() ?? []).map((r) => ({ label: r.name, run: () => h.onOpenRecent?.(r.path) })) },
-      { label: "Enregistrer", icon: "save", hint: "Ctrl+S", run: h.onSave },
-      { label: "Enregistrer sous…", icon: "save", run: h.onSaveAs },
-      { label: "Importer CSV", icon: "upload", run: h.onImportCsv },
-      { label: "Exporter CSV", icon: "download", run: h.onExportCsv },
-    ], closers),
-  );
+  wrap.append(...defs.map((d) => dropdown(d.label, d.items, closers)));
   const onDocClick = (ev: MouseEvent): void => {
     if (!wrap.contains(ev.target as Node)) closers.forEach((c) => c());
   };
   document.addEventListener("click", onDocClick);
   disposers.set(wrap, () => document.removeEventListener("click", onDocClick));
   return wrap;
+}
+
+/** The "Fichier" menu alone (kept for callers that only need file actions). */
+export function createMenus(h: MenuHandlers): HTMLElement {
+  return createMenuBar([{ label: "Fichier", items: fileEntries(h) }]);
 }
 
 /** Document-click listener removers, keyed by the element `createMenus` returned. */

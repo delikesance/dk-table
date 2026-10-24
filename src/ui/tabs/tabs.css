@@ -1,8 +1,8 @@
 /* Sheet tabs: extends .dk-tabs / .dk-tab from mockups/design/components.css. */
 .dk-tabs { overflow-x: auto; }
-.dk-tabs .dk-tab { color: var(--c-text-2); }
-/* Active tab: surface, ink text, 2px accent underline. */
-.dk-tabs .dk-tab--active { background: var(--c-surface); color: var(--c-text); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line-strong), inset 0 -2px 0 var(--c-accent); }
+.dk-tabs .dk-tab { color: var(--c-text-2); font-family: var(--font-display); font-size: var(--fs-menu); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+/* Active tab: solid Hermes blue with paper text, in both themes. */
+.dk-tabs .dk-tab--active { background: var(--c-accent-solid); color: var(--c-text-on-solid); box-shadow: none; }
 /* "+" target >= 28px. */
 .dk-tabs .dk-tab--add { width: 28px; height: 28px; color: var(--c-text-2); display: inline-flex; align-items: center; justify-content: center; }
 .dk-tabs .dk-tab--add:hover { color: var(--c-text); }

@@ -35,7 +35,7 @@ input.dk-formula__name:focus { outline: none; box-shadow: inset 0 -2px 0 var(--c
   border-radius: var(--r-sm); background: transparent; color: var(--c-text); text-align: left; cursor: pointer;
   font: var(--fw-regular) var(--fs-sm) var(--font-ui);
 }
-.dk-menu__item:hover, .dk-menu__item:focus { background: var(--c-accent); color: var(--c-text-on-accent); }
+.dk-menu__item:hover, .dk-menu__item:focus { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
 .dk-menu__label { flex: 1; }
 .dk-menu__hint { font: inherit; opacity: .6; }
 /* N2 extras share the toolbar row; [hidden] must win over display:flex. */

@@ -7,7 +7,7 @@ function mkToolbar() {
   const host = document.createElement("div");
   const h = {
     onUndo: vi.fn(), onRedo: vi.fn(), onBold: vi.fn(), onItalic: vi.fn(),
-    onAlign: vi.fn(), onFormat: vi.fn(), onFill: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onTextColor: vi.fn(),
+    onAlign: vi.fn(), onFormat: vi.fn(), onFill: vi.fn(), onTextColor: vi.fn(),
   };
   const tb = createToolbar(host, h);
   return { host, h, tb };
@@ -19,11 +19,16 @@ describe("toolbar", () => {
     const { host, h } = mkToolbar();
     btn(host, "undo").click(); btn(host, "redo").click();
     btn(host, "bold").click(); btn(host, "italic").click();
-    btn(host, "align-center").click(); btn(host, "open").click(); btn(host, "save").click();
+    btn(host, "align-center").click();
     expect(h.onUndo).toHaveBeenCalled(); expect(h.onRedo).toHaveBeenCalled();
     expect(h.onBold).toHaveBeenCalled(); expect(h.onItalic).toHaveBeenCalled();
     expect(h.onAlign).toHaveBeenCalledWith("center");
-    expect(h.onOpen).toHaveBeenCalled(); expect(h.onSave).toHaveBeenCalled();
+  });
+  it("no duplicate of the menu bar: no open/save buttons, no File menu", () => {
+    const { host } = mkToolbar();
+    expect(btn(host, "open")).toBeNull();
+    expect(btn(host, "save")).toBeNull();
+    expect(host.querySelector(".dk-menu__trigger")).toBeNull();
   });
   it("emits format and fill colour", () => {
     const { host, h } = mkToolbar();
