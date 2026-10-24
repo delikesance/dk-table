@@ -3,6 +3,8 @@ import { icon } from "./icons";
 import type { KeyValueStore } from "../io/recents";
 
 const KEY = "dk-table.tools";
+/** Fixed accessible name + tooltip; state is conveyed by aria-expanded. */
+const LABEL = "Outils (Ctrl+J)";
 
 /** Default store: localStorage when available, else null (memory only). */
 function defaultStore(): KeyValueStore | null {
@@ -13,8 +15,8 @@ function defaultStore(): KeyValueStore | null {
 export function createToolsToggle(): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button"; b.className = "dk-iconbtn dk-toolstoggle"; b.dataset.action = "toggle-tools";
-  b.setAttribute("aria-label", "Afficher les outils"); b.title = "Afficher les outils";
-  b.setAttribute("aria-expanded", "false"); b.innerHTML = icon("tools");
+  b.setAttribute("aria-label", LABEL); b.title = LABEL;
+  b.setAttribute("aria-expanded", "false"); b.innerHTML = `<span>Outils</span>${icon("tools")}`;
   return b;
 }
 
@@ -33,8 +35,7 @@ export function installToolsToggle(
   const set = (open: boolean) => {
     tools.hidden = !open; side.hidden = !open;
     app.classList.toggle("dk-app--minimal", !open);
-    const label = open ? "Masquer les outils" : "Afficher les outils";
-    btn.setAttribute("aria-expanded", String(open)); btn.setAttribute("aria-label", label); btn.title = label;
+    btn.setAttribute("aria-expanded", String(open));
     btn.classList.toggle("dk-toolstoggle--open", open);
     try { store?.setItem(KEY, open ? "1" : "0"); } catch { /* storage unavailable: memory only */ }
   };
