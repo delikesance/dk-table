@@ -7,6 +7,9 @@ import { freezeEntries } from "./freeze/freezeMenu";
 import type { MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
 
+/** Label of the auto-fit entry (shared with the cell menu and the palette). */
+export const FIT_LABEL = "Ajuster à la largeur du contenu";
+
 /** Select the whole column (`col`) or row (`row`) `i` unless the current selection already covers it whole. */
 function ensureLine(app: App, axis: "col" | "row", i: number): void {
   const { cols, rows } = app.activeDoc();
@@ -32,6 +35,7 @@ export function headerMenu(app: App, target: Element): MenuItem[] | null {
     { label: "Trier A→Z", icon: "sort-asc", action: () => void app.sortColumn(false) },
     { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) }] : [];
   const freeze = freezeEntries(app, isCol ? "cols" : "rows").map((e) => ({ label: e.label, action: e.run }));
-  return [...structure, ...sort, sep, ...freeze, sep,
+  const fit: MenuItem = { label: FIT_LABEL, action: () => app.fitColumns() };
+  return [...structure, ...sort, ...(isCol ? [fit] : []), sep, ...freeze, sep,
     { label: "Effacer le contenu", danger: true, action: () => app.editMany(Object.fromEntries(app.selectedKeys().map((k) => [k, ""]))) }];
 }
