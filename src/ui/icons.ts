@@ -15,8 +15,12 @@ import open from "iconoir/icons/regular/folder.svg?raw";
 import save from "iconoir/icons/regular/floppy-disk.svg?raw";
 import tools from "iconoir/icons/regular/nav-arrow-down.svg?raw";
 
+import add from "iconoir/icons/regular/page-plus.svg?raw";
+import upload from "iconoir/icons/regular/upload.svg?raw";
+import download from "iconoir/icons/regular/download.svg?raw";
+
 const RAW: Record<string, string> = {
-  undo, redo, bold, italic, fill, open, save, tools,
+  add, upload, download, undo, redo, bold, italic, fill, open, save, tools,
   "align-left": alignLeft, "align-center": alignCenter, "align-right": alignRight,
 };
 
