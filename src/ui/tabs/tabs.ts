@@ -1,4 +1,7 @@
+/** Sheet tab strip: select, add, rename and keyboard navigation of tabs. */
 import "./tabs.css";
+import { icon } from "../icons";
+import { showToast } from "../toast/toast";
 
 /** A sheet entry shown as a tab. */
 export interface SheetInfo { id: string; name: string }
@@ -11,7 +14,7 @@ export interface SheetTabsOptions {
   onSwitch: (id: string) => void;
   /** Optional: new id order after Alt+Arrow reorder. */
   onReorder?: (ids: string[]) => void;
-  /** Confirmation for delete; defaults to window.confirm. */
+  /** Synchronous confirmation for delete (tests); defaults to a "Supprimer" toast. */
   confirm?: (message: string) => boolean;
 }
 
@@ -33,7 +36,6 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
   bar.setAttribute("role", "tablist");
   bar.setAttribute("aria-label", "Feuilles");
   host.appendChild(bar);
-  const confirmFn = opts.confirm ?? ((m: string) => window.confirm(m));
   let sheets: SheetInfo[] = [];
   let active = "";
   let focusId: string | null = null;
@@ -41,7 +43,9 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
   /** Ask then delete sheet `id`; the last sheet is protected. */
   const tryDelete = (s: SheetInfo): void => {
     if (sheets.length <= 1) return;
-    if (confirmFn(`Supprimer la feuille « ${s.name} » ?`)) opts.onDelete(s.id);
+    const msg = `Supprimer la feuille « ${s.name} » ?`;
+    if (opts.confirm) { if (opts.confirm(msg)) opts.onDelete(s.id); return; }
+    showToast({ message: msg, actionLabel: "Supprimer", onAction: () => opts.onDelete(s.id) });
   };
 
   /** Swap tab `s` for an input; commit on Enter/blur, cancel on Escape. */
@@ -115,8 +119,9 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
     const add = document.createElement("button");
     add.type = "button";
     add.className = "dk-tab dk-tab--add";
-    add.textContent = "+";
+    add.innerHTML = icon("plus");
     add.setAttribute("aria-label", "Ajouter une feuille");
+    add.title = "Ajouter une feuille";
     add.addEventListener("click", () => opts.onAdd());
     bar.appendChild(add);
     if (focusId) {

@@ -1,5 +1,8 @@
 /** Function reference shown in the sidebar (engine builtins + live charts). */
 import type { FnDoc } from "./sidebar/sidebar";
+import { FN_DOCS_MATH } from "./fndocs-math";
+import { FN_DOCS_TEXT } from "./fndocs-text";
+import { FN_DOCS_MORE } from "./fndocs-more";
 
 /** Documented functions; `name` is inserted as `=NAME(`. */
 export const FN_DOCS: FnDoc[] = [
@@ -15,4 +18,7 @@ export const FN_DOCS: FnDoc[] = [
   { name: "SPARKLINE", signature: "SPARKLINE(A1:A5)", description: "Courbe dans la cellule" },
   { name: "BAR", signature: "BAR(A1:A5)", description: "Mini-barres dans la cellule" },
   { name: "TREND", signature: "TREND(A1:A5)", description: "Flèche de tendance et %" },
+  ...FN_DOCS_MATH,
+  ...FN_DOCS_TEXT,
+  ...FN_DOCS_MORE,
 ];

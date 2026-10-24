@@ -1,5 +1,11 @@
 /* Sheet tabs: extends .dk-tabs / .dk-tab from mockups/design/components.css. */
 .dk-tabs { overflow-x: auto; }
+.dk-tabs .dk-tab { color: var(--c-text-2); }
+/* Active tab: surface, ink text, 2px accent underline. */
+.dk-tabs .dk-tab--active { background: var(--c-surface); color: var(--c-text); box-shadow: var(--sh-1), 0 0 0 0.5px var(--c-line-strong), inset 0 -2px 0 var(--c-accent); }
+/* "+" target >= 28px. */
+.dk-tabs .dk-tab--add { width: 28px; height: 28px; color: var(--c-text-2); display: inline-flex; align-items: center; justify-content: center; }
+.dk-tabs .dk-tab--add:hover { color: var(--c-text); }
 .dk-tab { flex: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dk-tab:focus-visible, .dk-tab__input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .dk-tab__input {

@@ -1,0 +1,15 @@
+/* Floating mini-bar near the selection (see floating.ts). Tokens only. */
+.dk-floating {
+  position: fixed; z-index: 50; display: flex; gap: var(--s-1); padding: var(--s-2);
+  background: var(--c-surface); border-radius: var(--r-md); box-shadow: var(--sh-2);
+}
+.dk-floating[hidden] { display: none; }
+.dk-floating__btn {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px;
+  padding: 0 var(--s-1); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-text);
+  font: var(--fw-regular) var(--fs-sm) var(--font-ui); cursor: pointer;
+}
+.dk-floating__btn:hover { background: var(--c-hover, transparent); }
+.dk-floating__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-floating__btn[aria-pressed="true"] { background: var(--c-accent-soft, var(--c-hover, transparent)); color: var(--c-accent); }
+.dk-floating .color-picker { position: absolute; top: calc(100% + 4px); left: 0; z-index: 51; }

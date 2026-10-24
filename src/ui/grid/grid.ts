@@ -1,59 +1,64 @@
 /**
  * Spreadsheet grid component: headers, selection, inline editing, TSV copy/paste.
- * 26x100 = 2600 plain divs in a CSS grid (sticky headers); refresh() touches only given cells.
+ * Rows are virtualized (see window.ts): only visible rows + overscan exist in the DOM, the full
+ * height is simulated by CSS grid tracks; refresh() touches only given (rendered) cells.
  */
-import { colName, keyOf, parseKey, rangeKeys, type Pos } from "./keys";
+import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
+import { ROW_H, scrollToRow } from "./virtual";
+import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
+import { bindKeys } from "./gridKeys";
+import { fillPlan } from "./fill";
+import { createFilterCtl } from "./gridFilter";
+import { stepRow } from "./filterView";
+import { openEditor, type Editor } from "./editor";
+import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
+import { markKind } from "./cellkind";
 
 export type { Grid, GridOptions } from "./types";
-
-const MOVES: Record<string, [number, number]> = {
-  ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-};
 
 /** Build the grid inside `host` and return its API. */
 export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const { cols, rows } = opts;
   let anchor: Pos = { col: 0, row: 0 };
   let active: Pos = { col: 0, row: 0 };
-  let editor: { input: HTMLInputElement; typed: boolean } | null = null;
+  let editor: Editor | null = null;
   let dragging = false;
   let marked: HTMLElement[] = [];
-  const cells = new Map<string, HTMLElement>();
-  const colHeads: HTMLElement[] = [];
-  const rowHeads: HTMLElement[] = [];
-
   const root = document.createElement("div");
   root.className = "dkg";
   root.tabIndex = 0;
-  root.style.gridTemplateColumns = `var(--row-header-w) repeat(${cols}, var(--cell-w))`;
-  const mk = (cls: string, text = "") => {
-    const d = document.createElement("div");
-    d.className = cls;
-    d.textContent = text;
-    root.appendChild(d);
-    return d;
-  };
-  mk("dkg-corner");
-  for (let c = 0; c < cols; c++) colHeads.push(mk("dkg-colh", colName(c)));
-  for (let r = 0; r < rows; r++) {
-    rowHeads.push(mk("dkg-rowh", String(r + 1)));
-    for (let c = 0; c < cols; c++) {
-      const el = mk("dkg-cell");
-      el.dataset.key = keyOf(c, r);
-      cells.set(el.dataset.key, el);
-    }
-  }
+  const view = opts.view ?? { widths: {}, filters: {} };
+  const applyWidths = (): void => { root.style.gridTemplateColumns = templateColumns(view.widths, cols); };
+  applyWidths();
+  const colHeads = addHeaders(root, cols);
   host.appendChild(root);
+  addResizers(colHeads, {
+    view, apply: applyWidths,
+    columnTexts: (c) => Array.from({ length: rows }, (_, r) => opts.getDisplay(keyOf(c, r))),
+  });
+  const ctl = createFilterCtl(root, colHeads, rows, view, (c, r) => opts.getDisplay(keyOf(c, r)), () => {
+    if (ctl.hidden(active.row)) { active = { col: active.col, row: stepRow(ctl.order(), active.row, 1, rows, false) }; anchor = active; }
+    render();
+  });
+  const win = createRowWindow(root, cols, rows, (k, el) => opts.onCellCreated?.(k, el));
+  const cells = win.cells;
 
-  /** Render one cell: hook element if provided, else display text. */
+  const sigs = new Map<string, string>();
+
+  /** Render one cell (hook element if provided, else text); skips the DOM write when unchanged. */
   function paint(key: string): void {
     const el = cells.get(key);
     if (!el) return;
     const custom = opts.renderCell?.(key) ?? null;
+    const text = custom ? "" : opts.getDisplay(key);
+    const sig = custom ? `h:${custom.outerHTML}` : `t:${text}`;
+    if (sigs.get(key) === sig) return;
+    sigs.set(key, sig);
+    markKind(el, text);
     if (custom) el.replaceChildren(custom);
-    else el.textContent = opts.getDisplay(key);
+    else el.textContent = text;
   }
 
   const clamp = (p: Pos): Pos => ({
@@ -68,29 +73,51 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     return `${k[0]}:${k[k.length - 1]}`;
   };
 
-  /** Update highlight classes and notify. */
-  function render(notify = true): void {
+  /** Re-apply highlight classes on rendered cells/headers only (selection may span unrendered rows). */
+  function mark(): void {
     marked.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on"));
     marked = [];
-    const mark = (e: HTMLElement | undefined, cls: string) => {
+    const add = (e: HTMLElement | undefined, cls: string) => {
       if (!e) return;
       e.classList.add(cls);
       marked.push(e);
     };
-    const multi = anchor.col !== active.col || anchor.row !== active.row;
-    if (multi) rangeKeys(anchor, active).forEach((k) => mark(cells.get(k), "dkg-range"));
-    const ak = keyOf(active.col, active.row);
-    mark(cells.get(ak), "dkg-active");
-    mark(colHeads[active.col], "dkg-on");
-    mark(rowHeads[active.row], "dkg-on");
-    (cells.get(ak) as HTMLElement & { scrollIntoView?: Function })?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    if (anchor.col !== active.col || anchor.row !== active.row) {
+      const [c0, c1] = [Math.min(anchor.col, active.col), Math.max(anchor.col, active.col)];
+      const [r0, r1] = [Math.min(anchor.row, active.row), Math.max(anchor.row, active.row)];
+      for (const r of win.heads.keys())
+        if (r >= r0 && r <= r1) for (let c = c0; c <= c1; c++) add(cells.get(keyOf(c, r)), "dkg-range");
+    }
+    add(cells.get(keyOf(active.col, active.row)), "dkg-active");
+    add(colHeads[active.col], "dkg-on");
+    add(win.heads.get(active.row), "dkg-on");
+  }
+
+  /** Recompute the rendered row window; paint new rows, forget removed ones. */
+  function sync(): void {
+    const { added, removed } = win.sync(editor ? active.row : undefined, ctl.order());
+    for (const r of removed) for (let c = 0; c < cols; c++) sigs.delete(keyOf(c, r));
+    for (const r of added) for (let c = 0; c < cols; c++) paint(keyOf(c, r));
+    if (added.length || removed.length) mark();
+  }
+
+  /** Scroll the active row into view, refresh the window and highlights, then notify. */
+  function render(notify = true): void {
+    const st = scrollToRow(Math.max(0, ctl.index(active.row)), root.scrollTop, root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H);
+    if (st !== root.scrollTop) root.scrollTop = st;
+    sync();
+    mark();
+    (cells.get(keyOf(active.col, active.row)) as HTMLElement & { scrollIntoView?: Function })
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     if (notify) opts.onSelect?.(selection());
   }
 
   /** Move the cursor (extending the range when `extend`). */
   function move(dc: number, dr: number, extend = false, jump = false): void {
-    active = clamp(jump ? { col: dc ? (dc < 0 ? 0 : cols - 1) : active.col, row: dr ? (dr < 0 ? 0 : rows - 1) : active.row }
-      : { col: active.col + dc, row: active.row + dr });
+    active = clamp({
+      col: jump && dc ? (dc < 0 ? 0 : cols - 1) : active.col + dc,
+      row: dr ? stepRow(ctl.order(), active.row, dr, rows, jump) : active.row,
+    });
     if (!extend) anchor = active;
     render();
   }
@@ -99,50 +126,26 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   function startEdit(initial?: string): void {
     if (editor) return;
     const key = keyOf(active.col, active.row);
-    const el = cells.get(key)!;
-    const input = document.createElement("input");
-    input.className = "dkg-editor";
-    input.value = initial ?? opts.getRaw(key);
-    el.replaceChildren(input);
-    editor = { input, typed: initial !== undefined };
-    input.addEventListener("keydown", onEditorKey);
-    input.focus();
-    if (initial === undefined) input.select();
+    sigs.delete(key);
+    editor = openEditor(cells.get(key)!, initial ?? opts.getRaw(key), initial !== undefined,
+      { end: endEdit, move: (dc, dr) => move(dc, dr) });
   }
 
-  /** Close the editor; commit the value when `commit`. */
-  function endEdit(commit: boolean): void {
+  /** Close the editor; commit the value when `commit`, refocus the grid when `refocus` (not on blur). */
+  function endEdit(commit: boolean, refocus = true): void {
     if (!editor) return;
     const { input } = editor;
     editor = null;
     const key = keyOf(active.col, active.row);
     if (commit) opts.onEdit(key, input.value);
     paint(key);
-    root.focus();
+    if (refocus) root.focus();
   }
 
-  function onEditorKey(e: KeyboardEvent): void {
-    e.stopPropagation();
-    const m = MOVES[e.key];
-    if (e.key === "Escape") { e.preventDefault(); endEdit(false); }
-    else if (e.key === "Enter" || e.key === "Tab") {
-      e.preventDefault();
-      endEdit(true);
-      move(e.key === "Tab" ? (e.shiftKey ? -1 : 1) : 0, e.key === "Enter" ? (e.shiftKey ? -1 : 1) : 0);
-    } else if (m && editor?.typed) { e.preventDefault(); endEdit(true); move(m[0], m[1]); }
-  }
-
-  root.addEventListener("keydown", (e) => {
-    if (editor) return;
-    const m = MOVES[e.key];
-    if (m) { e.preventDefault(); move(m[0], m[1], e.shiftKey, e.ctrlKey || e.metaKey); }
-    else if (e.key === "Tab") { e.preventDefault(); move(e.shiftKey ? -1 : 1, 0); }
-    else if (e.key === "Enter") { e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
-    else if (e.key === "F2") { e.preventDefault(); startEdit(); }
-    else if (e.key === "Delete" || e.key === "Backspace") {
-      e.preventDefault();
-      rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); });
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); startEdit(e.key); }
+  bindKeys(root, {
+    busy: () => !!editor, move, startEdit,
+    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
+    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
   });
 
   root.addEventListener("mousedown", (e) => {
@@ -161,7 +164,8 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     active = parseKey(t.dataset.key!);
     render();
   });
-  document.addEventListener("mouseup", () => { dragging = false; });
+  const onMouseUp = (): void => { dragging = false; };
+  document.addEventListener("mouseup", onMouseUp);
   root.addEventListener("dblclick", (e) => {
     if ((e.target as HTMLElement).closest(".dkg-cell")) startEdit();
   });
@@ -169,16 +173,27 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
     put: (k, v) => { opts.onEdit(k, v); paint(k); },
+    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
   });
 
-  cells.forEach((_, k) => paint(k));
+  root.addEventListener("scroll", sync);
+  sync();
   render(false);
   return {
-    refresh: (keys) => (keys ?? [...cells.keys()]).forEach(paint),
+    refresh: (keys) => (keys ?? [...cells.keys()]).forEach(paint), // paint ignores unrendered keys
     select(key) {
       endEdit(true);
-      active = anchor = clamp(parseKey(key));
+      const [a, b] = key.split(":");
+      active = clamp(parseKey(b ?? a));
+      anchor = b ? clamp(parseKey(a)) : active;
       render();
+    },
+    focus: () => root.focus(),
+    destroy() {
+      ctl.close();
+      document.removeEventListener("mouseup", onMouseUp);
+      editor = null;
+      root.remove();
     },
     getSelection: selection,
   };

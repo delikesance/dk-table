@@ -2,7 +2,14 @@
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
-import { exportCsv, importCsv, openFile, openRecent, saveFile } from "./fileops";
+import { openMacroDialog } from "../macros/dialog";
+import { autosum } from "./autosum";
+import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
+
+/** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
+function toggleTools(): void {
+  document.querySelector<HTMLButtonElement>('[data-action="toggle-tools"]')?.click();
+}
 
 /** Keyboard shortcuts (Ctrl/Cmd + key) -> action. Ctrl+K is owned by the palette. */
 function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
@@ -13,13 +20,14 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     i: () => app.style({ italic: !app.activeStyle().italic }),
     o: () => void openFile(app),
     s: (e) => void saveFile(app, e.shiftKey),
-    n: () => app.addSheet(),
+    n: () => newDocument(app),
+    j: () => toggleTools(),
   };
 }
 
-/** Clear selected cells (one undo step is recorded per cell; fine for small ranges). */
+/** Clear selected cells as a single undo step. */
 function clearSelection(app: App): void {
-  app.selectedKeys().forEach((k) => app.edit(k, ""));
+  app.editMany(Object.fromEntries(app.selectedKeys().map((k) => [k, ""])));
 }
 
 /** Context menu items for the grid. */
@@ -31,12 +39,24 @@ function cellMenu(app: App): MenuItem[] {
     { label: "Alignement", submenu: (["left", "center", "right"] as const).map((a) => ({
       label: { left: "Gauche", center: "Centre", right: "Droite" }[a], action: () => app.style({ align: a }) })) },
     { separator: true },
+    { label: "Trier A→Z", icon: "sort-asc", action: () => void app.sortColumn(false) },
+    { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) },
+    { separator: true },
     { label: "Effacer le contenu", danger: true, action: () => clearSelection(app) },
     { label: "Annuler", shortcut: "Ctrl+Z", action: () => app.undo() },
   ];
 }
 
-/** Register palette commands, global shortcuts, context menu and file command hooks. */
+/** True when the event target is an editable text field (input, textarea, contenteditable). */
+function inTextField(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable === true);
+}
+
+/** Current global keydown listener, replaced on each install. */
+let onKey: ((e: KeyboardEvent) => void) | null = null;
+
+/** Register palette commands, global shortcuts, context menu and file command hooks (a remount replaces the keydown listener). */
 export function installCommands(app: App): void {
   const run = (id: string, label: string, fn: () => void, shortcut?: string, keywords: string[] = []) =>
     registerCommand({ id, label, run: fn, shortcut, keywords });
@@ -49,8 +69,14 @@ export function installCommands(app: App): void {
   run("edit.redo", "Rétablir", () => app.redo(), "Ctrl+Y");
   run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
-  run("sheet.add", "Nouvelle feuille", () => app.addSheet(), "Ctrl+N");
+  run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
+  run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);
+  run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
+  run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
+  run("sheet.add", "Nouvelle feuille", () => app.addSheet());
+  run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
+  run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
     run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);
   }
@@ -68,14 +94,19 @@ export function installCommands(app: App): void {
   };
 
   const map = shortcuts(app);
-  document.addEventListener("keydown", (e) => {
+  if (onKey) document.removeEventListener("keydown", onKey); // remount: avoid stacked listeners
+  onKey = (e: KeyboardEvent) => {
+    if (e.altKey && e.key === "=" && !e.ctrlKey && !e.metaKey && !inTextField(e.target)) {
+      e.preventDefault(); autosum(app); return;
+    }
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const fn = map[e.key.toLowerCase()];
     if (!fn) return;
-    // Let inputs keep their native undo/bold-less behaviour while editing text.
-    if ((e.target as HTMLElement)?.tagName === "INPUT" && "zyb i".includes(e.key.toLowerCase())) return;
+    // Let text fields (cell editor, formula bar...) keep their native undo/redo/bold while editing; Ctrl+J (tools) is ignored there too.
+    if (inTextField(e.target) && "zybij".includes(e.key.toLowerCase())) return;
     e.preventDefault();
     fn(e);
-  });
+  };
+  document.addEventListener("keydown", onKey);
 }
 

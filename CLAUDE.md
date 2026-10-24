@@ -41,23 +41,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## CI
 
 - `.github/workflows/ci.yml` (GitHub Actions, on push + PR): `npm ci`, `npm test`, `cargo test`, each guarded by file existence.
+- `.github/workflows/release.yml`: build Linux (deb + AppImage); à valider via workflow_dispatch. Tests de config: `src/config/packaging.test.ts`; tests de styles/contraste: `src/styles/styles.test.ts`.
 
 ## Commands
 
+- Worktree + vitest: si `node_modules` est une jonction vers le dépôt principal, vitest échoue ("Denied ID" sur `node_modules/iconoir`): lancer `npm install` dans la worktree ou mettre `server.fs.strict=false`.
 - `npm test` (vitest, jsdom pour l'UI), `npx tsc --noEmit`, `npm run build` (tsc + vite), `npm run tauri dev`.
+- `cargo test` (in `src-tauri/`), `npm run tauri build` (MSI + NSIS in `src-tauri/target/release/bundle/`).
+- `src/engine/` (pure logic, e.g. `sheet.ts` + tests), `src/ui/` (DOM), `src/main.ts` (entry), `src-tauri/` (Rust, `lib.rs` registers plugins dialog + fs).
+- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
+- `src-tauri/icons/` = placeholder flat icon, to replace.
+
+- `npm run test:e2e` (Playwright, Chrome headless, `e2e/`, hors vitest). Prérequis: `npx playwright install chromium` (ou `E2E_CHANNEL=chrome` pour le Chrome système). Lance son propre Vite sur un port aléatoire (`E2E_PORT` s'il est fixé), jamais réutilisé (`reuseExistingServer: false`); pas de Tauri (dialog/fs absents). Helpers: `e2e/helpers.ts` (cellules = `.dkg-cell[data-key="A1"]`).
 
 ## Structure (src/)
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
-- `ui/`: `app.ts` (mount, câblage), `appTypes.ts` (interface App), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ tabs/ sidebar/ palette/ contextmenu/`.
+- `ui/`: `icons.ts` (Iconoir `iconoir/icons/regular/*.svg?raw`, `icon(name)`, `currentColor`, noir via `--c-icon`), `appTools.ts` (bouton `toggle-tools`, mode minimal, Ctrl+J, état persistant `dk-table.tools`), `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `numfmt.ts` (formats de nombre), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ (dont `menus.ts`: menus Fichier + Import/Export) tabs/ sidebar/ palette/ contextmenu/`.
+- Modules neufs (non câblés dans l'UI, voir TODO Phase 8): `engine/range.ts`, `engine/sort.ts`, `ui/sort.ts`, `io/autosave.ts`, `ui/grid/filter.ts`, `ui/toast/`, `ui/toolbar/colors.*`, `ui/toolbar/floating.*`.
+- Fonctions: `engine/fn-{math,text,logic,date,finance,cond,lookup}.ts` enregistrées par `engine/wire.ts` (import côté `sheet.ts`, évite le cycle avec `functions.ts`) via `registerBuiltin(name, fn)` (args bruts) ou `registerFunction` (nombres). `listFunctionNames()` = liste réelle (registre + IF/IFERROR/IFNA + SPARKLINE/BAR/TREND), utilisée par `fndocs.test.ts`. Docs FR: `ui/fndocs.ts` + `fndocs-{math,text,more}.ts`.
+- Grille virtualisée: `ui/grid/virtual.ts` + `window.ts`, MAX_ROWS=1000.
+- Dates: convention 1900 unique (`numfmt.ts` = `fn-date.ts`): 1 = 01/01/1900, 60 = faux 29/02/1900, dès 61 = 1899-12-30 + n.
+- Limites connues: VLOOKUP/HLOOKUP/INDEX 2D inutilisables en formule (évaluateur aplatit les plages, `it.todo`); pas de `#N/A` (IFNA renvoie la valeur, lookups -> #VALUE!); IRR sans estimation (10 %); ISBLANK vrai aussi pour ""; MEDIAN sans nombre -> #VALUE!; pas de couleur de texte (`CellStyle.color`).
 - `styles/`: `tokens.css` + `components.css` copiés de `mockups/design/` (la source de design reste `mockups/design/`; resynchroniser à la main).
+
+## Decisions (refonte Apple)
+
+- Mode minimal par défaut: seuls grille + barre de formule + onglets visibles; `.dk-app__tools` (toolbar) et `.dk-sidebar` sont `hidden` jusqu'au clic sur `[data-action="toggle-tools"]` (classe `dk-app--minimal`).
+- Icônes: bibliothèque Iconoir (dépendance `iconoir`), toutes via `src/ui/icons.ts` (SVG inline `currentColor`); `--c-icon` noir (clair) / clair (sombre). `mockups/design/` resynchronisé.
+
+## Decisions (macros Lua)
+
+- `src/macros/`: `macro.ts` (`runMacro(code, api, {timeoutMs})` + `sheetApi(sheet)`), `run.ts` (`runMacroOnApp`), `dialog.ts` (boîte textarea), commande palette « Exécuter une macro Lua… » (`macro.run`).
+- Lua exposé: `getValue(addr)`, `getRaw(addr)`, `setCell(addr, v)`, `getRange("A1:A5")` (nombres); passe uniquement par l'API publique de `engine/sheet.ts`.
+- Lib: `wasmoon` (Lua 5.4 en WASM, async). Délai max 2 s via `debug.sethook` (compteur d'instructions, hook posé dans le même chunk que le code: hooks par thread). Erreurs -> `{ok:false,error}` en français, jamais levées.
+- Une macro = un pas d'undo (`App.runBatch`). Le .wasm est chargé via `?url` Vite (navigateur/Tauri); tests Node: chargement natif (`MODE === "test"`).
+- Limites: pas d'accès aux styles/feuilles, pas de `require`/fichiers; `pcall` ne contourne pas le délai (le hook continue de tirer).
+
+## Decisions (onboarding)
+
+- `ui/onboarding/` (`showOnboarding(host, app)`): écran d'accueil modal (role=dialog, liste ARIA des feuilles, « Créer » = `addSheet`, clic = `switchSheet`, Échap ferme, état vide). Affiché par `main.ts` après `mount()`, ignoré avec `?onboarding=0` (utilisé par `e2e/helpers.ts` `openApp`). `mount()` reste inchangé.
+- Tokens `--ob-*` (papier/encre/accent bleu, filets 20 %, rayons 2/6px, libellés mono) adaptés de hermes-agent.nousresearch.com, bloc ajouté en fin de `styles/tokens.css` (clair + sombre).
 
 ## Decisions (intégration I8)
 
+- Ctrl+N / menu « Nouveau » = nouveau document vierge (confirmation si modifications non enregistrées via `fileops.newDocument`); « Nouvelle feuille » = palette.
+- Apostrophe en préfixe (`'abc`): force le texte, comme Excel; l'apostrophe n'est pas affichée (voir `engine/recalc.ts`).
 - Cellules vivantes: le moteur ne gère que des valeurs texte/nombre; `liveResult` détecte `=SPARKLINE|BAR|TREND(plage)` pleine cellule et la grille (hook `renderCell`) affiche le SVG. Le moteur renvoie un texte de repli (ex. TREND: "▲ +10%").
-- Undo/redo: snapshot des cellules brutes par feuille (100 max); les éditions groupées (coller/effacer) = un pas. Styles non annulables ni persistés.
-- Recalcul UI: après chaque édition, `grid.refresh()` complet (26x100).
+- Undo/redo: snapshot des cellules brutes par feuille (100 max); les éditions groupées (coller/effacer) = un pas. Les styles sont aussi annulables (un pas par `app.style`) et persistés dans `.dktable` (`DocSheet.styles`).
+- Recalcul UI: `grid.refresh()` incrémental: parcourt les 2600 cellules (renderCell/getDisplay) mais n'écrit le DOM que si le contenu change.
+- Fichiers récents: `io/recents.ts` (liste persistée dans localStorage, store injectable), câblé dans `appApi.ts`.
+- Format de nombre: `ui/numfmt.ts` `formatValue` (fr-FR: number/percent/currency), format par cellule via `CellStyle.format`; "Date" non implémenté (sans effet).
+
+## Docs
+
+- `docs/demo.md`: script de la démo de 5 minutes (installation puis tour des fonctions).
+- `docs/workflow-ux.md`: workflow UX casual-first (niveaux N1/N2/N3, coût en clics); maquette `mockups/workflow-ux.html` (4 écrans commutables, exemptée de la limite de 200 lignes).
 
 ## Research
 
@@ -73,7 +113,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-**Project**: dk-table = entry for hackathon "War of Code : le Tableur" (build an Excel-like spreadsheet by midnight; AI may write the code but the app must NOT embed AI; auto-recalc of dependents mandatory; installable on Windows + Linux; scored by peers /10 on beauty, practicality, lightness, ease of use; +5 "Pépite" bonus for an original feature; 5-min demo: install then feature tour). Repo still has no app code.
+**Project**: dk-table = entry for hackathon "War of Code : le Tableur" (build an Excel-like spreadsheet by midnight; AI may write the code but the app must NOT embed AI; auto-recalc of dependents mandatory; installable on Windows + Linux; scored by peers /10 on beauty, practicality, lightness, ease of use; +5 "Pépite" bonus for an original feature; 5-min demo: install then feature tour).
 
 **Decisions (user-confirmed)**: stack = Tauri/Rust + web front; time budget = until midnight (not 4h); chosen Pépite direction = "Cellules vivantes".
 
@@ -87,10 +127,3 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cycle handling (#CYCLE)
 - Linux packaging format
 - Whether pépites 1/2 are dropped or kept as stretch
-
-## Commands & structure
-
-- `npm test` (vitest run), `cargo test` (in `src-tauri/`), `npm run tauri dev`, `npm run tauri build` (MSI + NSIS in `src-tauri/target/release/bundle/`).
-- `src/engine/` (pure logic, e.g. `sheet.ts` + tests), `src/ui/` (DOM), `src/main.ts` (entry), `src-tauri/` (Rust, `lib.rs` registers plugins dialog + fs).
-- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
-- `src-tauri/icons/` = placeholder flat icon, to replace.

@@ -1,8 +1,10 @@
+/** Dependency graph and recalculation: topological recompute of dependents, #CYCLE detection. */
 import type { Node, Sheet, Value } from "./types";
 import { err } from "./types";
 import { expandRange, inBounds } from "./address";
 import { collectRefs, parseFormula } from "./parser";
 import { evaluate } from "./evaluator";
+import { isDecimal } from "./values";
 
 /** Per-sheet derived state: values, parsed formulas and the dependency graph. */
 export interface State {
@@ -26,10 +28,14 @@ export function getState(sheet: Sheet): State {
   return s;
 }
 
-/** Parse a non-formula raw string: numeric text -> number, else text. */
+/**
+ * Parse a non-formula raw string: decimal text -> number (0x/0b/0o stay text),
+ * a leading apostrophe forces text (apostrophe dropped), else text.
+ */
 function literal(raw: string): Value {
+  if (raw.startsWith("'")) return raw.slice(1);
   const t = raw.trim();
-  if (t !== "" && Number.isFinite(Number(t))) return Number(t);
+  if (isDecimal(t) && Number.isFinite(Number(t))) return Number(t);
   return raw;
 }
 

@@ -1,8 +1,10 @@
+/** Public sheet API: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues with automatic recalculation. */
 import type { Sheet, Value } from "./types";
 import { isErr } from "./types";
 import { expandRange, inBounds, normKey } from "./address";
 import { getState, recalc, rewire } from "./recalc";
 import { displayValue } from "./values";
+import "./wire";
 
 export type { Sheet, Cell, Value, CellError, ErrorCode } from "./types";
 export { registerFunction } from "./functions";
