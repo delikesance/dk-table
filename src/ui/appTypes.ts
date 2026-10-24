@@ -8,6 +8,7 @@ import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
+import type { DocFormat } from "../doc/commands";
 import type { DocEditor } from "../doc/editor";
 
 /** Hooks set by the command layer (file ops, context menu). */
@@ -39,6 +40,12 @@ export interface App {
   activeDoc(): DocSheet;
   loadDoc(doc: DktDoc, path?: string): void;
   /** Export the open document (md / html through the save dialog, pdf through printing). */
+  /** Apply a text command (bold, title, list...) to the open document. */
+  docFormat(name: DocFormat): void;
+  /** Insert a live cell prompt (`@`) or a linked block into the open document. */
+  docInsert(kind: "cell" | "table" | "bar" | "trend"): void;
+  /** Show sheet and document side by side, or back to one. */
+  toggleSplit(): void;
   exportDoc(kind: "md" | "html" | "pdf"): Promise<void>;
   /** Add a sheet from imported cells and activate it. */
   importSheet(name: string, sheet: Pick<DocSheet, "cols" | "rows" | "cells">): void;

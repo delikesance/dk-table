@@ -29,6 +29,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     s: (e) => void saveFile(app, e.shiftKey),
     n: () => newDocument(app),
     j: () => toggleTools(),
+    "\\": () => app.toggleSplit(),
     e: () => { if (app.activeDocId()) openExportDoc(app); },
     ",": () => openSettings(),
     "+": () => app.insertRows(),
@@ -111,6 +112,7 @@ export function installCommands(app: App): void {
   run("data.sort-desc", "Trier la colonne Z→A", () => void app.sortColumn(true), undefined, ["tri", "sort", "décroissant"]);
   run("sheet.add", "Nouvelle feuille", () => app.addSheet());
   run("doc.export", "Exporter le document…", () => { if (app.activeDocId()) openExportDoc(app); }, "Ctrl+E", ["markdown", "html", "pdf", "imprimer"]);
+  run("view.split", "Vue scindée feuille / document", () => app.toggleSplit(), "Ctrl+\\", ["document", "côte à côte", "split"]);
   run("doc.new", "Nouveau document", () => void app.addDoc(), undefined, ["dk doc", "texte", "rapport", "word"]);
   run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
   run("app.about", "À propos de dk-table", openAbout);

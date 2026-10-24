@@ -9,6 +9,7 @@ import { exportCsv, exportFec, importCsv, newDocument, saveFile } from "../fileo
 import { openSettings } from "../dialogs/settings";
 import { openAbout } from "../dialogs/about";
 import { autosum } from "../autosum";
+import { openExportDoc } from "../dialogs/exportDoc";
 
 /** Dépendances réelles de `buildMenuSpec` pour `app` ; `openPalette` vient de la palette montée. */
 export function menuDeps(app: App, openPalette: () => void): MenuDeps {
@@ -31,5 +32,6 @@ export function menuDeps(app: App, openPalette: () => void): MenuDeps {
     openPalette,
     openAbout,
     autosum: () => void autosum(app),
+    exportDoc: () => openExportDoc(app),
   };
 }

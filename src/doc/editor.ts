@@ -11,6 +11,8 @@ import { mentionPlugin } from "./mention";
 import { RefView, type RefViewHost } from "./refView";
 import { BlockView, type BlockHost } from "./blockView";
 import { insertAfterBlock, pasteLink } from "./paste";
+import { docCommands, type DocFormat } from "./commands";
+import type { BlockAttrs } from "./blocks";
 import type { CopyInfo, RefBook, RefTarget } from "./refs";
 
 export type { CopyInfo };
@@ -23,6 +25,12 @@ export interface DocEditor {
   undo(): boolean;
   redo(): boolean;
   focus(): void;
+  /** Run a text command (bold, title, list...) on the selection. */
+  command(name: DocFormat): boolean;
+  /** Insert a linked block at the cursor (after the current block). */
+  insertBlock(a: BlockAttrs): void;
+  /** Insert text at the cursor. */
+  insertText(t: string): void;
   /** Re-read every cited value (call after a recalculation). */
   refresh(): void;
   destroy(): void;
@@ -80,6 +88,9 @@ export function createDocEditor(host: HTMLElement, content: DocText["content"], 
     undo: () => run(undo),
     redo: () => run(redo),
     focus: () => view.focus(),
+    command: (name) => { view.focus(); return docCommands[name](view.state, view.dispatch, view); },
+    insertBlock: (a) => { view.dispatch(view.state.tr.replaceSelectionWith(docSchema.nodes.liveBlock.create({ ...a })).scrollIntoView()); view.focus(); },
+    insertText: (t) => { view.dispatch(view.state.tr.insertText(t)); view.focus(); },
     refresh: () => { rh?.views.forEach((v) => v.refresh()); bh?.views.forEach((v) => v.refresh()); },
     destroy: () => view.destroy(),
   };
