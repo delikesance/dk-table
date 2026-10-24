@@ -14,13 +14,7 @@ Source de vérité des tâches (voir CLAUDE.md). À mettre à jour à chaque cha
 
 Chaque tâche : écrire le test d'abord (TDD).
 
-- [x] T1.1 Init Tauri v2 + Vite TypeScript vanilla
-- [x] T1.2 Structure `src/`, `src-tauri/`, `src/engine/`, `src/ui/` (après T1.1)
-- [x] T1.3 Fenêtre principale dk-table 1200x800 (après T1.1)
-- [x] T1.4 Plugin dialog (après T1.1)
-- [x] T1.5 Plugin fs, permissions minimales (après T1.1)
-- [x] T1.6 `npm run tauri dev` OK (après T1.2 à T1.5)
-- [x] T1.7 Premier `tauri build` OK (MSI 3.1 MiB + NSIS 2.06 MiB, `src-tauri/target/release/bundle/`)
+- [x] T1.1–T1.7 Tauri v2 + Vite TS, structure `src/`/`src-tauri/`, fenêtre 1200x800, plugins dialog + fs (permissions minimales), `tauri dev` et premier `tauri build` (MSI + NSIS) OK
 
 ## Phase 2 : Tableur de base (après T1.2)
 
@@ -198,3 +192,8 @@ Classement par gravité (P0 = pire)
 ## Saisie des formules
 
 - [x] F1 Autocomplétion des fonctions après « = » (cellule + barre de formule) : liste filtrée avec description, signature de la sélection, flèches/Entrée/Tab/Échap, aide de signature avec l'argument courant (`ui/formula/`). Tests : `fnComplete.test.ts`, `fnPopup.test.ts`, `wiring.test.ts`, e2e `feat-fncomplete.spec.ts`.
+
+## Contrôles de la grille façon Google Sheets
+
+- [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
+- [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
