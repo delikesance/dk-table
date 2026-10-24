@@ -7,6 +7,8 @@ export interface RecentItem { path: string; name: string }
 export interface MenuHandlers {
   onNew(): void; onOpen(): void; onSave(): void; onSaveAs(): void;
   onImportCsv(): void; onExportCsv(): void;
+  /** Export the active sheet as FEC (Fichier des Écritures Comptables). */
+  onExportFec(): void;
   /** Recent files, read each time the menu opens (omit: "Récents" stays empty). */
   recents?(): RecentItem[];
   onOpenRecent?(path: string): void;
@@ -119,6 +121,7 @@ export function fileEntries(h: MenuHandlers): Entry[] {
     { label: "Enregistrer sous…", icon: "save", hint: "Ctrl+Maj+S", run: h.onSaveAs },
     { label: "Importer CSV", icon: "upload", run: h.onImportCsv, sep: true },
     { label: "Exporter CSV", icon: "download", run: h.onExportCsv },
+    { label: "Exporter FEC…", icon: "download", run: h.onExportFec },
   ];
 }
 

@@ -9,10 +9,10 @@ const fakeApp = () => ({
   undo: vi.fn(), redo: vi.fn(), style: vi.fn(), activeStyle: () => ({}), addSheet: vi.fn(),
   sortColumn: vi.fn(), toggleSidebar: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["A1"],
   borders: vi.fn(), insertRows: vi.fn(), insertCols: vi.fn(), deleteRows: vi.fn(), deleteCols: vi.fn(),
-  setFreeze: vi.fn(), selection: () => "C3",
+  setFreeze: vi.fn(), selection: () => "C3", activeDoc: () => ({ id: "s", name: "S", cols: 26, rows: 100, cells: {} }),
 }) as unknown as App;
 const deps = (macros: { id: string; name: string }[] = []): MenuDeps => ({
-  file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn() },
+  file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn(), onExportFec: vi.fn() },
   openSettings: vi.fn(), openMacros: vi.fn(), macros: () => macros, runMacro: vi.fn(),
   openPalette: vi.fn(), openAbout: vi.fn(), autosum: vi.fn(),
 });
@@ -57,6 +57,21 @@ describe("contenu des menus", () => {
     expect(f[i + 1].label).toBe("Comptabilité");
     f[i + 1].run!();
     expect(app.style).toHaveBeenCalledWith({ format: "accounting" });
+  });
+  it("Données : Insérer les en-têtes FEC (séparé) écrit A1:R1", () => {
+    const app = fakeApp();
+    const e = items(buildMenuSpec(app, deps()), "Données").find((x) => x.label === "Insérer les en-têtes FEC")!;
+    expect(e.sep).toBe(true);
+    e.run!();
+    expect(app.editMany).toHaveBeenCalledWith(expect.objectContaining({ A1: "JournalCode", R1: "Idevise" }));
+  });
+  it("Fichier : Exporter FEC… juste après Exporter CSV", () => {
+    const d = deps();
+    const f = items(buildMenuSpec(fakeApp(), d), "Fichier");
+    const i = f.findIndex((e) => e.label === "Exporter CSV");
+    expect(f[i + 1].label).toBe("Exporter FEC…");
+    f[i + 1].run!();
+    expect(d.file.onExportFec).toHaveBeenCalled();
   });
   it("Fichier > Paramètres… (Ctrl+,)", () => {
     const d = deps();
