@@ -64,6 +64,7 @@ export function createApi(c: Ctx): App {
     style(patch) {
       pushUndo(c.cur);
       for (const k of keysOf(c.grid.getSelection())) { c.cur.styles[k] = { ...c.cur.styles[k], ...patch }; paint(k); }
+      c.grid.refresh();
       setTitle(c, true); syncInfo(c);
     },
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},

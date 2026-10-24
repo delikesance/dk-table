@@ -15,7 +15,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onBold: () => app.style({ bold: !app.activeStyle().bold }),
     onItalic: () => app.style({ italic: !app.activeStyle().italic }),
     onAlign: (align) => app.style({ align }),
-    onFormat: () => {},
+    onFormat: (format) => app.style({ format }),
     onFill: (fill) => app.style({ fill }),
     onOpen: () => app.hooks.command?.("open"),
     onSave: () => app.hooks.command?.("save"),

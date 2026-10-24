@@ -3,6 +3,7 @@ import { getDisplay, getRaw, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
 import { pushUndo } from "./model";
 import { liveCell, paintStyle } from "./cellview";
+import { formatValue } from "./numfmt";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
 /** Sync formula bar, sidebar info and toolbar state with the active cell. */
@@ -13,7 +14,7 @@ export function syncInfo(c: Ctx): void {
   c.sidebar.setCellInfo({ ref: key, raw, display: getDisplay(c.cur.sheet, key), format: "Standard" });
   const st = c.cur.styles[key] ?? {};
   c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, align: st.align ?? "left",
-    canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
+    format: st.format ?? "general", canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
 }
 
 /** After a data change: redraw all cells (dependents) and mark modified. */
@@ -28,7 +29,7 @@ export function buildGrid(c: Ctx): void {
   c.gridHost.replaceChildren();
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows,
-    getDisplay: (k) => getDisplay(c.cur.sheet, k),
+    getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
     onEdit: (k, raw) => {
       if (!c.coalescing) {
