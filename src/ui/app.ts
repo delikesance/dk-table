@@ -21,6 +21,7 @@ import { installMacros } from "./macros/wire";
 import { relink, type Ctx } from "./appState";
 import { createDocStore } from "../doc/store";
 import "../doc/doc.css";
+import "../doc/blocks.css";
 import type { App } from "./appTypes";
 
 export type { App, Hooks } from "./appTypes";

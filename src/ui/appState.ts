@@ -10,6 +10,7 @@ import type { MacroUi } from "./macros/wire";
 import type { CfStyle } from "../engine/cf/types";
 import type { DocStore } from "../doc/store";
 import type { DocEditor } from "../doc/editor";
+import type { CopyInfo } from "../doc/refs";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
 export interface Ctx {
@@ -24,6 +25,8 @@ export interface Ctx {
   backDoc?: string;
   /** Editor of the open document. */
   docEd?: DocEditor;
+  /** Last range copied in the grid (documents paste it as a live reference). */
+  lastCopy?: CopyInfo;
   entries: Entry[];
   /** Active sheet entry. */
   cur: Entry;

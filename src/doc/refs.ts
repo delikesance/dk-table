@@ -70,3 +70,6 @@ export function searchRefs(book: RefBook, query: string, limit = 8): RefHit[] {
   }
   return hits.sort((x, y) => x.score - y.score || x.hit.address.localeCompare(y.hit.address)).slice(0, limit).map((h) => h.hit);
 }
+
+/** The last range copied in a sheet: its TSV text, sheet id and range ("B3" or "A3:D4"). */
+export interface CopyInfo { text: string; sheet: string; ref: string }

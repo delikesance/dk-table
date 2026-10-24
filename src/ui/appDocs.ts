@@ -30,7 +30,7 @@ export async function openDocView(c: Ctx, id: string): Promise<void> {
   refreshTabs(c);
   const { createDocEditor } = await import("../doc/editor");
   if (c.curDoc !== id || c.docEd) return; // closed or replaced while loading
-  c.docEd = createDocEditor(c.docHost, d.content, (content) => c.docs.setContent(id, content), { book: bookOf(c), open: (t) => openCell(c, t) });
+  c.docEd = createDocEditor(c.docHost, d.content, (content) => c.docs.setContent(id, content), { book: bookOf(c), open: (t) => openCell(c, t), lastCopy: () => c.lastCopy });
   c.docEd.focus();
 }
 

@@ -63,3 +63,19 @@ describe("bindClipboard", () => {
     expect(put).toHaveBeenCalledWith("C5", "=A1*2");
   });
 });
+
+describe("bindClipboard onCopy", () => {
+  it("annonce la plage copiée et son texte (pas pour un couper)", () => {
+    const root = document.createElement("div");
+    const onCopy = vi.fn();
+    bindClipboard(root, {
+      sel: () => ({ anchor: { col: 1, row: 2 }, active: { col: 0, row: 3 } }), cols: 10, rows: 10, busy: () => false,
+      getRaw: (k) => k, put: vi.fn(), clear: vi.fn(), onCopy,
+    });
+    fire(root, "copy", new Map());
+    expect(onCopy).toHaveBeenCalledWith("A3:B4", "A3\tB3\nA4\tB4");
+    onCopy.mockClear();
+    fire(root, "cut", new Map());
+    expect(onCopy).toHaveBeenCalledWith(null, "A3\tB3\nA4\tB4");
+  });
+});
