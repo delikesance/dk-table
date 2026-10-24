@@ -58,6 +58,18 @@ function evalArg(n: Node, sheet: Sheet, get: Getter): Arg {
   return evaluate(n, sheet, get);
 }
 
+/**
+ * IFERROR(value, if_error) / IFNA(value, if_na): lazy, the fallback is only evaluated
+ * when needed. IFERROR catches every error (incl. #CYCLE!). The engine has no #N/A,
+ * so IFNA never intercepts and returns the value unchanged.
+ */
+function lazyCatch(n: Extract<Node, { t: "call" }>, sheet: Sheet, get: Getter): Value {
+  if (n.args.length !== 2) return err("#VALUE!");
+  const v = evaluate(n.args[0], sheet, get);
+  if (!isErr(v) || n.name === "IFNA") return v;
+  return evaluate(n.args[1], sheet, get);
+}
+
 /** Evaluate an AST to a scalar value (a bare range is #VALUE!). */
 export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
   switch (n.t) {
@@ -92,6 +104,7 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
         const br = c ? n.args[1] : n.args[2];
         return br ? evaluate(br, sheet, get) : false;
       }
+      if (n.name === "IFERROR" || n.name === "IFNA") return lazyCatch(n, sheet, get);
       const fn = getFunction(n.name);
       if (!fn) return err("#NAME?");
       return fn(n.args.map((a) => evalArg(a, sheet, get)));
