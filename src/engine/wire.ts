@@ -18,9 +18,11 @@ import { lookupFunctions } from "./fn-lookup";
 import { dateFunctions } from "./fn-date";
 import { date2Functions } from "./fn-date2";
 import { financeFunctions } from "./fn-finance";
+import { loanFunctions } from "./fn-loan";
+import { investFunctions } from "./fn-invest";
 
 for (const table of [mathFunctions, math2Functions, statsFunctions, textFunctions, text2Functions,
-  logicFunctions, infoFunctions, date2Functions])
+  logicFunctions, infoFunctions, date2Functions, loanFunctions, investFunctions])
   for (const [n, f] of Object.entries(table)) registerBuiltin(n, f);
 // Matrix-aware groups: ranges arrive as Value[][] (rows).
 for (const table of [condFunctions, cond2Functions, lookupFunctions])

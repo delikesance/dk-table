@@ -18,7 +18,7 @@ function near(f: string, x: number, digits = 6) {
 
 describe("IPMT / PPMT", () => {
   it("IPMT first period", () => near("=IPMT(0.1/12,1,36,8000)", -66.666667));
-  it("IPMT last year", () => near("=IPMT(0.1,3,3,8000)", -292.447129));
+  it("IPMT last year", () => near("=IPMT(0.1,3,3,8000)", -292.44713));
   it("IPMT type 1: first period is 0, then shifted", () => {
     near("=IPMT(0.1/12,1,36,8000,0,1)", 0);
     near("=IPMT(0.1/12,2,36,8000,0,1)", -64.533299);
@@ -51,11 +51,12 @@ describe("RATE", () => {
 describe("NPER", () => {
   it("with fv and type 1", () => near("=NPER(0.01,-100,-1000,10000,1)", 59.673866));
   it("rate 0", () => near("=NPER(0,-100,1000)", 10));
-  it("impossible -> #NUM!", () => expect(disp("=NPER(0.1,100,1000)")).toBe("#NUM!"));
+  it("negative result allowed (like Excel)", () => near("=NPER(0.1,100,1000)", -7.272541));
+  it("impossible -> #NUM!", () => expect(disp("=NPER(0.1,-100,10000)")).toBe("#NUM!"));
 });
 
 describe("CUMIPMT / CUMPRINC", () => {
-  it("CUMIPMT second year", () => near("=CUMIPMT(0.09/12,360,125000,13,24,0)", -11135.23213));
+  it("CUMIPMT second year", () => near("=CUMIPMT(0.09/12,360,125000,13,24,0)", -11135.232131));
   it("CUMIPMT first month", () => near("=CUMIPMT(0.09/12,360,125000,1,1,0)", -937.5));
   it("CUMPRINC second year", () => near("=CUMPRINC(0.09/12,360,125000,13,24,0)", -934.107123));
   it("CUMPRINC type 1, first period", () => near("=CUMPRINC(0.09/12,360,125000,1,1,1)", -998.291088));
