@@ -40,7 +40,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     },
   });
   c.fbar = createFormulaBar(q(".dk-app__bar"), {
-    onGoto: (t) => c.grid.select(t.split(":")[0]),
+    onGoto: (t) => { c.grid.select(t.split(":")[0]); c.grid.focus(); },
     onCommit: (raw) => app.edit(firstKey(c), raw),
   });
   c.sidebar = createSidebar(q(".dk-app__main"), {

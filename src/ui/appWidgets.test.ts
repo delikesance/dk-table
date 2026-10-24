@@ -105,3 +105,14 @@ describe('Fichier > Récents', () => {
     expect(cmd).toHaveBeenCalledWith('recent:/docs/budget.dktable');
   });
 });
+
+describe("name box", () => {
+  it("returns focus to the grid after a jump", () => {
+    const name = root.querySelector<HTMLInputElement>("input.dk-formula__name")!;
+    name.focus();
+    name.value = "C7";
+    name.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+    expect(app.selection()).toBe("C7");
+    expect(root.querySelector(".dkg")!.contains(document.activeElement)).toBe(true);
+  });
+});
