@@ -113,7 +113,7 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
 - [x] keys-nav : Ctrl+flèches façon Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A, Ctrl+Espace, Maj+Espace, Ctrl+PgPréc/PgSuiv (feuilles), Ctrl+Entrée, Alt+Entrée, F4
 - [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
-- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
+- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; XLSX
 - [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
@@ -176,6 +176,15 @@ Classement par gravité (P0 = pire)
 - [ ] H4b Splash de lancement Tauri et bannière d'installeur avec l'Atlas.
 - [x] H5 Barre d'outils sans Fichier ni Ouvrir/Enregistrer (couverts par la barre de menus et Ctrl+O/S).
 - [ ] e2e Playwright non relancés dans le conteneur cloud (navigateur absent) : à relancer en local.
+
+## Formatage conditionnel
+
+- [x] CF1 Moteur `src/engine/cf/` : valeur (>, ≥, <, ≤, =, ≠, entre, hors de ; opérandes nombre, texte ou =formule), texte (contient, ne contient pas, commence, se termine), vides / non vides, erreurs / sans erreur, doublons / uniques, n (ou n %) plus élevées / basses, au-dessus / en dessous de la moyenne, formule relative, échelles 2-3 couleurs, barres de données ; priorité = ordre de la liste
+- [x] CF2 Persistance `.dktable` (`DocSheet.cf`, validation stricte), annulation (un pas par modification), plages et formules suivent l'insertion / suppression de lignes et colonnes
+- [x] CF3 Rendu grille (par-dessus le style de la cellule, recalcul à chaque édition) + encre contrastée automatique sur les remplissages
+- [x] CF4 Gestionnaire : Format > Formatage conditionnel… et palette (`format.cf`) ; liste (monter, descendre, modifier, supprimer) + éditeur sur la sélection
+- [ ] CF5 Suites : jeux d'icônes, arrêt si vrai, règles sur dates (période), copier le format conditionnel avec le copier-coller, API Lua
+- [ ] CF6 Vérification à la main dans Tauri
 
 ## Phase 8 : Macros Lua
 
