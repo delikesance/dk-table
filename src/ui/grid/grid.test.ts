@@ -38,10 +38,12 @@ beforeEach(() => {
 });
 
 describe("createGrid", () => {
-  it("renders headers and 26x100 cells showing display values", () => {
-    expect(host.querySelectorAll(".dkg-cell").length).toBe(2600);
+  it("renders headers and a window of rows showing display values", () => {
+    const rows = host.querySelectorAll(".dkg-rowh").length;
+    expect(rows).toBeGreaterThan(0);
+    expect(rows).toBeLessThanOrEqual(100);
+    expect(host.querySelectorAll(".dkg-cell").length).toBe(rows * 26);
     expect(host.querySelectorAll(".dkg-colh").length).toBe(26);
-    expect(host.querySelectorAll(".dkg-rowh").length).toBe(100);
     expect(cell("B1").textContent).toBe("2");
     expect(host.querySelector(".dkg-colh")!.textContent).toBe("A");
   });
