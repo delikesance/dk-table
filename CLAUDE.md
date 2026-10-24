@@ -49,7 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm test` (vitest, jsdom pour l'UI), `npx tsc --noEmit`, `npm run build` (tsc + vite), `npm run tauri dev`.
 - `cargo test` (in `src-tauri/`), `npm run tauri build` (MSI + NSIS in `src-tauri/target/release/bundle/`).
 - `src/engine/` (pure logic, e.g. `sheet.ts` + tests), `src/ui/` (DOM), `src/main.ts` (entry), `src-tauri/` (Rust, `lib.rs` registers plugins dialog + fs).
-- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file only).
+- Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file scopés sur $HOME/$DOCUMENT/$DESKTOP/$DOWNLOAD ; `tauri-plugin-persisted-scope` conserve les chemins choisis via dialogue hors de ces dossiers, ex. fichiers récents sur un autre disque).
 - `src-tauri/icons/` = placeholder flat icon, to replace.
 
 - `npm run test:e2e` (Playwright, Chrome headless, `e2e/`, hors vitest). Prérequis: `npx playwright install chromium` (ou `E2E_CHANNEL=chrome` pour le Chrome système). Lance son propre Vite sur un port aléatoire (`E2E_PORT` s'il est fixé), jamais réutilisé (`reuseExistingServer: false`); pas de Tauri (dialog/fs absents). Helpers: `e2e/helpers.ts` (cellules = `.dkg-cell[data-key="A1"]`).

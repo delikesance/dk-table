@@ -69,7 +69,7 @@ P1 : qualité visible (beauté, praticité)
 - [x] Corriger les alertes hooks design (contraste, taille min) : fait (contraste-design, `src/styles/styles.test.ts`)
 - [ ] Icône d'application définitive (placeholder aujourd'hui)
 - [x] Formule vivante : tests de verrouillage seulement (`live.test.ts`) ; SVG en formule composée non supporté par le moteur texte/nombre (reste cellule entière)
-- [x] Fichiers récents persistés (`src/io/recents.ts`, localStorage) ; reste : scope fs Tauri adapté
+- [x] Fichiers récents persistés (`src/io/recents.ts`, localStorage) ; scope fs Tauri : fait (`capabilities/default.json` autorise $HOME/$DOCUMENT/$DESKTOP/$DOWNLOAD en lecture/écriture texte + plugin persisted-scope pour les chemins choisis ailleurs, test `src/config/fsScope.test.ts`)
 
 P2 : perf et fonctions
 - [x] Perf grille : rendu incrémental (écritures DOM évitées si inchangé) ; limite : renderCell/getDisplay toujours appelés pour 2600 cellules
