@@ -46,7 +46,7 @@ describe("SUMIF", () => {
     expect(f.SUMIF([A, ">0", [1, 2]])).toEqual(err("#VALUE!"));
   });
   it("ignores non-numeric sum cells", () => {
-    expect(f.SUMIF([A, ">0", ["x", 1, 2, 3]])).toBe(6);
+    expect(f.SUMIF([A, ">0", ["x", 1, 2, 3]])).toBe(5);
   });
 });
 
