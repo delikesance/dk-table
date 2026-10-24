@@ -7,15 +7,13 @@ import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
 import { ROW_H, scrollToRow } from "./virtual";
 import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
+import { bindKeys } from "./gridKeys";
+import { fillPlan } from "./fill";
 import { openEditor, type Editor } from "./editor";
 import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 
 export type { Grid, GridOptions } from "./types";
-
-const MOVES: Record<string, [number, number]> = {
-  ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-};
 
 /** Build the grid inside `host` and return its API. */
 export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
@@ -135,17 +133,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (refocus) root.focus();
   }
 
-  root.addEventListener("keydown", (e) => {
-    if (editor) return;
-    const m = MOVES[e.key];
-    if (m) { e.preventDefault(); move(m[0], m[1], e.shiftKey, e.ctrlKey || e.metaKey); }
-    else if (e.key === "Tab") { e.preventDefault(); move(e.shiftKey ? -1 : 1, 0); }
-    else if (e.key === "Enter") { e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
-    else if (e.key === "F2") { e.preventDefault(); startEdit(); }
-    else if (e.key === "Delete" || e.key === "Backspace") {
-      e.preventDefault();
-      rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); });
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); startEdit(e.key); }
+  bindKeys(root, {
+    busy: () => !!editor, move, startEdit,
+    clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
+    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
   });
 
   root.addEventListener("mousedown", (e) => {
