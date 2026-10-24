@@ -7,6 +7,7 @@ import { registerLive } from "../engine/live/adapter";
 import { createPalette } from "./palette/palette";
 import { newEntry } from "./model";
 import { installCommands } from "./commands";
+import { installUnloadGuard } from "./fileops";
 import { buildGrid, refreshTabs } from "./appGrid";
 import { createApi } from "./appApi";
 import { createWidgets } from "./appWidgets";
@@ -37,5 +38,6 @@ export function mount(root: HTMLElement): App {
   refreshTabs(c);
   buildGrid(c);
   installCommands(c.app);
+  installUnloadGuard(c.app);
   return c.app;
 }
