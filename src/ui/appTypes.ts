@@ -4,6 +4,7 @@ import type { SheetInfo } from "./tabs/tabs";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { Sheet } from "../engine/sheet";
 import type { CellStyle } from "./model";
+import type { BorderMode } from "./borders";
 
 /** Hooks set by the command layer (file ops, context menu). */
 export interface Hooks {
@@ -42,6 +43,8 @@ export interface App {
   select(key: string): void;
   /** Merge a style patch into every selected cell. */
   style(patch: CellStyle): void;
+  /** Apply a « Bordures » mode to the selection (per-cell edges, one undo step). */
+  borders(mode: BorderMode): void;
   /** Style of the active cell. */
   activeStyle(): CellStyle;
   toggleSidebar(): void;
