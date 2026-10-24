@@ -5,11 +5,15 @@ const ERR = /^#(CYCLE!|DIV\/0!|N\/A|VALUE!|REF!|NAME\?|NUM!|NULL!)$/;
 /** fr-FR / en numbers: optional sign, digit groups (space, nbsp, narrow nbsp), decimal , or ., exponent, % or currency suffix. */
 const NUM = /^[-+]?\d[\d   ]*(?:[.,]\d+)?(?:[eE][-+]?\d+)?\s*(?:%|[€$£])?$/;
 
-/** Classify a display string as number, error or text. */
+/** Accounting zero ("- €"), shown by the "Comptabilité" format. */
+const ACC_ZERO = /^-\s*€$/;
+
+/** Classify a display string as number, error or text; accounting "(1 234,50 €)" and "- €" are numbers (right-aligned). */
 export function cellKind(display: string): CellKind {
   const t = display.trim();
   if (ERR.test(t)) return "err";
-  return NUM.test(t) ? "num" : "text";
+  const inner = /^\((.+)\)$/.exec(t)?.[1] ?? t;
+  return NUM.test(inner) || ACC_ZERO.test(t) ? "num" : "text";
 }
 
 const HINTS: Record<string, string> = {
