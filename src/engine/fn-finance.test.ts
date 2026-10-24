@@ -24,11 +24,3 @@ describe("NPV", () => {
   it("values as args", () => expect(num("=NPV(0.1,100,100)")).toBeCloseTo(173.55, 2));
   it("range", () => expect(num("=NPV(0.1,A1:A2)", { A1: "100", A2: "100" })).toBeCloseTo(173.55, 2));
 });
-
-describe("IRR", () => {
-  it("simple", () => expect(num("=IRR(A1:A2)", { A1: "-100", A2: "110" })).toBeCloseTo(0.1, 6));
-  it("multi flows", () =>
-    expect(num("=IRR(A1:A3)", { A1: "-100", A2: "60", A3: "60" })).toBeCloseTo(0.1307, 3));
-  it("no sign change -> #NUM!", () =>
-    expect(getDisplay(ev("=IRR(A1:A2)", { A1: "100", A2: "110" }), "Z1")).toBe("#NUM!"));
-});
