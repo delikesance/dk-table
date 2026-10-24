@@ -1,6 +1,7 @@
 /** Palette commands, keyboard shortcuts and the cell context menu. */
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
+import { headerMenu } from "./headerMenu";
 import type { App } from "./appTypes";
 import { openSettings } from "./dialogs/settings";
 import { openAbout } from "./dialogs/about";
@@ -126,6 +127,8 @@ export function installCommands(app: App): void {
   };
   app.hooks.context = (e) => {
     e.preventDefault();
+    const heads = headerMenu(app, e.target as HTMLElement);
+    if (heads) { showContextMenu(e.clientX, e.clientY, heads); return; }
     const t = (e.target as HTMLElement).closest<HTMLElement>(".dkg-cell");
     if (t?.dataset.key && !app.selectedKeys().includes(t.dataset.key)) app.select(t.dataset.key);
     showContextMenu(e.clientX, e.clientY, cellMenu(app));

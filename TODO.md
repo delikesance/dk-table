@@ -186,3 +186,11 @@ Classement par gravité (P0 = pire)
 - [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
+
+## Contrôles de la grille façon Google Sheets
+
+- [x] G1 Clic sur en-tête de colonne/ligne = colonne/ligne entière ; Maj+clic et glisser (en-têtes ou cellules) étendent ; coin = toute la feuille (`ui/grid/mouse.ts`). Pas de défilement au clic ; Suppr ignore les cellules vides ; barre flottante masquée sur lignes/colonnes entières.
+- [x] G2 Clic droit sur en-tête : insérer, supprimer, trier (colonnes), « Figer jusqu'à la colonne C / ligne 5 », libérer l'axe, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`).
+- [x] G3 Affichage : « Figer jusqu'à la ligne N / la colonne X » selon la sélection.
+- [x] G4 Poignées de gel glissables dans le coin, guide aimanté aux bords (`ui/grid/freezeHandle.ts`).
+- [ ] G5 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable (non fait).

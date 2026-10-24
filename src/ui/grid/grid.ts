@@ -20,6 +20,8 @@ import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 import { markKind } from "./cellkind";
 import { bindMouse } from "./mouse";
+import { addFreezeHandles } from "./freezeHandle";
+import { clampFreeze, frozenPx } from "./freeze";
 
 export type { Grid, GridOptions } from "./types";
 
@@ -50,6 +52,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     render();
   });
   fz.layout();
+  if (opts.onFreeze) {
+    const f = clampFreeze(view.freeze, cols, rows);
+    addFreezeHandles(root, { freeze: f, widths: view.widths, frozenPx: frozenPx(f, ctl.hidden), rowHeads: () => win.heads.values(), colHeads, onFreeze: opts.onFreeze });
+  }
   const win = createRowWindow(root, cols, rows, (k, el) => {
     const p = parseKey(k);
     fz.decorate(el, p.col, p.row);
