@@ -95,6 +95,11 @@ P3 : livraison
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
 
+## E2E (Playwright)
+
+- [x] Infra e2e : `playwright.config.ts`, `e2e/helpers.ts`, `e2e/smoke.spec.ts`, job CI
+- [ ] Tests e2e par fonctionnalité à écrire (édition, formules, undo/redo, CSV, onglets, palette, cellules vivantes)
+
 ## Fait
 
 - [x] Dépôt GitHub privé créé et master poussée
