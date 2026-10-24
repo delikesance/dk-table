@@ -5,6 +5,7 @@
  */
 import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
 import { ROW_H, scrollToRow } from "./virtual";
+import { navigate, pageRows, type NavAction } from "./nav";
 import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
 import { bindKeys } from "./gridKeys";
@@ -112,13 +113,12 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (notify) opts.onSelect?.(selection());
   }
 
-  /** Move the cursor (extending the range when `extend`). */
-  function move(dc: number, dr: number, extend = false, jump = false): void {
-    active = clamp({
-      col: jump && dc ? (dc < 0 ? 0 : cols - 1) : active.col + dc,
-      row: dr ? stepRow(ctl.order(), active.row, dr, rows, jump) : active.row,
-    });
-    if (!extend) anchor = active;
+  /** Apply a keyboard navigation action (pure math in nav.ts) and re-render. */
+  function nav(a: NavAction, extend = false): void {
+    ({ anchor, active } = navigate(a, { anchor, active }, extend, {
+      cols, rows, order: ctl.order(), page: pageRows(root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H),
+      filled: (c, r) => opts.getRaw(keyOf(c, r)) !== "",
+    }));
     render();
   }
 
@@ -128,22 +128,21 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     const key = keyOf(active.col, active.row);
     sigs.delete(key);
     editor = openEditor(cells.get(key)!, initial ?? opts.getRaw(key), initial !== undefined,
-      { end: endEdit, move: (dc, dr) => move(dc, dr) });
+      { end: endEdit, move: (dc, dr) => nav({ kind: "move", dc, dr }), commitAll: () => endEdit(true, true, true) });
   }
 
-  /** Close the editor; commit the value when `commit`, refocus the grid when `refocus` (not on blur). */
-  function endEdit(commit: boolean, refocus = true): void {
+  /** Close the editor; commit when `commit` (into the whole selection when `all`), refocus the grid when `refocus` (not on blur). */
+  function endEdit(commit: boolean, refocus = true, all = false): void {
     if (!editor) return;
     const { input } = editor;
     editor = null;
     const key = keyOf(active.col, active.row);
-    if (commit) opts.onEdit(key, input.value);
-    paint(key);
+    for (const k of all ? rangeKeys(anchor, active) : [key]) { if (commit) opts.onEdit(k, input.value); paint(k); }
     if (refocus) root.focus();
   }
 
   bindKeys(root, {
-    busy: () => !!editor, move, startEdit,
+    busy: () => !!editor, nav, startEdit, sheet: (d) => opts.onSheetStep?.(d),
     clear: () => rangeKeys(anchor, active).forEach((k) => { opts.onEdit(k, ""); paint(k); }),
     fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
   });
