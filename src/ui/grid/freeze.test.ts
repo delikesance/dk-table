@@ -19,18 +19,17 @@ describe("colLeft", () => {
 });
 
 describe("freezeVars", () => {
-  it("gives sticky offsets per frozen row/col plus scroll padding", () => {
+  it("gives sticky offsets per frozen row/col plus a left scroll padding", () => {
     const v = freezeVars({ rows: 2, cols: 1 }, {}, () => false);
     expect(v["--dkg-t0"]).toBe("calc(var(--col-header-h) + 0px)");
     expect(v["--dkg-t1"]).toBe("calc(var(--col-header-h) + 28px)");
     expect(v["--dkg-l0"]).toBe("var(--row-header-w)");
-    expect(v["scroll-padding-top"]).toBe("calc(var(--col-header-h) + 56px)");
+    expect(v["scroll-padding-top"]).toBeUndefined();
     expect(v["scroll-padding-left"]).toBe("calc(var(--row-header-w) + var(--cell-w) * 1)");
   });
   it("hidden (filtered) frozen rows take no height", () => {
     const v = freezeVars({ rows: 3, cols: 0 }, {}, (r) => r === 1);
     expect(v["--dkg-t2"]).toBe("calc(var(--col-header-h) + 28px)");
-    expect(v["scroll-padding-top"]).toBe("calc(var(--col-header-h) + 56px)");
   });
 });
 

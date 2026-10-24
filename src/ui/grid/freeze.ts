@@ -1,8 +1,9 @@
 /**
  * Frozen panes ("Figer les volets"): pure layout math (no DOM).
  * Frozen rows/cols are made `position: sticky`; their offsets are CSS variables set on the grid root
- * (`--dkg-t<r>` top of frozen row r, `--dkg-l<c>` left of frozen column c) plus scroll-padding so that
- * scrollIntoView keeps the active cell out from under the frozen band.
+ * (`--dkg-t<r>` top of frozen row r, `--dkg-l<c>` left of frozen column c) plus `scroll-padding-left` so
+ * that horizontal scrollIntoView keeps the active cell out from under the frozen columns (vertical
+ * scrolling is computed by `revealTop`: a top padding would make the browser scroll frozen rows away).
  */
 import { ROW_H, scrollToRow } from "./virtual";
 
@@ -36,7 +37,7 @@ export function frozenPx(f: Freeze, hidden: (row: number) => boolean): number {
   return n * ROW_H;
 }
 
-/** CSS custom properties / scroll paddings to set on the grid root for freeze `f`. */
+/** CSS custom properties / scroll padding to set on the grid root for freeze `f`. */
 export function freezeVars(f: Freeze, widths: Record<number, number>, hidden: (row: number) => boolean): Record<string, string> {
   const out: Record<string, string> = {};
   let y = 0;
@@ -45,7 +46,6 @@ export function freezeVars(f: Freeze, widths: Record<number, number>, hidden: (r
     if (!hidden(r)) y += ROW_H;
   }
   for (let c = 0; c < f.cols; c++) out[`--dkg-l${c}`] = colLeft(c, widths);
-  out["scroll-padding-top"] = `calc(var(--col-header-h) + ${y}px)`;
   out["scroll-padding-left"] = colLeft(f.cols, widths);
   return out;
 }
