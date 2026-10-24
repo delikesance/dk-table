@@ -29,13 +29,13 @@
   /* États */
   --c-error: #c4261d;
   --c-error-soft: rgba(196, 38, 29, 0.08);
-  --c-success: #1a7f45;
+  --c-success: #166b3b;
   --c-success-soft: rgba(26, 127, 69, 0.10);
   --c-readonly-bg: #f6f6f8;
   --c-readonly-text: #55555c;
 
   /* Dépendances (précédents / dépendants) */
-  --c-dep-in: #b45309;        /* précédents : ambre */
+  --c-dep-in: #9a4507;       /* précédents : ambre */
   --c-dep-in-soft: rgba(180, 83, 9, 0.12);
   --c-dep-out: #0e7490;       /* dépendants : cyan */
   --c-dep-out-soft: rgba(14, 116, 144, 0.12);
@@ -43,7 +43,7 @@
   /* Typographie */
   --font-ui: -apple-system, "SF Pro Text", "SF Pro", "Segoe UI", Inter, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
-  --fs-xs: 11px;
+  --fs-xs: 12px;
   --fs-sm: 12px;
   --fs-md: 13px;   /* cellules, UI */
   --fs-lg: 15px;
@@ -118,7 +118,7 @@
     --c-line: rgba(255, 255, 255, 0.09);
     --c-line-strong: rgba(255, 255, 255, 0.2);
 
-    --c-accent: #8e9dff;     /* 7:1 sur surface */
+    --c-accent: #9aa7ff;    /* 7:1 sur surface */
     --c-accent-hover: #a9b5ff;
     --c-accent-soft: rgba(142, 157, 255, 0.14);
     --c-accent-soft-2: rgba(142, 157, 255, 0.22);
