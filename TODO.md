@@ -148,3 +148,4 @@ Classement par gravité (P0 = pire)
 - [x] P3 Menu contextuel: non capturé par script (ouverture via clic droit réel requise): à vérifier à la revue (ombre `--sh-2`, rayon `--r-md`, danger rouge). `contextmenu/contextmenu.css`.
 - [x] P3 Toasts/statut: non visibles dans les captures (aucun message déclenché); vérifier position/contraste (`toast/`). Test: toast `role=status`, fond `--c-overlay` contraste >= 4.5:1.
 - [ ] P3 Cellules vivantes: sparkline fine (1px) et barres sans marge, TREND rouge seul sans contexte; en sombre barres pâles saturées. Test: `engine/live` SVG `stroke-width>=1.5`, `gap` barres >= 1px, couleurs via `--c-accent`/`--c-error`. `live/*.ts`.
+- [x] Grille: Entrée sur cellule non éditée = ouvre l'édition (comme F2); Maj+Entrée monte, Ctrl/Alt+Entrée ignoré. Test: `ui/grid/grid.test.ts`. `grid/grid.ts`.
