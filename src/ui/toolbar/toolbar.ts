@@ -1,4 +1,5 @@
 import { icon } from "../icons";
+import { createMenus, type MenuHandlers } from "./menus";
 import "./toolbar.css";
 
 /** Horizontal alignment values. */
@@ -9,6 +10,8 @@ export interface ToolbarHandlers {
   onUndo(): void; onRedo(): void; onBold(): void; onItalic(): void;
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string): void;
   onOpen(): void; onSave(): void;
+  /** Optional: when all of `MenuHandlers` are given, File and Import/Export menus are shown. */
+  menus?: MenuHandlers;
 }
 
 /** Toolbar reflected state. */
@@ -74,6 +77,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   fillBtn.append(color);
 
   el.append(
+    ...(h.menus ? [createMenus(h.menus), sep()] : []),
     group(undo, redo), sep(), group(bold, italic), sep(), group(...alignBtns), sep(),
     group(sel), sep(), group(fillBtn), sep(),
     group(mkBtn("open", "Ouvrir (Ctrl+O)", h.onOpen), mkBtn("save", "Enregistrer (Ctrl+S)", h.onSave)),
