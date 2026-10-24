@@ -111,8 +111,9 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] functions-more : 61 fonctions (ROUNDUP, SUMPRODUCT, STDEV, AVERAGEIFS, TEXTJOIN, SUBSTITUTE, ISERROR, IFS, SWITCH, EOMONTH, NETWORKDAYS, CHOOSE…)
 - [x] freeze-panes : figer première ligne / colonne / jusqu'à la cellule active (palette), persisté
 - [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
+- [x] keys-nav : Ctrl+flèches façon Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A, Ctrl+Espace, Maj+Espace, Ctrl+PgPréc/PgSuiv (feuilles), Ctrl+Entrée, Alt+Entrée, F4
 - [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
-- [ ] Suites : réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
+- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; mise en forme conditionnelle ; XLSX
 - [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
