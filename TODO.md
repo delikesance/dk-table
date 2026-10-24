@@ -65,17 +65,19 @@ P0 : bloquant démo
 - [ ] T5.1 Vérification visuelle réelle dans la fenêtre Tauri (`npm run tauri dev`) : créer, remplir, enregistrer, rouvrir, CSV, menu contextuel, Ctrl+K, copier-coller de plages (un seul pas d'annulation) ; corriger les bugs UI
 - [ ] Vérifier la CI : `gh run view 40112430388` (doit rester verte)
 - [ ] Script de démo 5 min : installation puis tour des fonctionnalités (cellules vivantes en final)
-- [ ] Persister gras/italique/alignement/fond dans `.dktable` + couverture annulation (undo) (session seulement aujourd'hui)
-- [ ] Menu de format de nombre fonctionnel (général/nombre/pourcentage/devise/date) ; `onFormat` de la toolbar est un no-op
+- [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
+- [ ] refonte-apple : refonte UI style Apple sobre, icônes noires, par défaut seule la feuille visible, outils/menus déployables à la demande
+- [ ] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise/date) via `app.style({format})` ; `CellStyle.format` existe déjà, rendu à implémenter ; `onFormat` de la toolbar est un no-op
 
 P1 : qualité visible (beauté, praticité)
 - [x] Corriger les alertes hooks design (contraste, taille min) : fait (contraste-design, `src/styles/styles.test.ts`)
 - [ ] Icône d'application définitive (placeholder aujourd'hui)
 - [x] Formule vivante : tests de verrouillage seulement (`live.test.ts`) ; SVG en formule composée non supporté par le moteur texte/nombre (reste cellule entière)
-- [ ] Fichiers récents persistés entre sessions + scope fs Tauri adapté
+- [x] Fichiers récents persistés (`src/io/recents.ts`, localStorage) ; reste : scope fs Tauri adapté
 
 P2 : perf et fonctions
-- [ ] Perf grille : redessin partiel (aujourd'hui complet à chaque édition), virtualisation, taille dynamique
+- [x] Perf grille : rendu incrémental (écritures DOM évitées si inchangé) ; limite : renderCell/getDisplay toujours appelés pour 2600 cellules
+- [ ] Perf grille : virtualisation, taille dynamique
 - [ ] Fonctions et features supplémentaires selon priorités de `docs/recherche-tableur.md`
 - [x] Split de `app.ts` en `appState/appGrid/appApi/appWidgets` (split-app) ; contrôle > 200 lignes à refaire à chaque vague
 
