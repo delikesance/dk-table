@@ -2,6 +2,7 @@
 import { registerCommand } from "./palette/registry";
 import { showContextMenu, type MenuItem } from "./contextmenu/contextmenu";
 import type { App } from "./appTypes";
+import { openMacroDialog } from "../macros/dialog";
 import { exportCsv, importCsv, openFile, openRecent, saveFile } from "./fileops";
 
 /** Keyboard shortcuts (Ctrl/Cmd + key) -> action. Ctrl+K is owned by the palette. */
@@ -50,6 +51,7 @@ export function installCommands(app: App): void {
   run("format.bold", "Gras", () => app.style({ bold: !app.activeStyle().bold }), "Ctrl+B");
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("sheet.add", "Nouvelle feuille", () => app.addSheet(), "Ctrl+N");
+  run("macro.run", "Exécuter une macro Lua…", () => openMacroDialog(app), undefined, ["macro", "lua", "script"]);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   for (const f of ["SPARKLINE", "BAR", "TREND"]) {
     run(`insert.${f}`, `Insérer ${f}`, () => app.insertFunction(f), undefined, ["graphique", "cellule vivante"]);

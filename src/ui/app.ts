@@ -101,6 +101,10 @@ export function mount(root: HTMLElement): App {
       setCell(cur.sheet, key, raw);
       touch();
     },
+    async runBatch(fn) {
+      pushUndo(cur);
+      try { return await fn(cur.sheet); } finally { touch(); }
+    },
     undo() { if (step(cur, "undo")) { buildGrid(); setTitle(true); } },
     redo() { if (step(cur, "redo")) { buildGrid(); setTitle(true); } },
     addSheet() {
