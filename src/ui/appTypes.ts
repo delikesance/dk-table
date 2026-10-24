@@ -20,6 +20,8 @@ export interface App {
   dirty?: boolean;
   /** Edit a cell (undoable) and recalculate dependents. */
   edit(key: string, raw: string): void;
+  /** Edit several cells as ONE undo step and ONE refresh (paste/clear). */
+  editMany(cells: Record<string, string>): void;
   undo(): void;
   redo(): void;
   addSheet(): void;
@@ -40,7 +42,7 @@ export interface App {
   /** Style of the active cell. */
   activeStyle(): CellStyle;
   toggleSidebar(): void;
-  /** Start `=NAME(` in the active cell. */
+  /** Write a complete `=NAME()` in the active cell; no-op if the cell is not empty (never overwrites). */
   insertFunction(name: string): void;
   recents(): RecentFile[];
   addRecent(path: string): void;
