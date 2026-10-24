@@ -8,6 +8,7 @@ import { autosum } from "./autosum";
 import { BORDER_LABELS } from "./borders";
 import { parseKey } from "./grid/keys";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
+import { openCfDialog } from "./cf/panel";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -99,6 +100,7 @@ export function installCommands(app: App): void {
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("format.underline", "Souligné", () => app.style({ underline: !app.activeStyle().underline }), "Ctrl+U");
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
+  run("format.cf", "Formatage conditionnel…", () => openCfDialog(app), undefined, ["conditionnel", "règle", "échelle", "barres", "doublons", "surligner"]);
   for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
   run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);

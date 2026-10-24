@@ -7,6 +7,7 @@ import { fileEntries, type Entry, type MenuDef, type MenuHandlers } from "../too
 import { applyTheme, savedThemePref, type ThemePref } from "../theme";
 import { BORDER_LABELS } from "../borders";
 import { parseKey } from "../grid/keys";
+import { openCfDialog } from "../cf/panel";
 import type { App } from "../appTypes";
 
 /** Actions de la barre qui ne passent pas par le handle `App` (fichiers, dialogues, macros). */
@@ -55,6 +56,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Aligner à droite", run: () => app.style({ align: "right" }) },
       { label: "Renvoi à la ligne", run: toggle("wrap") },
       ...BORDER_LABELS.map(([m, l], i) => ({ label: `Bordures : ${l.toLowerCase()}`, sep: i === 0, run: () => app.borders(m) })),
+      { label: "Formatage conditionnel…", sep: true, run: () => openCfDialog(app) },
       { label: "Standard", sep: true, run: fmt("general") },
       { label: "Nombre", run: fmt("number") },
       { label: "Pourcentage", run: fmt("percent") },

@@ -9,7 +9,7 @@ const fakeApp = () => ({
   undo: vi.fn(), redo: vi.fn(), style: vi.fn(), activeStyle: () => ({}), addSheet: vi.fn(),
   sortColumn: vi.fn(), toggleSidebar: vi.fn(), editMany: vi.fn(), selectedKeys: () => ["A1"],
   borders: vi.fn(), insertRows: vi.fn(), insertCols: vi.fn(), deleteRows: vi.fn(), deleteCols: vi.fn(),
-  setFreeze: vi.fn(), selection: () => "C3",
+  setFreeze: vi.fn(), selection: () => "C3", cfRules: () => [], setCfRules: vi.fn(),
 }) as unknown as App;
 const deps = (macros: { id: string; name: string }[] = []): MenuDeps => ({
   file: { onNew: vi.fn(), onOpen: vi.fn(), onSave: vi.fn(), onSaveAs: vi.fn(), onImportCsv: vi.fn(), onExportCsv: vi.fn() },
@@ -49,6 +49,10 @@ describe("contenu des menus", () => {
     expect(app.setFreeze).toHaveBeenCalledWith({ rows: 2, cols: 2 });
     items(spec, "Format").find((e) => e.label === "Bordures : contour")!.run!();
     expect(app.borders).toHaveBeenCalledWith("outer");
+  });
+  it("Format > Formatage conditionnel… ouvre le gestionnaire de règles", () => {
+    items(buildMenuSpec(fakeApp(), deps()), "Format").find((e) => e.label === "Formatage conditionnel…")!.run!();
+    expect(document.querySelector('.dk-dialog[data-id="cf"] h2')!.textContent).toBe("Formatage conditionnel");
   });
   it("Fichier > Paramètres… (Ctrl+,)", () => {
     const d = deps();
