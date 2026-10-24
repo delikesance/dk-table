@@ -52,41 +52,38 @@ test("toolbar alignment buttons set text-align", async ({ page }) => {
 });
 
 test("fill color of a single cell is applied and undoable", async ({ page }) => {
-  await toggleTools(page);
   await selectCell(page, "B2");
-  await pickFill(page, "#ff0000");
-  expect(await css(page, "B2", "background-color")).toBe("rgb(255, 0, 0)");
-  expect(await css(page, "B3", "background-color")).not.toBe("rgb(255, 0, 0)");
+  await pickFill(page, "Rouge clair");
+  expect(await css(page, "B2", "background-color")).toBe("rgb(253, 226, 224)");
+  expect(await css(page, "B3", "background-color")).not.toBe("rgb(253, 226, 224)");
   await page.locator(".dkg").focus();
   await page.keyboard.press("Control+z");
-  expect(await css(page, "B2", "background-color")).not.toBe("rgb(255, 0, 0)");
+  expect(await css(page, "B2", "background-color")).not.toBe("rgb(253, 226, 224)");
 });
 
 test("fill color of a range covers every cell of the range only", async ({ page }) => {
-  await toggleTools(page);
   await selectRange(page, "A1", "B2");
-  await pickFill(page, "#00ff00");
-  for (const k of ["A1", "B1", "A2", "B2"]) expect(await css(page, k, "background-color")).toBe("rgb(0, 255, 0)");
-  expect(await css(page, "C1", "background-color")).not.toBe("rgb(0, 255, 0)");
-  expect(await css(page, "A3", "background-color")).not.toBe("rgb(0, 255, 0)");
+  await pickFill(page, "Vert clair");
+  for (const k of ["A1", "B1", "A2", "B2"]) expect(await css(page, k, "background-color")).toBe("rgb(217, 242, 221)");
+  expect(await css(page, "C1", "background-color")).not.toBe("rgb(217, 242, 221)");
+  expect(await css(page, "A3", "background-color")).not.toBe("rgb(217, 242, 221)");
   await page.locator(".dkg").focus();
   await page.keyboard.press("Control+z");
-  for (const k of ["A1", "B1", "A2", "B2"]) expect(await css(page, k, "background-color")).not.toBe("rgb(0, 255, 0)");
+  for (const k of ["A1", "B1", "A2", "B2"]) expect(await css(page, k, "background-color")).not.toBe("rgb(217, 242, 221)");
 });
 
 test("fill and bold survive a save / open round-trip", async ({ page }) => {
-  await toggleTools(page);
   await typeInCell(page, "A1", "x");
   await selectCell(page, "A1");
   await page.keyboard.press("Control+b");
-  await pickFill(page, "#0000ff");
+  await pickFill(page, "Bleu clair");
   await page.locator(".dkg").focus();
   await page.keyboard.press("Control+s");
   await expect.poll(() => page.evaluate(() => Object.keys((window as unknown as { __files: object }).__files).length)).toBe(1);
   await page.keyboard.press("Control+z"); // dirty the doc and drop the fill
   await page.keyboard.press("Control+z");
-  expect(await css(page, "A1", "background-color")).not.toBe("rgb(0, 0, 255)");
+  expect(await css(page, "A1", "background-color")).not.toBe("rgb(214, 230, 251)");
   await page.keyboard.press("Control+o");
-  await expect.poll(() => css(page, "A1", "background-color")).toBe("rgb(0, 0, 255)");
+  await expect.poll(() => css(page, "A1", "background-color")).toBe("rgb(214, 230, 251)");
   expect(await css(page, "A1", "font-weight")).toBe("700");
 });
