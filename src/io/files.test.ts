@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { exportCsvFile, importCsvFile, openDocument, openPath, saveAs, saveDocument, type IoDeps } from "./files";
+import { exportCsvFile, exportFecFile, importCsvFile, openDocument, openPath, saveAs, saveDocument, type IoDeps } from "./files";
 import { serialize } from "./format";
 import type { DktDoc } from "./types";
 
@@ -64,5 +64,20 @@ describe("openPath / CSV files", () => {
     const p = await exportCsvFile({ ...doc.sheets[0], cells: { A1: { raw: "x" } } }, d);
     expect(p).toBe("/x/out.csv");
     expect(d.writeTextFile).toHaveBeenCalledWith("/x/out.csv", "x");
+  });
+});
+
+describe("exportFecFile", () => {
+  it("asks with the FEC filter and appends .txt", async () => {
+    const d = deps({ save: vi.fn(async () => "/x/123456789FEC20241231") });
+    expect(await exportFecFile("a\tb\r\n", d)).toBe("/x/123456789FEC20241231.txt");
+    expect(d.save).toHaveBeenCalledWith({ filters: [{ name: "FEC", extensions: ["txt"] }] });
+    expect(d.writeTextFile).toHaveBeenCalledWith("/x/123456789FEC20241231.txt", "a\tb\r\n");
+  });
+  it("keeps an existing .txt and writes nothing on cancel", async () => {
+    expect(await exportFecFile("x", deps({ save: async () => "/x/f.TXT" }))).toBe("/x/f.TXT");
+    const d = deps({ save: async () => null });
+    expect(await exportFecFile("x", d)).toBeNull();
+    expect(d.writeTextFile).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import { fileEntries, type Entry, type MenuDef, type MenuHandlers } from "../too
 import { applyTheme, savedThemePref, type ThemePref } from "../theme";
 import { BORDER_LABELS } from "../borders";
 import { parseKey } from "../grid/keys";
+import { insertFecHeaders } from "../fec";
 import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
 import type { App } from "../appTypes";
@@ -62,6 +63,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Nombre", run: fmt("number") },
       { label: "Pourcentage", run: fmt("percent") },
       { label: "Monétaire", run: fmt("currency") },
+      { label: "Comptabilité", run: fmt("accounting") },
       { label: "Date", run: fmt("date") },
     ] },
     { label: "Feuille", items: [
@@ -75,6 +77,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Trier A → Z", run: () => void app.sortColumn(false) },
       { label: "Trier Z → A", run: () => void app.sortColumn(true) },
       { label: "Somme rapide", hint: "Alt+=", sep: true, run: d.autosum },
+      { label: "Insérer les en-têtes FEC", sep: true, run: () => insertFecHeaders(app) },
     ] },
     { label: "Scripts", items: () => [
       { label: "Éditeur de macros", hint: "Alt+F11", run: d.openMacros },

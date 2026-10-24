@@ -94,7 +94,7 @@ test("File menu opens with the keyboard and lists its entries", async ({ page })
   const list = page.locator('[role="menu"][aria-label="Fichier"]');
   await expect(list).toBeVisible();
   await expect(list.locator(".dk-menu__item")).toHaveText([
-    /Nouveau/, /Ouvrir/, /Récents/, /Enregistrer/, /Enregistrer sous/, /Importer CSV/, /Exporter CSV/, /Paramètres/,
+    /Nouveau/, /Ouvrir/, /Récents/, /Enregistrer/, /Enregistrer sous/, /Importer CSV/, /Exporter CSV/, /Exporter FEC/, /Paramètres/,
   ]);
   await expect(list.locator(".dk-menu__item").first()).toBeFocused();
   await page.keyboard.press("End");

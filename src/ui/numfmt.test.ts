@@ -18,6 +18,25 @@ describe("formatValue", () => {
   });
 });
 
+describe("formatValue accounting", () => {
+  const FS = " ";
+  it("positive: 2 decimals, euro after, trailing figure space", () => {
+    expect(norm(formatValue("1234.5", "accounting"))).toBe(`1 234,50 €${FS}`);
+  });
+  it("negative in parentheses", () => expect(norm(formatValue("-1234.5", "accounting"))).toBe("(1 234,50 €)"));
+  it("zero shown as dash", () => {
+    expect(norm(formatValue("0", "accounting"))).toBe(`- €${FS}`);
+    expect(norm(formatValue("-0.001", "accounting"))).toBe(`- €${FS}`);
+  });
+  it("right-aligned: positive pad matches the closing parenthesis", () => {
+    expect(formatValue("12.3", "accounting").length).toBe(formatValue("-12.3", "accounting").length - 1);
+  });
+  it("non numeric text unchanged", () => {
+    expect(formatValue("abc", "accounting")).toBe("abc");
+    expect(formatValue("", "accounting")).toBe("");
+  });
+});
+
 describe("formatValue date", () => {
   it("serial to DD/MM/YYYY", () => {
     expect(formatValue("46319", "date")).toBe("24/10/2026");
