@@ -6,7 +6,7 @@ import { lookupFunctions as L } from "./fn-lookup";
 /** Call a builtin; 2D matrices are passed as nested arrays (cast, like a 2D-aware evaluator would). */
 const call = (n: string, ...a: unknown[]): Value => L[n](a as Arg[]);
 const T: Value[][] = [[1, "a"], [2, "b"], [3, "c"]]; // A1:B3
-const N_A = err("#VALUE!"); // engine has no #N/A
+const N_A = err("#N/A");
 
 describe("VLOOKUP", () => {
   it("exact", () => expect(call("VLOOKUP", 2, T, 2, false)).toBe("b"));
