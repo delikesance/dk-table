@@ -33,6 +33,8 @@ export interface DocSheet {
   cells: Record<string, DocCell>;
   /** Optional per-cell styles (absent in older files). */
   styles?: Record<string, CellStyle>;
+  /** Optional frozen panes: number of top rows / left columns kept visible (absent = none). */
+  freeze?: { rows: number; cols: number };
 }
 
 /** Whole document persisted as JSON. */
