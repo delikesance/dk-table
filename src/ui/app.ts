@@ -16,7 +16,7 @@ import type { App } from "./appTypes";
 export type { App, Hooks } from "./appTypes";
 
 const LAYOUT =
-  '<div class="dk-app"><div class="dk-app__top"></div>' +
+  '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
   '<div class="dk-app__main"><div class="dk-app__grid"></div></div>' +
   '<div class="dk-app__tabs"></div></div>';
 
