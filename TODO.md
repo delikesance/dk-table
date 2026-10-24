@@ -89,6 +89,9 @@ P3 : livraison
 
 ## Later (non planifié)
 
+- [x] Macros Lua (wasmoon) : API cellules, délai max, palette « Exécuter une macro Lua… », undo en un pas (branche `wt/lua-macros`)
+- [ ] Macros : enregistrer/réutiliser des scripts, accès aux styles et à plusieurs feuilles
+
 - [x] Moteur de recalcul (graphe de dépendances, #CYCLE) : fait (I1)
 - [x] Pépite Cellules vivantes (SPARKLINE/BAR/TREND) : fait (I6 + I8)
 
