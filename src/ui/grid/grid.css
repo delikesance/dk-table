@@ -25,6 +25,17 @@
 }
 .dkg-corner { top: 0; left: 0; z-index: 3; height: var(--col-header-h); }
 .dkg-colh { top: 0; height: var(--col-header-h); }
+/* Poignée de redimensionnement: bande sur le bord droit de l'en-tête de colonne. */
+.dkg-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 4;
+}
+.dkg-resizer:hover { background: var(--c-accent-soft-2); }
 .dkg-rowh { left: 0; }
 .dkg-colh.dkg-on, .dkg-rowh.dkg-on { background: var(--c-accent-soft); color: var(--c-accent); }
 .dkg-cell {

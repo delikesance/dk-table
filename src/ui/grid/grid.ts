@@ -8,6 +8,7 @@ import { ROW_H, scrollToRow } from "./virtual";
 import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { bindClipboard } from "./clipboard";
 import { openEditor, type Editor } from "./editor";
+import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 
 export type { Grid, GridOptions } from "./types";
@@ -27,10 +28,16 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const root = document.createElement("div");
   root.className = "dkg";
   root.tabIndex = 0;
-  root.style.gridTemplateColumns = `var(--row-header-w) repeat(${cols}, var(--cell-w))`;
+  const view = opts.view ?? { widths: {}, filters: {} };
+  const applyWidths = (): void => { root.style.gridTemplateColumns = templateColumns(view.widths, cols); };
+  applyWidths();
   root.style.gridTemplateRows = `var(--col-header-h) repeat(${rows}, ${ROW_H}px)`;
   const colHeads = addHeaders(root, cols);
   host.appendChild(root);
+  addResizers(colHeads, {
+    view, apply: applyWidths,
+    columnTexts: (c) => Array.from({ length: rows }, (_, r) => opts.getDisplay(keyOf(c, r))),
+  });
   const win = createRowWindow(root, cols, rows, (k, el) => opts.onCellCreated?.(k, el));
   const cells = win.cells;
 
