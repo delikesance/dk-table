@@ -112,4 +112,20 @@ describe("moodboard: fin de boucle", () => {
     h.emit({ type: "done", complete: false });
     expect(document.getElementById("progress")!.textContent).toContain("Boucle non terminée");
   });
+  it("echec du chargement: message de nouvelle tentative, pas 'Aucune carte'", async () => {
+    const g = globalThis as Record<string, unknown>;
+    g.fetch = async () => { throw new Error("down"); };
+    g.EventSource = class { addEventListener() {} };
+    document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
+    new Function(js)();
+    await new Promise((r) => setTimeout(r, 10));
+    const err = document.getElementById("loaderr")!;
+    expect(err.textContent).toMatch(/Impossible de charger.*Réessayer/s);
+    expect(document.querySelectorAll(".empty").length).toBe(0);
+    g.fetch = async () => ({ ok: true, json: async () => CARDS });
+    (err.querySelector("button") as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.getElementById("loaderr")).toBeNull();
+    expect(document.querySelectorAll(".card").length).toBe(6);
+  });
 });

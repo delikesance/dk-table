@@ -101,11 +101,24 @@
     render();
   }
 
-  /** Recharge les cartes (get /moodboard), au plus une fois toutes les 3 s en rafale. */
+  /** Message d'echec avec bouton Reessayer (un seul, retire au prochain succes). */
+  function showError() {
+    if ($("loaderr")) return;
+    const box = el("div", "loaderr", "Impossible de charger les cartes. ");
+    box.id = "loaderr"; box.setAttribute("role", "alert");
+    const b = el("button", null, "Réessayer"); b.type = "button"; b.addEventListener("click", load);
+    box.append(b); $("board").before(box);
+  }
+
+  /** Recharge les cartes (get /moodboard), au plus une fois toutes les 3 s en rafale; en cas d'echec garde l'etat et propose de reessayer. */
   let last = 0, timer = null;
   async function load() {
     last = Date.now();
-    try { const r = await fetch("/moodboard"); if (r.ok) { cards = await r.json(); render(); } } catch { /* garde l'etat */ }
+    try {
+      const r = await fetch("/moodboard");
+      if (!r.ok) throw new Error(String(r.status));
+      cards = await r.json(); const e = $("loaderr"); if (e) e.remove(); render();
+    } catch { showError(); }
   }
   function soon() {
     if (timer) return;

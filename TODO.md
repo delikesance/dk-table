@@ -244,3 +244,10 @@ Classement par gravité (P0 = pire)
 - [x] Boucle, toile design libre (`docs/design-canvas.md`): scripts et animations permis dans l'iframe isolée, runtime (thème, pause, erreurs), largeurs/zoom/comparaison, skill `.claude/skills/design-canvas`
 - [ ] Boucle: préchauffage de processus (`startup()` alpha) non retenu; à reconsidérer si l'API se stabilise
 
+- [x] Défilement et sélection propres à chaque feuille : `appGrid.buildGrid` mémorise scrollTop/scrollLeft + sélection de la feuille quittée (WeakMap par entrée, non enregistrés dans le fichier) et les restaure au retour; une feuille neuve démarre en A1 en haut. Tests `appScroll.test.ts` + `e2e/sheet-scroll.spec.ts`. Onglets doc/macro non concernés (éditeurs recréés à l'ouverture)
+
+## Boucle autonome (autoloop)
+
+- [x] Étape 1 : squelette `tools/autoloop/` (config, budget, journal, redact, agent injectable + fake, loop pur, main `--dry-run`), tests `tools/autoloop/__tests__/`, tsconfig inclut `tools`. Aucun appel réel au SDK.
+- [x] Étape 2 (MVP) : cycle audit -> dédoublonnage (empreinte `fp`) -> issues `auto:bug` (`github.ts`, `dedupe.ts`, `roles/audit.ts`, `checks.ts`, `cycle.ts`, `live.ts`); `--live` branché mais jamais lancé; SDK en devDependency
+- [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees

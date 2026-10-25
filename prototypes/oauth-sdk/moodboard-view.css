@@ -45,3 +45,5 @@
 #drawer .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: var(--s2); }
 #drawer .shots img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
 #drawer .missing { color: var(--st-block); font-weight: 600; }
+.loaderr { margin: var(--s3) var(--s4) 0; padding: var(--s2) var(--s3); border: 1px solid var(--fail); border-radius: 4px; background: var(--warn-bg); }
+.loaderr button { font: inherit; margin-left: var(--s2); cursor: pointer; }

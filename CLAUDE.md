@@ -1,7 +1,6 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Development methodology: TDD
 
 - The project follows test-driven development: write tests first (red), implement (green), then refactor.
@@ -15,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - No file may exceed 200 lines (code, CSS, docs, tests); split into modules before crossing it.
 - Everything is documented: every module/function/component gets a short doc comment, and each implementation is documented (what/why, usage) in the same change.
 - After every implementation, update `CLAUDE.md` when needed (commands, architecture, structure, decisions) and update `TODO.md` (see To-do list).
+- Réponses : phrases les plus courtes possibles, zéro blabla, un minimum d'erreurs d'inattention (relire avant d'envoyer).
 
 ## Captures d'écran pour les nouvelles fonctionnalités
 
@@ -28,6 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Parallel workflow
 
+- Ordre : 1) recherche (quoi construire, comparaison); 2) design (UX/UI + contrat données/API, écrit avant tout code : maquette ou courte spec sous `docs/`, interfaces fixées); 3) implémentation par workers en parallèle, chacun en TDD, appuyés sur ce design (contrats fixés = ni collisions ni reprise); 4) correction/tests; 5) intégration.
 - Before launching a task, split it into small independent mini-tasks (disjoint files where possible).
 - One worker per mini-task, each in its own git worktree on branch `wt/<mini-task-name>`, run in parallel.
 - TDD per mini-task: write its failing test first; every worker brief includes the test command (`npm test`, plus `cargo test` for Rust).
@@ -64,7 +65,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Suivi du design en direct (`prototypes/oauth-sdk/designs.ts`): `listDesigns/watchDesigns/readDesign` sur `docs/design/*.html` (hors `recap.html`); serveur: `GET /designs` ({files, steps}), `GET /designs/<nom>` (CSP sandbox), `GET /design.html` (`designHtml`), evenement SSE `file`; `pipeline.ts` surveille le secteur design et ecrit `docs/design/recap.html` (`buildRecap` de `recap.ts`, injecte) avant le commit.
 - Historique des designs: fichiers `docs/design/<date>-<HHmmss>.html` (+ `recap-<date>-<HHmmss>.html`), un par run, jamais écrasés (`sectors.ts` `designPath/recapPath/beginDesignRun`). `designStore.ts` (`createDesignStore`): `/designs` et `/designs/<nom>` servent l'union secteur actif + arbre principal + ref `developpement` (`git ls-tree`/`git show` via `Run`), dédoublonnée par nom, avec `kind: design|recap`; `design.html` a un sélecteur « Historique ».
-- Boucle autonome (prototype, hors build): `npx tsx --env-file=.env prototypes/oauth-sdk/boucle.ts` puis http://127.0.0.1:4317 (budget en euros, Go/Stop). Chaîne research -> design (maquette HTML `docs/design/<date>.html`; /design + Artifact inaccessibles en headless) -> implementation -> correction sur worktrees `wt/<secteur>-<ts>`, fusion dans `developpement` si tests + tsc verts, jamais master ni push. Env: `CLAUDE_CODE_OAUTH_TOKEN` (`.env`, ignoré par git), `EUR_USD` (1.08), `PORT` (4317). Recherche seule: `prototypes/oauth-sdk/index.ts`. Résumé Haiku par phase: `summary.ts` (`summarizePhase`, ≤0,05 $, repli sans LLM), événement SSE `summary` (+ `ok` sur `end`), affiché dans la zone résumé du panneau (cartes d agents + barre de progression: worker-panel-ux, `panel.html`). Moodboard de recherche (idées par statut found/developing/lead, pas chronologique): `moodboard.ts` (`buildMoodboard`, appariement TODO.md par mots du titre, résumé Haiku groupé ≤0,01 $/carte, cache, repli sans LLM), routes `GET /moodboard` (JSON) et `GET /moodboard.html` (page lue sur disque par `boucle.ts`).
+- Boucle autonome (prototype, hors build): `npx tsx --env-file=.env prototypes/oauth-sdk/boucle.ts` puis http://127.0.0.1:4317 (budget en euros, Go/Stop). Chaîne research -> design (maquette HTML `docs/design/<date>.html`; /design + Artifact inaccessibles en headless) -> implementation -> correction sur worktrees `wt/<secteur>-<ts>`, fusion dans `developpement` si tests + tsc verts, jamais master ni push. Env: `CLAUDE_CODE_OAUTH_TOKEN` (`.env`, ignoré par git), `EUR_USD` (1.08), `PORT` (4317). Recherche seule: `prototypes/oauth-sdk/index.ts`. Résumé Haiku par phase: `summary.ts` (`summarizePhase`, ≤0,05 $, repli sans LLM), événement SSE `summary` (+ `ok` sur `end`), affiché dans la zone résumé du panneau (cartes d agents + barre de progression: worker-panel-ux, `panel.html`). Moodboard de recherche (idées par statut found/developing/lead, pas chronologique): `moodboard.ts` (`buildMoodboard`, appariement TODO.md par mots du titre, résumé Haiku groupé ≤0,01 $/carte, cache, repli sans LLM), routes `GET /moodboard` (JSON) et `GET /moodboard.html` (page lue sur disque par `boucle.ts`). Boucle optimisée (`docs/boucle-optimisee.md`): `agentOptions.ts` (preset claude_code + skills, git et AskUserQuestion interdits, `trancheur`), cartes/rapports `card.ts`/`cards.ts`/`reportRules.ts`/`reportWatch.ts`/`files.ts`, boucle jusqu'à `allDone` (`complete` dans `done`), pages `moodboard.html` + `moodboard-view.*`, toile `design.html` + `design-view.*` + `designRuntime.ts` (`docs/design-canvas.md`, skill design-canvas). Les assets `*-view.js` ne portent pas le nom d'un module `.ts` (vite résoudrait le `.js`).
 - `npm run test:e2e` (Playwright, Chrome headless, `e2e/`, hors vitest). Prérequis: `npx playwright install chromium` (ou `E2E_CHANNEL=chrome` pour le Chrome système). Lance son propre Vite sur un port aléatoire (`E2E_PORT` s'il est fixé), jamais réutilisé (`reuseExistingServer: false`); pas de Tauri (dialog/fs absents). Helpers: `e2e/helpers.ts` (cellules = `.dkg-cell[data-key="A1"]`).
 
 ## Structure (src/)
@@ -194,5 +195,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cycle handling (#CYCLE)
 - Linux packaging format
 - Whether pépites 1/2 are dropped or kept as stretch
-- Boucle optimisée (`docs/boucle-optimisee.md`): `agentOptions.ts` (preset claude_code + skills, git et AskUserQuestion interdits, `trancheur`), cartes/rapports `card.ts`/`cards.ts`/`reportRules.ts`/`reportWatch.ts`/`files.ts`, boucle jusqu'à `allDone` (`complete` dans `done`), pages `moodboard.html` + `moodboard-view.*`, toile `design.html` + `design-view.*` + `designRuntime.ts` (`docs/design-canvas.md`, skill design-canvas). Les assets `*-view.js` ne portent pas le nom d'un module `.ts` (vite résoudrait le `.js`).
 
+## autoloop
+- `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`). Étape 2: `cycle.ts` (vérifs npm/tsc par l'orchestrateur -> `roles/audit.ts` -> `dedupe.ts` empreinte `<!-- fp:… -->` -> `github.ts` `GhClient`, issues `auto:bug`, max 3/cycle), `live.ts` (`--live`: SDK + gh réels, seul mode qui crée des issues). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
