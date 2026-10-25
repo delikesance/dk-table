@@ -49,7 +49,7 @@ describe("agentOptions", () => {
     const o = agentOptions("edit");
     expect(o.disallowedTools).toContain("AskUserQuestion");
     const ag = (o.agents as Record<string, { description: string; prompt: string; model: string; tools: string[]; maxTurns: number }>).trancheur;
-    expect(ag.model).toBe(MODEL_BY_KIND.plan);
+    expect(ag.model).toBe("haiku"); // routage: arbitrage leger sur le plus petit modele (table routing.ts)
     expect(ag.description).toMatch(/doute|question/i);
     expect(ag.prompt).toMatch(/decision|tranche/i);
     expect(ag.tools).toEqual(expect.arrayContaining(["Read", "Grep", "Glob"]));

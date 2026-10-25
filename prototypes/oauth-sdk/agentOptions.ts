@@ -13,6 +13,8 @@
  * Usage : `agentOptions("edit", { cwd, maxBudgetUsd, abort, env, model, maxTurns })`.
  */
 
+import { modelFor } from "./routing";
+
 /** Type de tache d'une requete : code (edition pure), think (recherche, choix, diagnostic, design), plan (arbitrage), summary. */
 export type Kind = "code" | "think" | "plan" | "summary";
 
@@ -26,7 +28,7 @@ const TRANCHEUR = {
     "Tu es l'agent de questionnement et de raisonnement. On te soumet une question ou un doute. " +
     "Lis le code et CLAUDE.md si utile, pese les options (simplicite, regles du projet, TDD, pas de surcharge), " +
     "puis rends UNE decision claire en 3 lignes maximum : choix, raison, consequence. Ne pose jamais de question en retour.",
-  model: MODEL_BY_KIND.plan,
+  model: modelFor("trancheur", 0),
   tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"],
   maxTurns: 8,
 };
