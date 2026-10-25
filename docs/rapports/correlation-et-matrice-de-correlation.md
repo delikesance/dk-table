@@ -1,4 +1,5 @@
 # Rapport : Corrélation et matrice de corrélation
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -19,3 +20,9 @@ Aucune (fonctionnalité interne, `Visible : non`).
 
 - Module placé dans `src/engine/stats/` (à côté de `descriptive.ts`) et non dans `src/stats/` : le dossier existant est le bon emplacement.
 - Pas de module `utils.ts` séparé : le calcul des paires tient dans `correlation.ts`, sous la limite de 200 lignes.
+
+## Preuves
+- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
