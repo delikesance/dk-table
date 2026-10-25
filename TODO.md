@@ -276,6 +276,7 @@ Classement par gravité (P0 = pire)
 - [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees
 - [x] Fix e2e `shell-tabs.spec.ts` : test de sélection aligné sur la sélection propre à chaque feuille (PR #31)
 - [x] Tableau croisé : `engine/pivot.ts` + `pivotCalc.ts` (lignes, colonnes, SUM/COUNT/AVG, champ calculé, totaux), dialogue `ui/dialogs/pivot.ts` (palette « Tableau croisé… ») -> nouvelle feuille « Croisé ». Rapport `docs/rapports/tableaux-croises-de-calc-incomplets-non-verifie.md` Defaut ameliore: ligne = 1re colonne texte repetee, valeur hors identifiants.
+- [x] Transformations rejouables (mini Power Query) : `engine/query.ts` (filtrer, scinder, dédoublonner, pivoter), dialogue `ui/dialogs/query.ts` (palette « Transformations… »), `engine/queryLua.ts` (macro Lua, pivot inclus), `ui/appLive.ts` (rejeu auto), `docs/query.md`. Rapport `docs/rapports/transformations-rejouables-mini-power-query.md` Rejeu automatique via `ui/appLive.ts`.
 - [x] Diff / fusion `.dktable` : `io/diff.ts` (`diffCells`, `merge3`, `diffDocs`), dialogue `ui/dialogs/diff.ts` (palette « Comparer avec un fichier… », lecture seule). Rapport `docs/rapports/diff-et-fusion-cellule-par-cellule-du-dktable.md`. Fusion 3 voies : aperçu lecture seule fait (io/mergeDocs.ts, ui/dialogs/merge.ts, menu Données « Fusionner… », palette file.merge, captures merge-apercu-*.png); reste : résolution conflit par conflit + application du résultat
 
 ## Cartes boucle (implémentation)
