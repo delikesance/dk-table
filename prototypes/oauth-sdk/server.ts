@@ -52,10 +52,10 @@ export interface Deps {
 const ASSETS: Record<string, [string, string]> = {
   "GET /panel.css": ["panel.css", "text/css; charset=utf-8"],
   "GET /panel.js": ["panel.js", "text/javascript; charset=utf-8"],
-  "GET /moodboard.css": ["moodboard.css", "text/css; charset=utf-8"],
-  "GET /moodboard.js": ["moodboard.js", "text/javascript; charset=utf-8"],
-  "GET /design.css": ["design.css", "text/css; charset=utf-8"],
-  "GET /design.js": ["design.js", "text/javascript; charset=utf-8"],
+  "GET /moodboard-view.css": ["moodboard-view.css", "text/css; charset=utf-8"],
+  "GET /moodboard-view.js": ["moodboard-view.js", "text/javascript; charset=utf-8"],
+  "GET /design-view.css": ["design-view.css", "text/css; charset=utf-8"],
+  "GET /design-view.js": ["design-view.js", "text/javascript; charset=utf-8"],
 };
 
 /** Canevas du design: scripts et animations en ligne permis, aucun reseau ni sortie du cadre. */

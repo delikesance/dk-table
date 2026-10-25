@@ -159,4 +159,17 @@ describe("panneau: fin de boucle", () => {
     expect(q("#phasebar .step.fail")).toBeTruthy();
     expect(q("#status")!.textContent).toMatch(/^Arrêté/);
   });
+  it("done avec `complete`: toutes les cartes terminees, ou cartes restantes", () => {
+    let send = load();
+    send({ type: "done", message: "terminé", complete: true });
+    expect(q("#status")!.textContent).toMatch(/^Terminé, toutes les cartes/);
+    send = load();
+    send({ type: "done", message: "terminé", complete: false });
+    expect(q("#status")!.textContent).toMatch(/^Terminé, cartes restantes/);
+  });
+  it("tournees: le message d'info « tournee N » est journalise", () => {
+    const send = load();
+    send({ type: "info", round: 2, message: "tournee 2 : 3 carte(s) restante(s)" });
+    expect(q("#log")!.textContent).toContain("tournee 2");
+  });
 });

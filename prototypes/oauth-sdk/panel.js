@@ -58,7 +58,8 @@
   function finalStatus(e) {
     var stopped = /arr/i.test(e.message || "");
     closeAll(stopped);
-    $("status").textContent = (stopped ? "Arrêté" : "Terminé") + " · " + fmt(spentUsd / RATE) + " € sur " + fmt(cap(), 0) + " €";
+    var end = stopped ? "Arrêté" : e.complete === true ? "Terminé, toutes les cartes" : e.complete === false ? "Terminé, cartes restantes" : "Terminé";
+    $("status").textContent = end + " · " + fmt(spentUsd / RATE) + " € sur " + fmt(cap(), 0) + " €";
   }
 
   /** Titre de la phase courante, grand. */
