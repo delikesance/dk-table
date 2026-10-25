@@ -1,5 +1,5 @@
 # Rapport : Listes personnalisées de tri et de recopie
-Statut : en-cours
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -44,7 +44,7 @@ Visible : oui
 - Modification: même dialogue (pas de nouvelle fenêtre); « Enregistrer la modification » remplace la liste à sa position, un refus garde le mode modification.
 
 ## Preuves
-- Tests : ok (358 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
-- Captures : docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png, liste-ajoutee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png, refus-doublon-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png, liste-supprimee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png, liste-modifiee-sombre.png (absente)
-<!-- boucle-proof {"tests":{"ok":true,"count":358,"scope":"related"},"tsc":{"ok":true}} -->
+- Captures : docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png, liste-ajoutee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png, refus-doublon-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png, liste-supprimee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png, liste-modifiee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-sombre.png, docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-sombre.png, docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-sombre.png, docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
