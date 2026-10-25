@@ -62,6 +62,7 @@ P0 : bloquant démo
 - [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
 - [x] refonte-apple : mode minimal par défaut (feuille + barre de formule), bouton chevron `toggle-tools` déploie toolbar + sidebar, icônes Iconoir noires partout (`src/ui/icons.ts`, `--c-icon`; onglets, sidebar, menu contextuel, `composants.html`), menus Fichier + Import/Export dans la toolbar (`toolbar/menus.ts`), déploiement des outils : Ctrl+J + commande palette + état persistant `dk-table.tools`. Reste à la main : vérification visuelle (clair/sombre) dans Tauri
 - [x] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise) via `app.style({format})` ; limite connue : l option "Date" du menu est sans effet
+- [x] formats-de-nombre-personnalises : Format > Personnalisé… (1 à 4 sections, texte entre guillemets, `0.0" cm"`), `src/ui/numfmtCustom.ts`, dialogue `ui/dialogs/customFormat.ts`, `docs/formats-personnalises.md`, rapport `docs/rapports/formats-de-nombre-personnalises.md`
 - [x] workflow-ux : doc `docs/workflow-ux.md` écrit (benchmark, N1/N2/N3, clics, 12 changements, décisions) + `src/config/workflowUx.test.ts`
 - [ ] workflow-ux : planifier les changements du doc §4 (barre N1 visible, Σ, tri, menu Fichier unique, toast, couleurs, filtre, redim., autosave, Ctrl+D/R, mini-barre, format Date) ; trancher les décisions §5
 

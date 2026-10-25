@@ -13,6 +13,7 @@ import { openCfDialog } from "../cf/panel";
 import { openValidationDialog } from "../validation/panel";
 import { toggleKinds } from "../grid/kinds";
 import { openTextToColumns } from "../dialogs/textToCols";
+import { openCustomFormat } from "../dialogs/customFormat";
 import { openNamedFns } from "../dialogs/namedFns";
 import { openMerge } from "../dialogs/merge";
 import { docFormatMenu, insertionMenu } from "./docSpec";
@@ -84,6 +85,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Monétaire", run: fmt("currency") },
       { label: "Comptabilité", run: fmt("accounting") },
       { label: "Date", run: fmt("date") },
+      { label: "Personnalisé…", run: () => openCustomFormat(app) },
     ] },
     { label: "Feuille", items: [
       { label: "Nouvelle feuille", run: () => app.addSheet() },

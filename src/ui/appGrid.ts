@@ -9,7 +9,7 @@ import { pushUndo } from "./model";
 import { liveCell, paintCell } from "./cellview";
 import { computeCf } from "../engine/cf/compute";
 import { sheetEnv } from "../engine/cf/env";
-import { formatValue } from "./numfmt";
+import { CUSTOM, formatValue } from "./numfmt";
 import { toInput } from "./formula/syntax";
 import { displayGap, decimalMode } from "../engine/decimal";
 import { fitColumns } from "./appFit";
@@ -111,6 +111,7 @@ export function buildGrid(c: Ctx): void {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
+    numeric: (k) => (c.cur.styles[k]?.format ?? "").startsWith(CUSTOM),
     onEdit: (k, raw) => {
       checkCells({ [k]: raw });
       if (!c.coalescing) {
