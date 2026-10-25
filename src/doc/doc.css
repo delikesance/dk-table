@@ -1,39 +1,39 @@
-/* dk doc: page on the grid background, Hermes type (condensed titles, Inter Tight body, DM Mono for live values). */
-.dk-app__doc { background: var(--c-bg); padding: var(--s-8) var(--s-4); }
+/* dk doc: a classic administrative page (A4 sheet, serif text, black titles) on the app background; the chrome keeps the app style. */
+.dk-app__doc { background: var(--c-bg); padding: var(--s-8) var(--s-4); overflow: auto; }
 .dk-app__doc .cm-editor {
-  max-width: 820px; min-height: 100%; margin: 0 auto; box-sizing: border-box;
-  background: var(--c-surface); border: 1px solid var(--c-line); color: var(--c-text);
-  font: var(--fw-regular) 18px/1.6 var(--font-ui); outline: none;
+  width: 21cm; max-width: 100%; min-height: 29.7cm; margin: 0 auto; box-sizing: border-box;
+  background: #fff; border: 1px solid var(--c-line-strong); color: #000;
+  font: 12pt/1.5 "Times New Roman", Times, "Liberation Serif", serif; outline: none;
 }
 .dk-app__doc .cm-editor.cm-focused { box-shadow: var(--focus-ring); }
 .dk-app__doc .cm-scroller { font: inherit; overflow: visible; flex: 1; align-items: stretch; }
-.dk-app__doc .cm-content { padding: var(--s-10) 56px; caret-color: var(--c-accent); min-height: 100%; box-sizing: border-box; }
+.dk-app__doc .cm-content { padding: 2.5cm; caret-color: #000; min-height: 100%; box-sizing: border-box; }
 .dk-app__doc .cm-content:focus-visible { outline: none; box-shadow: none; }
 .dk-app__doc .cm-line { padding: 0; }
-.dk-app__doc .cm-cursor { border-left-color: var(--c-accent); }
-.dk-app__doc .cm-selectionBackground { background: var(--c-accent-soft); }
+.dk-app__doc .cm-cursor { border-left-color: #000; }
+.dk-app__doc .cm-selectionBackground { background: #cfd8ff; }
 /* Live Preview: styles of the Markdown elements (the syntax marks are hidden by decorations away from the cursor). */
-.dk-h { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.05; padding-top: var(--s-4); }
-.dk-h1 { font-size: 56px; font-weight: 300; }
-.dk-h2 { font-size: 30px; font-weight: var(--fw-medium); color: var(--c-accent); }
-.dk-h3 { font-size: 22px; font-weight: var(--fw-medium); }
-.dk-strong { font-weight: 700; }
+.dk-h { font-weight: bold; line-height: 1.25; padding-top: 0.6em; }
+.dk-h1 { font-size: 18pt; }
+.dk-h2 { font-size: 14pt; }
+.dk-h3 { font-size: 12pt; font-style: italic; }
+.dk-strong { font-weight: bold; }
 .dk-em { font-style: italic; }
 .dk-under { text-decoration: underline; }
-.dk-link { color: var(--c-accent); text-decoration: underline; }
-.dk-code, .dk-codeblock, .dk-chip-src { font-family: var(--font-mono); font-size: 0.9em; background: var(--c-accent-soft); }
-.dk-codeblock { display: block; padding: 0 var(--s-3); }
-.dk-quote { padding-left: var(--s-4); border-left: 2px solid var(--c-accent); color: var(--c-text-2); }
-.dk-bullet { display: inline-block; width: 1.1em; color: var(--c-accent); }
-.dk-rule { border: 0; border-top: 1px solid var(--c-line-strong); margin: var(--s-2) 0; }
-.dk-rule-src { color: var(--c-text-2); font-family: var(--font-mono); }
+.dk-link { color: #000; text-decoration: underline; }
+.dk-code, .dk-codeblock, .dk-chip-src { font-family: "Courier New", Courier, monospace; font-size: 0.9em; background: #eee; }
+.dk-codeblock { display: block; padding: 0 0.5em; }
+.dk-quote { padding-left: 0.5cm; margin-left: 1cm; border-left: 2px solid #000; }
+.dk-bullet { display: inline-block; width: 1.1em; }
+.dk-rule { border: 0; border-top: 1px solid #000; margin: 0.5em 0; }
+.dk-rule-src { font-family: "Courier New", Courier, monospace; }
 .dk-app__doc .cm-tooltip-autocomplete { background: var(--c-surface); border: 1px solid var(--c-accent); border-radius: var(--r-sm); box-shadow: var(--sh-2); font: var(--fw-regular) var(--fs-sm) var(--font-ui); color: var(--c-text); }
 .dk-app__doc .cm-tooltip-autocomplete > ul { font-family: inherit; max-height: 280px; }
 .dk-app__doc .cm-tooltip-autocomplete > ul > li { padding: var(--s-2) var(--s-3); }
 .dk-app__doc .cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
 .dk-app__doc .cm-completionDetail { margin-left: var(--s-3); font: var(--fs-xs) var(--font-mono); opacity: 0.8; font-style: normal; }
 .dk-tab--doc::before { content: ""; display: inline-block; width: 8px; height: 10px; margin-right: 6px; border: 1.5px solid currentColor; border-radius: 1px; }
-/* Live references and calculations: chips. */
-.dk-ref, .dk-calc { font: var(--fw-medium) 0.88em var(--font-mono); background: var(--c-accent-soft); color: var(--c-accent); padding: 1px 6px; border-bottom: 2px solid var(--c-accent); border-radius: var(--r-xs); cursor: pointer; white-space: nowrap; }
-.dk-ref--err, .dk-calc--err { color: var(--c-error); background: var(--c-error-soft); border-bottom: 2px wavy var(--c-error); }
+/* Live references and calculations: plain values with a dotted underline so they stay recognisable. */
+.dk-ref, .dk-calc { color: #000; border-bottom: 1px dotted #000; cursor: pointer; white-space: nowrap; }
+.dk-ref--err, .dk-calc--err { color: var(--c-error); border-bottom: 1px dotted var(--c-error); }
 .dk-calc .live-chart { vertical-align: middle; }
