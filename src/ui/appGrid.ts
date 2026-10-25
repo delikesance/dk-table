@@ -9,6 +9,7 @@ import { liveCell, paintCell } from "./cellview";
 import { computeCf } from "../engine/cf/compute";
 import { sheetEnv } from "../engine/cf/env";
 import { formatValue } from "./numfmt";
+import { displayGap, decimalMode } from "../engine/decimal";
 import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
@@ -104,6 +105,10 @@ export function buildGrid(c: Ctx): void {
     onFreeze: (f) => c.app.setFreeze(f),
     onCopy: (ref, text) => { c.lastCopy = ref ? { text, sheet: c.cur.id, ref } : undefined; },
     renderCell: (k) => liveCell(c.cur.sheet, k),
+    gap: (k) => {
+      const v = decimalMode() ? getValue(c.cur.sheet, k) : "";
+      return typeof v === "number" && displayGap(v, c.cur.styles[k]?.format) ? `Affiché ≠ stocké : ${v}` : undefined;
+    },
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k, el) => {
       const st = c.cur.styles[k], cf = c.cfMap?.get(k);

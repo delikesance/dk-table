@@ -156,6 +156,10 @@ export function parse(text: string): DktDoc {
   if (data.macros !== undefined) doc.macros = checkMacros(data.macros);
   if (data.functions !== undefined) doc.functions = checkFunctions(data.functions);
   if (data.docs !== undefined) doc.docs = checkDocs(data.docs, ids);
+  if (data.decimal !== undefined) {
+    if (typeof data.decimal !== "boolean") throw new DktParseError("decimal must be a boolean");
+    doc.decimal = data.decimal;
+  }
   if (data.history !== undefined) doc.history = checkHistory(data.history);
   return doc;
 }

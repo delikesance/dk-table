@@ -96,6 +96,8 @@ export interface DktDoc {
   macros?: DocMacro[];
   /** Fonctions nommées du classeur (optionnel, absent dans les anciens fichiers). */
   functions?: DocFn[];
+  /** Mode décimal exact (arrondi 15 chiffres significatifs) ; absent = IEEE 754. */
+  decimal?: boolean;
   /** Rich-text documents of the workbook, shown as tabs after the sheets (optional). */
   docs?: DocText[];
   /** Journal par cellule + instantanés nommés (optionnel). */

@@ -31,12 +31,13 @@ const HINTS: Record<string, string> = {
  * Set the `dkg-num` / `dkg-err` classes and the error tooltip on a cell element for display text `text`;
  * `dkg-ml` marks multi-line text (Alt+Enter) so only those cells wrap with pre-wrap.
  */
-export function markKind(el: HTMLElement, text: string): void {
+export function markKind(el: HTMLElement, text: string, gap?: string): void {
   el.classList.toggle("dkg-ml", text.includes("\n"));
   const kind = cellKind(text);
   el.classList.toggle("dkg-num", kind === "num");
   el.classList.toggle("dkg-err", kind === "err");
-  el.title = kind === "err" ? errorHint(text) : "";
+  el.title = kind === "err" ? errorHint(text) : gap ?? "";
+  el.classList.toggle("dkg-gap", !!gap && kind !== "err"); // affiché ≠ stocké (mode décimal)
 }
 
 /** One-sentence French explanation of an error code (tooltip). */
