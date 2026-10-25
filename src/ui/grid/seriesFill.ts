@@ -5,6 +5,7 @@
  * des références (`shiftFormula`).
  */
 import { extendSeries } from "../../engine/series";
+import { customLists } from "../../io/customLists";
 import { shiftFormula } from "../../engine/refs";
 import { keyOf, type Pos } from "./keys";
 import type { Sel } from "./nav";
@@ -43,7 +44,7 @@ export function seriesPlan(
         const d = to - from;
         return shiftFormula(src[k % src.length], vertical ? 0 : d, vertical ? d : 0);
       })
-      : extendSeries(src, n, ctrl, sign > 0 ? 1 : -1);
+      : extendSeries(src, n, ctrl, sign > 0 ? 1 : -1, customLists.lists());
     out.forEach((v, k) => { plan[at(line, (sign > 0 ? hi : lo) + sign * (k + 1))] = v; });
   }
   const far = (sign > 0 ? hi : lo) + sign * n;

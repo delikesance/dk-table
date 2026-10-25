@@ -3,6 +3,7 @@
  * Reconnaît, dans l'ordre: nombres (pas constant, sinon tendance linéaire), dates texte, mois/jours FR,
  * texte terminé par un nombre ("Item 1"); sinon le motif source est répété. Pur, sans DOM.
  * La source est donnée dans le sens de la recopie (pour remonter, l'appelant la renverse).
+ * `lists` = listes personnalisées (`io/customLists.ts`), prolongées de façon cyclique.
  */
 import { isDecimal } from "./values";
 import { dateSeries } from "./series-date";
@@ -43,10 +44,10 @@ function suffixSeries(src: string[], dir: number): Kind | null {
  * série +1, une seule date / un seul "Item 1" est recopié, plusieurs valeurs sont recopiées en boucle.
  * `dir` -1: recopie vers le haut / la gauche; une source d'un seul élément décroît (lundi -> dimanche).
  */
-export function extendSeries(src: string[], n: number, ctrl = false, dir: 1 | -1 = 1): string[] {
+export function extendSeries(src: string[], n: number, ctrl = false, dir: 1 | -1 = 1, lists: readonly (readonly string[])[] = []): string[] {
   if (n <= 0 || !src.length) return [];
   const copy = (i: number): string => src[i % src.length];
-  const kind = src.some((s) => s.trim() === "") ? null : numberSeries(src, dir) ?? dateSeries(src, dir) ?? nameSeries(src, dir) ?? suffixSeries(src, dir);
+  const kind = src.some((s) => s.trim() === "") ? null : numberSeries(src, dir) ?? dateSeries(src, dir) ?? nameSeries(src, dir, lists) ?? suffixSeries(src, dir);
   const series = !!kind && (ctrl ? src.length === 1 && !kind.byDefault : kind.byDefault);
   return Array.from({ length: n }, (_, i) => (series ? kind!.next(i) : copy(i)));
 }

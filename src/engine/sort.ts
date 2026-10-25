@@ -12,6 +12,8 @@ export interface SortOptions {
   desc?: boolean;
   /** Si vrai, la 1re ligne reste en place. */
   hasHeader?: boolean;
+  /** Liste personnalisée: ses valeurs passent avant les autres, dans l'ordre de la liste (casse ignorée). */
+  list?: string[];
 }
 
 /** Résultat: `rows[i]` = ligne d'origine `order[i]`. */
@@ -41,6 +43,10 @@ function compareAsc(a: string, b: string): number {
   return a.trim().localeCompare(b.trim(), 'fr', { sensitivity: 'accent' });
 }
 
+/** Position d'une valeur dans la liste personnalisée (-1 si absente ou pas de liste). */
+const listPos = (list: string[] | undefined, s: string): number =>
+  list ? list.findIndex((x) => x.trim().toLowerCase() === s.trim().toLowerCase()) : -1;
+
 /**
  * Trie les lignes de `block` selon la colonne `opts.col`.
  * Tri stable; vides toujours en bas; ne modifie pas `block`.
@@ -54,7 +60,10 @@ export function sortRows(block: string[][], opts: SortOptions): SortResult {
     const ei = isEmpty(key(i));
     const ej = isEmpty(key(j));
     if (ei || ej) return ei === ej ? i - j : ei ? 1 : -1;
-    return sign * compareAsc(key(i)!, key(j)!) || i - j;
+    const a = key(i)!, b = key(j)!;
+    const pa = listPos(opts.list, a), pb = listPos(opts.list, b);
+    if (pa >= 0 || pb >= 0) return pa < 0 ? 1 : pb < 0 ? -1 : sign * (pa - pb) || i - j;
+    return sign * compareAsc(a, b) || i - j;
   });
   const order = [...block.slice(0, start).map((_, i) => i), ...idx];
   return { rows: order.map((i) => block[i]), order };
