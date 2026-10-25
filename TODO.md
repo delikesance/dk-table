@@ -224,6 +224,7 @@ Classement par gravité (P0 = pire)
 - [x] Largeurs de colonnes enregistrées dans `.dktable` (`DocSheet.colWidths`, lettres → px, absent si aucune), restaurées à l'ouverture (anciens fichiers OK), annulables (glisser et ajustement = un pas), suivent l'insertion/suppression de colonnes. `io/colWidthsFormat.ts`, `Entry.widths`; tests unitaires + `e2e/feat-colwidth.spec.ts`
 - [ ] Secteur recherche v1 (`prototypes/oauth-sdk/`): lancer la boucle live (`CLAUDE_CODE_OAUTH_TOKEN`, plafond 20 USD) -> `docs/recherche/fonctionnalites.md`, puis ajouter les tâches issues des 4 axes
 - [x] Secteur recherche v1: run live (2,20 $ / 20 $), synthèse 4 axes dans `docs/recherche/fonctionnalites.md`
+- [x] Carte `carte-des-dependances-interactive`: panneau « Qui utilise cette cellule ? » (palette `data.depmap`, `engine/model/depmap.ts`, `ui/dialogs/depmap.ts`, rapport `docs/rapports/`)
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
