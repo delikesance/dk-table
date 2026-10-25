@@ -1,4 +1,5 @@
 # Rapport : Valeur cible (Goal Seek)
+Statut : bloque
 Visible : oui
 
 ## Fait
@@ -21,3 +22,9 @@ Visible : oui
 
 ## Bloque
 - Budget de la session épuisé (quasi nul) avant d'écrire le test et le code. La carte est à reprendre par une nouvelle tournée.
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
