@@ -10,7 +10,7 @@ import { Decoration, EditorView, type DecorationSet } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
 import { BLOCK_LANG } from "../md/chip";
 import { liveHost, refreshFx, type LiveHost } from "./host";
-import { BlockWidget, BulletWidget, CalcWidget, RefWidget, RuleWidget } from "./widgets";
+import { BlockWidget, BulletWidget, CalcWidget, RefWidget, LangWidget, RuleWidget } from "./widgets";
 
 const hide = Decoration.replace({});
 const cls = (c: string): Decoration => Decoration.mark({ class: c });
@@ -29,6 +29,18 @@ function build(state: EditorState): DecorationSet {
   };
   /** Hide `[from, to)` (and `extra` spaces after it) unless `show`. */
   const mark = (from: number, to: number, show: boolean): void => { if (!show && to > from) out.push(hide.range(from, to)); };
+  /** A code block: framed lines; away from the cursor the ``` lines are hidden and the language is labelled. */
+  const fenced = (from: number, to: number, lang: string, marks: SyntaxNode[], show: boolean): void => {
+    lines(from, to, "dk-codeblock");
+    const first = doc.lineAt(from), last = doc.lineAt(to);
+    out.push(Decoration.line({ class: "dk-cb-start" }).range(first.from));
+    if (show) return;
+    out.push(Decoration.replace(lang ? { widget: new LangWidget(lang) } : {}).range(first.from, first.to));
+    if (marks.length > 1 && last.number > first.number) {
+      out.push(Decoration.line({ class: "dk-cb-end" }).range(last.from));
+      out.push(hide.range(last.from, last.to));
+    }
+  };
   let openU: SyntaxNode | null = null;
 
   ensureSyntaxTree(state, doc.length, 200)?.iterate({
@@ -80,7 +92,7 @@ function build(state: EditorState): DecorationSet {
         const info = n.node.getChild("CodeInfo"), code = n.node.getChild("CodeText");
         if (host && info && doc.sliceString(info.from, info.to).trim() === BLOCK_LANG && code && !inside(from, to)) {
           out.push(Decoration.replace({ widget: new BlockWidget(host, doc.sliceString(code.from, code.to)), block: true }).range(from, to));
-        } else lines(from, to, "dk-codeblock");
+        } else fenced(from, to, info ? doc.sliceString(info.from, info.to).trim() : "", n.node.getChildren("CodeMark"), inside(from, to));
         return false;
       }
       return undefined;

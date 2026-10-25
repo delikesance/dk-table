@@ -39,6 +39,12 @@ Comme Obsidian : l'arbre syntaxique Lezer Markdown (`doc/md/chipParser.ts`, avec
 - **Puces** : `{{@…}}` et `{{=…}}` sont remplacés par leur valeur (widgets, `doc/live/widgets.ts`) ; la source apparaît quand le curseur est strictement dedans (flèches, ou clic sur un calcul). Clic sur une référence = ouvrir la cellule (`Alt+←` revient au document). Entrée / Tab dans une puce en sort ; Retour arrière juste après une puce la supprime entière.
 - Sans classeur (éditeur de texte seul), les puces restent du texte.
 
+## Blocs de code
+
+- Un bloc ```` ```langage ```` est cadré (filet noir, fond gris clair, police à chasse fixe). Loin du curseur, les lignes ``` sont masquées et le nom du langage s'affiche en petit en haut à droite ; le curseur dans le bloc montre les ``` bruts.
+- Colorisation par langage (`@codemirror/language-data`, analyseur chargé à la demande au premier bloc du langage) : `doc/live/codeHighlight.ts`, classes `dk-t-*` sobres (mots-clés en gras noir, chaînes vert foncé, nombres brun, commentaires gris italique, types/fonctions bleu marine).
+- Export HTML/PDF : même cadre et même étiquette de langage, sans couleurs (l'export est synchrone et sans analyseur) ; l'export Markdown conserve le langage.
+
 ## Code
 
 - `doc/editor.ts` éditeur CodeMirror ; `doc/store.ts` liste des documents ; `doc/doc.css`, `doc/blocks.css` mise en page.

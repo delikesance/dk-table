@@ -32,7 +32,7 @@ describe("markSelection", () => {
     const marked = markSelection([], t, { col: 0, row: 0 }, { col: 1, row: 1 });
     markSelection(marked, t, { col: 1, row: 1 }, { col: 1, row: 1 });
     expect(cls(t, "A1")).toBe("");
-    expect(cls(t, "B2")).toBe("dkg-active");
+    expect(cls(t, "B2")).toBe("dkg-active dkg-h");
   });
   it("lights every header of the range, the active ones strongest", () => {
     const t = targets();
@@ -41,5 +41,17 @@ describe("markSelection", () => {
     expect(t.colHeads[2].classList.contains("dkg-on-active")).toBe(true);
     expect(t.colHeads[0].classList.contains("dkg-on-active")).toBe(false);
     expect(t.rowHeads.get(1)!.classList.contains("dkg-on-active")).toBe(true);
+  });
+});
+
+describe("poignée de recopie", () => {
+  it("marque la cellule en bas à droite de la plage (dkg-h), une seule", () => {
+    const t = targets();
+    const marked = markSelection([], t, { col: 2, row: 2 }, { col: 0, row: 0 });
+    expect(cls(t, "C3")).toContain("dkg-h");
+    expect(new Set(marked.filter((e) => e.classList.contains("dkg-h"))).size).toBe(1);
+    markSelection(marked, t, { col: 0, row: 0 }, { col: 0, row: 0 });
+    expect(cls(t, "C3")).not.toContain("dkg-h");
+    expect(cls(t, "A1")).toContain("dkg-h");
   });
 });

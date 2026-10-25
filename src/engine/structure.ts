@@ -5,6 +5,7 @@
  * Pure: inputs are not mutated. Self-contained tokenizer (does not depend on parser.ts).
  */
 import { makeKey, parseKey } from "./address";
+import { OPEN_RANGE_SRC } from "./openrange";
 
 /** One structural edit: `n > 0` inserts n lines before `at`; `n < 0` deletes |n| lines from `at` (1-based). */
 export interface StructEdit {
@@ -33,22 +34,22 @@ function moveKey(key: string, e: StructEdit): string | null {
   return c === null ? null : makeKey(c, p.row);
 }
 
-/** Parsed reference with its `$` markers. */
+/** Parsed reference with its `$` markers; `col`/`row` are 0 for the absent part of an open-range endpoint. */
 interface Ref { col: number; row: number; ac: boolean; ar: boolean }
 
-const REF = /^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$/;
+const REF = /^(\$?)([A-Za-z]{1,3})?(\$?)(\d+)?$/;
 
-/** Parse "$A$1" / "a1" into a Ref. */
+/** Parse "$A$1" / "a1" (or the endpoint "B" / "$3" of an open range) into a Ref. */
 function parseRef(s: string): Ref {
   const m = REF.exec(s)!;
-  const p = parseKey(m[2] + m[4])!;
-  return { col: p.col, row: p.row, ac: !!m[1], ar: !!m[3] };
+  const col = m[2] ? parseKey(m[2] + "1")!.col : 0;
+  return { col, row: m[4] ? Number(m[4]) : 0, ac: !!m[2] && !!m[1], ar: m[2] ? !!m[3] : !!(m[1] || m[3]) };
 }
 
 /** Format a Ref back to text, keeping `$` markers. */
 function fmtRef(r: Ref): string {
-  const k = makeKey(r.col, 1);
-  return `${r.ac ? "$" : ""}${k.slice(0, -1)}${r.ar ? "$" : ""}${r.row}`;
+  const letters = r.col ? makeKey(r.col, 1).slice(0, -1) : "";
+  return `${r.ac ? "$" : ""}${letters}${r.ar ? "$" : ""}${r.row || ""}`;
 }
 
 /** Shift a single reference; null when its cell is deleted. */
@@ -71,17 +72,36 @@ function shiftRange(a: Ref, b: Ref, e: StructEdit): [Ref, Ref] | null {
   return lo === a ? [rlo, rhi] : [rhi, rlo];
 }
 
-/** Ref or range not preceded by an identifier char and not followed by one or by "(" (function names). */
-const TOKEN = /(^|[^A-Za-z0-9_.$!#])(\$?[A-Za-z]{1,3}\$?\d+)(?::(\$?[A-Za-z]{1,3}\$?\d+))?(?![A-Za-z0-9_.($])/g;
+/** Shift an open range (`B2:B`, `A:C`, `2:5`): an axis the range does not constrain is unchanged. */
+function shiftOpen(a: Ref, b: Ref, e: StructEdit): [Ref, Ref] | null {
+  const prop = e.axis === "row" ? "row" : "col";
+  if (!a[prop] && !b[prop]) return [a, b];
+  if (!b[prop]) return [{ ...a, [prop]: moveLine(a[prop], e) ?? e.at }, b];
+  return shiftRange(a, b, e);
+}
+
+/**
+ * Open range, ref or range, not preceded by an identifier char (so sheet-qualified refs are left alone)
+ * and not followed by one or by "(" (function names). One pass: groups 2 = open range, 3/4 = ref / range end.
+ */
+const TOKEN = new RegExp(
+  "(^|[^A-Za-z0-9_.$!#])(?:(" + OPEN_RANGE_SRC + ")|(\\$?[A-Za-z]{1,3}\\$?\\d+)(?::(\\$?[A-Za-z]{1,3}\\$?\\d+))?(?![A-Za-z0-9_.($]))",
+  "g",
+);
 
 /** Rewrite refs in a formula fragment that contains no string literal. */
 function rewriteCode(code: string, e: StructEdit): string {
-  return code.replace(TOKEN, (_m, pre: string, a: string, b?: string) => {
+  return code.replace(TOKEN, (_m, pre: string, open?: string, a?: string, b?: string) => {
+    if (open !== undefined) {
+      const [x, y] = open.split(":");
+      const rg = shiftOpen(parseRef(x), parseRef(y), e);
+      return pre + (rg ? `${fmtRef(rg[0])}:${fmtRef(rg[1])}` : "#REF!");
+    }
     if (b === undefined) {
-      const r = shiftRef(parseRef(a), e);
+      const r = shiftRef(parseRef(a!), e);
       return pre + (r ? fmtRef(r) : "#REF!");
     }
-    const rg = shiftRange(parseRef(a), parseRef(b), e);
+    const rg = shiftRange(parseRef(a!), parseRef(b), e);
     return pre + (rg ? `${fmtRef(rg[0])}:${fmtRef(rg[1])}` : "#REF!");
   });
 }
