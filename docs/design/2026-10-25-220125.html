@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espion, Analyse rapide, Appareil photo</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css, theme-dark.css). Clair par defaut; sombre via data-theme OU prefers-color-scheme. */
+:root { --bg:#f2f2f2; --surface:#fafafa; --header:#e2e2f6; --hover:#e8e8f6; --text:#0000f2; --text2:#4a4ac8; --line:rgba(0,0,242,.14); --line2:rgba(0,0,242,.28); --acc:#0000f2; --on-acc:#f2f2f2; --soft:rgba(0,0,242,.06); --soft2:rgba(0,0,242,.14); --err:#a8380a; --ok:#13703c; --in:#9a4708; --out:#0b6178; --code:#0000a6; --code-t:#f2f2f2; }
+:root[data-theme="dark"] { --bg:#19192f; --surface:#23233f; --header:#2c2c52; --hover:#2c2c52; --text:#f2f2f2; --text2:#b8b8d4; --line:rgba(242,242,242,.16); --line2:rgba(242,242,242,.32); --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.10); --soft2:rgba(140,140,255,.22); --err:#ffb08a; --ok:#8ef0a8; --in:#ffc48a; --out:#6fdcff; --code:#0f0f26; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#19192f; --surface:#23233f; --header:#2c2c52; --hover:#2c2c52; --text:#f2f2f2; --text2:#b8b8d4; --line:rgba(242,242,242,.16); --line2:rgba(242,242,242,.32); --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.10); --soft2:rgba(140,140,255,.22); --err:#ffb08a; --ok:#8ef0a8; --in:#ffc48a; --out:#6fdcff; --code:#0f0f26; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:24px; font:15px/1.45 "Inter Tight",system-ui,sans-serif; background:var(--bg); color:var(--text); }
+h1 { font:800 2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h2 { font:700 1.35rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h3 { font:700 .8rem "DM Mono",monospace; text-transform:uppercase; color:var(--text2); margin:16px 0 6px; }
+.lead { color:var(--text2); margin:0 0 20px; }
+.idea { background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:16px; margin-bottom:20px; }
+.row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+.mono { font-family:"DM Mono",ui-monospace,Consolas,monospace; }
+.states { display:flex; flex-wrap:wrap; gap:16px; }
+.state { flex:1 1 320px; min-width:300px; }
+.cap { font:500 .78rem "DM Mono",monospace; color:var(--text2); margin:0 0 6px; text-transform:uppercase; }
+button { font:inherit; color:var(--text); background:transparent; border:1px solid var(--line2); border-radius:2px; padding:3px 10px; cursor:pointer; }
+button:hover { background:var(--hover); } button.on { background:var(--acc); color:var(--on-acc); border-color:var(--acc); }
+button:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
+/* grille factice */
+table.g { border-collapse:collapse; font:500 .85rem "DM Mono",monospace; background:var(--surface); }
+.g th { background:var(--header); font-weight:500; padding:3px 10px; border:1px solid var(--line); min-width:64px; }
+.g td { padding:3px 10px; border:1px solid var(--line); text-align:right; position:relative; }
+.g td.t { text-align:left; } .g td.sel { background:var(--soft2); outline:1px solid var(--acc); outline-offset:-1px; }
+.g td.rng { background:var(--soft); } .g td.flash, .win td.flash { animation:fl 1.2s ease-out; }
+@keyframes fl { 0% { background:var(--acc); color:var(--on-acc); } 100% { background:transparent; } }
+/* surface flottante: seule ombre autorisee */
+.float { background:var(--surface); border:1px solid var(--line2); border-radius:4px; box-shadow:0 6px 24px rgba(0,0,60,.22); }
+.win { width:100%; max-width:470px; } .win .bar { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--header); border-bottom:1px solid var(--line); border-radius:4px 4px 0 0; font:700 .9rem "Sofia Sans Extra Condensed",sans-serif; text-transform:uppercase; }
+.win .bar .sp { flex:1; }
+.win table { width:100%; border-collapse:collapse; font:500 .82rem "DM Mono",monospace; }
+.win th { text-align:left; font-weight:500; color:var(--text2); padding:4px 8px; border-bottom:1px solid var(--line); }
+.win td { padding:4px 8px; border-bottom:1px solid var(--line); } .win tr.row:hover { background:var(--hover); cursor:pointer; }
+.win td.v { text-align:right; } .win td.f { color:var(--text2); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.err { color:var(--err); } .up { color:var(--ok); } .down { color:var(--err); }
+.delta { font-size:.72rem; margin-left:6px; } .empty { padding:18px 10px; color:var(--text2); }
+/* analyse rapide */
+.qa { width:300px; } .qa .tabs { display:flex; border-bottom:1px solid var(--line); } .qa .tabs button { flex:1; border:0; border-radius:0; font:700 .85rem "Sofia Sans Extra Condensed",sans-serif; text-transform:uppercase; padding:6px 2px; }
+.qa .tabs button.on { background:var(--acc); color:var(--on-acc); } .qa .opts { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:10px; }
+.qa .opts button { height:62px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:.72rem; padding:2px; }
+.qa .opts button.on { background:var(--soft2); color:var(--text); border-color:var(--acc); } .qa .foot { padding:6px 10px; border-top:1px solid var(--line); font:500 .75rem "DM Mono",monospace; color:var(--text2); display:flex; justify-content:space-between; }
+.qa svg, .qa .glyph { width:30px; height:22px; } svg .s { stroke:currentColor; fill:none; stroke-width:1.6; } svg .f { fill:currentColor; }
+.db { position:absolute; left:0; top:2px; bottom:2px; background:var(--soft2); border-right:2px solid var(--acc); z-index:0; transition:width .35s ease; } .g td span { position:relative; z-index:1; }
+.tot td { font-weight:700; border-top:2px solid var(--acc); }
+/* appareil photo */
+.cam { width:230px; border:1px solid var(--out); border-radius:2px; position:relative; }
+.cam::before { content:attr(data-src); position:absolute; top:-9px; left:6px; background:var(--surface); color:var(--out); font:500 .7rem "DM Mono",monospace; padding:0 4px; }
+.cam .g { width:100%; } .link { stroke:var(--out); stroke-dasharray:4 4; fill:none; stroke-width:1.5; animation:dash 1.2s linear infinite; } @keyframes dash { to { stroke-dashoffset:-16; } }
+.pulse { position:absolute; width:8px; height:8px; border-radius:50%; background:var(--out); }
+.contract { background:var(--code); color:var(--code-t); border-radius:4px; padding:12px 14px; font:500 .8rem/1.5 "DM Mono",monospace; white-space:pre-wrap; overflow-x:auto; }
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<h1>Espion · Analyse rapide · Appareil photo</h1>
+<p class="lead">Trois idees de TODO.md (axe 3 « negligé ailleurs »), absentes de src/. Chaque maquette est interactive.</p>
+
+<section class="idea" id="spy">
+  <h2>1 — Fenetre Espion</h2>
+  <p class="lead">Panneau flottant qui suit des cellules choisies, sur toutes les feuilles, pendant l'edition ailleurs. Au changement : ligne en surbrillance et ecart (↑ ↓). Clic sur une ligne = aller a la cellule.</p>
+  <div class="row">
+    <div>
+      <p class="cap">Feuille « Ventes » (modifier pour voir l'espion reagir)</p>
+      <table class="g" id="spyGrid"></table>
+      <p><button id="spyEdit">Modifier B2 (+120)</button> <button id="spyBreak">Provoquer #DIV/0!</button> <button id="spyReset">Retablir</button></p>
+    </div>
+    <div class="float win" id="spyWin" role="region" aria-label="Espion"></div>
+  </div>
+  <h3>Etats</h3>
+  <div class="states">
+    <div class="state"><p class="cap">Vide</p><div class="float win"><div class="bar">Espion<span class="sp"></span><button>+ Selection</button></div><div class="empty">Aucune cellule suivie. Selectionner des cellules puis « + Selection ».</div></div></div>
+    <div class="state"><p class="cap">Erreur suivie</p><div class="float win"><div class="bar">Espion</div><table><tr><th>Feuille</th><th>Cell.</th><th style="text-align:right">Valeur</th></tr><tr class="row"><td>Ventes</td><td>B6</td><td class="v err">#DIV/0!</td></tr></table></div></div>
+  </div>
+</section>
+
+<section class="idea" id="qa">
+  <h2>2 — Analyse rapide (Ctrl+Q)</h2>
+  <p class="lead">Sur une selection de donnees, une surface flottante propose 4 familles. Survol d'une option = apercu dans la grille, clic = application en un pas d'annulation, Echap = annule l'apercu.</p>
+  <div class="row">
+    <div style="position:relative">
+      <p class="cap">Apercu direct sur la grille</p>
+      <table class="g" id="qaGrid"></table>
+    </div>
+    <div class="float qa" id="qaBox" role="dialog" aria-label="Analyse rapide">
+      <div class="tabs" role="tablist" id="qaTabs"></div><div class="opts" id="qaOpts"></div>
+      <div class="foot"><span id="qaHint">Survoler pour previsualiser</span><span>Echap</span></div>
+    </div>
+  </div>
+  <h3>Option « Totaux » en apercu (themes identiques)</h3>
+  <p class="cap">Ligne de total ajoutee sous la selection, ecrite avec SUM, sans toucher aux donnees.</p>
+</section>
+
+<section class="idea" id="cam">
+  <h2>3 — Appareil photo (plage vivante)</h2>
+  <p class="lead">« Coller en plage liee » : une copie en lecture seule d'une plage source, posee ailleurs (autre feuille ou bloc <span class="mono">dk doc</span>). Elle se met a jour a chaque recalcul de la source, bordure et trait pointille en teinte « dependant ».</p>
+  <div class="row" style="position:relative" id="camRow">
+    <div><p class="cap">Source : Ventes!A1:B4</p><table class="g" id="camSrc"></table><p><button id="camEdit">Modifier B3</button></p></div>
+    <svg width="90" height="60" aria-hidden="true"><path class="link" d="M0 30 H90"/></svg>
+    <div class="cam" data-src="Ventes!A1:B4 (lecture seule)"><table class="g" id="camDst"></table></div>
+  </div>
+  <h3>Etats</h3>
+  <p class="mono" style="font-size:.82rem;color:var(--text2)">Normal : bordure --c-dep-out · Source supprimee : bordure --c-error, valeurs figees, bandeau « Source introuvable » · Edition : interdite (cellule readonly, --c-readonly-bg).</p>
+</section>
+
+<section class="idea" id="contracts">
+  <h2>Interfaces et contrats</h2>
+<div class="contract">// --- 1. Espion ---  (TDD : src/engine/model/watch.test.ts en premier)
+src/engine/model/watch.ts (pur, sans DOM)
+  type WatchItem = { id: string; sheet: string; key: string };       // key "B2"
+  type WatchRow  = WatchItem & { raw: string; display: string; value: Value; prev?: Value; delta?: number; error?: ErrorCode };
+  addWatch(list: WatchItem[], items: Omit<WatchItem,"id">[]): WatchItem[]   // dedoublonne feuille+cellule
+  removeWatch(list, id): WatchItem[]
+  readWatch(book: Workbook, list: WatchItem[], prev?: WatchRow[]): WatchRow[]  // delta = nombre - nombre precedent, undefined sinon
+  onRenameSheet / onDeleteSheet: remappent ou retirent les items
+src/ui/watch/panel.ts   mountWatch(app): { open(), close(), toggle() }  -- surface flottante deplacable, role="region"
+  evenements: abonne a app.onRecalc (apres chaque recalcul) -> readWatch -> met a jour les lignes, classe .flash 1,2 s
+  clic ligne -> app.goTo(sheet, key); Suppr -> removeWatch; bouton « + Selection » -> addWatch(app.selection())
+src/io/watchFormat.ts   DktDoc.watch?: WatchItem[]  (persiste dans .dktable; absent = []) + validation
+palette: « Affichage : Fenetre Espion » ; menu Affichage ; pas de raccourci.
+fichiers: src/ui/watch/{panel.ts,watch.css}, src/ui/appWatch.ts (cablage), src/ui/menubar/spec.ts (entree), docs/espion.md
+
+// --- 2. Analyse rapide ---  (test d'abord : src/engine/quick.test.ts)
+src/engine/quick.ts (pur)
+  type QuickFamily = "format" | "chart" | "total" | "table";
+  type QuickOption = { id: string; family: QuickFamily; label: string; icon: string; plan: QuickPlan };
+  type QuickPlan   = { writes: {key:string; raw:string}[]; styles?: {range:string; style:Partial<CellStyle>}[]; cf?: CfRule[]; live?: {key:string; raw:string} };
+  suggestQuick(sheet, range): QuickOption[]   // total: SUM/AVERAGE/COUNT en ligne/colonne ; format: barres de donnees, echelle de couleurs, > seuil ; chart: SPARKLINE/BAR/TREND via liveResult ; table: tri, filtre
+  Plages sans nombre -> seules les options de tableau. Plan applique via app.batch() = un pas d'annulation.
+src/ui/quick/popup.ts   openQuick(app, range): ferme sur Echap/clic dehors; Ctrl+Q ouvre; hover -> app.preview(plan) / leave -> app.preview(null)
+  app.preview(plan|null): surcouche de rendu (classe .dkg-prev), aucune ecriture dans le moteur
+  clavier: fleches = navigation entre options, Tab = onglet suivant, Entree = appliquer
+fichiers: src/ui/quick/{popup.ts,quick.css}, src/ui/appQuick.ts, src/ui/commands.ts (Ctrl+Q), spec.ts (Donnees), docs/analyse-rapide.md
+
+// --- 3. Appareil photo ---  (test d'abord : src/engine/camera.test.ts)
+src/engine/camera.ts (pur)
+  type Snapshot = { id: string; src: { sheet: string; range: string }; at: { sheet: string; key: string } };
+  readSnapshot(book, snap): string[][]     // valeurs affichees; source absente -> null (etat « introuvable »)
+  shiftSnapshot(snaps, op: StructureOp): Snapshot[]   // suit insertion/suppression de lignes/colonnes, comme refs.ts
+  dependances: la plage source est ajoutee au graphe (rewire) -> recalcul de la copie a chaque changement
+src/io/cameraFormat.ts  DktDoc.snapshots?: Snapshot[]
+src/ui/camera/overlay.ts  rend la copie en cellules readonly (--c-readonly-bg), bordure --c-dep-out, flash au changement
+palette: « Copier en plage liee » (apres Copier) puis « Coller en plage liee »; menu Edition > Collage special
+fichiers: src/ui/camera/{overlay.ts,camera.css}, src/ui/appCamera.ts, src/engine/camera.ts, docs/appareil-photo.md
+
+// e2e + captures (CLAUDE.md): e2e/feat-espion.spec.ts, feat-analyse-rapide.spec.ts, feat-camera.spec.ts,
+// captures 1200x800 clair/sombre dans docs/screenshots/<fonctionnalite>/.
+// Contraintes: fichiers <= 200 lignes, doc comment par fonction, TODO.md mis a jour.</div>
+</section>
+
+<script>
+(function () {
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function $(id) { return document.getElementById(id); }
+  function fmt(n) { return typeof n === "number" ? n.toLocaleString("fr-FR") : n; }
+
+  /* ---------- 1. Espion ---------- */
+  var base = { B2: 480, B3: 350, B4: 410, B5: 290 }, S = { B2: 480, B3: 350, B4: 410, B5: 290 }, zero = false;
+  var watch = [{ key: "B6", f: "=SUM(B2:B5)" }, { key: "B2", f: "480" }, { key: "C6", f: "=B6/B7" }], prev = {};
+  function val(k) {
+    var t = S.B2 + S.B3 + S.B4 + S.B5;
+    if (k === "B6") return t;
+    if (k === "C6") return zero ? "#DIV/0!" : Math.round(t / 4);
+    return S[k];
+  }
+  function spyGrid() {
+    var h = "<tr><th></th><th>A</th><th>B</th><th>C</th></tr>", names = ["Nord", "Sud", "Est", "Ouest"];
+    for (var i = 0; i < 4; i++) h += "<tr><th>" + (i + 2) + "</th><td class='t'>" + names[i] + "</td><td data-k='B" + (i + 2) + "'>" + fmt(S["B" + (i + 2)]) + "</td><td></td></tr>";
+    h += "<tr class='tot'><th>6</th><td class='t'>Total</td><td data-k='B6'>" + fmt(val("B6")) + "</td><td data-k='C6'>" + (zero ? "#DIV/0!" : fmt(val("C6"))) + "</td></tr>";
+    $("spyGrid").innerHTML = h;
+  }
+  function spyWin(changed) {
+    var h = "<div class='bar'>Espion<span class='sp'></span><button>+ Selection</button></div><table><tr><th>Feuille</th><th>Cell.</th><th style='text-align:right'>Valeur</th><th>Formule</th></tr>";
+    watch.forEach(function (w) {
+      var v = val(w.key), p = prev[w.key], d = "";
+      if (typeof v === "number" && typeof p === "number" && v !== p) d = "<span class='delta " + (v > p ? "up" : "down") + "'>" + (v > p ? "↑ +" : "↓ ") + fmt(v - p) + "</span>";
+      h += "<tr class='row' data-k='" + w.key + "'><td>Ventes</td><td>" + w.key + "</td><td class='v" + (typeof v === "string" ? " err" : "") + (changed && changed.indexOf(w.key) > -1 && !reduce ? " flash" : "") + "'>" + fmt(v) + d + "</td><td class='f'>" + w.f + "</td></tr>";
+    });
+    $("spyWin").innerHTML = h + "</table>";
+  }
+  function spyUpdate() {
+    var ch = [];
+    watch.forEach(function (w) { if (val(w.key) !== prev[w.key]) ch.push(w.key); });
+    spyGrid(); spyWin(ch); watch.forEach(function (w) { prev[w.key] = val(w.key); });
+  }
+  watch.forEach(function (w) { prev[w.key] = val(w.key); });
+  $("spyEdit").onclick = function () { S.B2 += 120; spyUpdate(); };
+  $("spyBreak").onclick = function () { zero = true; spyUpdate(); };
+  $("spyReset").onclick = function () { S = JSON.parse(JSON.stringify(base)); zero = false; spyUpdate(); };
+  $("spyWin").addEventListener("click", function (e) {
+    var r = e.target.closest && e.target.closest("tr.row"); if (!r) return;
+    var c = document.querySelector("#spyGrid [data-k='" + r.dataset.k + "']");
+    document.querySelectorAll("#spyGrid .sel").forEach(function (x) { x.classList.remove("sel"); }); c.classList.add("sel");
+  });
+  spyGrid(); spyWin();
+
+  /* ---------- 2. Analyse rapide ---------- */
+  var data = [["Nord", 480], ["Sud", 350], ["Est", 410], ["Ouest", 290]];
+  var ico = {
+    bars: "<svg viewBox='0 0 30 22'><rect class='f' x='3' y='4' width='22' height='4'/><rect class='f' x='3' y='10' width='14' height='4'/><rect class='f' x='3' y='16' width='18' height='4'/></svg>",
+    scale: "<svg viewBox='0 0 30 22'><rect class='f' opacity='.25' x='2' y='3' width='26' height='5'/><rect class='f' opacity='.55' x='2' y='9' width='26' height='5'/><rect class='f' x='2' y='15' width='26' height='5'/></svg>",
+    gt: "<svg viewBox='0 0 30 22'><path class='s' d='M8 4l10 7-10 7'/></svg>",
+    line: "<svg viewBox='0 0 30 22'><path class='s' d='M2 18l7-8 6 4 8-10 5 3'/></svg>",
+    col: "<svg viewBox='0 0 30 22'><rect class='f' x='4' y='10' width='5' height='10'/><rect class='f' x='12' y='4' width='5' height='16'/><rect class='f' x='20' y='13' width='5' height='7'/></svg>",
+    trend: "<svg viewBox='0 0 30 22'><path class='s' d='M4 17L22 5M14 5h8v8'/></svg>",
+    sum: "<svg viewBox='0 0 30 22'><path class='s' d='M20 4H8l7 7-7 7h12'/></svg>",
+    avg: "<svg viewBox='0 0 30 22'><path class='s' d='M3 11h24M8 5l-3 6 3 6M22 5l3 6-3 6'/></svg>",
+    cnt: "<svg viewBox='0 0 30 22'><path class='s' d='M9 4v14M14 4v14M19 4v14M5 15L24 7'/></svg>",
+    sort: "<svg viewBox='0 0 30 22'><path class='s' d='M8 4v14M4 14l4 4 4-4M20 18V4M16 8l4-4 4 4'/></svg>",
+    filt: "<svg viewBox='0 0 30 22'><path class='s' d='M3 4h24l-9 8v7l-6-3v-4z'/></svg>",
+    tab: "<svg viewBox='0 0 30 22'><rect class='s' x='3' y='3' width='24' height='16'/><path class='s' d='M3 9h24M12 3v16'/></svg>"
+  };
+  var fam = { format: ["Mise en forme", [["bars", "Barres", "bars"], ["scale", "Echelle", "scale"], ["gt", "> moyenne", "gt"]]], chart: ["Graphiques", [["line", "Courbe", "line"], ["col", "Barres", "col"], ["trend", "Tendance", "trend"]]], total: ["Totaux", [["sum", "Somme", "sum"], ["avg", "Moyenne", "avg"], ["cnt", "Nombre", "cnt"]]], table: ["Tableaux", [["tab", "Tableau", "tab"], ["sort", "Tri", "sort"], ["filt", "Filtre", "filt"]]] };
+  var cur = "format", pv = null;
+  function qaGrid() {
+    var h = "<tr><th></th><th>A</th><th>B</th><th>C</th></tr>", max = 480, mean = 382.5, i, shown = 0;
+    for (i = 0; i < 4; i++) {
+      var v = data[i][1], st = "", w = "";
+      if (pv === "bars") w = "<div class='db' style='width:" + Math.round(v / max * 100) + "%'></div>";
+      if (pv === "scale") st = " style='background:rgba(0,0,242," + (v / max * .35).toFixed(2) + ")'";
+      if (pv === "gt" && v > mean) st = " style='background:var(--soft2);color:var(--text);font-weight:700'";
+      var c = "";
+      if (pv === "line") c = "<td>" + spark(i) + "</td>"; else if (pv === "col") c = "<td>" + barc(v / max) + "</td>"; else if (pv === "trend") c = "<td class='" + (i === 3 ? "down" : "up") + "'>" + (i === 3 ? "▼ −29%" : "▲ +12%") + "</td>"; else c = "<td></td>";
+      h += "<tr><th>" + (i + 2) + "</th><td class='t'>" + data[i][0] + "</td><td" + st + "><span>" + v + "</span>" + w + "</td>" + c + "</tr>";
+    }
+    var tot = { sum: "=SUM(B2:B5) → 1 530", avg: "=AVERAGE(B2:B5) → 383", cnt: "=COUNT(B2:B5) → 4" }[pv];
+    if (tot) h += "<tr class='tot'><th>6</th><td class='t'>" + tot.split(" → ")[0] + "</td><td>" + tot.split(" → ")[1] + "</td><td></td></tr>";
+    if (pv === "sort") h = h.replace(/Nord|Sud|Est|Ouest/g, function (m) { return m; });
+    $("qaGrid").innerHTML = h;
+    var cells = $("qaGrid").querySelectorAll("td:nth-child(3)"); cells.forEach(function (td) { td.classList.add("rng"); });
+  }
+  function spark(i) { var p = [[0, 8, 4, 9], [3, 5, 8, 4], [2, 6, 5, 8], [9, 7, 4, 2]][i], d = p.map(function (y, x) { return (x ? "L" : "M") + (x * 18) + " " + (14 - y); }).join(" "); return "<svg width='56' height='16'><path d='" + d + "' stroke='var(--acc)' fill='none' stroke-width='1.6'/></svg>"; }
+  function barc(r) { return "<svg width='56' height='14'><rect x='0' y='2' width='" + Math.round(r * 54) + "' height='10' fill='var(--acc)'/></svg>"; }
+  function qaBox() {
+    var t = "";
+    Object.keys(fam).forEach(function (k) { t += "<button role='tab' class='" + (k === cur ? "on" : "") + "' data-f='" + k + "'>" + fam[k][0] + "</button>"; });
+    $("qaTabs").innerHTML = t;
+    $("qaOpts").innerHTML = fam[cur][1].map(function (o) { return "<button data-o='" + o[2] + "'>" + ico[o[0]] + o[1] + "</button>"; }).join("");
+  }
+  $("qaTabs").addEventListener("click", function (e) { var f = e.target.dataset && e.target.dataset.f; if (f) { cur = f; pv = null; qaBox(); qaGrid(); } });
+  $("qaOpts").addEventListener("mouseover", function (e) { var b = e.target.closest("button"); if (b) { pv = b.dataset.o; qaGrid(); $("qaHint").textContent = "Apercu : " + b.textContent; } });
+  $("qaOpts").addEventListener("mouseleave", function () { pv = null; qaGrid(); $("qaHint").textContent = "Survoler pour previsualiser"; });
+  $("qaOpts").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { $("qaHint").textContent = "Applique (Ctrl+Z annule)"; } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { pv = null; qaGrid(); } });
+  qaBox(); qaGrid();
+
+  /* ---------- 3. Appareil photo ---------- */
+  var cv = { B2: 480, B3: 350, B4: 410 };
+  function camTable(id, flash) {
+    var h = "<tr><th>A</th><th>B</th></tr><tr><td class='t'>Region</td><td class='t'>CA</td></tr>";
+    ["B2", "B3", "B4"].forEach(function (k, i) { h += "<tr><td class='t'>" + ["Nord", "Sud", "Est"][i] + "</td><td data-k='" + k + "' class='" + (flash === k ? "flash" : "") + "'>" + fmt(cv[k]) + "</td></tr>"; });
+    $(id).innerHTML = h;
+  }
+  $("camEdit").onclick = function () { cv.B3 += 75; camTable("camSrc"); setTimeout(function () { camTable("camDst", reduce ? "" : "B3"); }, reduce ? 0 : 450); };
+  camTable("camSrc"); camTable("camDst");
+})();
+</script>
+</body>
+</html>
