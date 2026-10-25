@@ -26,3 +26,9 @@ Aucune (carte sans effet visible).
 - Les valeurs de la table sont des saisies brutes (texte ou nombre) passées à `setCell`, comme la saisie utilisateur.
 - Hors carte (suite possible): UI (Données > Table de données…, palette) et rendu de la grille de résultats; forme `{=TABLE(...)}` persistée non prévue, le résultat est calculé à la demande.
 - Propagation en mode manuel: `recalc` (dépendants de la feuille seulement). Les dépendances inter-feuilles de la formule ne sont pas recalculées pendant la substitution (limite connue).
+
+## Preuves
+- Tests : ok (13 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":13,"scope":"related"},"tsc":{"ok":true}} -->
