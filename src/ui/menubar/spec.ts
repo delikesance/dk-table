@@ -94,7 +94,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Insérer les en-têtes FEC", sep: true, run: () => insertFecHeaders(app) },
     ] },
     { label: "Scripts", items: () => [
-      { label: "Éditeur de macros", hint: "Alt+F11", run: d.openMacros },
+      { label: "Macros", hint: "Alt+F11", run: d.openMacros },
       ...d.macros().map((m, i) => ({ label: m.name, sep: i === 0, run: () => d.runMacro(m.id) })),
     ] },
     { label: "Affichage", items: () => [ // dynamic: "jusqu'à la ligne/colonne" follows the selection (Sheets)

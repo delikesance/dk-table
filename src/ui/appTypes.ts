@@ -93,8 +93,10 @@ export interface App {
   sheetName(): string;
   /** Run a macro on the active sheet (Lua VM loaded on first use). */
   runMacro(id: string): Promise<RunResult>;
-  /** Open the macro panel (on `id` if given). */
-  openMacros(id?: string): Promise<void>;
+  /** Open the macro list panel. */
+  openMacros(): Promise<void>;
+  /** Open the full-screen editor tab of macro `id` (Lua editor loaded on first use). */
+  editMacro(id: string): Promise<void>;
   /** Create a dk doc (rich-text document of the workbook), open it, return its id. */
   addDoc(): string;
   /** Show document `id` in place of the grid. */

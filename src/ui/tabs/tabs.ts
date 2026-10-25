@@ -4,7 +4,7 @@ import { icon } from "../icons";
 import { showToast } from "../toast/toast";
 
 /** A sheet entry shown as a tab. */
-export interface SheetInfo { id: string; name: string; /** "doc" for a dk doc tab (default: sheet). */ kind?: "doc" }
+export interface SheetInfo { id: string; name: string; /** "doc" for a dk doc tab, "macro" for a Lua macro editor tab (default: sheet). */ kind?: "doc" | "macro" }
 
 /** Callbacks and options for {@link createSheetTabs}. */
 export interface SheetTabsOptions {
@@ -42,6 +42,7 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
 
   /** Ask then delete sheet `id`; the last sheet is protected. */
   const tryDelete = (s: SheetInfo): void => {
+    if (s.kind === "macro") { opts.onDelete(s.id); return; } // closes the editor tab; the macro is deleted from the macro list
     if (sheets.length <= 1) return;
     const msg = `Supprimer la feuille « ${s.name} » ?`;
     if (opts.confirm) { if (opts.confirm(msg)) opts.onDelete(s.id); return; }
@@ -103,7 +104,7 @@ export function createSheetTabs(host: HTMLElement, opts: SheetTabsOptions): Shee
     sheets.forEach((s, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "dk-tab" + (s.id === active ? " dk-tab--active" : "") + (s.kind === "doc" ? " dk-tab--doc" : "");
+      b.className = "dk-tab" + (s.id === active ? " dk-tab--active" : "") + (s.kind === "doc" ? " dk-tab--doc" : "") + (s.kind === "macro" ? " dk-tab--macro" : "");
       b.textContent = s.name;
       b.dataset.id = s.id;
       b.setAttribute("role", "tab");

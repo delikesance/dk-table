@@ -4,10 +4,11 @@ Les macros sont des scripts Lua 5.3 enregistrés dans le classeur (`.dktable`, c
 
 ## Accès
 
-- `Alt+F11` ou palette `Ctrl+K` > « Éditeur de macros » : ouvre le panneau droit.
-- Palette `Ctrl+K` > « Macro : <nom> » : exécute une macro sans ouvrir le panneau (une erreur ouvre le panneau sur la macro).
-- Dans l'éditeur : `Ctrl+Entrée` exécute, `Ctrl+Espace` force l'autocomplétion.
-- Liste : double-clic ou `F2` pour renommer ; clic droit pour exécuter, renommer, supprimer.
+- `Alt+F11`, menu Scripts > « Macros » ou palette `Ctrl+K` > « Macros » : ouvre/ferme la liste des macros (panneau droit, sans code).
+- Liste : « + Nouvelle » crée une macro et ouvre son éditeur ; ▶ exécute ; le crayon (ou un clic sur la ligne) ouvre l'éditeur ; `F2` ou clic droit pour renommer, exécuter, supprimer.
+- L'éditeur s'ouvre en plein écran dans un onglet (`</>` + nom) à côté des feuilles et des documents : clic = afficher, double-clic ou `F2` = renommer, `Suppr` ou clic droit = fermer l'onglet (la macro est conservée).
+- Palette `Ctrl+K` > « Macro : <nom> » : exécute une macro sans ouvrir l'éditeur (une erreur ouvre la liste et affiche le message).
+- Dans l'éditeur : `Ctrl+Entrée` exécute (résultat sous le code), `Ctrl+Espace` force l'autocomplétion.
 
 Une exécution = un seul pas d'annulation (`Ctrl+Z` annule toutes les écritures de la macro).
 
