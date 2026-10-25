@@ -75,7 +75,7 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   // Etat persistant du run (reprise apres crash); un fichier corrompu est journalise et ignore.
   const state = createFileStateStore(join(o.cwd, ".boucle", "state.json"), { onWarn: (m) => rl.cur().warn("etat", m) });
   const pipeline = createPipeline({
-    state,
+    state, onLock: (s) => rl.cur()[s.waitMs >= 1000 ? "info" : "debug"]("verrou", s.name, { lock: s.name, waitMs: s.waitMs, holdMs: s.holdMs }),
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
     unfinished: async () => (await boardOf("merged", new Set())).filter((c) => c.state !== "termine").length,
     board: (a) => { activeIds = new Set(a ?? []); return tracked(boardOf("merged", activeIds)); },

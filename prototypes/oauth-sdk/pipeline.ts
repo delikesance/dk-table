@@ -42,7 +42,7 @@ function diskWrite(path: string, text: string): void {
 /** Construit `runPipeline` lie a ses dependances. */
 export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean; reason?: StopReason } | undefined> {
   const write = deps.writeFile ?? diskWrite;
-  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
+  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push, onLock: deps.onLock });
   const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);

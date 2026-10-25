@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { BoardCard } from "./cards";
-import { logEvent, trackBoard, wrapQuery, wrapRun } from "./instrument";
+import { contextChars, logEvent, trackBoard, usageFields, wrapQuery, wrapRun } from "./instrument";
 import { createLogs } from "./logger";
 import { readRun } from "./logRead";
 import type { QueryFn } from "./research";
@@ -45,6 +45,19 @@ describe("wrapQuery", () => {
     const e = (await read()).find((x) => x.comp === "modele" && x.costUsd !== undefined)!;
     expect(e).toMatchObject({ model: "haiku", costUsd: 0.42, turns: 7, maxTurns: 40, maxBudgetUsd: 0.3, subtype: "success", cwd: "/wt/a" });
     expect(JSON.stringify(await read())).not.toContain("SECRETSECRET");
+  });
+  it("journalise l'usage (tokens, cache) et la taille du contexte injecte", async () => {
+    const { l, read } = setup();
+    const withUsage: QueryFn = () => (async function* () { yield { type: "result", subtype: "success", total_cost_usd: 1, usage: { input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 300, cache_creation_input_tokens: 40 } } as never; })();
+    for await (const _ of wrapQuery(withUsage, () => l)({ prompt: "x".repeat(100), options: { model: "haiku", systemPrompt: { type: "preset", preset: "claude_code", append: "y".repeat(60) } } })) { /* consomme */ }
+    const es = await read();
+    expect(es.find((e) => e.msg === "appel")).toMatchObject({ ctxChars: 160, ctxTokensApprox: 40 });
+    expect(es.find((e) => e.msg === "resultat")).toMatchObject({ inTokens: 10, outTokens: 20, cacheRead: 300, cacheCreation: 40, ctxChars: 160 });
+  });
+  it("usage absent ou partiel: pas d'exception, champs omis", async () => {
+    expect(usageFields({})).toEqual({});
+    expect(usageFields({ usage: { input_tokens: 5, cache_read_input_tokens: "x" } })).toEqual({ inTokens: 5 });
+    expect(contextChars("abc", {})).toBe(3);
   });
   it("exception du flux: erreur journalisee avec stack, relancee", async () => {
     const { l, read } = setup();

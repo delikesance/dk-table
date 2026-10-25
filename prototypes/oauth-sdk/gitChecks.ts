@@ -7,7 +7,7 @@
  * Usage : voir git.ts (`createGitFlow`).
  */
 import { failureDigest } from "./cleanOutput";
-import { createMutex, type Mutex } from "./concurrency";
+import { createMutex, type LockStat, type Mutex } from "./concurrency";
 import type { Run } from "./git";
 import { relatedFailures } from "./mergeGuard";
 import { failedFiles, failedTests, onlyOnBranch } from "./testFailures";
@@ -21,12 +21,14 @@ export interface ChecksDeps {
   lock: Mutex;
   /** Branche de base. */
   dev: string;
+  /** Mesure des attentes de verrous. */
+  onLock?: (s: LockStat) => void;
 }
 
 /** Cree les verifications liees a un depot. */
-export function createChecks({ run, git, cwd, lock, dev: DEV }: ChecksDeps) {
+export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDeps) {
   /** Worktree de reference (developpement detache), cree a la demande: sert a savoir si un test rouge l'est deja sur la base. */
-  const baseLock = createMutex();
+  const baseLock = createMutex({ name: "baseLock", onLock });
   let baseDir: string | null = null;
   async function baseFailures(files: string[]): Promise<string[] | null> {
     return baseLock.run(async () => {
@@ -44,7 +46,7 @@ export function createChecks({ run, git, cwd, lock, dev: DEV }: ChecksDeps) {
     });
   }
 
-  const suiteLock = createMutex(); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
+  const suiteLock = createMutex({ name: "suiteLock", onLock }); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
   /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
   async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[] }> {
     const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
