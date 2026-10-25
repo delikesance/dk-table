@@ -24,6 +24,8 @@ Visible : non
 - Groupe = lignes contiguës au-dessus du sous-total, de niveau strictement supérieur. Replier masque ce groupe.
 - `showLevel(n)` remplace l'état : replie chaque ligne de niveau ≤ n dont la ligne du dessus est plus profonde que n.
 - Limite : un groupe sans ligne de sous-total en dessous (fin de feuille) ne peut pas être replié.
+- Tournée suivante : le design `docs/design/2026-10-25-200330.html` ne parle que d'analyse what-if (aucune mention de plan ni de sous-total) : ignoré, comme au premier passage.
+- Tournée suivante : critères d'acceptation relus, tous couverts par les 7 tests existants (niveaux 0-3, repli, dépli sans sous-groupes, `showLevel`). Aucun changement de code.
 
 ## Preuves
 - Tests : ok (7 tests, tests lies aux fichiers modifies)
