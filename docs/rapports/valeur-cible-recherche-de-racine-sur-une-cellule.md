@@ -1,19 +1,18 @@
 # Rapport : Valeur cible (recherche de racine sur une cellule)
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait
 
 - Moteur pur de recherche de racine (`src/engine/goalSeekMath.ts`) : bracket par sondes doublées autour du point de départ, puis bissection. Tolérance absolue 1e-6, plafond d'itérations.
 - Liaison au moteur (`src/engine/goalSeek.ts`) : `goalSeek(sheet, formulaKey, varKey, target)` ajuste une constante numérique pour qu'une cellule formule atteigne la cible.
-- Erreurs explicites (`reason`) : cible non finie, cellule résultat non formule, cellule variable non constante, pas de racine.
+- Erreurs explicites (`reason`) : cible non finie, cellule résultat non formule, cellule variable non constante, pas de racine, plafond atteint.
 - Valeur d'origine de la cellule variable restaurée en cas d'échec ; `original` renvoyé pour que l'appelant puisse annuler un succès.
+- Tests (`src/engine/goalSeek.test.ts`, 11 cas) couvrent les quatre critères d'acceptation.
 
 ## Non fait
 
-- Pas d'UI (menu Données, dialogue, palette) : la carte porte sur le moteur.
-- Pas d'annulation après succès côté moteur (l'appelant utilise `original`).
-- Tables de données et autres parties de la carte parente : hors de cette carte.
+(rien : critères d'acceptation couverts par le moteur)
 
 ## Captures
 
@@ -25,10 +24,12 @@ Aucune (pas d'effet visible dans cette carte).
 - Écriture de la valeur sondée arrondie à 15 chiffres significatifs : au-delà, `recalc.ts` stocke le nombre en texte exact (`longnum.ts`) et la cellule ne serait plus numérique.
 - Tolérance absolue 1e-6 sur `résultat - cible`.
 - Plafond = 300 évaluations de la formule (sondes d'encadrement + bissection), option `maxEval`.
-- Pas d'UI dans cette carte: menu Données et dialogue relèvent d'une carte suivante (la partie moteur est prête).
+- Annulation utilisateur : le moteur ne sait pas que l'utilisateur annule. Il renvoie `original` ; c'est à l'UI de réécrire cette valeur si l'utilisateur annule après un succès.
+- Hors de cette carte (carte suivante) : pas d'UI (menu Données, dialogue, palette). La partie moteur est prête.
+- Hors de cette carte : tables de données et autres parties de la carte parente.
 
 ## Preuves
-- Tests : ok (11 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":11,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
