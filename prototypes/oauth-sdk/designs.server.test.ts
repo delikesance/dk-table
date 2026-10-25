@@ -33,7 +33,7 @@ describe("designs", () => {
     const { base } = await boot({ designs });
     const r = await fetch(base + "/designs/d.html");
     expect(r.status).toBe(200);
-    expect(r.headers.get("content-security-policy")).toBe("sandbox");
+    expect(r.headers.get("content-security-policy") ?? "").toContain("sandbox allow-scripts");
     expect(r.headers.get("content-type")).toContain("text/html");
     expect(await r.text()).toBe("<h1>d</h1>");
     expect((await fetch(base + "/designs/x.html")).status).toBe(404);

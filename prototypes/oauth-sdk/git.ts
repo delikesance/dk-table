@@ -63,15 +63,18 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
   }
 
   async function mergeIfGreen(branch: string, dir: string) {
-    const bad = installFail.get(dir);
-    if (bad) return { merged: false, reason: bad };
+    const failed = installFail.get(dir);
+    if (failed) return { merged: false, reason: failed };
     const checks: [string, string[]][] = [
       ["npm", ["test"]],
       ["npx", ["tsc", "--noEmit"]],
     ];
-    for (const [cmd, args] of checks) {
-      const r = await run(cmd, args, dir);
-      if (r.code !== 0) return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${r.out.slice(-500)}` };
+    // tests et tsc en parallele (independants): le gain est le plus long des deux au lieu de leur somme
+    const results = await Promise.all(checks.map(([cmd, args]) => run(cmd, args, dir)));
+    const bad = results.findIndex((r) => r.code !== 0);
+    if (bad >= 0) {
+      const [cmd, args] = checks[bad];
+      return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${results[bad].out.slice(-500)}` };
     }
     if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
     const m = await git(["merge", "--no-ff", branch]);

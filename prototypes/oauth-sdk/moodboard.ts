@@ -37,6 +37,8 @@ export interface MoodDeps {
   budget?: Budget;
   cache?: Map<string, string>;
   env?: Record<string, string>;
+  /** Opt-in: resumes Haiku (defaut: premiere phrase, 0 spawn). */
+  llm?: boolean;
 }
 
 /** Plafond (EUR) d'un rafraichissement quand aucun run n'est actif. */
@@ -102,7 +104,7 @@ const keyOf = (c: { title: string; source: string }) =>
 /** Resume les cartes hors cache par lots et remplit `cache`; ne leve jamais. */
 async function summarize(cards: MoodCard[], d: MoodDeps, cache: Map<string, string>): Promise<void> {
   const todo = cards.filter((c) => !cache.has(keyOf(c)));
-  if (d.env && !d.env.CLAUDE_CODE_OAUTH_TOKEN) return;
+  if (!d.llm || (d.env && !d.env.CLAUDE_CODE_OAUTH_TOKEN)) return;
   for (let i = 0; i < todo.length; i += BATCH) {
     const lot = todo.slice(i, i + BATCH);
     if (d.budget?.exhausted()) return;
