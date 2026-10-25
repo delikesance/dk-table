@@ -10,6 +10,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createBudget, type Budget } from "./budget";
+import { listDesigns, readDesign, watchDesigns } from "./designs";
 import { createGitFlow, type Run } from "./git";
 import { runResearch, type QueryFn } from "./research";
 import { SECTORS, toController, type Sector } from "./sectors";
@@ -32,9 +33,18 @@ export interface PipelineDeps {
   writeFile?: (path: string, text: string) => void;
   /** Budget du run en cours (null une fois fini): partage avec le moodboard. */
   onBudget?: (b: Budget | null) => void;
+  /** Dossier docs/design du secteur design en cours (null une fois fini): pour servir les designs en direct. */
+  onSectorDir?: (designDir: string | null) => void;
+  /** Recap HTML des designs (recap.ts `buildRecap`); absent: pas de recap.html. */
+  buildRecap?: (designs: { name: string; html: string; mtimeMs: number }[], steps: BoucleEvent[]) => string;
+  /** Suivi des designs (defauts: designs.ts; injectables pour les tests). */
+  watchDesigns?: typeof watchDesigns;
+  listDesigns?: typeof listDesigns;
+  readDesign?: typeof readDesign;
 }
 
 const DOC = join("docs", "recherche", "fonctionnalites.md");
+const DESIGN_DIR = join("docs", "design");
 
 /** Ecriture disque par defaut. */
 function diskWrite(path: string, text: string): void {
@@ -92,10 +102,29 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
       let held: BoucleEvent | undefined;
-      const emit = (e: BoucleEvent) => { if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else onEvent(e); };
+      const isDesign = sector.name === "design";
+      const ddir = join(dir, DESIGN_DIR);
+      const steps: BoucleEvent[] = [];
+      const emit = (e: BoucleEvent) => {
+        if (isDesign) steps.push(e);
+        if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else onEvent(e);
+      };
+      let stopWatch: (() => void) | undefined;
+      if (isDesign) {
+        deps.onSectorDir?.(ddir);
+        stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name }));
+      }
       let ok = false;
       try {
         await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env });
+        if (isDesign && deps.buildRecap) {
+          stopWatch?.();
+          const files = await (deps.listDesigns ?? listDesigns)(ddir);
+          const read = deps.readDesign ?? readDesign;
+          const designs = [];
+          for (const f of files) designs.push({ name: f.name, html: (await read(ddir, f.name)) ?? "", mtimeMs: f.mtimeMs });
+          write(join(ddir, "recap.html"), deps.buildRecap(designs, steps));
+        }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir);
         ok = m.merged;
@@ -104,6 +133,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
       } finally {
+        if (isDesign) { stopWatch?.(); deps.onSectorDir?.(null); }
         status[sector.name] = ok ? "ok" : "failed";
         if (held) onEvent({ ...(held as BoucleEvent), ok });
         await summarize(sector.name);

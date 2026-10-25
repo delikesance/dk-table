@@ -19,7 +19,9 @@ import type { Run } from "./git";
 import { buildMoodboard, pickBudget } from "./moodboard";
 import { createPipeline } from "./pipeline";
 import type { QueryFn } from "./research";
-import { createServer, listen } from "./server";
+import { createServer, listen, type BoucleEvent } from "./server";
+import { listDesigns, readDesign } from "./designs";
+import { buildRecap } from "./recap"; // owned by worker-design-view (merge pending)
 
 if (!process.env.CLAUDE_CODE_OAUTH_TOKEN) {
   process.stderr.write("CLAUDE_CODE_OAUTH_TOKEN absent (voir .env, `claude setup-token`).\n");
@@ -49,9 +51,23 @@ const moodCache = new Map<string, string>();
 /** Page du moodboard (ecrite par ailleurs); absente => 404. */
 const readOpt = (p: string): string | undefined => { try { return readFileSync(p, "utf-8"); } catch { return undefined; } };
 
+// Designs : dossier du secteur design en cours (sinon l'arbre principal) et etapes du secteur.
+let activeDesignDir: string | null = null;
+const designDir = (): string => activeDesignDir ?? join(process.cwd(), "docs", "design");
+const designSteps: BoucleEvent[] = [];
+const pipeline = createPipeline({
+  query: query as unknown as QueryFn, run, cwd: process.cwd(), env, buildRecap,
+  onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; },
+});
+
 const here = dirname(fileURLToPath(import.meta.url));
 const server = createServer({
-  runPipeline: createPipeline({ query: query as unknown as QueryFn, run, cwd: process.cwd(), env, onBudget: (b) => { activeBudget = b; } }),
+  runPipeline: (o) => {
+    designSteps.length = 0;
+    return pipeline({ ...o, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); o.onEvent(e); } });
+  },
+  designs: { list: () => listDesigns(designDir()), read: (n) => readDesign(designDir(), n), steps: () => designSteps },
+  designHtml: () => readOpt(join(here, "design.html")),
   parseBudgetEur,
   panelHtml: readFileSync(join(here, "panel.html"), "utf-8"),
   moodboard: () => buildMoodboard({
