@@ -49,6 +49,10 @@
 - **Dialogue d'outils d'analyse et sortie en feuille** : partie de « Outils d'analyse statistique » (decoupe automatique). Source (docs/recherche/fonctionnalites.md). Valeur : meme objectif que la carte parente, en plus petit.
 - **Formules à résultat débordant (spill) et fonctions Sheets** : Sheets a ARRAYFORMULA, QUERY, SPLIT, REGEXEXTRACT, SORTN, FILTER, UNIQUE. Sources : https://support.google.com/docs/table/25273 et https://support.google.com/docs/answer/3093197. Valeur : très haute, hors ligne et sans IA. Il faut un mécanisme de spill dans le moteur. Non vérifié dans `src/` : CLAUDE.md note que CHOOSE ne renvoie pas de plage. IMPORT* et GOOGLEFINANCE exigent le réseau, donc hors périmètre.
 - **Vues alternatives sur les mêmes données (Airtable)** : Airtable propose Formulaire, Calendrier, Galerie, Kanban, Chronologie, Gantt. Source : https://support.airtable.com/docs/getting-started-with-airtable-views. Valeur : retenir seulement une vue « fiche » ou Kanban par colonne de statut, en lecture seule. Le reste est trop lourd. Le TODO a déjà une idée « fiche » (non vérifiée en détail).
+- **Vue Kanban (groupement par colonne de statut)** : partie de « Vues alternatives sur les mêmes données (Airtable) » (decoupe automatique). Source (docs/recherche/fonctionnalites.md). Valeur : meme objectif que la carte parente, en plus petit.
+- **Vue Calendrier et Chronologie (colonnes date)** : partie de « Vues alternatives sur les mêmes données (Airtable) » (decoupe automatique). Source (docs/recherche/fonctionnalites.md). Valeur : meme objectif que la carte parente, en plus petit.
+- **Vue Galerie (cartes)** : partie de « Vues alternatives sur les mêmes données (Airtable) » (decoupe automatique). Source (docs/recherche/fonctionnalites.md). Valeur : meme objectif que la carte parente, en plus petit.
+- **Vue Formulaire (saisie de lignes)** : partie de « Vues alternatives sur les mêmes données (Airtable) » (decoupe automatique). Source (docs/recherche/fonctionnalites.md). Valeur : meme objectif que la carte parente, en plus petit.
 
 ## Negligees ou sous-utilisees ailleurs
 
