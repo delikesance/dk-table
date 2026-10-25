@@ -26,6 +26,28 @@ describe("createMutex", () => {
   });
 });
 
+describe("createMutex: mesure des attentes", () => {
+  it("rapporte l'attente avant d'entrer et la duree passee dedans, par nom (horloge simulee)", async () => {
+    let t = 0;
+    const stats: { name: string; waitMs: number; holdMs: number }[] = [];
+    const m = createMutex({ name: "suiteLock", now: () => t, onLock: (s) => stats.push(s) });
+    const gate = deferred();
+    const a = m.run(async () => { await gate.promise; t += 50; });
+    const b = m.run(async () => { t += 10; });
+    await flush();
+    t += 200; // b attend derriere a
+    gate.resolve();
+    await Promise.all([a, b]);
+    expect(stats[0]).toEqual({ name: "suiteLock", waitMs: 0, holdMs: 250 });
+    expect(stats[1]).toMatchObject({ name: "suiteLock", waitMs: 250, holdMs: 10 });
+  });
+  it("un rappel de mesure qui leve ne casse pas le verrou", async () => {
+    const m = createMutex({ onLock: () => { throw new Error("log"); } });
+    await expect(m.run(async () => 1)).resolves.toBe(1);
+    await expect(m.run(async () => 2)).resolves.toBe(2);
+  });
+});
+
 describe("runPool", () => {
   it("jamais plus de n travailleurs a la fois, tous les elements traites, resultats dans l'ordre", async () => {
     let now = 0, peak = 0;

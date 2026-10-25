@@ -5,11 +5,15 @@ import type { Run } from "./git";
 import { createPipeline } from "./pipeline";
 import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
+import { createFileStateStore } from "./runState";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const card = (id: string, state: BoardCard["state"], missing: string[] = []) =>
   ({ id, title: id, source: "s", status: "found", summary: "", state, reportPath: "", missing, anomalies: [] }) as BoardCard;
 
-interface Opts { boards: BoardCard[][]; testsRed?: boolean; /** Meme test rouge sur developpement (base). */ baseRed?: boolean; remote?: boolean; push?: boolean }
+interface Opts { /** Etat persistant (retry, essais). */ state?: ReturnType<typeof createFileStateStore>; boards: BoardCard[][]; testsRed?: boolean; /** Meme test rouge sur developpement (base). */ baseRed?: boolean; remote?: boolean; push?: boolean }
 function harness(o: Opts) {
   const calls: { model: string; prompt: string }[] = [];
   const gitCalls: string[] = [];
@@ -32,7 +36,7 @@ function harness(o: Opts) {
   let n = 0;
   const events: BoucleEvent[] = [];
   const p = createPipeline({
-    query, run, cwd: "/repo", eurUsd: 1, writeFile: () => {}, push: o.push,
+    query, run, cwd: "/repo", eurUsd: 1, writeFile: () => {}, push: o.push, state: o.state,
     board: async () => o.boards[Math.min(n++, o.boards.length - 1)], watchReports: () => () => {},
   });
   const go = () => p({ budgetEur: 50, onEvent: (e) => events.push(e), signal: new AbortController().signal });
@@ -55,11 +59,38 @@ describe("validation par code", () => {
     expect(h.corr()).toHaveLength(1);
     expect(h.corr()[0].prompt).toContain("a (manque : capture absente : x.png)");
   });
-  it("fusion refusee (tests rouges): correction lancee avec la raison", async () => {
-    const h = harness({ boards: [[card("a", "idee")], [card("a", "idee")]], testsRed: true });
+  it("fusion refusee (tests rouges): aucune correction depuis developpement; la carte est reprise avec la raison et le numero d'essai", async () => {
+    const state = createFileStateStore(join(mkdtempSync(join(tmpdir(), "pf-")), "state.json"));
+    const h = harness({ boards: [[card("a", "idee")]], testsRed: true, state });
     await h.go();
-    expect(h.corr().length).toBeGreaterThan(0);
-    expect(h.corr()[0].prompt).toContain("fusion a ete refusee");
+    expect(h.corr()).toHaveLength(0);
+    expect(h.impl()).toHaveLength(3); // borne dure: 3 essais
+    expect(h.impl()[0].prompt).not.toContain("REPRISE");
+    expect(h.impl()[1].prompt).toContain("REPRISE (essai 2 sur 3)");
+    expect(h.impl()[1].prompt).toContain("infra.test.ts > git lent");
+    expect(h.impl()[2].prompt).toContain("REPRISE (essai 3 sur 3)");
+  });
+  it("3 essais sans fusion: carte bloquee avec raison structuree, arret « blocked », aucun 4e agent", async () => {
+    const state = createFileStateStore(join(mkdtempSync(join(tmpdir(), "pf-")), "state.json"));
+    const board = async () => {
+      const d = state.load().cards.a?.deferred;
+      return [d ? { ...card("a", "bloque"), blockReason: d.reason } as BoardCard : card("a", "idee")];
+    };
+    const calls: string[] = [];
+    const query: QueryFn = ({ prompt }) => { if (prompt.includes("Cartes a traiter")) calls.push(prompt); return (async function* () { yield { type: "result", subtype: "success", result: "-", total_cost_usd: 0.01 }; })(); };
+    const run: Run = async (cmd, args) => {
+      if (cmd === "git" && args[1] === "--abbrev-ref") return { code: 0, out: "developpement\n" };
+      if (cmd === "git" && args[0] === "status") return { code: 0, out: " M f\n" };
+      if (cmd === "npm" && args[0] === "test") return { code: 1, out: " FAIL  x.test.ts > casse" };
+      return { code: 0, out: "" };
+    };
+    const events: BoucleEvent[] = [];
+    const r = await createPipeline({ query, run, cwd: "/repo", eurUsd: 1, writeFile: () => {}, state, board, watchReports: () => () => {} })({ budgetEur: 50, onEvent: (e) => events.push(e), signal: new AbortController().signal });
+    expect(calls).toHaveLength(3);
+    expect(r).toMatchObject({ complete: false, reason: "blocked" });
+    expect(state.load().cards.a).toMatchObject({ tries: 3, deferred: { kind: "max-tries" } });
+    expect(state.load().cards.a.models).toHaveLength(3); // un modele enregistre par essai
+    expect(events.some((e) => /cartes bloquees/.test(e.message ?? ""))).toBe(true);
   });
 });
 

@@ -10,12 +10,13 @@
  */
 import type { BoardCard } from "./cards";
 
-type Card = Pick<BoardCard, "id" | "title" | "source" | "summary">;
+type Card = Pick<BoardCard, "id" | "title" | "source" | "summary"> & { /** Fichiers declares par la qualification (qualify.ts): ils priment sur les chemins cites dans le texte. */ files?: string[] };
 
 const PATH = /[\w@.-]+(?:\/[\w@.-]+)+\/?|[\w-]+\.(?:ts|tsx|js|css|md|json|html)\b/g;
 
-/** Chemins annonces par la carte (sans doublon). */
+/** Chemins annonces par la carte (sans doublon): fichiers declares s'il y en a, sinon chemins cites dans le texte. */
 export function touches(c: Card): Set<string> {
+  if (c.files?.length) return new Set(c.files);
   const out = new Set<string>();
   for (const m of `${c.title} ${c.source} ${c.summary}`.matchAll(PATH)) out.add(m[0]);
   return out;

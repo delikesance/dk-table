@@ -22,10 +22,15 @@ export interface BoardCard extends MoodCard {
   missing: string[];
   /** Incoherences detectees par le reconciliateur (orpheline, finie sans rapport...). */
   anomalies: string[];
+  /** Raison structuree d'un blocage decide par le code (limite d'essais...): la carte est `bloque` et n'est plus traitee. */
+  blockReason?: string;
+  /** Fichiers cibles et criteres d'acceptation de la qualification du lot (qualify.ts), ajoutes aux cartes retenues. */
+  files?: string[];
+  criteria?: string[];
 }
 
 /** Dependances: celles du moodboard + test d'existence d'un fichier (captures). */
-export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger; /** Rapports perimes (ignores, voir stale.ts). */ stale?: StaleStore; /** Ids des cartes du lot en cours de traitement (aucune hors tournee). */ active?: ReadonlySet<string> };
+export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger; /** Rapports perimes (ignores, voir stale.ts). */ stale?: StaleStore; /** Ids des cartes du lot en cours de traitement (aucune hors tournee). */ active?: ReadonlySet<string>; /** Cartes ecartees par le code (id -> raison), lues dans .boucle/state.json. */ deferred?: () => ReadonlyMap<string, { kind: string; reason: string }> };
 
 /** Carte terminee reconstituee depuis le registre. */
 const fromLedger = (e: DoneEntry): BoardCard => ({
@@ -49,8 +54,10 @@ export async function buildBoard(d: BoardDeps): Promise<BoardCard[]> {
     const known = new Set<string>();
     await Promise.all((report?.screenshots ?? []).map(async (p) => { if (await d.exists(p).catch(() => false)) known.add(p); }));
     const proof = report ? validateReport(report, (p) => known.has(p)) : { ok: true, missing: [] };
-    const r = reconcileCard({ status: c.status, report, proof, active: !!d.active?.has(c.id), ledgered: kept.has(c.id) });
+    const r = reconcileCard({ status: c.status, report, proof, active: !!d.active?.has(c.id), ledgered: kept.has(c.id), proven: !!report?.proof });
     if (kept.has(c.id) && !(report?.status === "termine" && proof.ok)) return { ...fromLedger(kept.get(c.id)!), axis: c.axis ?? kept.get(c.id)!.axis };
+    const stop = r.state !== "termine" ? d.deferred?.().get(c.id) : undefined;
+    if (stop) return { ...c, report, ...r, state: "bloque", anomalies: [...r.anomalies, `bloquee (${stop.kind}) : ${stop.reason}`], blockReason: stop.reason, reportPath: path, markdown: md || undefined };
     return { ...c, report, ...r, reportPath: path, markdown: md || undefined };
   }));
   if (!d.ledger) return live;

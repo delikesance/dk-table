@@ -12,7 +12,7 @@
  * Usage : `runResearch({ query, budgetUsd: 20 })` -> `{ markdown, items, totalCostUsd }`.
  */
 
-import { agentOptions, MODEL_BY_KIND, type Kind } from "./agentOptions";
+import { agentOptions } from "./agentOptions";
 import { dedupe } from "./researchMerge";
 import { modelFor, type Task } from "./routing";
 import type { Budget } from "./budget";
@@ -32,14 +32,12 @@ export type QueryFn = (a: {
   options: Record<string, unknown>;
 }) => AsyncIterable<ResultMsg>;
 
-export { MODEL_BY_KIND, type Kind } from "./agentOptions";
 
 /** Un axe de recherche : titre de section, consigne, type de tache. */
 export interface Axis {
   id: string;
   title: string;
   ask: string;
-  kind: Kind;
 }
 
 /** Idees minimum par axe pour se contenter d'une passe. */
@@ -51,19 +49,19 @@ const MAX_TURNS = 8;
 
 const BASE =
   "Compare Excel, Google Sheets, LibreOffice Calc et Airtable pour le tableur dk-table. " +
-  "Lis d'abord docs/recherche-tableur.md, TODO.md et CLAUDE.md pour savoir ce que dk-table a deja; " +
+  "Lis d'abord docs/recherche-tableur.md et TODO.md pour savoir ce que dk-table a deja; " +
   "cherche sur le web (docs officielles, forums, avis utilisateurs), au plus 4 recherches web, puis reponds sans autre exploration. " +
   "Ne traite QUE cet axe (d'autres agents couvrent les autres). ";
 
 /** Les 4 axes de la synthese (ordre = ordre des sections). */
 export const AXES: Axis[] = [
-  { id: "nouveau", title: "Idees nouvelles", kind: "think",
+  { id: "nouveau", title: "Idees nouvelles",
     ask: "Propose des fonctionnalites originales que ces tableurs n'ont pas (ou mal)." },
-  { id: "absent", title: "Absent de dk-table, present ailleurs", kind: "think",
+  { id: "absent", title: "Absent de dk-table, present ailleurs",
     ask: "Liste les fonctionnalites presentes dans au moins un de ces tableurs et absentes de dk-table." },
-  { id: "neglige", title: "Negligees ou sous-utilisees ailleurs", kind: "think",
+  { id: "neglige", title: "Negligees ou sous-utilisees ailleurs",
     ask: "Liste les fonctionnalites existantes mais negligees ou peu utilisees dans ces tableurs." },
-  { id: "mal", title: "Mal implementees ailleurs", kind: "think",
+  { id: "mal", title: "Mal implementees ailleurs",
     ask: "Liste les fonctionnalites mal implementees que les utilisateurs de ces tableurs detestent." },
 ];
 

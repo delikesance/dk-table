@@ -33,17 +33,38 @@ export function wrapRun(run: Run, log: () => Logger): Run {
   };
 }
 
+/** Approximation du nombre de tokens d'un texte (4 caracteres par token): mesure de contexte, pas une facture. */
+export const approxTokens = (chars: number) => Math.ceil(chars / 4);
+
+/** Taille (caracteres) du contexte injecte par la boucle dans un appel: prompt + ajouts du prompt systeme. */
+export function contextChars(prompt: string, options: Record<string, unknown>): number {
+  const sp = options.systemPrompt as { append?: unknown } | string | undefined;
+  const extra = typeof sp === "string" ? sp.length : typeof sp?.append === "string" ? sp.append.length : 0;
+  return prompt.length + extra;
+}
+
+/** Tokens lus sur un message `result` (`usage` de la boucle principale; absent ou partiel = champs omis, jamais d'exception). */
+export function usageFields(r: { usage?: Record<string, unknown> }): Record<string, number> {
+  const u = r.usage, out: Record<string, number> = {};
+  if (!u || typeof u !== "object") return out;
+  const pick = (k: string, as: string) => { if (typeof u[k] === "number") out[as] = u[k] as number; };
+  pick("input_tokens", "inTokens"); pick("output_tokens", "outTokens");
+  pick("cache_read_input_tokens", "cacheRead"); pick("cache_creation_input_tokens", "cacheCreation");
+  return out;
+}
+
 /** Enveloppe `query`: laisse passer les messages; journalise le resultat (cout, tours, duree) ou l'erreur. */
 export function wrapQuery(query: QueryFn, log: () => Logger): QueryFn {
   return (a) => (async function* () {
     const o = a.options, t = Date.now();
     const ctx = { model: o.model, maxTurns: o.maxTurns, maxBudgetUsd: o.maxBudgetUsd, cwd: o.cwd };
-    log().debug("modele", "appel", { ...ctx, prompt: a.prompt.slice(0, 200) }); // jamais options.env
+    const chars = contextChars(a.prompt, o);
+    log().debug("modele", "appel", { ...ctx, prompt: a.prompt.slice(0, 200), ctxChars: chars, ctxTokensApprox: approxTokens(chars) }); // jamais options.env
     try {
       for await (const m of query(a)) {
-        const r = m as { type?: string; subtype?: string; total_cost_usd?: number; num_turns?: number; duration_ms?: number };
+        const r = m as { type?: string; subtype?: string; total_cost_usd?: number; num_turns?: number; duration_ms?: number; usage?: Record<string, unknown> };
         if (r.type === "result") {
-          log()[r.subtype === "success" ? "info" : "warn"]("modele", "resultat", { ...ctx, subtype: r.subtype, costUsd: r.total_cost_usd ?? 0, turns: r.num_turns, apiMs: r.duration_ms, durMs: Date.now() - t });
+          log()[r.subtype === "success" ? "info" : "warn"]("modele", "resultat", { ...ctx, subtype: r.subtype, costUsd: r.total_cost_usd ?? 0, turns: r.num_turns, apiMs: r.duration_ms, durMs: Date.now() - t, ctxChars: chars, ...usageFields(r) });
         }
         yield m;
       }

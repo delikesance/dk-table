@@ -1,6 +1,6 @@
 /** Tests des options Agent SDK communes: skills et outils de Claude Code restent disponibles. */
 import { describe, expect, it } from "vitest";
-import { agentOptions, MODEL_BY_KIND, NO_GIT } from "./agentOptions";
+import { agentOptions, NO_GIT } from "./agentOptions";
 
 describe("agentOptions", () => {
   for (const mode of ["research", "edit"] as const) {
@@ -55,8 +55,5 @@ describe("agentOptions", () => {
     expect(ag.tools).toEqual(expect.arrayContaining(["Read", "Grep", "Glob"]));
     expect(ag.tools).not.toContain("Edit");
     expect(ag.maxTurns).toBeLessThanOrEqual(10);
-  });
-  it("modeles par type de tache", () => {
-    expect(MODEL_BY_KIND).toEqual({ code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" });
   });
 });

@@ -32,3 +32,12 @@ describe("onlyOnBranch", () => {
   });
   it("tout echoue deja sur la base: rien d'introduit", () => { expect(onlyOnBranch(["a > x"], ["a > x", "c"])).toEqual([]); });
 });
+
+describe("testCount", () => {
+  it("lit le nombre de tests passes, avec ou sans echecs et codes ANSI", async () => {
+    const { testCount } = await import("./testFailures");
+    expect(testCount("\u001b[2m Tests \u001b[22m 458 passed | 4 skipped (462)")).toBe(458);
+    expect(testCount(" Tests  3 failed | 12 passed (15)")).toBe(12);
+    expect(testCount("rien")).toBeUndefined();
+  });
+});

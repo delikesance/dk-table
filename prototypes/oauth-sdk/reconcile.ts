@@ -21,6 +21,8 @@ export interface ReconcileInput {
   /** Un agent de la tournee en cours traite cette carte. */
   active: boolean;
   ledgered: boolean;
+  /** Le rapport porte des preuves ecrites par le code (fusion verte): un `en-cours` sans agent est un travail partiel a reprendre, pas un orphelin. */
+  proven?: boolean;
 }
 
 /** Etat justifie + preuves manquantes + incoherences detectees. */
@@ -38,5 +40,6 @@ export function reconcileCard(i: ReconcileInput): Reconciled {
   }
   if (r.status === "termine") return i.proof.ok ? out("termine") : out("preuves", i.proof.missing);
   if (r.status === "bloque") return out("bloque");
-  return i.active ? out("en-cours") : out("idee", [], ["orpheline : rapport en cours sans agent actif"]);
+  if (i.active || i.proven) return out("en-cours");
+  return out("idee", [], ["orpheline : rapport en cours sans agent actif"]);
 }

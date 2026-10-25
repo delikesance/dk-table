@@ -27,12 +27,15 @@ import type { QueryFn } from "./research";
 import { createServer, type BoucleEvent } from "./server";
 import { logEvent, trackBoard, wrapQuery, wrapRun } from "./instrument";
 import { createRunLogs } from "./wiringLogs";
+import { createFileStateStore } from "./runState";
+import { createFileQualifCache } from "./qualifyStep";
+import { PARALLEL_DEFAULT } from "./limits";
 
 /** Dependances reelles (ou factices en test). */
 export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
 
 /** Agents en parallele: `BOUCLE_PARALLEL` (entier >= 1), defaut 3; 1 = un seul agent pour tout le lot. */
-export const parallelOf = (v?: string): number => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 8) : 3; };
+export const parallelOf = (v?: string): number => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 8) : PARALLEL_DEFAULT; };
 
 /** Lit un fichier du dossier du code; `undefined` s'il est absent (=> 404). */
 const here = dirname(fileURLToPath(import.meta.url));
@@ -57,6 +60,8 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
   let activeDir: string | null = null, activeDirs: string[] = [];
   const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir, activeDirs: () => activeDirs });
+  // Etat persistant du run (reprise apres crash); un fichier corrompu est journalise et ignore.
+  const state = createFileStateStore(join(o.cwd, ".boucle", "state.json"), { onWarn: (m) => rl.cur().warn("etat", m) });
   // Cartes terminees: registre durable (jamais purge), hors depot (.boucle/ ignore par git).
   const ledger = createFileLedger(join(o.cwd, ".boucle", "termines.jsonl"));
   // Rapports « en cours » d'un run interrompu: archives au demarrage, ignores ensuite (hors depot).
@@ -66,12 +71,15 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   let events = 0; // compteur d'evenements: tout evenement invalide le cache du moodboard (temps reel)
   const boardOf = (order: Order, active: ReadonlySet<string> = activeIds) => buildBoard({
     ledger, active, stale,
+    deferred: () => new Map(Object.entries(state.load().cards).filter(([, c]) => c.deferred).map(([id, c]) => [id, c.deferred!])),
     readFile: async (p) => (await files.read(p, order)) ?? Promise.reject(new Error("absent")),
     exists: (p) => files.exists(p, order),
     query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
   });
   const tracked = (b: Promise<BoardCard[]>) => b.then((cs) => { trackBoard(rl.cur(), seen, cs); return cs; });
   const pipeline = createPipeline({
+    state, qualif: { read: async (p) => (await files.read(p, "merged")) ?? null, doneTitles: async () => (await ledger.load()).map((e) => e.title), cache: createFileQualifCache(join(o.cwd, ".boucle", "qualif.json")) },
+    onLock: (s) => rl.cur()[s.waitMs >= 1000 ? "info" : "debug"]("verrou", s.name, { lock: s.name, waitMs: s.waitMs, holdMs: s.holdMs }),
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
     unfinished: async () => (await boardOf("merged", new Set())).filter((c) => c.state !== "termine").length,
     board: (a) => { activeIds = new Set(a ?? []); return tracked(boardOf("merged", activeIds)); },

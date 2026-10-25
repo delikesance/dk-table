@@ -1,7 +1,7 @@
 /** Tests des secteurs implementation / correction / design (query factice, sans reseau ni cout). */
+import { modelFor } from "./routing";
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import { MODEL_BY_KIND } from "./agentOptions";
 import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 import { SECTORS, SECTOR_DEFS, beginDesignRun, currentDesignPath, designPath, promptFor, recapPath, runSector } from "./sectors";
@@ -24,10 +24,14 @@ describe("definitions", () => {
     for (const s of SECTORS) expect(typeof s.run).toBe("function");
   });
 
-  it("prompts TDD/CLAUDE.md, git interdit, dontAsk", () => {
-    for (const s of SECTOR_DEFS) {
-      expect(s.prompt).toMatch(/CLAUDE\.md/);
+  it("prompts TDD, git et TODO.md interdits, CLAUDE.md jamais relu (deja charge par le SDK)", () => {
+    for (const s of SECTOR_DEFS) expect(s.prompt).not.toMatch(/Lis (d'abord )?CLAUDE\.md/);
+    for (const s of SECTOR_DEFS.filter((x) => x.id !== "design")) {
+      expect(s.prompt).toMatch(/TDD/);
+      expect(s.prompt).toMatch(/Ne touche ni a git/);
+      expect(s.prompt).not.toMatch(/mets TODO\.md a jour/);
     }
+    expect(SECTOR_DEFS.find((x) => x.id === "implementation")!.prompt).toContain("n'en choisis aucune autre");
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
     expect(get("implementation").prompt).toMatch(/docs\/recherche\/fonctionnalites\.md/);
     expect(get("correction").prompt).toContain("npx tsc");
@@ -93,7 +97,7 @@ describe("runSector", () => {
     expect(o.tools).toEqual({ type: "preset", preset: "claude_code" });
     expect(o.skills).toBe("all");
     expect(o.disallowedTools).toContain("Bash(git push:*)");
-    expect(o.model).toBe(MODEL_BY_KIND[SECTOR_DEFS[0].kind]);
+    expect(o.model).toBe(modelFor("design", 0)); // une seule table de routage (routing.ts)
   });
 });
 
