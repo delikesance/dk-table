@@ -8,6 +8,7 @@ import type { Sidebar, RecentFile } from "./sidebar/sidebar";
 import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
 import { runLive } from "./appLive";
+import { getPassword } from "./protection";
 import type { MacroUi } from "./macros/wire";
 import type { CfStyle } from "../engine/cf/types";
 import type { DocStore } from "../doc/store";
@@ -93,10 +94,10 @@ function statusOf(c: Ctx, dirty: boolean): string {
   return "";
 }
 
-/** Repaint the window title (file name, dirty marker, autosave status) from `c.app`. */
+/** Repaint the window title (file name, encryption and dirty markers, autosave status) from `c.app`. */
 export function renderTitle(c: Ctx): void {
   const dirty = !!c.app.dirty;
-  document.title = `${c.app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${dirty ? " •" : ""} — dk-table${statusOf(c, dirty)}`;
+  document.title = `${c.app.path?.split(/[\\/]/).pop() ?? "Sans titre"}${getPassword() ? " (chiffré)" : ""}${dirty ? " •" : ""} — dk-table${statusOf(c, dirty)}`;
 }
 
 /** Set the dirty flag and update the title; a modification also schedules an autosave. */
