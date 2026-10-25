@@ -106,11 +106,12 @@ export function watchDocs(c: Ctx): void {
 export function docFormat(c: Ctx, name: DocFormat): void { c.docEd?.command(name); }
 
 /**
- * Insert into the open document: "cell" types `@` (name search), "table" / "bar" / "trend" link a block to the
+ * Insert into the open document: "cell" types `@` (name search), "calc" opens a formula chip, "table" / "bar" / "trend" link a block to the
  * selected range of the active sheet (its used range when only one cell is selected).
  */
-export function docInsert(c: Ctx, kind: "cell" | "table" | "bar" | "trend"): void {
+export function docInsert(c: Ctx, kind: "cell" | "calc" | "table" | "bar" | "trend"): void {
   if (!c.docEd) return;
+  if (kind === "calc") { c.docEd.insertCalc(); return; }
   if (kind === "cell") { c.docEd.insertText("@"); return; }
   const sel = c.app.selection();
   const ref = sel.includes(":") ? sel : usedRange(c.cur.sheet);

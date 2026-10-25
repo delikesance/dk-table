@@ -43,6 +43,7 @@ function matching(docs: FnDoc[], word: string): FnDoc[] {
 export function fnCompletion(text: string, pos: number, docs: FnDoc[]): FnCompletion {
   if (!text.startsWith("=") || pos < 1) return null;
   const before = text.slice(0, pos);
+  if (/@[^@+\-*/^&<>=();,\n"]*$/.test(before)) return null; // typing an @name search (documents), not a function
   const stack = openCalls(before);
   if (!stack) return null;
   const word = /[A-Za-z_][A-Za-z0-9_.]*$/.exec(before.slice(1))?.[0] ?? "";

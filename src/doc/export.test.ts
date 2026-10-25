@@ -60,3 +60,25 @@ describe("export HTML", () => {
     expect(h).toContain("39500");
   });
 });
+
+describe("export des puces de calcul", () => {
+  const calcNode = (src: string, fmt = "auto"): JNode => ({ type: "calc", attrs: { src, fmt } });
+  it("Markdown : la valeur calculée, la même que dans la puce", () => {
+    const md = toMarkdown(doc({ type: "paragraph", content: [t("Soit "), calcNode("{s1}!C3*2", "percent")] }), book());
+    expect(md).toContain("Soit 228");
+    expect(md).toContain("%");
+  });
+  it("HTML : valeur calculée et mini-graphique en ligne", () => {
+    const h = toHtml("R", doc({ type: "paragraph", content: [calcNode("SUM({s1}!B2:B3)"), calcNode("BAR({s1}!B2:B3)")] }), book());
+    expect(h).toContain("79500");
+    expect(h).toContain("<svg");
+  });
+  it("une erreur est exportée telle quelle", () => {
+    expect(toMarkdown(doc({ type: "paragraph", content: [calcNode("1/0")] }), book())).toContain("#DIV/0!");
+  });
+  it("Markdown : un mini-graphique devient son texte de tendance, ou rien", () => {
+    const md = toMarkdown(doc({ type: "paragraph", content: [t("x "), calcNode("TREND({s1}!B2:B3)")] }), book());
+    expect(md).toContain("x ");
+    expect(md).not.toContain("<svg");
+  });
+});

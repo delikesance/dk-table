@@ -58,3 +58,33 @@ test("@ cherche une case par ses noms ; Ctrl+E ouvre l'export", async ({ page })
   await expect(page.locator(".dk-dialog")).toContainText("Markdown");
   await expect(page.locator(".dk-dialog")).toContainText("PDF");
 });
+
+test("= ouvre une puce de calcul : @ pour une case, résultat vivant, mini-graphique", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await openApp(page);
+  await fillTable(page);
+  await menu(page, "Fichier", /Nouveau document/);
+  await page.locator(".ProseMirror").click();
+  await page.keyboard.type("Total : ");
+  await page.keyboard.type("=");
+  const field = page.locator(".dk-calc input");
+  await expect(field).toBeFocused();
+  await page.keyboard.type("@claire");
+  await expect(page.locator(".dk-mention")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("*2");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".ProseMirror .dk-calc")).toHaveText("110");
+  await page.keyboard.type(" et ");
+  await page.keyboard.type("=");
+  await page.keyboard.type("BAR(");
+  await page.keyboard.type("Feuille 1!B2:B3".replace("Feuille 1", "'Feuille 1'"));
+  await page.keyboard.type(")");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".ProseMirror .dk-calc svg")).toHaveCount(1);
+  await page.keyboard.press("Control+\\");
+  await typeInCell(page, "B3", "100");
+  await expect(page.locator(".ProseMirror .dk-calc").first()).toHaveText("200");
+  expect(errors).toEqual([]);
+});

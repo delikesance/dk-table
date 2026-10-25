@@ -17,6 +17,14 @@ const cellRef: NodeSpec = {
   parseDOM: [{ tag: "span.dk-ref[data-sheet]", getAttrs: (d) => ({ sheet: (d as HTMLElement).dataset.sheet, ref: (d as HTMLElement).dataset.ref }) }],
 };
 
+/** Inline calculation `=…`: `src` = formula with sheet ids (`{id}!B3`), `fmt` = "auto" or a number format; drawn by `calcView`. */
+const calc: NodeSpec = {
+  inline: true, group: "inline", atom: true, selectable: true,
+  attrs: { src: { default: "" }, fmt: { default: "auto" } },
+  toDOM: (n) => ["span", { class: "dk-calc", "data-src": n.attrs.src, "data-fmt": n.attrs.fmt }, `=${n.attrs.src}`],
+  parseDOM: [{ tag: "span.dk-calc[data-src]", getAttrs: (d) => ({ src: (d as HTMLElement).dataset.src, fmt: (d as HTMLElement).dataset.fmt ?? "auto" }) }],
+};
+
 /** Block live link to a range, drawn as a table, bars or trend by `blockView`; `cols` null = every column, `value` null = last. */
 const liveBlock: NodeSpec = {
   group: "block", atom: true, selectable: true, draggable: true,
@@ -27,7 +35,7 @@ const liveBlock: NodeSpec = {
 
 /** The document schema: text blocks, lists, marks and the `cellRef` live reference. */
 export const docSchema = new Schema({
-  nodes: addListNodes(basic.spec.nodes, "paragraph block*", "block").addToEnd("cellRef", cellRef).addToEnd("liveBlock", liveBlock),
+  nodes: addListNodes(basic.spec.nodes, "paragraph block*", "block").addToEnd("cellRef", cellRef).addToEnd("liveBlock", liveBlock).addToEnd("calc", calc),
   marks: { strong: basic.spec.marks.get("strong")!, em: basic.spec.marks.get("em")!, underline, link: basic.spec.marks.get("link")! },
 });
 

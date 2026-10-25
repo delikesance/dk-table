@@ -1,5 +1,5 @@
 /** ProseMirror editor of one dk doc: schema, history, formatting shortcuts, JSON change callback. */
-import { EditorState } from "prosemirror-state";
+import { EditorState, TextSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { Node } from "prosemirror-model";
 import { history, undo, redo } from "prosemirror-history";
@@ -11,6 +11,9 @@ import { mentionPlugin } from "./mention";
 import { RefView, type RefViewHost } from "./refView";
 import { BlockView, type BlockHost } from "./blockView";
 import { insertAfterBlock, pasteLink } from "./paste";
+import { CalcView, type CalcHost } from "./calcView";
+import { createCalc } from "./calc";
+import { handleEquals } from "./calcTrigger";
 import { docCommands, type DocFormat } from "./commands";
 import type { BlockAttrs } from "./blocks";
 import type { CopyInfo, RefBook, RefTarget } from "./refs";
@@ -29,6 +32,8 @@ export interface DocEditor {
   command(name: DocFormat): boolean;
   /** Insert a linked block at the cursor (after the current block). */
   insertBlock(a: BlockAttrs): void;
+  /** Insert an empty calculation chip at the cursor (opens in edit mode). */
+  insertCalc(): void;
   /** Insert text at the cursor. */
   insertText(t: string): void;
   /** Re-read every cited value (call after a recalculation). */
@@ -69,13 +74,28 @@ function shortcuts() {
 export function createDocEditor(host: HTMLElement, content: DocText["content"], onChange: (c: DocText["content"]) => void, opts?: DocEditorOptions): DocEditor {
   const rh: RefViewHost | undefined = opts && { book: opts.book, open: opts.open, views: new Set() };
   const bh: BlockHost | undefined = opts && { book: opts.book, views: new Set(), set: (pos, a) => view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, a)), insertAfter: (pos, kind, a) => insertAfterBlock(view, pos, kind, a) };
+  const ch: CalcHost | undefined = opts && {
+    book: opts.book, calc: createCalc(opts.book), views: new Set(),
+    set: (pos, a) => {
+      const tr = view.state.tr, cur = tr.doc.nodeAt(pos);
+      if (cur && (cur.attrs.src !== a.src || cur.attrs.fmt !== a.fmt)) tr.setNodeMarkup(pos, undefined, a);
+      view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(pos + 1))));
+      view.focus();
+    },
+    literal: (pos, text) => {
+      const tr = view.state.tr.replaceWith(pos, pos + 1, docSchema.text(text));
+      view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(pos + text.length), -1)));
+      view.focus();
+    },
+  };
   const state = EditorState.create({
     doc: Node.fromJSON(docSchema, content),
     plugins: [...(opts ? [mentionPlugin(opts.book)] : []), history(), shortcuts(), keymap(baseKeymap)],
   });
   const view = new EditorView(host, {
     state,
-    nodeViews: rh && bh && { cellRef: (node) => new RefView(node, rh), liveBlock: (node, _v, getPos) => new BlockView(node, getPos, bh) },
+    nodeViews: rh && bh && ch && { calc: (node, _v, getPos) => new CalcView(node, getPos, ch), cellRef: (node) => new RefView(node, rh), liveBlock: (node, _v, getPos) => new BlockView(node, getPos, bh) },
+    handleTextInput: (v, from, to, text) => !!opts && handleEquals(v, from, to, text),
     handlePaste: (v, e) => !!opts?.lastCopy && pasteLink(v, e.clipboardData?.getData("text/plain") ?? "", opts.lastCopy()),
     dispatchTransaction(tr) {
       view.updateState(view.state.apply(tr));
@@ -90,8 +110,9 @@ export function createDocEditor(host: HTMLElement, content: DocText["content"], 
     focus: () => view.focus(),
     command: (name) => { view.focus(); return docCommands[name](view.state, view.dispatch, view); },
     insertBlock: (a) => { view.dispatch(view.state.tr.replaceSelectionWith(docSchema.nodes.liveBlock.create({ ...a })).scrollIntoView()); view.focus(); },
+    insertCalc: () => { view.dispatch(view.state.tr.replaceSelectionWith(docSchema.nodes.calc.create({ src: "", fmt: "auto" }))); },
     insertText: (t) => { view.dispatch(view.state.tr.insertText(t)); view.focus(); },
-    refresh: () => { rh?.views.forEach((v) => v.refresh()); bh?.views.forEach((v) => v.refresh()); },
+    refresh: () => { rh?.views.forEach((v) => v.refresh()); bh?.views.forEach((v) => v.refresh()); ch?.views.forEach((v) => v.refresh()); },
     destroy: () => view.destroy(),
   };
 }
