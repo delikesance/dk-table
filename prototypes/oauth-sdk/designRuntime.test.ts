@@ -4,11 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { RUNTIME_JS, injectRuntime } from "./designRuntime";
 
 describe("injectRuntime", () => {
-  it("insere avant </body>, une seule fois, ou en fin de document sans body", () => {
-    const a = injectRuntime("<html><body><p>x</p></body></html>");
-    expect(a.indexOf("data-dk-runtime")).toBeLessThan(a.indexOf("</body>"));
+  it("insere en tete (apres <head>), avant les scripts du design, une seule fois", () => {
+    const a = injectRuntime('<html><head><title>x</title></head><body><script>console.error("tot")</script></body></html>');
+    expect(a.indexOf("data-dk-runtime")).toBeLessThan(a.indexOf('console.error("tot")'));
+    expect(a.indexOf("data-dk-runtime")).toBeGreaterThan(a.indexOf("<head>"));
     expect(injectRuntime(a)).toBe(a);
-    expect(injectRuntime("<p>x</p>").endsWith("</script>")).toBe(true);
+    expect(injectRuntime("<p>x</p>").startsWith("<script data-dk-runtime>")).toBe(true);
+    expect(injectRuntime('<!doctype html><html lang="fr"><body>y</body></html>')).toMatch(/<html lang="fr"><script data-dk-runtime>/);
   });
   it("le runtime ne fait aucune requete reseau", () => {
     expect(RUNTIME_JS).not.toMatch(/fetch|XMLHttpRequest|WebSocket|http/);

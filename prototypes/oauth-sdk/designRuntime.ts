@@ -5,7 +5,7 @@
  * Messages recus : `theme` (value: light|dark|auto -> `data-theme` + `color-scheme` sur <html>),
  *   `pause` (value: bool -> fige/relance animations et transitions).
  * Messages envoyes : `ready`, `error` (erreurs, promesses rejetees, console.error/warn).
- * Aucun acces reseau. Usage : `injectRuntime(html)` (idempotent).
+ * Place en tete du document (avant les scripts du design). Aucun acces reseau. Usage : `injectRuntime(html)` (idempotent).
  */
 
 /** Code du runtime (sans balise). */
@@ -26,9 +26,10 @@ post({type:"ready"});
 
 const TAG = `<script data-dk-runtime>${RUNTIME_JS}</script>`;
 
-/** Ajoute le runtime avant `</body>` (sinon en fin de document); sans effet s'il est deja present. */
+/** Ajoute le runtime en tete (apres `<head>`, sinon `<html>`, sinon au debut) pour voir les erreurs de tous les scripts; idempotent. */
 export function injectRuntime(html: string): string {
   if (html.includes("data-dk-runtime")) return html;
-  const i = html.toLowerCase().lastIndexOf("</body>");
-  return i < 0 ? html + TAG : html.slice(0, i) + TAG + html.slice(i);
+  const m = /<head(\s[^>]*)?>/i.exec(html) ?? /<html(\s[^>]*)?>/i.exec(html);
+  const i = m ? m.index + m[0].length : 0;
+  return html.slice(0, i) + TAG + html.slice(i);
 }

@@ -122,6 +122,15 @@ describe("design: viewports, zoom, theme, pause, erreurs, comparaison", () => {
     expect(t).toContain("boum (3:4)");
     expect(t).not.toContain("intrus");
   });
+  it("changer de design efface les erreurs de l'ancien", async () => {
+    await load();
+    const win = {};
+    Object.defineProperty(frame(), "contentWindow", { value: win, configurable: true });
+    window.dispatchEvent(new MessageEvent("message", { data: { dk: 1, type: "error", message: "ancienne" }, source: win as MessageEventSource }));
+    expect(document.getElementById("err-count")!.textContent).toBe("1");
+    (document.querySelectorAll("#thumbs .thumb")[0] as HTMLElement).click();
+    expect(document.getElementById("err-count")!.textContent).toBe("0");
+  });
   it("comparer: deux iframes cote a cote, la seconde choisie dans la liste", async () => {
     await load();
     (document.getElementById("compare") as HTMLElement).click();
