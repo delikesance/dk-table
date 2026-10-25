@@ -1,4 +1,5 @@
 # Rapport : Listes personnalisées de tri et de recopie
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -36,3 +37,9 @@ Visible : oui
 - Design `docs/design/2026-10-25-204816.html` non suivi: il porte sur « Valeur cible et évaluation pas à pas » (Données > Valeur cible), sans rapport avec les listes. Décision prise sans sous-agent (sujet évident).
 - Chemins de la carte (`src/data/custom-lists.ts`, `src/ui/OptionsDialog.tsx`, `src/engine/autofill.ts`) n'existent pas: l'implémentation réelle est `engine/custom-lists.ts`, `io/customLists.ts`, `ui/dialogs/customLists.ts`, `engine/series-names.ts`.
 - Suppression par position (bouton par liste), sans confirmation: la liste se ressaisit en quelques secondes.
+
+## Preuves
+- Tests : ok (349 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png, liste-ajoutee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png, refus-doublon-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png, liste-supprimee-sombre.png (absente)
+<!-- boucle-proof {"tests":{"ok":true,"count":349,"scope":"related"},"tsc":{"ok":true}} -->
