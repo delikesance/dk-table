@@ -96,6 +96,24 @@ describe("subtotals — cas limites", () => {
     expect(rows[2].cells[1]).toBe("3");
   });
 
+  it("lignes courtes et clé vide : groupe « (vide) », sans erreur", () => {
+    const rows = subtotals([["A", "1"], [], ["", "2"]], { groups: [0], values: [1], fn: "SUM" });
+    expect(rows.filter((r) => r.kind === "sub").map((r) => r.cells)).toEqual([
+      ["Total (vide)", "2"],
+      ["Total A", "1"],
+    ]);
+    expect(rows[rows.length - 1].cells).toEqual(["Total général", "3"]);
+  });
+
+  it("sans colonne de groupe : total général seul ; plus de 3 niveaux refusés", () => {
+    expect(subtotals([["1"], ["2"]], { groups: [], values: [0], fn: "SUM" }).map((r) => r.kind)).toEqual([
+      "data", "data", "total",
+    ]);
+    expect(() => subtotals([["a", "b", "c", "d", "1"]], { groups: [0, 1, 2, 3], values: [4], fn: "SUM" })).toThrow(
+      RangeError,
+    );
+  });
+
   it("plusieurs colonnes de valeurs", () => {
     const rows = subtotals([["A", "1", "10"], ["B", "2", "20"]], { groups: [0], values: [1, 2], fn: "SUM" });
     expect(rows[rows.length - 1].cells).toEqual(["Total général", "3", "30"]);
