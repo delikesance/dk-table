@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 22:24:43 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-212335.html</h2><div class="frame">
+<h1>Trois idées non réalisées</h1>
+<p class="lead">Source: recherche (axes 2 et 3) et TODO: Valeur cible, fenêtre Espion, remplissage instantané. Aucune n'existe dans <code>src/</code>. Chaque maquette est montrée en clair et en sombre; les boutons « Rejouer » relancent l'animation.</p>
+
+<section class="idea" id="i1">
+  <h2>1 · Valeur cible (Données › Valeur cible…)</h2>
+  <p class="lead">Trouver l'entrée qui donne un résultat voulu. Réutilise <code>solve.ts</code> (Newton puis bissection). Le mouvement montre les itérations: la cellule d'entrée change, le résultat converge vers la cible.</p>
+  <div class="steps"><button class="go" data-replay="gs">Rejouer</button></div>
+  <div class="pair" id="gs"></div>
+</section>
+
+<section class="idea" id="i2">
+  <h2>2 · Fenêtre Espion</h2>
+  <p class="lead">Panneau qui suit des cellules (feuille, valeur, formule), même hors écran ou sur une autre feuille. Une valeur qui change clignote et indique l'ancienne valeur. Ajout: menu Affichage ou clic droit « Espionner ».</p>
+  <div class="steps"><button class="go" data-replay="ws">Modifier B2</button></div>
+  <div class="pair" id="ws"></div>
+</section>
+
+<section class="idea" id="i3">
+  <h2>3 · Remplissage instantané (Ctrl+E, sans IA)</h2>
+  <p class="lead">Un exemple tapé, le motif est déduit (extraire, fusionner, casse) puis proposé en aperçu grisé. Entrée accepte (un pas d'annulation), Échap annule. Aucun motif sûr: rien proposé.</p>
+  <div class="steps"><button class="go" data-replay="ff">Rejouer</button></div>
+  <div class="pair" id="ff"></div>
+</section>
+
+<section class="idea">
+  <h2>Interfaces et contrats</h2>
+  <h3>1 · Valeur cible</h3>
+  <pre class="contract">// src/engine/goalseek.ts (pur)
+type GoalSpec = { formula: string /* "B5" */; target: number; input: string /* "B2" */; sheet?: string };
+type GoalStep = { input: number; result: number };
+type GoalResult =
+  | { ok: true;  input: number; result: number; steps: GoalStep[] }
+  | { ok: false; reason: "no-convergence" | "input-not-constant" | "formula-not-formula" | "non-numeric"; steps: GoalStep[] };
+goalSeek(sheet: Sheet, spec: GoalSpec, opts?: { tol?: number /*1e-9*/; maxIter?: number /*100*/ }): GoalResult
+// Évalue la formule via setCell sur une copie; solve.ts: Newton, repli bissection sur [x/2, 2x] élargi.
+// UI: src/ui/dialogs/goalSeek.ts  (palette data.goalseek, menu Données). Champs: Cellule à définir, Valeur, Cellule à modifier.
+// Aperçu: les steps sont rejoués (≤ 1,2 s, immédiat si prefers-reduced-motion). « Appliquer » = app.batch (un pas d'annulation); « Annuler » = aucune écriture.
+// Événements: dk:goalseek-step {input,result}, dk:goalseek-done {ok}.
+// Erreurs affichées en clair: « B5 n'est pas une formule », « B2 contient une formule », « Pas de solution proche de 10 ».
+// Tests d'abord: src/engine/goalseek.test.ts (linéaire en 1 pas, non linéaire, pas de solution, entrée formule, undo).
+// Fichiers touchés: engine/goalseek.ts, ui/dialogs/goalSeek.ts, ui/menubar/spec.ts, commands.ts, docs/valeur-cible.md, e2e/feat-goalseek.spec.ts.</pre>
+  <h3>2 · Fenêtre Espion</h3>
+  <pre class="contract">// src/engine/watch.ts (pur)
+type WatchItem = { id: string; sheetId: string; key: string /* "B5" */ };
+type WatchRow = { id: string; sheet: string; key: string; raw: string; display: string; prev?: string; changed: boolean };
+watchRows(book: Book, items: WatchItem[]): WatchRow[]   // cellule supprimée => display "#REF!"
+// Stockage: DktDoc.watch?: WatchItem[]  (io/watchFormat.ts, validation stricte, anciens fichiers OK; suit insert/delete lignes/colonnes via structure.ts).
+// UI: src/ui/watch/panel.ts (panneau bas, 3 colonnes Feuille/Cellule/Valeur + Formule), appWatch.ts: add(key) / remove(id) / refresh() après recalcul.
+// Interaction: clic ligne = va à la cellule (autre feuille comprise); Suppr retire; « changed » = classe dk-watch--changed 1,2 s.
+// Événement: dk:watch-change {id, prev, next}.
+// Tests d'abord: engine/watch.test.ts, io/watchFormat.test.ts, ui/watch/panel.test.ts.
+// Fichiers touchés: engine/watch.ts, io/watchFormat.ts, ui/watch/*, ui/appWatch.ts, ui/menubar/spec.ts (Affichage), headerMenu/contextmenu (« Espionner »), docs/espion.md.</pre>
+  <h3>3 · Remplissage instantané</h3>
+  <pre class="contract">// src/engine/flashfill.ts (pur, déterministe)
+type FlashExample = { src: string[] /* valeurs de la ligne source */; out: string };
+type FlashRule = { kind: "extract" | "concat" | "case" | "split"; describe(): string; apply(src: string[]): string | null };
+inferRule(examples: FlashExample[]): FlashRule | null     // null si ambigu: rien proposé
+flashFill(col: string[][], examples: FlashExample[]): { out: (string | null)[]; rule: FlashRule } | null
+// Motifs v1: sous-chaîne entre délimiteurs / n-ième mot, concaténation de colonnes avec séparateur, MAJ/min/Titre, initiales.
+// UI: src/ui/grid/flashFill.ts: Ctrl+E (ou détection après 2 exemples), aperçu grisé classe dkg-ghost, Entrée = écrire (app.batch), Échap = fermer.
+// Palette: data.flashfill. Aucune écriture sans validation. Ne convertit pas les types (texte exact).
+// Événements: dk:flash-preview {rule, count}, dk:flash-commit {count}.
+// Tests d'abord: engine/flashfill.test.ts (extraction, concat, casse, ambigu => null), ui/grid/flashFill.test.ts, e2e/feat-flashfill.spec.ts.
+// Fichiers touchés: engine/flashfill.ts, ui/grid/flashFill.ts, grid.css, commands.ts, docs/remplissage-instantane.md.</pre>
+  <h3>Transverse</h3>
+  <pre class="contract">Chaque module ≤ 200 lignes, doc courte par fonction, TODO.md et CLAUDE.md mis à jour.
+Captures clair + sombre sous docs/screenshots/<fonctionnalité>/ (Playwright 1200x800, ?onboarding=0).
+Ordre conseillé (indépendants, fichiers disjoints): valeur cible, Espion, remplissage instantané.</pre>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td>25/10/2026 22:23:35</td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 22:23:34</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 22:23:34</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 22:23:34</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-204816.html</td><td>25/10/2026 22:23:34</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-200330.html</td><td>25/10/2026 22:23:34</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-212335.html</td><td>25/10/2026 22:24:38</td><td>écrit</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.39 $</td></tr></table></section>
+</body></html>

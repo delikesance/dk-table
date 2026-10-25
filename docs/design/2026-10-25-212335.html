@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valeur cible, Espion, Remplissage instantané</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css, theme-dark.css). Page: thème parent (data-theme / prefers-color-scheme). Maquettes: clair ET sombre forcés via [data-t]. */
+:root { --bg:#f2f2f2; --card:#fff; --fg:#14142b; --mut:#4a4a60; --line:#c4c4d6; --acc:#0000f2; --on-acc:#fff; }
+:root[data-theme="dark"] { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#b8b8d4; --line:#44446e; --acc:#8c8cff; --on-acc:#0a0a2a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#b8b8d4; --line:#44446e; --acc:#8c8cff; --on-acc:#0a0a2a; } }
+* { box-sizing: border-box; }
+body { margin:0; padding:24px; font:16px/1.5 "Inter Tight",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+h1 { font:800 2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h2 { font:800 1.4rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 8px; }
+h3 { font-size:.8rem; margin:12px 0 4px; color:var(--mut); text-transform:uppercase; letter-spacing:.04em; }
+.idea { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; margin:16px 0; }
+.lead { color:var(--mut); margin:0 0 8px; }
+.pair { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:12px; }
+.steps { display:flex; gap:6px; margin:8px 0; flex-wrap:wrap; }
+button { font:600 .8rem "Inter Tight",sans-serif; border:1px solid var(--line); background:var(--card); color:var(--fg); border-radius:2px; padding:4px 10px; cursor:pointer; }
+button[aria-pressed="true"], button.go { background:var(--acc); color:var(--on-acc); border-color:var(--acc); }
+button:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+/* Maquette: jetons locaux forcés */
+.mock { --m-bg:#f2f2f2; --m-cell:#fafafa; --m-fg:#14142b; --m-mut:#4a4a60; --m-line:#c4c4d6; --m-acc:#0000f2; --m-on:#fff; --m-head:#e4e4f4; --m-ok:#0a7a3c; --m-warn:#c2410c; --m-chrome:#0000f2;
+  background:var(--m-bg); color:var(--m-fg); border:1px solid var(--m-line); border-radius:4px; font:13px/1.4 "Inter Tight",sans-serif; overflow:hidden; }
+.mock[data-t="dark"] { --m-bg:#19192f; --m-cell:#1f1f3a; --m-fg:#f2f2f2; --m-mut:#b8b8d4; --m-line:#44446e; --m-acc:#8c8cff; --m-on:#0a0a2a; --m-head:#2a2a4c; --m-ok:#6ee7a0; --m-warn:#fdba74; --m-chrome:#0000f2; }
+.bar { background:var(--m-chrome); color:#f2f2f2; font:700 .85rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; padding:4px 10px; display:flex; justify-content:space-between; }
+.g { display:grid; font:12px "DM Mono",ui-monospace,monospace; }
+.g > div { padding:3px 8px; border-right:1px solid var(--m-line); border-bottom:1px solid var(--m-line); background:var(--m-cell); min-height:25px; transition:background .3s,color .3s; }
+.g .h { background:var(--m-head); color:var(--m-mut); text-align:center; }
+.g .n { text-align:right; } .g .sel { outline:2px solid var(--m-acc); outline-offset:-2px; }
+.g .hit { background:var(--m-acc); color:var(--m-on); } .g .ghost { color:var(--m-mut); font-style:italic; }
+.g .bad { color:var(--m-warn); }
+.panel { padding:10px; border-top:1px solid var(--m-line); }
+.panel .row { display:flex; justify-content:space-between; gap:8px; padding:2px 0; font:12px "DM Mono",ui-monospace,monospace; }
+.lab { color:var(--m-mut); font-family:"Inter Tight",sans-serif; }
+.field { border:1px solid var(--m-line); background:var(--m-cell); padding:1px 6px; border-radius:2px; }
+.m-btn { background:var(--m-acc); color:var(--m-on); border:0; border-radius:2px; padding:3px 10px; font:600 12px "Inter Tight",sans-serif; }
+.m-btn.alt { background:transparent; color:var(--m-fg); border:1px solid var(--m-line); }
+.state { color:var(--m-ok); font-weight:600; } .state.err { color:var(--m-warn); }
+.bars { height:6px; background:var(--m-line); border-radius:2px; } .bars i { display:block; height:100%; background:var(--m-acc); width:0; transition:width .4s; }
+@media (prefers-reduced-motion: reduce) { .g > div, .bars i { transition:none; } }
+pre.contract { font:500 .85rem/1.5 "DM Mono",ui-monospace,monospace; color:var(--mut); white-space:pre-wrap; margin:0; }
+</style>
+</head>
+<body>
+<h1>Trois idées non réalisées</h1>
+<p class="lead">Source: recherche (axes 2 et 3) et TODO: Valeur cible, fenêtre Espion, remplissage instantané. Aucune n'existe dans <code>src/</code>. Chaque maquette est montrée en clair et en sombre; les boutons « Rejouer » relancent l'animation.</p>
+
+<section class="idea" id="i1">
+  <h2>1 · Valeur cible (Données › Valeur cible…)</h2>
+  <p class="lead">Trouver l'entrée qui donne un résultat voulu. Réutilise <code>solve.ts</code> (Newton puis bissection). Le mouvement montre les itérations: la cellule d'entrée change, le résultat converge vers la cible.</p>
+  <div class="steps"><button class="go" data-replay="gs">Rejouer</button></div>
+  <div class="pair" id="gs"></div>
+</section>
+
+<section class="idea" id="i2">
+  <h2>2 · Fenêtre Espion</h2>
+  <p class="lead">Panneau qui suit des cellules (feuille, valeur, formule), même hors écran ou sur une autre feuille. Une valeur qui change clignote et indique l'ancienne valeur. Ajout: menu Affichage ou clic droit « Espionner ».</p>
+  <div class="steps"><button class="go" data-replay="ws">Modifier B2</button></div>
+  <div class="pair" id="ws"></div>
+</section>
+
+<section class="idea" id="i3">
+  <h2>3 · Remplissage instantané (Ctrl+E, sans IA)</h2>
+  <p class="lead">Un exemple tapé, le motif est déduit (extraire, fusionner, casse) puis proposé en aperçu grisé. Entrée accepte (un pas d'annulation), Échap annule. Aucun motif sûr: rien proposé.</p>
+  <div class="steps"><button class="go" data-replay="ff">Rejouer</button></div>
+  <div class="pair" id="ff"></div>
+</section>
+
+<section class="idea">
+  <h2>Interfaces et contrats</h2>
+  <h3>1 · Valeur cible</h3>
+  <pre class="contract">// src/engine/goalseek.ts (pur)
+type GoalSpec = { formula: string /* "B5" */; target: number; input: string /* "B2" */; sheet?: string };
+type GoalStep = { input: number; result: number };
+type GoalResult =
+  | { ok: true;  input: number; result: number; steps: GoalStep[] }
+  | { ok: false; reason: "no-convergence" | "input-not-constant" | "formula-not-formula" | "non-numeric"; steps: GoalStep[] };
+goalSeek(sheet: Sheet, spec: GoalSpec, opts?: { tol?: number /*1e-9*/; maxIter?: number /*100*/ }): GoalResult
+// Évalue la formule via setCell sur une copie; solve.ts: Newton, repli bissection sur [x/2, 2x] élargi.
+// UI: src/ui/dialogs/goalSeek.ts  (palette data.goalseek, menu Données). Champs: Cellule à définir, Valeur, Cellule à modifier.
+// Aperçu: les steps sont rejoués (≤ 1,2 s, immédiat si prefers-reduced-motion). « Appliquer » = app.batch (un pas d'annulation); « Annuler » = aucune écriture.
+// Événements: dk:goalseek-step {input,result}, dk:goalseek-done {ok}.
+// Erreurs affichées en clair: « B5 n'est pas une formule », « B2 contient une formule », « Pas de solution proche de 10 ».
+// Tests d'abord: src/engine/goalseek.test.ts (linéaire en 1 pas, non linéaire, pas de solution, entrée formule, undo).
+// Fichiers touchés: engine/goalseek.ts, ui/dialogs/goalSeek.ts, ui/menubar/spec.ts, commands.ts, docs/valeur-cible.md, e2e/feat-goalseek.spec.ts.</pre>
+  <h3>2 · Fenêtre Espion</h3>
+  <pre class="contract">// src/engine/watch.ts (pur)
+type WatchItem = { id: string; sheetId: string; key: string /* "B5" */ };
+type WatchRow = { id: string; sheet: string; key: string; raw: string; display: string; prev?: string; changed: boolean };
+watchRows(book: Book, items: WatchItem[]): WatchRow[]   // cellule supprimée => display "#REF!"
+// Stockage: DktDoc.watch?: WatchItem[]  (io/watchFormat.ts, validation stricte, anciens fichiers OK; suit insert/delete lignes/colonnes via structure.ts).
+// UI: src/ui/watch/panel.ts (panneau bas, 3 colonnes Feuille/Cellule/Valeur + Formule), appWatch.ts: add(key) / remove(id) / refresh() après recalcul.
+// Interaction: clic ligne = va à la cellule (autre feuille comprise); Suppr retire; « changed » = classe dk-watch--changed 1,2 s.
+// Événement: dk:watch-change {id, prev, next}.
+// Tests d'abord: engine/watch.test.ts, io/watchFormat.test.ts, ui/watch/panel.test.ts.
+// Fichiers touchés: engine/watch.ts, io/watchFormat.ts, ui/watch/*, ui/appWatch.ts, ui/menubar/spec.ts (Affichage), headerMenu/contextmenu (« Espionner »), docs/espion.md.</pre>
+  <h3>3 · Remplissage instantané</h3>
+  <pre class="contract">// src/engine/flashfill.ts (pur, déterministe)
+type FlashExample = { src: string[] /* valeurs de la ligne source */; out: string };
+type FlashRule = { kind: "extract" | "concat" | "case" | "split"; describe(): string; apply(src: string[]): string | null };
+inferRule(examples: FlashExample[]): FlashRule | null     // null si ambigu: rien proposé
+flashFill(col: string[][], examples: FlashExample[]): { out: (string | null)[]; rule: FlashRule } | null
+// Motifs v1: sous-chaîne entre délimiteurs / n-ième mot, concaténation de colonnes avec séparateur, MAJ/min/Titre, initiales.
+// UI: src/ui/grid/flashFill.ts: Ctrl+E (ou détection après 2 exemples), aperçu grisé classe dkg-ghost, Entrée = écrire (app.batch), Échap = fermer.
+// Palette: data.flashfill. Aucune écriture sans validation. Ne convertit pas les types (texte exact).
+// Événements: dk:flash-preview {rule, count}, dk:flash-commit {count}.
+// Tests d'abord: engine/flashfill.test.ts (extraction, concat, casse, ambigu => null), ui/grid/flashFill.test.ts, e2e/feat-flashfill.spec.ts.
+// Fichiers touchés: engine/flashfill.ts, ui/grid/flashFill.ts, grid.css, commands.ts, docs/remplissage-instantane.md.</pre>
+  <h3>Transverse</h3>
+  <pre class="contract">Chaque module ≤ 200 lignes, doc courte par fonction, TODO.md et CLAUDE.md mis à jour.
+Captures clair + sombre sous docs/screenshots/<fonctionnalité>/ (Playwright 1200x800, ?onboarding=0).
+Ordre conseillé (indépendants, fichiers disjoints): valeur cible, Espion, remplissage instantané.</pre>
+</section>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers = [];
+  function later(fn, ms) { timers.push(setTimeout(fn, reduce ? 0 : ms)); }
+  function clear() { timers.forEach(clearTimeout); timers = []; }
+  function cell(txt, cls) { return '<div class="' + (cls || "") + '">' + txt + "</div>"; }
+  function mount(id, build) {
+    var host = document.getElementById(id); host.innerHTML = "";
+    ["light", "dark"].forEach(function (t) {
+      var m = document.createElement("div"); m.className = "mock"; m.dataset.t = t;
+      m.innerHTML = build(t); host.appendChild(m);
+    });
+  }
+  function all(id, sel) { return document.querySelectorAll("#" + id + " " + sel); }
+  function setAll(id, sel, v, cls) { all(id, sel).forEach(function (e) { e.textContent = v; if (cls) e.className = cls; }); }
+
+  /* 1 · Valeur cible: profit(prix)=prix*qte-cout avec remise de volume => non linéaire, 4 itérations. */
+  var GS = [[10, 500], [6.4, 68], [5.84, 3.1], [5.8333, 0]];
+  function gsBuild() {
+    return '<div class="bar"><span>Valeur cible</span><span>Données</span></div>' +
+      '<div class="g" style="grid-template-columns:28px 1fr 1fr 1.4fr">' +
+      cell("", "h") + cell("A", "h") + cell("B", "h") + cell("C", "h") +
+      cell("2", "h") + cell("Prix") + cell("10", "n sel gi") + cell("modifiée") +
+      cell("3", "h") + cell("Quantité") + cell("120", "n") + cell("") +
+      cell("4", "h") + cell("Coût") + cell("700", "n") + cell("") +
+      cell("5", "h") + cell("Profit") + cell("500", "n gr") + cell("=B2*B3-B4") + "</div>" +
+      '<div class="panel"><div class="row"><span class="lab">Cellule à définir</span><span class="field">B5</span></div>' +
+      '<div class="row"><span class="lab">À la valeur</span><span class="field">0</span></div>' +
+      '<div class="row"><span class="lab">En modifiant</span><span class="field">B2</span></div>' +
+      '<div class="row"><span class="lab">Itération</span><span class="it">0 / 4</span></div><div class="bars"><i></i></div>' +
+      '<div class="row" style="margin-top:8px"><span class="state st">Prêt</span><span><button class="m-btn alt">Annuler</button> <button class="m-btn ap" disabled style="opacity:.5">Appliquer</button></span></div></div>';
+  }
+  function gsRun() {
+    clear(); mount("gs", gsBuild);
+    GS.forEach(function (s, i) {
+      later(function () {
+        setAll("gs", ".gi", String(s[0])); setAll("gs", ".gr", String(s[1]));
+        setAll("gs", ".it", (i + 1) + " / 4");
+        all("gs", ".bars i").forEach(function (b) { b.style.width = ((i + 1) * 25) + "%"; });
+        all("gs", ".gi,.gr").forEach(function (c) { c.classList.add("hit"); setTimeout(function () { c.classList.remove("hit"); }, reduce ? 0 : 280); });
+        if (i === GS.length - 1) {
+          setAll("gs", ".st", "Solution trouvée: B2 = 5,8333 (écart < 1e-9)");
+          all("gs", ".ap").forEach(function (b) { b.disabled = false; b.style.opacity = 1; });
+        }
+      }, 500 + i * 650);
+    });
+  }
+
+  /* 2 · Espion: modifier B2 propage vers B5 (Feuille1) et Synthèse!C2. */
+  function wsBuild() {
+    return '<div class="bar"><span>Fenêtre Espion</span><span>Affichage</span></div>' +
+      '<div class="g" style="grid-template-columns:28px 1fr 1fr">' +
+      cell("", "h") + cell("A", "h") + cell("B", "h") +
+      cell("2", "h") + cell("Prix") + cell("10", "n sel b2") +
+      cell("3", "h") + cell("Quantité") + cell("120", "n") +
+      cell("5", "h") + cell("Profit") + cell("500", "n") + "</div>" +
+      '<div class="panel"><div class="row lab"><span style="width:84px">Feuille</span><span style="width:40px">Cell.</span><span style="flex:1;text-align:right">Valeur</span><span style="flex:1.4;text-align:right">Formule</span></div>' +
+      wsRow("Feuille1", "B5", "w1", "500", "=B2*B3-B4") + wsRow("Synthèse", "C2", "w2", "1 200", "=SUM(Feuille1!B5:B9)") + wsRow("Feuille1", "B40", "w3", "—", "(hors écran)") + "</div>";
+  }
+  function wsRow(sh, k, c, v, f) {
+    return '<div class="row"><span style="width:84px">' + sh + '</span><span style="width:40px">' + k + '</span><span class="v ' + c + '" style="flex:1;text-align:right;padding:0 4px;border-radius:2px;transition:background .4s">' + v + '</span><span class="lab" style="flex:1.4;text-align:right">' + f + "</span></div>";
+  }
+  function wsRun() {
+    clear(); mount("ws", wsBuild);
+    later(function () { setAll("ws", ".b2", "12"); }, 500);
+    [["w1", "740", "500"], ["w2", "1 440", "1 200"]].forEach(function (r, i) {
+      later(function () {
+        all("ws", "." + r[0]).forEach(function (e) {
+          e.textContent = r[1] + "  (avant " + r[2] + ")"; e.style.background = "var(--m-acc)"; e.style.color = "var(--m-on)";
+          setTimeout(function () { e.style.background = ""; e.style.color = ""; e.textContent = r[1]; }, reduce ? 0 : 1400);
+        });
+      }, 1000 + i * 350);
+    });
+  }
+
+  /* 3 · Remplissage instantané: "Marie Curie" -> "M. Curie". */
+  var NAMES = ["Marie Curie", "Louis Pasteur", "Ada Lovelace", "Alan Turing"];
+  var OUT = ["M. Curie", "L. Pasteur", "A. Lovelace", "A. Turing"];
+  function ffBuild() {
+    var rows = '<div class="h"></div><div class="h">A</div><div class="h">B</div>';
+    NAMES.forEach(function (n, i) { rows += cell(i + 1, "h") + cell(n) + cell(i === 0 ? OUT[0] : "", "ff" + (i === 0 ? " sel" : "")); });
+    return '<div class="bar"><span>Remplissage instantané</span><span>Ctrl+E</span></div><div class="g" style="grid-template-columns:28px 1.3fr 1fr">' + rows + "</div>" +
+      '<div class="panel"><div class="row"><span class="state st">Motif: initiale + « . » + dernier mot</span></div><div class="row"><span class="lab ct">Ctrl+E</span><span><button class="m-btn alt">Échap</button> <button class="m-btn" disabled style="opacity:.5">Entrée: écrire 3</button></span></div></div>';
+  }
+  function ffRun() {
+    clear(); mount("ff", ffBuild);
+    all("ff", ".st").forEach(function (e) { e.textContent = "Exemple saisi en B1"; });
+    for (var i = 1; i < 4; i++) (function (i) {
+      later(function () {
+        all("ff", ".g").forEach(function (g) {
+          var c = g.querySelectorAll(".ff")[0]; if (!c) return;
+          var target = g.children[3 + 3 * i + 2]; target.textContent = OUT[i]; target.className = "ghost";
+        });
+        if (i === 3) {
+          setAll("ff", ".st", "Motif: initiale + « . » + dernier mot");
+          all("ff", ".panel .m-btn:not(.alt)").forEach(function (b) { b.disabled = false; b.style.opacity = 1; });
+        }
+      }, 700 + i * 300);
+    })(i);
+  }
+  var runs = { gs: gsRun, ws: wsRun, ff: ffRun };
+  document.querySelectorAll("[data-replay]").forEach(function (b) { b.addEventListener("click", function () { runs[b.dataset.replay](); }); });
+  gsRun(); wsRun(); ffRun();
+})();
+</script>
+</body>
+</html>
