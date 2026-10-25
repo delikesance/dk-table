@@ -86,13 +86,14 @@ describe("runPipeline", () => {
     expect(sum).toBeLessThanOrEqual(10);
   });
 
-  it("emet start/end par axe de recherche (contrat du panneau), sans cout dedoublé", async () => {
+  it("emet start/end par axe de recherche (contrat du panneau), cout par axe sur l'axe, cout de phase sur l'evenement du secteur", async () => {
     const { events } = await go({});
     const ax = events.filter((e) => e.sector === "research" && e.axis);
     for (const t of ["start", "end"]) {
       expect(new Set(ax.filter((e) => e.type === t).map((e) => e.axis)).size).toBe(4); // 4 axes (x tours)
     }
-    expect(ax.every((e) => e.costUsd == null && e.elapsedS == null)).toBe(true);
+    expect(ax.filter((e) => e.type === "start").every((e) => e.costUsd == null)).toBe(true);
+    expect(ax.filter((e) => e.type === "end").every((e) => typeof e.costUsd === "number")).toBe(true);
     const rEnd = events.filter((e) => e.type === "end" && e.sector === "research" && !e.axis);
     expect(rEnd).toHaveLength(1);
     expect(typeof rEnd[0].ok).toBe("boolean");

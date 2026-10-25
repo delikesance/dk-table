@@ -82,7 +82,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       const message = await summarizePhase({
         phase: LABEL[name] ?? name,
         phases: all.map((x) => ({ name: LABEL[x.name] ?? x.name, status: status[x.name] })),
-        agents: [], spentUsd: budget.spent(), remainingUsd: budget.remaining(),
+        agents: [], spentUsd: budget.spent(), remainingUsd: budget.left(), eurUsd: budget.eurUsd,
       }, { query: deps.query, budget, env: deps.env, llm: deps.llmSummaries });
       onEvent({ type: "summary", phase: name, message });
       onEvent({ type: "info", sector: name, message: `resume: ${message}` });
@@ -134,7 +134,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       } finally {
         stopReports?.();
         deps.onDir?.(null);
-        if (isDesign) { stopWatch?.(); deps.onSectorDir?.(null); }
+        if (isDesign) { stopWatch?.(); if (ok) deps.onSectorDir?.(null); } // non fusionne: le worktree reste, la page Design l'affiche encore
         status[sector.name] = ok ? "ok" : "failed";
         if (held) onEvent({ ...(held as BoucleEvent), ok });
         await summarize(sector.name);

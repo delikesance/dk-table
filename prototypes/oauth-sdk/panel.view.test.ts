@@ -105,6 +105,15 @@ describe("panneau: rendu", () => {
 });
 
 describe("panneau: flux et journal", () => {
+  it("journal: sans codes ANSI, sans ligne « resume: » en double du resume", () => {
+    const send = load();
+    send({ type: "info", sector: "research", message: "npm test failed: \u001b[2m | \u001b[22m\u001b[32m1833 passed\u001b[39m" });
+    send({ type: "info", sector: "research", message: "resume: Échec : recherche." });
+    const t = q("#log")!.textContent!;
+    expect(t).toContain("npm test failed:  | 1833 passed");
+    expect(t).not.toContain("\u001b");
+    expect(t).not.toContain("resume:");
+  });
   it("connexion perdue puis reprise", () => {
     const send = load();
     send.fail();
