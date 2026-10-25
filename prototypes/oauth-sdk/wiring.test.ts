@@ -25,3 +25,10 @@ describe("buildBoucleServer", () => {
     }
   });
 });
+
+describe("parallelOf", () => {
+  it("BOUCLE_PARALLEL: entier >= 1 (plafonne a 8), sinon 3", async () => {
+    const { parallelOf } = await import("./wiring");
+    expect([parallelOf(undefined), parallelOf("1"), parallelOf("4"), parallelOf("99"), parallelOf("0"), parallelOf("x")]).toEqual([3, 1, 4, 8, 3, 3]);
+  });
+});

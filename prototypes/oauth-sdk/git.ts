@@ -4,6 +4,8 @@
  * The command runner is injected so tests need no real git.
  */
 import { failureDigest, stripAnsi } from "./cleanOutput";
+import { createMutex } from "./concurrency";
+import { failedFiles, failedTests, onlyOnBranch } from "./testFailures";
 
 /** Runs a command; resolves with exit code and combined output. */
 export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code: number; out: string }>;
@@ -11,12 +13,17 @@ export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code:
 export interface GitFlow {
   /** Create branch `developpement` from the current branch if missing. Never touches master/main. */
   ensureDev(): Promise<void>;
-  /** Create worktree + branch (then npm ci in it) `wt/<sector>-<timestamp>` from developpement; returns {branch, dir}. */
-  startSector(sector: string): Promise<{ branch: string; dir: string }>;
+  /** Create worktree + branch (then npm ci in it) `wt/<sector>[-<tag>]-<timestamp>-<n>` from developpement; returns {branch, dir}. `tag` = carte (agents en parallele). */
+  startSector(sector: string, tag?: string): Promise<{ branch: string; dir: string }>;
   /** Commit all changes in dir (message + trailer), skip if nothing to commit. */
   commit(dir: string, message: string): Promise<boolean>;
-  /** Run tests + tsc in dir; if green merge --no-ff into developpement and remove the worktree. */
-  mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string; push?: PushResult }>;
+  /**
+   * Tests + tsc dans dir; si vert, sous verrou: synchronise la branche avec developpement (tests relances si developpement a avance),
+   * fusion --no-ff, retrait du worktree, push. `conflict`: la synchro a echoue (la carte sera relancee en serie).
+   */
+  mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string; conflict?: boolean; preexisting?: string[]; push?: PushResult }>;
+  /** Retire le worktree de reference (fin du run). */
+  dispose(): Promise<void>;
   /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
   pushDev(): Promise<PushResult>;
 }
@@ -47,18 +54,26 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     if (r.code !== 0) await git(["branch", DEV]);
   }
 
-  async function startSector(sector: string) {
-    await ensureDev();
-    const slug = sector.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "sector";
-    const stamp = Date.now();
-    const branch = `wt/${slug}-${stamp}`;
-    const dir = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/${slug}-${stamp}`;
-    const r = await git(["worktree", "add", "-b", branch, dir, DEV]);
-    if (r.code !== 0) throw new Error(`worktree add failed: ${r.out}`);
-    // Dependances propres au worktree (pas de jonction: "Denied ID" sous vitest, voir CLAUDE.md).
-    const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir);
-    if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
-    return { branch, dir };
+  /** Verrou de l'arbre principal: creation de worktrees, checkout, fusion et push passent un par un. */
+  const lock = createMutex();
+  let seq = 0;
+
+  async function startSector(sector: string, tag = "") {
+    return lock.run(async () => {
+      await ensureDev();
+      const slug = [sector, tag].filter(Boolean).join("-").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "sector";
+      const name = `${slug}-${Date.now()}-${seq++}`;
+      const branch = `wt/${name}`;
+      const dir = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/${name}`;
+      const r = await git(["worktree", "add", "-b", branch, dir, DEV]);
+      if (r.code !== 0) throw new Error(`worktree add failed: ${r.out}`);
+      return { branch, dir };
+    }).then(async (w) => {
+      // Dependances propres au worktree (pas de jonction: "Denied ID" sous vitest, voir CLAUDE.md); hors verrou: en parallele.
+      const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], w.dir);
+      if (ci.code !== 0) installFail.set(w.dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
+      return w;
+    });
   }
 
   async function commit(dir: string, message: string): Promise<boolean> {
@@ -78,32 +93,69 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return (await git(["checkout", DEV])).code === 0;
   }
 
+  /** Worktree de reference (developpement detache), cree a la demande: sert a savoir si un test rouge l'est deja sur la base. */
+  const baseLock = createMutex();
+  let baseDir: string | null = null;
+  async function baseFailures(files: string[]): Promise<string[] | null> {
+    return baseLock.run(async () => {
+      if (!baseDir) {
+        const dir = await lock.run(async () => {
+          const d = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/base-${Date.now()}`;
+          return (await git(["worktree", "add", "--detach", d, DEV])).code === 0 ? d : null;
+        });
+        if (!dir) return null;
+        if ((await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir)).code !== 0) { await git(["worktree", "remove", "--force", dir]); return null; }
+        baseDir = dir;
+      } else await git(["checkout", "--detach", DEV], baseDir);
+      const r = await run("npm", ["test", "--", ...files], baseDir);
+      return r.code === 0 ? [] : failedTests(r.out);
+    });
+  }
+
+  /** Tests + tsc en parallele (independants). Un test deja rouge sur la base ne bloque pas (`preexisting`); tsc rouge ou test introduit bloque. */
+  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[] }> {
+    const [t, c] = await Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]);
+    if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
+    if (t.code === 0) return { reason: null };
+    const mine = failedTests(t.out);
+    const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
+    if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}` };
+    const added = onlyOnBranch(mine, base);
+    return added.length ? { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` } : { reason: null, preexisting: mine };
+  }
+
   async function mergeIfGreen(branch: string, dir: string) {
     const failed = installFail.get(dir);
     if (failed) return { merged: false, reason: failed };
     const noCommit = commitFail.get(dir);
     if (noCommit) return { merged: false, reason: `commit failed: ${noCommit}` };
-    const checks: [string, string[]][] = [
-      ["npm", ["test"]],
-      ["npx", ["tsc", "--noEmit"]],
-    ];
-    // tests et tsc en parallele (independants): le gain est le plus long des deux au lieu de leur somme
-    const results = await Promise.all(checks.map(([cmd, args]) => run(cmd, args, dir)));
-    const bad = results.findIndex((r) => r.code !== 0);
-    if (bad >= 0) {
-      const [cmd, args] = checks[bad];
-      return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${failureDigest(results[bad].out)}` };
-    }
-    if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
-    const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
-    if (ahead.code === 0 && ahead.out.trim() === "0") return { merged: false, reason: "rien a fusionner (aucun commit sur la branche)" };
-    const m = await git(["merge", "--no-ff", branch]);
-    if (m.code !== 0) {
-      await git(["merge", "--abort"]);
-      return { merged: false, reason: `merge conflict: ${stripAnsi(m.out).slice(-500)}` };
-    }
-    await git(["worktree", "remove", "--force", dir]);
-    return { merged: true, push: await pushDev() };
+    const first = await checks(dir);
+    if (first.reason) return { merged: false, reason: first.reason };
+    let preexisting = first.preexisting;
+    return lock.run(async () => {
+      if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
+      const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
+      if (ahead.code === 0 && ahead.out.trim() === "0") return { merged: false, reason: "rien a fusionner (aucun commit sur la branche)" };
+      // synchro: developpement a pu avancer pendant le travail de l'agent (autres cartes fusionnees)
+      const head = (await git(["rev-parse", "HEAD"], dir)).out;
+      const sync = await git(["merge", "--no-edit", DEV], dir);
+      if (sync.code !== 0) {
+        await git(["merge", "--abort"], dir);
+        return { merged: false, conflict: true, reason: `merge conflict avec ${DEV}: ${stripAnsi(sync.out).slice(-500)}` };
+      }
+      if ((await git(["rev-parse", "HEAD"], dir)).out !== head) {
+        const again = await checks(dir); // tests sur l'etat fusionne, pas sur l'etat de depart
+        if (again.reason) return { merged: false, reason: `apres synchro avec ${DEV}: ${again.reason}` };
+        preexisting = again.preexisting ?? preexisting;
+      }
+      const m = await git(["merge", "--no-ff", branch]);
+      if (m.code !== 0) {
+        await git(["merge", "--abort"]);
+        return { merged: false, conflict: true, reason: `merge conflict: ${stripAnsi(m.out).slice(-500)}` };
+      }
+      await git(["worktree", "remove", "--force", dir]);
+      return { merged: true, preexisting, push: await pushDev() };
+    });
   }
 
   /** Push de `developpement` seulement (refspec explicite), apres integration du distant s'il est en avance. */
@@ -124,5 +176,10 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return r.code === 0 ? { pushed: true } : { pushed: false, reason: `push echoue : ${stripAnsi(r.out).slice(-300)}` };
   }
 
-  return { ensureDev, startSector, commit, mergeIfGreen, pushDev };
+  async function dispose() {
+    const d = baseDir; baseDir = null;
+    if (d) await git(["worktree", "remove", "--force", d]);
+  }
+
+  return { ensureDev, startSector, commit, mergeIfGreen, pushDev, dispose };
 }
