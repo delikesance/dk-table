@@ -16,7 +16,7 @@ export interface IoDeps {
 /** Test-only hook: `globalThis.__DK_IO__` (e.g. set by Playwright) replaces the Tauri plugins when defined. */
 const hook = (): IoDeps | undefined => (globalThis as { __DK_IO__?: IoDeps }).__DK_IO__;
 
-const defaultDeps: IoDeps = {
+export const defaultDeps: IoDeps = {
   open: (o) => (hook()?.open ?? ((x) => open(x) as Promise<string | null>))(o),
   save: (o) => (hook()?.save ?? save)(o),
   readTextFile: (p) => (hook()?.readTextFile ?? readTextFile)(p),

@@ -10,6 +10,7 @@ import { parseKey } from "../grid/keys";
 import { insertFecHeaders } from "../fec";
 import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
+import { docFormatMenu, insertionMenu } from "./docSpec";
 import type { App } from "../appTypes";
 
 /** Actions de la barre qui ne passent pas par le handle `App` (fichiers, dialogues, macros). */
@@ -24,6 +25,8 @@ export interface MenuDeps {
   openPalette(): void;
   openAbout(): void;
   autosum(): void;
+  /** Ouvre la boîte d'export du document ouvert. */
+  exportDoc(): void;
 }
 
 /** Entrée radio de thème. */
@@ -37,12 +40,23 @@ function freezeAt(app: App): void {
   app.setFreeze({ rows: p.row, cols: p.col });
 }
 
-/** Les 8 menus, dans l'ordre de la maquette validée. */
+/** Entrées du menu Fichier : « Nouveau document » après « Nouveau », « Exporter le document… » quand un document est ouvert. */
+function fichier(app: App, d: MenuDeps, inDoc: boolean): MenuDef {
+  const e = fileEntries(d.file);
+  e.splice(1, 0, { label: "Nouveau document", run: () => void app.addDoc() });
+  if (inDoc) e.splice(e.findIndex((x) => x.label === "Enregistrer sous…") + 1, 0, { label: "Exporter le document…", hint: "Ctrl+E", run: d.exportDoc });
+  return { label: "Fichier", items: [...e, { label: "Paramètres…", hint: "Ctrl+,", run: d.openSettings, sep: true }] };
+}
+
+/** Les menus : 8 dans l'ordre de la maquette validée ; avec un document ouvert, Insertion remplace Feuille et Données. */
 export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
+  const inDoc = !!app.activeDocId?.();
   const toggle = (k: "bold" | "italic" | "underline" | "wrap") => () => app.style({ [k]: !app.activeStyle()[k] });
   const fmt = (format: string) => () => app.style({ format });
-  return [
-    { label: "Fichier", items: [...fileEntries(d.file), { label: "Paramètres…", hint: "Ctrl+,", run: d.openSettings, sep: true }] },
+  const vue = { label: "Vue scindée", hint: "Ctrl+\\", sep: true, run: () => app.toggleSplit() };
+  const themes = (): Entry[] => [theme("Thème automatique", "auto"), theme("Thème clair", "light"), theme("Thème sombre", "dark")];
+  const all: MenuDef[] = [
+    fichier(app, d, inDoc),
     { label: "Édition", items: [
       { label: "Annuler", hint: "Ctrl+Z", run: () => app.undo() },
       { label: "Rétablir", hint: "Ctrl+Y", run: () => app.redo() },
@@ -84,17 +98,25 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       ...d.macros().map((m, i) => ({ label: m.name, sep: i === 0, run: () => d.runMacro(m.id) })),
     ] },
     { label: "Affichage", items: () => [ // dynamic: "jusqu'à la ligne/colonne" follows the selection (Sheets)
-      theme("Thème automatique", "auto"), theme("Thème clair", "light"), theme("Thème sombre", "dark"),
+      ...themes(),
       { label: "Figer la première ligne", sep: true, run: () => app.setFreeze({ rows: 1, cols: 0 }) },
       { label: "Figer la première colonne", run: () => app.setFreeze({ rows: 0, cols: 1 }) },
       ...freezeEntries(app, "both"),
       { label: "Figer jusqu'à la cellule active", run: () => freezeAt(app) },
       { label: "Libérer les volets", run: () => app.setFreeze({ rows: 0, cols: 0 }) },
       { label: "Panneau des fonctions", sep: true, run: () => app.toggleSidebar() },
+      vue,
     ] },
     { label: "Aide", items: [
       { label: "Rechercher une commande", hint: "Ctrl+K", run: d.openPalette },
       { label: "À propos de dk-table", sep: true, run: d.openAbout },
     ] },
+  ];
+  if (!inDoc) return all;
+  const by = (label: string): MenuDef => all.find((m) => m.label === label)!;
+  const edition = by("Édition");
+  return [
+    by("Fichier"), { label: edition.label, items: (edition.items as Entry[]).slice(0, 2) }, docFormatMenu(app), insertionMenu(app),
+    by("Scripts"), { label: "Affichage", items: () => [...themes(), vue] }, by("Aide"),
   ];
 }

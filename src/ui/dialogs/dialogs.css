@@ -15,3 +15,6 @@
 .dk-dialog__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .dk-about__art { height: 260px; border-radius: var(--r-sm); }
 .dk-about__credits { margin: 0; color: var(--c-text-2); font: 11px/1.5 var(--font-mono); }
+.dk-export { display: grid; gap: var(--s-2); }
+.dk-export__btn { height: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--s-2) var(--s-4); text-align: left; }
+.dk-export__btn small { opacity: 0.85; }

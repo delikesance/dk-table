@@ -27,6 +27,8 @@ export interface ClipboardHooks {
   put(key: string, raw: string): void;
   /** Clear the selected range (cut); same synchronous event = one undo step. */
   clear(): void;
+  /** Called on copy / cut with the range ("A1:B2", null for a cut) and its TSV text (docs paste it as a link). */
+  onCopy?(ref: string | null, text: string): void;
 }
 
 /** Wire copy/cut/paste (TSV) listeners on `root`. */
@@ -42,6 +44,9 @@ export function bindClipboard(root: HTMLElement, h: ClipboardHooks): void {
     last = cut ? null : { text, origin: { col: Math.min(a.col, b.col), row: Math.min(a.row, b.row) } };
     e.clipboardData?.setData("text/plain", text);
     e.preventDefault();
+    const [c0, c1, r0, r1] = [Math.min(a.col, b.col), Math.max(a.col, b.col), Math.min(a.row, b.row), Math.max(a.row, b.row)];
+    const [p, q] = [keyOf(c0, r0), keyOf(c1, r1)];
+    h.onCopy?.(cut ? null : p === q ? p : `${p}:${q}`, text);
   };
   root.addEventListener("copy", (e) => { if (!h.busy()) copy(e, false); });
   root.addEventListener("cut", (e) => { if (!h.busy()) { copy(e, true); h.clear(); } });

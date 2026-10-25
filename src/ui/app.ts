@@ -21,6 +21,7 @@ import { installMacros } from "./macros/wire";
 import { relink, type Ctx } from "./appState";
 import { createDocStore } from "../doc/store";
 import "../doc/doc.css";
+import "../doc/blocks.css";
 import type { App } from "./appTypes";
 
 export type { App, Hooks } from "./appTypes";
@@ -52,9 +53,19 @@ export function mount(root: HTMLElement): App {
   c.macroUi = installMacros(c.app, root.querySelector<HTMLElement>(".dk-app__main")!);
   c.sidebar.setRecent(c.recents);
   const palette = createPalette({ hotkey: true });
-  const menus = createMenuBar(buildMenuSpec(c.app, menuDeps(c.app, palette.open)));
-  root.querySelector<HTMLElement>(".dk-app__menubar")!.append(menus);
-  disposePrev = () => { palette.destroy(); destroyMenus(menus); };
+  const slot = root.querySelector<HTMLElement>(".dk-app__menubar")!;
+  let menus: HTMLElement | undefined, menusInDoc: boolean | undefined;
+  /** (Re)build the menu bar; skipped when the sheet / document mode did not change. */
+  c.rebuildMenus = () => {
+    const inDoc = !!c.curDoc;
+    if (menus && inDoc === menusInDoc) return;
+    if (menus) destroyMenus(menus);
+    menus = createMenuBar(buildMenuSpec(c.app, menuDeps(c.app, palette.open)));
+    menusInDoc = inDoc;
+    slot.replaceChildren(menus);
+  };
+  c.rebuildMenus();
+  disposePrev = () => { palette.destroy(); if (menus) destroyMenus(menus); };
   refreshTabs(c);
   buildGrid(c);
   installCommands(c.app);
