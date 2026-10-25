@@ -119,6 +119,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Decisions (décimal exact)
 
 - `engine/decimal.ts` (`setDecimalMode`, `fix` = 15 chiffres significatifs après + - * / ^ %, `displayGap`), option par classeur (`DktDoc.decimal?`, Paramètres), cellule `dkg-gap` si affiché ≠ stocké. Détail: `docs/decimal-exact.md`.
+- Saisie numérique > 15 chiffres significatifs = texte exact (`engine/longnum.ts`, `recalc.ts` `literal`), `rawKind` = `long` -> classe `dkg-long` + infobulle. Détail: `docs/identifiants-longs.md`. Le design `docs/design/2026-10-25-180012.html` (validation/espion) est hors sujet.
 
 ## Decisions (poignée de recopie)
 
