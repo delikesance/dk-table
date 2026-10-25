@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 17:28:28 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-162708.html</h2><div class="frame">
+<main>
+<h1>Espion et Historique par cellule</h1>
+<p>Deux pistes issues de la recherche (TODO, axes 1 et 3), non realisees : fenetre Espion, historique par cellule. Maquettes interactives : cliquer une cellule, la modifier (champ ci-dessous), tester les etats.</p>
+
+<!-- ============ IDEE 1 : ESPION ============ -->
+<section class="idea" id="espion">
+<h2>1. Fenetre Espion</h2>
+<p>Panneau flottant qui suit des cellules (toutes feuilles) pendant l'edition ailleurs. Une ligne = feuille, cellule, formule, valeur, variation. Clic sur une ligne = saut a la cellule. Le mouvement montre quelle ligne a recalcule (flash) et le sens de variation.</p>
+<div class="row">
+  <div style="flex:1;min-width:360px">
+    <div class="cap">Ecran principal : feuille Ventes (clic = selection, double-clic ou champ = modifier)</div>
+    <div class="card">
+      <div class="bar"><button id="wToggle" class="on" aria-pressed="true">Espion</button><button id="wAdd">Espionner la selection</button><button id="wCycle">Simuler un changement</button></div>
+      <div class="fbar"><b id="wRef">B2</b><span id="wFx">1200</span></div>
+      <table class="g" id="grid"></table>
+    </div>
+  </div>
+  <div class="panel" id="watch" role="region" aria-label="Fenetre Espion">
+    <div class="hd"><h3>Espion</h3><span class="mono" id="wCount"></span></div>
+    <table class="wl"><thead><tr><th>Cellule</th><th>Formule</th><th style="text-align:right">Valeur</th><th style="text-align:right">Delta</th></tr></thead><tbody id="wBody"></tbody></table>
+    <div class="empty" id="wEmpty" hidden>Aucune cellule suivie.</div>
+  </div>
+</div>
+<h3>Etats</h3>
+<div class="states">
+  <div class="state"><b>Vide</b><p>Ligne unique « Aucune cellule suivie. » + commande « Espionner la selection ».</p></div>
+  <div class="state"><b>Recalcul</b><p>Ligne concernee : flash 0,9 s (<code>--flash</code>), delta colore (bleu hausse, orange baisse).</p></div>
+  <div class="state"><b>Erreur</b><p>Valeur en orange (<code>#DIV/0!</code>, <code>#REF!</code>) ; delta vide.</p></div>
+  <div class="state"><b>Cible supprimee</b><p>Ligne grisee, <code>#REF!</code>, bouton retirer au survol.</p></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre>// src/ui/watch/model.ts (pur, &lt;=120 lignes)
+export interface WatchItem { id: string; sheetId: string; key: string /* "B2" */; }
+export interface WatchRow extends WatchItem { sheetName: string; raw: string; display: string;
+  value: number | string | null; delta: number | null; error: boolean; dead: boolean; }
+export interface WatchModel {
+  list(): WatchItem[];
+  add(sheetId: string, key: string): WatchItem;       // dedoublonne (sheetId+key)
+  remove(id: string): void;
+  rows(getValue: (s: string, k: string) =&gt; Cell): WatchRow[]; // delta = valeur - derniere valeur numerique connue
+  onChange(fn: () =&gt; void): () =&gt; void;
+}
+// src/ui/watch/panel.ts : mountWatchPanel(host: HTMLElement, app: App): { show(); hide(); toggle(); dispose() }
+// Evenements : app.on("recalc", ids) -&gt; rows() uniquement pour les cles touchees ; clic ligne -&gt; app.goTo(sheetId, key)
+// Persistance : DktDoc.watch?: WatchItem[] (src/io/watchFormat.ts, absent = [])
+// Commandes : palette "view.watch" (Affichage &gt; Fenetre Espion, <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>W</kbd>), "cell.watch" (menu contextuel cellule)
+// Marqueur grille : classe dkg-w (point 6 px, --c-accent) posee par ui/grid/mark.ts</pre>
+<ul class="c"><li>Fichiers touches : <code>ui/watch/{model,panel,watch.css}.ts</code>, <code>io/watchFormat.ts</code>, <code>ui/menubar/spec.ts</code>, <code>ui/contextmenu</code>, <code>ui/grid/mark.ts</code>, <code>io/format.ts</code> (champ optionnel).</li>
+<li>Tests d'abord : <code>model.test.ts</code> (add/dedup/remove, delta, #REF! apres suppression de feuille), <code>watchFormat.test.ts</code> (aller-retour), e2e <code>e2e/feat-watch.spec.ts</code>.</li>
+<li>Accessibilite : <code>role=region</code>, lignes focalisables, Entree = saut, Suppr = retirer.</li></ul>
+</section>
+
+<!-- ============ IDEE 2 : HISTORIQUE ============ -->
+<section class="idea" id="histo">
+<h2>2. Historique par cellule</h2>
+<p>Journal des valeurs successives d'une cellule : liste chronologique, diff brut/formule, restauration en un clic (un pas d'annulation). Ouvre depuis le menu contextuel ou <kbd>Alt</kbd>+<kbd>H</kbd>. Chaque edition ajoute un point en haut avec glissement.</p>
+<div class="row">
+  <div style="flex:1;min-width:360px">
+    <div class="cap">Cellule C2 (marge). Modifier via le champ pour creer une version.</div>
+    <div class="card">
+      <div class="bar"><input id="hIn" class="mono" value="=B2*0,3" aria-label="Nouvelle formule C2" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--line2);border-radius:3px;padding:3px 8px"><button id="hSet">Valider</button></div>
+      <div class="fbar"><b>C2</b><span id="hCur"></span></div>
+    </div>
+  </div>
+  <div class="panel" id="hist" role="region" aria-label="Historique de C2">
+    <div class="hd"><h3>Historique C2</h3><span class="mono" id="hCount"></span></div>
+    <ul class="tl" id="hList"></ul>
+    <div class="diff" id="hDiff" hidden></div>
+  </div>
+</div>
+<h3>Etats</h3>
+<div class="states">
+  <div class="state"><b>Aucune version</b><p>Cellule jamais modifiee : « Aucun historique ».</p></div>
+  <div class="state"><b>Version selectionnee</b><p>Diff ligne a ligne : ajout (bleu), retrait (orange barre), action « Restaurer ».</p></div>
+  <div class="state"><b>Restauree</b><p>Nouvelle entree « restauration » en tete ; l'ancienne reste (journal append-only).</p></div>
+  <div class="state"><b>Limite</b><p>50 versions par cellule ; la plus ancienne sort. Mention « 50 max » dans l'en-tete a saturation.</p></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre>// src/engine/history.ts (pur, &lt;=120 lignes)
+export interface CellVersion { at: number /* ms */; raw: string; display: string; source: "edit"|"paste"|"fill"|"macro"|"restore"; }
+export interface CellHistory {
+  record(sheetId: string, key: string, v: CellVersion): void;  // ignore si raw identique a la derniere
+  list(sheetId: string, key: string): CellVersion[];            // plus recent d'abord, max 50
+  restore(sheetId: string, key: string, index: number): CellVersion; // ajoute une entree "restore"
+  clear(sheetId?: string): void;
+}
+export function createHistory(max?: number): CellHistory;
+// src/ui/history/panel.ts : openCellHistory(app: App, sheetId: string, key: string): { close() }
+// src/ui/history/diff.ts : diffRaw(a: string, b: string): { type: "same"|"add"|"del"; text: string }[]  (par jeton)
+// Branchement : model.ts appelle history.record dans la meme transaction que le snapshot undo ; restore = app.setCell (1 pas d'annulation).
+// Persistance : DktDoc.history?: Record&lt;"sheetId!key", CellVersion[]&gt; (src/io/historyFormat.ts) ; option Parametres « Conserver l'historique dans le fichier » (defaut : non, memoire seule).
+// Commandes : "cell.history" (menu contextuel + Affichage), <kbd>Alt</kbd>+<kbd>H</kbd>.</pre>
+<ul class="c"><li>Fichiers touches : <code>engine/history.ts</code>, <code>ui/history/{panel,diff,history.css}.ts</code>, <code>io/historyFormat.ts</code>, <code>ui/model.ts</code>, <code>ui/dialogs/settings.ts</code>, <code>ui/contextmenu</code>.</li>
+<li>Tests d'abord : <code>history.test.ts</code> (dedoublonnage, plafond 50, restore), <code>diff.test.ts</code>, <code>model.test.ts</code> (undo apres restore = un pas), e2e <code>e2e/feat-history.spec.ts</code>.</li>
+<li>Limite connue : edits groupes (coller 100 cellules) enregistres cellule par cellule, source <code>paste</code>.</li></ul>
+</section>
+</main>
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td></td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 17:26:52</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 17:28:22</td><td>écrit</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.50 $</td></tr></table></section>
+</body></html>
