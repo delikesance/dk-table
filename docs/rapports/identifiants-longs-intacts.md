@@ -12,7 +12,7 @@ Visible : oui
 ## Preuves
 - Tests : ok (`npm test` : 2268 tests passés, 4 ignorés; `npx tsc --noEmit` sans erreur)
 - E2E : `npm run test:e2e -- feat-identifiants-longs` : 2 passed
-- Captures : docs/screenshots/identifiants-longs-intacts/entree-longue-clair.png, entree-longue-sombre.png
+- Captures : docs/screenshots/identifiants-longs-intacts/entree-longue-clair.png, docs/screenshots/identifiants-longs-intacts/entree-longue-sombre.png
 
 ## Decisions
 - Pas de trancheur : choix évidents. Détection pure sans exposant; passage par `rawKind` (pas de nouveau hook dans `grid.ts`, déjà à 200 lignes).

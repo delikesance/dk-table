@@ -14,7 +14,7 @@ Visible : oui
 
 ## Preuves
 - Tests : ok (2214 tests, 4 ignores). `npx tsc --noEmit` ok. e2e `e2e/feat-pivot-defaut.spec.ts` : 2 ok.
-- Captures : docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/disposition-defaut-clair.png, disposition-defaut-sombre.png (dialogue initial : Lignes=Region, Valeur=Montant malgre colonnes Ref et Id). Anciennes : dialogue-*.png, resultat-*.png.
+- Captures : docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/disposition-defaut-{clair,sombre}.png (dialogue initial : Lignes=Region, Valeur=Montant malgre colonnes Ref et Id), docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/dialogue-{clair,sombre}.png, docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/resultat-{clair,sombre}.png
 
 ## Decisions
 - Carte non verifiee (ask.libreoffice.org) : une seule amelioration, disposition par defaut claire.

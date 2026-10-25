@@ -15,7 +15,7 @@ Visible : oui
 
 ## Preuves
 - Tests : ok (2246 tests; tsc ok; e2e feat-selstats ok)
-- Captures : docs/screenshots/statistiques-de-selection-dans-la-barre-d-etat/selection-clair.png, selection-sombre.png
+- Captures : docs/screenshots/statistiques-de-selection-dans-la-barre-d-etat/selection-clair.png, docs/screenshots/statistiques-de-selection-dans-la-barre-d-etat/selection-sombre.png
 
 ## Decisions
 - TODO coché à tort, fonctionnalité absente, donc implémentée.
