@@ -1,6 +1,6 @@
-/** Listes cycliques françaises pour la recopie de séries: mois et jours (complets et abréviés). */
+/** Listes cycliques françaises pour la recopie de séries: mois et jours (complets et abréviés), plus les listes utilisateur. */
 
-/** Listes de noms; la première qui contient toutes les valeurs sources est utilisée (jours avant mois pour « mar »). */
+/** Listes de noms intégrées; la première qui contient toutes les valeurs sources est utilisée (jours avant mois pour « mar »). */
 export const NAME_LISTS: readonly (readonly string[])[] = [
   ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
   ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."],
@@ -24,19 +24,22 @@ export function applyCase(w: string, c: "upper" | "title" | "lower"): string {
 /**
  * Série de noms: `next(i)` donne le (i+1)-ième nom après la source. Pas = écart d'indices constant
  * entre valeurs consécutives (modulo la longueur de la liste), 1 pour une seule valeur.
+ * `extra` = listes utilisateur, testées avant les intégrées. Recopie cyclique (la liste boucle).
  * Null si les valeurs ne sont pas toutes dans une même liste ou si le pas n'est pas constant.
  */
-export function nameSeries(src: string[], dir = 1): { next(i: number): string; byDefault: boolean } | null {
+export function nameSeries(src: string[], dir = 1, extra: readonly (readonly string[])[] = []): { next(i: number): string; byDefault: boolean } | null {
   const low = src.map((s) => s.trim().toLowerCase());
-  for (const list of NAME_LISTS) {
-    const idx = low.map((w) => list.indexOf(w));
+  for (const list of [...extra, ...NAME_LISTS]) {
+    const names = list.map((s) => s.trim().toLowerCase());
+    const idx = low.map((w) => names.indexOf(w));
     if (idx.some((i) => i < 0)) continue;
     const L = list.length;
     const step = src.length === 1 ? (dir + L) % L : (idx[1] - idx[0] + L) % L;
     if (step === 0 || idx.some((v, k) => k > 0 && (v - idx[k - 1] + L) % L !== step)) return null;
     const c = caseOf(src[src.length - 1].trim());
     const last = idx[idx.length - 1];
-    return { byDefault: true, next: (i) => applyCase(list[(((last + step * (i + 1)) % L) + L) % L], c) };
+    const out = (item: string) => (c === "lower" ? item.toLowerCase() : applyCase(item, c));
+    return { byDefault: true, next: (i) => out(list[(((last + step * (i + 1)) % L) + L) % L]) };
   }
   return null;
 }

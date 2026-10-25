@@ -21,6 +21,7 @@ import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
 import { decimalMode, onDecimalChange, setDecimalMode } from "../engine/decimal";
 import { recalcAll } from "../engine/userfn";
+import { calcApi } from "./appCalc";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
 import { historyField, loadHistory } from "./history/store";
@@ -41,7 +42,7 @@ export function createApi(c: Ctx): App {
   const macros = createMacroStore();
   let loading = false;
   const paint = (k: string): void => paintKey(c, k);
-  const app: App = {
+  const app: Omit<App, "recalc"> = {
     hooks: {},
     path: undefined,
     edit(key, raw) {
@@ -194,7 +195,6 @@ export function createApi(c: Ctx): App {
   macros.onChange(() => { if (!loading) setTitle(c, true); });
   watchDocs(c);
   setupAutosave(c);
-  // changer le mode décimal recalcule tout le classeur et marque le document modifié
-  onDecimalChange(() => { for (const e of c.entries) recalcAll(e.sheet); touch(c); setTitle(c, true); });
-  return app;
+  onDecimalChange(() => { for (const e of c.entries) recalcAll(e.sheet); touch(c); setTitle(c, true); }); // changer le mode décimal recalcule tout le classeur et marque le document modifié
+  return Object.assign(app, calcApi(c));
 }

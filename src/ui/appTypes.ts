@@ -33,6 +33,8 @@ export interface App {
   /** Edit several cells as ONE undo step and ONE refresh (paste/clear). */
   editMany(cells: Record<string, string>): void;
   undo(): void;
+  /** Calcul à la demande: `all` = tout le classeur (F9), sinon la feuille active (Maj+F9). */
+  recalc(all: boolean): void;
   redo(): void;
   addSheet(): void;
   switchSheet(id: string): void;
