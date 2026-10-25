@@ -1,4 +1,5 @@
 # Rapport : Modèle de plan (outline) : niveaux de lignes et état replié
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -22,3 +23,9 @@ Visible : non
 - Groupe = lignes contiguës au-dessus du sous-total, de niveau strictement supérieur. Replier masque ce groupe.
 - Limite : un groupe sans ligne de sous-total en dessous (fin de feuille) ne peut pas être replié.
 - 4e tournée : état replié = plis `{row, depth}` (comme Excel : groupe de profondeur d = suite de lignes de niveau ≥ d au-dessus du sous-total). Repli manuel : d = niveau du sous-total + 1. `showLevel(n)` : plis de profondeur n+1, donc seules les lignes de niveau > n sont masquées.
+
+## Preuves
+- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
