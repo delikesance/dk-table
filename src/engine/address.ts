@@ -1,4 +1,5 @@
 import type { Sheet } from "./types";
+import { rectOf } from "./openrange";
 
 /** Parse "B12" into 1-based {col,row}; null if malformed. No bounds check. */
 export function parseKey(key: string): { col: number; row: number } | null {
@@ -28,15 +29,15 @@ export function normKey(key: string): string {
 }
 
 /**
- * Expand "A1:B3" to its cell keys (row-major), clipped to sheet bounds.
+ * Expand "A1:B3" (or an open range such as "B2:B", "A:C", "2:5") to its cell keys (row-major).
+ * `clip`: open sides stop at the used range, else they reach the sheet bounds.
  * Returns null when an endpoint is malformed or out of bounds.
  */
-export function expandRange(sheet: Sheet, a: string, b: string): string[] | null {
-  if (!inBounds(sheet, a) || !inBounds(sheet, b)) return null;
-  const p = parseKey(a)!;
-  const q = parseKey(b)!;
+export function expandRange(sheet: Sheet, a: string, b: string, clip = false): string[] | null {
+  const r = rectOf(sheet, a, b, clip);
+  if (!r) return null;
   const out: string[] = [];
-  for (let r = Math.min(p.row, q.row); r <= Math.max(p.row, q.row); r++)
-    for (let c = Math.min(p.col, q.col); c <= Math.max(p.col, q.col); c++) out.push(makeKey(c, r));
+  for (let row = r.r1; row <= r.r2; row++)
+    for (let c = r.c1; c <= r.c2; c++) out.push(makeKey(c, row));
   return out;
 }

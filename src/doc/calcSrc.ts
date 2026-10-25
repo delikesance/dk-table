@@ -48,10 +48,11 @@ export function singleRef(stored: string): { sheet: string; ref: string } | null
   return m ? { sheet: m[1], ref: `${m[2].toUpperCase()}${m[3]}` } : null;
 }
 
-/** A whole-formula live chart: `BAR({s1}!B2:B4)` -> name, sheet id, range. */
+/** A whole-formula live chart: `BAR({s1}!B2:B4)` or `SPARKLINE({s1}!B2:B)` -> name, sheet id, range (no `$`). */
 export function liveCall(stored: string): { fn: "SPARKLINE" | "BAR" | "TREND"; sheet: string; range: string } | null {
-  const m = /^\s*(SPARKLINE|BAR|TREND)\s*\(\s*\{([^}]+)\}!\$?([A-Za-z]+)\$?(\d+)(?::\$?([A-Za-z]+)\$?(\d+))?\s*\)\s*$/i.exec(stored);
-  if (!m) return null;
-  const a = `${m[3]}${m[4]}`.toUpperCase();
-  return { fn: m[1].toUpperCase() as "BAR", sheet: m[2], range: m[5] ? `${a}:${m[5]}${m[6]}`.toUpperCase() : a };
+  const e = "(\\$?[A-Za-z]*\\$?\\d*)";
+  const m = new RegExp(`^\\s*(SPARKLINE|BAR|TREND)\\s*\\(\\s*\\{([^}]+)\\}!${e}(?::${e})?\\s*\\)\\s*$`, "i").exec(stored);
+  if (!m || !m[3] || (m[4] !== undefined && !m[4])) return null;
+  const range = [m[3], m[4]].filter(Boolean).join(":").replace(/\$/g, "").toUpperCase();
+  return { fn: m[1].toUpperCase() as "BAR", sheet: m[2], range };
 }
