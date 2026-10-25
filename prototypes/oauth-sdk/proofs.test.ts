@@ -51,4 +51,8 @@ describe("rapport complet", () => {
     const r = parseReport("# Rapport : x\nStatut : termine\nVisible : oui\n\n## Captures\n\n- `docs/s/a-clair.png` : boîte (thème clair).\n- docs/s/a-sombre.png : boîte, thème sombre\n");
     expect(r.screenshots).toEqual(["docs/s/a-clair.png", "docs/s/a-sombre.png"]);
   });
+  it("element « Libelle : `chemin` (note) »: le chemin est retenu, pas le libelle", () => {
+    const r = parseReport("# Rapport : x\nVisible : oui\n\n## Captures\n- Clair : `docs/s/a-clair.png` (note)\n- Sombre : `docs/s/a-sombre.png`\n");
+    expect(r.screenshots).toEqual(["docs/s/a-clair.png", "docs/s/a-sombre.png"]);
+  });
 });
