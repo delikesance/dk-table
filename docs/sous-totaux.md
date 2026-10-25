@@ -23,7 +23,9 @@ const rows = subtotals(table, { groups: [0, 1], values: [3], fn: "SUM" });
 - Le texte et les vides ignorés. Nombres lus avec virgule ou point décimal.
 - Résultat sans nombre : `AVERAGE`/`MIN`/`MAX` donnent `""`, `SUM`/`COUNT` donnent `0`.
 - Arrondi à 15 chiffres significatifs (`0,1 + 0,2` donne `0.3`).
-- Plage vide : `[]`, sans erreur.
+- Plage vide : `[]`, sans erreur. Sans colonne de groupe : données puis total général seul.
+- Clé vide (cellule vide ou ligne courte) : groupe libellé « Total (vide) ».
+- Plus de 3 colonnes de groupe (`MAX_LEVELS`) : `RangeError`.
 
 ## Hors périmètre
 
