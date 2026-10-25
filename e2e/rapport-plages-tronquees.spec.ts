@@ -16,6 +16,10 @@ for (const [theme, label] of [["light", "clair"], ["dark", "sombre"]] as const) 
     await page.keyboard.type("Audit de modèle");
     await page.keyboard.press("Enter");
     await expect(page.locator(".dk-audit__link", { hasText: "!C1" }).first()).toBeVisible();
+    await expect(page.locator(".dk-audit__fix", { hasText: "Étendre à A4" })).toBeVisible();
     await page.screenshot({ path: `${DIR}/alerte-${label}.png` });
+    await page.locator(".dk-audit__fix", { hasText: "Étendre à A4" }).click();
+    await expect(page.locator(".dk-audit__link", { hasText: "!C1" })).toHaveCount(0);
+    await page.screenshot({ path: `${DIR}/corrige-${label}.png` });
   });
 }

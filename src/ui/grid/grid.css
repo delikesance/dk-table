@@ -157,3 +157,4 @@
 /* Surlignage formules / constantes (palette « Surligner formules / constantes », classe dk-kinds sur <html>) */
 .dk-kinds .dkg-kf { background-color: var(--c-accent-soft-2); }
 .dk-kinds .dkg-kc { background-color: color-mix(in srgb, var(--c-error) 18%, transparent); }
+.dkg-long { box-shadow: inset 0 -2px 0 var(--c-accent, #0000F2); text-align: left; }
