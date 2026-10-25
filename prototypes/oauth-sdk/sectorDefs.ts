@@ -16,9 +16,9 @@ export interface SectorDef {
 }
 
 const RULES =
-  "Lis CLAUDE.md d'abord et respecte-le: TDD (ecris un test qui echoue AVANT tout code, " +
-  "lance `npm test`), fichiers de 200 lignes max, tout est documente, mets TODO.md a jour. " +
-  "Ne touche pas a git (pas de commit, branche, push): la boucle s'en charge. Reponds brievement.";
+  "Les regles du projet (CLAUDE.md) sont deja chargees: TDD (ecris un test qui echoue AVANT tout code, " +
+  "lance `npm test`), fichiers de 200 lignes max, tout est documente. " +
+  "Ne touche ni a git (pas de commit, branche, push) ni a TODO.md : la boucle s'en charge. Reponds brievement.";
 
 /** Chemin horodate `docs/design/<date>-<HHmmss>.html` (UTC): un fichier par run, jamais ecrase. */
 export function designPath(d: Date = new Date()): string {
@@ -43,7 +43,7 @@ export const SECTOR_DEFS: SectorDef[] = [
   {
     id: "design", kind: "think", maxTurns: 40, share: 0.15,
     prompt:
-      "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
+      "Secteur design/UX, AVANT tout code. Lis src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
       `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : toile libre, page HTML autonome ` +
       "(CSS et JS en ligne; scripts, animations, canvas/SVG et interactions permis; aucune requete ni ressource externe: la CSP les bloque). " +
@@ -57,9 +57,9 @@ export const SECTOR_DEFS: SectorDef[] = [
   {
     id: "implementation", kind: "think", maxTurns: 60, share: 0.4,
     prompt:
-      `Secteur implementation. Lis d'abord le design ${DESIGN} et construis dessus. S'il est absent, dis-le ` +
-      "et replie-toi sur docs/recherche/fonctionnalites.md et TODO.md : choisis 1 a 3 " +
-      "fonctionnalites non cochees, prioritaires et petites, et implemente-les. " + RULES,
+      `Secteur implementation. Les cartes a traiter sont listees plus bas : le lot est decide par la boucle, n'en choisis aucune autre. ` +
+      `Si le design ${DESIGN} existe, construis dessus. Sans liste de cartes, replie-toi sur docs/recherche/fonctionnalites.md : ` +
+      "choisis 1 a 3 fonctionnalites non realisees, prioritaires et petites. " + RULES,
   },
   {
     id: "correction", kind: "think", maxTurns: 40, share: 0.2,

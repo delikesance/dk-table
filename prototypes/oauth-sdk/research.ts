@@ -51,7 +51,7 @@ const MAX_TURNS = 8;
 
 const BASE =
   "Compare Excel, Google Sheets, LibreOffice Calc et Airtable pour le tableur dk-table. " +
-  "Lis d'abord docs/recherche-tableur.md, TODO.md et CLAUDE.md pour savoir ce que dk-table a deja; " +
+  "Lis d'abord docs/recherche-tableur.md et TODO.md pour savoir ce que dk-table a deja; " +
   "cherche sur le web (docs officielles, forums, avis utilisateurs), au plus 4 recherches web, puis reponds sans autre exploration. " +
   "Ne traite QUE cet axe (d'autres agents couvrent les autres). ";
 
