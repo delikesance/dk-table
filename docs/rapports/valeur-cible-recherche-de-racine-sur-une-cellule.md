@@ -1,4 +1,5 @@
 # Rapport : Valeur cible (recherche de racine sur une cellule)
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -25,3 +26,9 @@ Aucune (pas d'effet visible dans cette carte).
 - Tolérance absolue 1e-6 sur `résultat - cible`.
 - Plafond = 300 évaluations de la formule (sondes d'encadrement + bissection), option `maxEval`.
 - Pas d'UI dans cette carte: menu Données et dialogue relèvent d'une carte suivante (la partie moteur est prête).
+
+## Preuves
+- Tests : ok (11 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":11,"scope":"related"},"tsc":{"ok":true}} -->
