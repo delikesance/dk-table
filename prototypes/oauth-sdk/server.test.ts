@@ -82,6 +82,14 @@ describe("boucle server", () => {
 });
 
 describe("moodboard", () => {
+  it("la page est relue a chaque requete (fonction)", async () => {
+    let v = "v1";
+    const { base } = await boot(undefined, { moodboardHtml: () => v });
+    expect(await (await fetch(base + "/moodboard.html")).text()).toBe("v1");
+    v = "v2";
+    expect(await (await fetch(base + "/moodboard.html")).text()).toBe("v2");
+  });
+
   const card = { id: "a", title: "A", status: "found" as const, summary: "s", source: "x" };
   it("GET /moodboard renvoie le JSON, GET /moodboard.html la page", async () => {
     const { base } = await boot(undefined, { moodboard: async () => [card], moodboardHtml: "<html>mood</html>" });

@@ -11,10 +11,13 @@
  *   - found      : aucune ligne TODO ne correspond. Une tache deja faite `- [x]` retire la carte.
  * Resume : kind 'summary' (Haiku), 1 tour, sans outil, 0,01 USD max par carte, cartes groupees par
  *        requete, cache (titre+source) dans la Map, cout regle dans le budget partage; ne leve jamais.
+ * Budget : jamais en dehors du plafond de l'utilisateur. Pendant un run, les resumes sont regles dans
+ *        le budget PARTAGE du pipeline (`pickBudget` renvoie le budget actif); hors run, un petit plafond
+ *        neuf de `IDLE_EUR` (0,05 EUR) par rafraichissement, et le cache evite de re-payer.
  * Usage : `await buildMoodboard({ readFile, query, budget, cache })`.
  */
 import { createHash } from "node:crypto";
-import type { Budget } from "./budget";
+import { createBudget, type Budget } from "./budget";
 import { MODEL_BY_KIND, type QueryFn } from "./research";
 
 /** Carte du moodboard (contrat avec la vue). */
@@ -34,6 +37,14 @@ export interface MoodDeps {
   budget?: Budget;
   cache?: Map<string, string>;
   env?: Record<string, string>;
+}
+
+/** Plafond (EUR) d'un rafraichissement quand aucun run n'est actif. */
+export const IDLE_EUR = 0.05;
+
+/** Budget a utiliser: celui du run en cours (partage), sinon un petit plafond neuf. */
+export function pickBudget(active: () => Budget | null, eurUsd?: number): Budget {
+  return active() ?? createBudget(IDLE_EUR, eurUsd);
 }
 
 /** Plafond par carte (USD) et taille de lot. */

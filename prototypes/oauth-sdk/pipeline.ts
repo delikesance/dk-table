@@ -9,7 +9,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createBudget } from "./budget";
+import { createBudget, type Budget } from "./budget";
 import { createGitFlow, type Run } from "./git";
 import { runResearch, type QueryFn } from "./research";
 import { SECTORS, toController, type Sector } from "./sectors";
@@ -30,6 +30,8 @@ export interface PipelineDeps {
   eurUsd?: number;
   /** Ecriture de fichier (defaut: fs, dossiers crees). */
   writeFile?: (path: string, text: string) => void;
+  /** Budget du run en cours (null une fois fini): partage avec le moodboard. */
+  onBudget?: (b: Budget | null) => void;
 }
 
 const DOC = join("docs", "recherche", "fonctionnalites.md");
@@ -43,8 +45,9 @@ function diskWrite(path: string, text: string): void {
 /** Construit `runPipeline` lie a ses dependances. */
 export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void> {
   const write = deps.writeFile ?? diskWrite;
-  return async function runPipeline({ budgetEur, onEvent, signal }) {
+  const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<void> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
+    deps.onBudget?.(budget);
     const flow = createGitFlow(deps.run, deps.cwd);
     await flow.ensureDev();
 
@@ -106,5 +109,8 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
         await summarize(sector.name);
       }
     }
+  };
+  return async (o) => {
+    try { await inner(o); } finally { deps.onBudget?.(null); }
   };
 }
