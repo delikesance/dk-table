@@ -2,3 +2,7 @@
 .dk-status { flex: none; display: flex; gap: 16px; justify-content: flex-end; padding: 2px 12px;
   font: var(--fs-sm) var(--font-mono); color: var(--c-text); background: var(--c-bg); border-top: 1px solid var(--c-line-strong); }
 .dk-status[hidden] { display: none; }
+.dk-status { position: relative; align-items: center; }
+.dk-status__btn { font: inherit; color: inherit; background: none; border: 1px solid var(--c-line-strong); border-radius: 3px; cursor: pointer; }
+.dk-status__menu { position: absolute; right: 12px; bottom: 100%; display: flex; flex-direction: column; gap: 2px; padding: 6px 8px;
+  background: var(--c-bg); border: 1px solid var(--c-line-strong); border-radius: 3px; }

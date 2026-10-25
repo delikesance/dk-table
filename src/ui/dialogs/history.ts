@@ -6,7 +6,7 @@
 import { openDialog } from "./dialog";
 import { renderDiff } from "./diff";
 import { cellHistory, rewind, snapshotDoc, timeline } from "../../io/history";
-import { currentHistory, setBaseline, takeSnapshot } from "../history/store";
+import { currentHistory, journalNow, setBaseline, takeSnapshot } from "../history/store";
 import type { DktDoc } from "../../io/types";
 import type { App } from "../appTypes";
 import "./dataDialogs.css";
@@ -26,6 +26,7 @@ export function openHistory(app: App): void {
   const body = document.createElement("div");
   body.className = "dk-dialog__body dk-data dk-hist";
   const cur = app.toDoc();
+  journalNow(cur); // les modifications non enregistrées entrent au journal
   const sheet = cur.active ?? cur.sheets[0].id, key = app.selection();
   const times = timeline(currentHistory());
   const log = cellHistory(currentHistory(), sheet, key);

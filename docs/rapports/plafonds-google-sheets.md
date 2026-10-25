@@ -9,7 +9,7 @@ Visible : oui
 - Rien
 
 ## Preuves
-- Tests : ok (6 tests limits + e2e)
+- Tests : ok (2102 tests; 1 échec hors périmètre: prototypes pipeline.parallel timing)
 - Captures : docs/screenshots/plafonds-google-sheets/toast-cellule-{clair,sombre}.png (import CSV non capturé : dialogue Tauri absent en e2e, couvert en unitaire)
 
 ## Decisions

@@ -83,6 +83,7 @@ P3 : livraison
 - [ ] Test de l'installeur Windows (MSI/NSIS construits en T1.7)
 - [ ] T4.1 Analyser LibreOffice Calc via REA, sans copier de code (optionnel ; "Libre Fiscal" à confirmer)
 - [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : section Status encore "no app code")
+- [x] Pépite 2 voyage dans le temps : historique local dans le fichier, curseur, instantanés, comparaison (`docs/historique-local.md`, palette « Historique et versions… »)
 - [ ] Décision pépites 1 (flèches) / 2 (voyage dans le temps) : abandon ou bonus si le temps le permet
 
 ## Phase 8 : Modules intégrés, câblage à faire
@@ -224,6 +225,7 @@ Classement par gravité (P0 = pire)
 - [x] Largeurs de colonnes enregistrées dans `.dktable` (`DocSheet.colWidths`, lettres → px, absent si aucune), restaurées à l'ouverture (anciens fichiers OK), annulables (glisser et ajustement = un pas), suivent l'insertion/suppression de colonnes. `io/colWidthsFormat.ts`, `Entry.widths`; tests unitaires + `e2e/feat-colwidth.spec.ts`
 - [ ] Secteur recherche v1 (`prototypes/oauth-sdk/`): lancer la boucle live (`CLAUDE_CODE_OAUTH_TOKEN`, plafond 20 USD) -> `docs/recherche/fonctionnalites.md`, puis ajouter les tâches issues des 4 axes
 - [x] Secteur recherche v1: run live (2,20 $ / 20 $), synthèse 4 axes dans `docs/recherche/fonctionnalites.md`
+- [x] Carte `carte-des-dependances-interactive`: panneau « Qui utilise cette cellule ? » (palette `data.depmap`, `engine/model/depmap.ts`, `ui/dialogs/depmap.ts`, rapport `docs/rapports/`)
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
@@ -254,6 +256,7 @@ Classement par gravité (P0 = pire)
 - [x] Boucle: agents d'implémentation en parallèle sur cartes indépendantes (`BOUCLE_PARALLEL`, défaut 3): worktree par carte, fusion sérialisée, repli en série sur conflit, budget réparti, panneau (`parallel.ts`, `independent.ts`)
 - [x] Boucle: cartes « Terminées » durables (registre `.boucle/termines.jsonl`, survit nouvelle tournée, redémarrage, nouveau Go)
 - [x] Boucle: design absent de la toile sous Windows (arguments git non protégés sous cmd.exe, commit perdu): `shellArgs.ts`, fusion refusée sans commit
+- [x] Boucle: tests e2e de bout en bout (`docs/boucle-e2e.md`, `e2e/boucle*`): vrai serveur + vrai git + faux agents + Playwright sur les 3 pages; bugs corrigés: panneau (conflit réessayé en échec, run précédent additionné, Stop muet), coupure SSE (ids + `Last-Event-ID`), worktrees non fusionnés jamais retirés (`release`), frise du designer sans fichier écrit (`flush`). Reste: doublons de cartes (même titre dans deux axes, idée retitrée) = fil design de la Boucle
 - [x] Boucle: réconciliateur d'états (`reconcile.ts`): faux « en cours » supprimés, orphelines et finies-sans-rapport visibles (anomalies dans le moodboard et le journal), `docs/boucle-optimisee.md`
 - [x] Boucle: correction déclenchée par le code seulement (fusion refusée ou preuves manquantes), routage des modèles haiku-first avec escalade (`routing.ts`, `BOUCLE_MODELS`)
 - [x] Boucle: push automatique de `developpement` après fusion validée (`pushDev`, jamais master, `BOUCLE_PUSH=0` pour couper)
@@ -271,8 +274,8 @@ Classement par gravité (P0 = pire)
 - [x] Étape 2 (MVP) : cycle audit -> dédoublonnage (empreinte `fp`) -> issues `auto:bug` (`github.ts`, `dedupe.ts`, `roles/audit.ts`, `checks.ts`, `cycle.ts`, `live.ts`); `--live` branché mais jamais lancé; SDK en devDependency
 - [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees
 - [x] Fix e2e `shell-tabs.spec.ts` : test de sélection aligné sur la sélection propre à chaque feuille (PR #31)
-- [x] Tableau croisé : `engine/pivot.ts` + `pivotCalc.ts` (lignes, colonnes, SUM/COUNT/AVG, champ calculé, totaux), dialogue `ui/dialogs/pivot.ts` (palette « Tableau croisé… ») -> nouvelle feuille « Croisé ». Rapport `docs/rapports/tableaux-croises-de-calc-incomplets-non-verifie.md`
-- [x] Diff / fusion `.dktable` : `io/diff.ts` (`diffCells`, `merge3`, `diffDocs`), dialogue `ui/dialogs/diff.ts` (palette « Comparer avec un fichier… », lecture seule). Rapport `docs/rapports/diff-et-fusion-cellule-par-cellule-du-dktable.md`. Suite : UI de fusion 3 voies
+- [x] Tableau croisé : `engine/pivot.ts` + `pivotCalc.ts` (lignes, colonnes, SUM/COUNT/AVG, champ calculé, totaux), dialogue `ui/dialogs/pivot.ts` (palette « Tableau croisé… ») -> nouvelle feuille « Croisé ». Rapport `docs/rapports/tableaux-croises-de-calc-incomplets-non-verifie.md` Defaut ameliore: ligne = 1re colonne texte repetee, valeur hors identifiants.
+- [x] Diff / fusion `.dktable` : `io/diff.ts` (`diffCells`, `merge3`, `diffDocs`), dialogue `ui/dialogs/diff.ts` (palette « Comparer avec un fichier… », lecture seule). Rapport `docs/rapports/diff-et-fusion-cellule-par-cellule-du-dktable.md`. Fusion 3 voies : aperçu lecture seule fait (io/mergeDocs.ts, ui/dialogs/merge.ts, menu Données « Fusionner… », palette file.merge, captures merge-apercu-*.png); reste : résolution conflit par conflit + application du résultat
 
 ## Cartes boucle (implémentation)
 
@@ -281,3 +284,6 @@ Classement par gravité (P0 = pire)
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`
+
+- [x] CI/CD rapide: `ci.yml` léger sur push hors main (tsc + vitest --changed), `ci-full.yml` (test, cargo, e2e 3 shards) vers/sur main, concurrency, Chrome du runner; `docs/ci.md`, `src/config/ci.test.ts`
+- [x] import-texte-d-abord-avec-rapport-de-conversions-risquees : import CSV texte d'abord, rapport par colonne accepter/refuser (`io/csvText.ts`, `ui/dialogs/importReport.ts`, `docs/import-texte.md`)
