@@ -1,4 +1,5 @@
 # Rapport : Chiffrement du classeur par mot de passe
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -16,7 +17,6 @@ Visible : oui
 - Indicateur « (chiffré) » dans le titre de la fenêtre tant que le classeur a un mot de passe (`appState.renderTitle`) ; `protection.ts` prévient l'app (`onPasswordChange`) pour repeindre le titre. Tests : `src/ui/appState.test.ts`, `src/ui/protection.test.ts`.
 
 ## Non fait
-
 
 ## Captures
 
@@ -39,3 +39,9 @@ Visible : oui
 - Format : PBKDF2-SHA256 (310 000 itérations, sel 16 octets) + AES-GCM 256 (IV 12 octets). Paramètres dans l'enveloppe.
 - Mauvais mot de passe et fichier altéré renvoient le même message (AES-GCM ne les distingue pas). Le fichier n'est réécrit qu'à l'enregistrement : un échec ne corrompt rien.
 - « Retirer » enregistre immédiatement en clair ; si l'enregistrement est annulé, le mot de passe est restauré.
+
+## Preuves
+- Tests : ok (242 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"count":242,"scope":"related"},"tsc":{"ok":true}} -->
