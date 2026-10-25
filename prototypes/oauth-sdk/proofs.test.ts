@@ -17,6 +17,7 @@ describe("parseCaptures", () => {
   it("accolades: la virgule interne ne coupe pas la liste", () => {
     expect(parseCaptures("docs/screenshots/texte-en-colonnes/{dialogue,resultat}-{clair,sombre}.png").paths).toHaveLength(4);
     expect(parseCaptures("docs/s/{a,b}.png, docs/s/c.png").paths).toEqual(["docs/s/a.png", "docs/s/b.png", "docs/s/c.png"]);
+    expect(parseCaptures("docs/s/{a, b}.png").paths).toEqual(["docs/s/a.png", "docs/s/b.png"]);
   });
   it("« sans objet (...) »: exemption explicite, aucun chemin", () => {
     expect(parseCaptures("sans objet (aucun effet visible nouveau)")).toEqual({ paths: [], exempt: true });
@@ -41,5 +42,9 @@ describe("rapport complet", () => {
     const r = parseReport(md("sans objet (aucun effet visible nouveau)"));
     expect(r.visible).toBe(false);
     expect(validateReport(r, () => false)).toEqual({ ok: true, missing: [] });
+  });
+  it("section ## Captures en liste « `chemin` : legende »: chemins retenus", () => {
+    const r = parseReport("# Rapport : x\nStatut : termine\nVisible : oui\n\n## Captures\n\n- `docs/s/a-clair.png` : boîte (thème clair).\n- docs/s/a-sombre.png : boîte, thème sombre\n");
+    expect(r.screenshots).toEqual(["docs/s/a-clair.png", "docs/s/a-sombre.png"]);
   });
 });
