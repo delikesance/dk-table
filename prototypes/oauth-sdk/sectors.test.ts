@@ -1,7 +1,7 @@
 /** Tests des secteurs implementation / correction / design (query factice, sans reseau ni cout). */
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import type { QueryFn } from "./research";
+import { MODEL_BY_KIND, type QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 import { SECTORS, SECTOR_DEFS, runSector } from "./sectors";
 
@@ -36,13 +36,25 @@ describe("definitions", () => {
   });
 });
 
+describe("modeles par type de tache", () => {
+  it("chaque secteur est une seule requete think (choix + edition melanges) -> sonnet", async () => {
+    for (const d of SECTOR_DEFS) {
+      expect(d.kind).toBe("think");
+      const { q, seen } = fake(0.1);
+      await runSector(d, { query: q, maxBudgetUsd: 1 });
+      expect(seen[0].options.model).toBe("sonnet");
+    }
+  });
+});
+
 describe("runSector", () => {
   it("passe plafond, modele, outils, dontAsk et cwd au SDK", async () => {
     const { q, seen } = fake(1.5);
     const r = await runSector(SECTOR_DEFS[0], { query: q, maxBudgetUsd: 4, cwd: "/w" });
     expect(r).toMatchObject({ costUsd: 1.5, ok: true });
     const o = seen[0].options;
-    expect([o.maxBudgetUsd, o.permissionMode, o.cwd, o.model]).toEqual([4, "dontAsk", "/w", SECTOR_DEFS[0].model]);
+    expect([o.maxBudgetUsd, o.permissionMode, o.cwd]).toEqual([4, "dontAsk", "/w"]);
+    expect(o.model).toBe(MODEL_BY_KIND[SECTOR_DEFS[0].kind]);
   });
 });
 
