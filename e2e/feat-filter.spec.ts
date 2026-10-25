@@ -31,3 +31,23 @@ test("unchecking a value hides its rows; Effacer le filtre brings them back", as
   await expect(cell(page, "A2")).toBeVisible();
   await expect(cell(page, "A4")).toBeVisible();
 });
+
+test("search: focused on open, narrows the list, Tout sélectionner + Enter apply to the results", async ({ page }) => {
+  await open(page);
+  const search = page.locator(".dkg-pop__search");
+  await expect(search).toBeFocused();
+  await page.locator(".dkg-pop input[data-all]").uncheck();
+  await search.fill("B");
+  await expect(page.locator(".dkg-pop input[data-v]:visible")).toHaveCount(1);
+  await page.locator(".dkg-pop input[data-all]").check();
+  await search.press("Enter");
+  await expect(page.locator(".dkg-pop")).toBeHidden();
+  await expect(cell(page, "A3")).toBeVisible(); // b
+  await expect(cell(page, "A2")).toBeHidden(); // a
+});
+
+test("search: Escape closes the popover", async ({ page }) => {
+  await open(page);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".dkg-pop")).toBeHidden();
+});
