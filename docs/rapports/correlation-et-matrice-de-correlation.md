@@ -24,7 +24,7 @@ Aucune (fonctionnalité interne, `Visible : non`).
 - Critères d'acceptation vérifiés par `correlation.test.ts` : r dans [-1, 1], y = 2x donne 1, matrice N×N symétrique, paires non numériques ignorées sans NaN, variance nulle donne une erreur (pearson) ou `null` (matrice).
 
 ## Preuves
-- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
