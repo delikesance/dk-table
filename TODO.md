@@ -62,6 +62,7 @@ P0 : bloquant démo
 - [x] Persister gras/italique/alignement/fond dans `.dktable` + annulation (style-persist-undo)
 - [x] refonte-apple : mode minimal par défaut (feuille + barre de formule), bouton chevron `toggle-tools` déploie toolbar + sidebar, icônes Iconoir noires partout (`src/ui/icons.ts`, `--c-icon`; onglets, sidebar, menu contextuel, `composants.html`), menus Fichier + Import/Export dans la toolbar (`toolbar/menus.ts`), déploiement des outils : Ctrl+J + commande palette + état persistant `dk-table.tools`. Reste à la main : vérification visuelle (clair/sombre) dans Tauri
 - [x] menu-format-nombre : format de nombre par cellule (général/nombre/pourcentage/devise) via `app.style({format})` ; limite connue : l option "Date" du menu est sans effet
+- [x] formats-de-nombre-personnalises : Format > Personnalisé… (1 à 4 sections, texte entre guillemets, `0.0" cm"`), `src/ui/numfmtCustom.ts`, dialogue `ui/dialogs/customFormat.ts`, `docs/formats-personnalises.md`, rapport `docs/rapports/formats-de-nombre-personnalises.md`
 - [x] workflow-ux : doc `docs/workflow-ux.md` écrit (benchmark, N1/N2/N3, clics, 12 changements, décisions) + `src/config/workflowUx.test.ts`
 - [ ] workflow-ux : planifier les changements du doc §4 (barre N1 visible, Σ, tri, menu Fichier unique, toast, couleurs, filtre, redim., autosave, Ctrl+D/R, mini-barre, format Date) ; trancher les décisions §5
 
@@ -231,6 +232,7 @@ Classement par gravité (P0 = pire)
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données (fait, voir plus bas), tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `atteindre-formules-constantes`: palette + menu Affichage « Surligner formules / constantes » (`engine/audit-kinds.ts`, `ui/grid/kinds.ts`, classes `dkg-kf`/`dkg-kc`; `docs/formules-constantes.md`), e2e `e2e/feat-formules-constantes.spec.ts`
+- [x] Carte `atteindre-special-go-to-special`: Ctrl+G « Atteindre spécial » (vides, formules, constantes, types de résultat, lignes visibles; `engine/special.ts`, `ui/appSpecial.ts`, `ui/dialogs/goToSpecial.ts`; `docs/atteindre-special.md`, rapport `docs/rapports/atteindre-special-go-to-special.md`), e2e `e2e/feat-atteindre-special.spec.ts`
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
 - [x] Carte `fonctions-nommees`: fonction personnalisée (nom, paramètres, corps) dans `.dktable`, dialogue Données > Fonctions nommées… (`docs/fonctions-nommees.md`)
 - [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)
@@ -287,6 +289,7 @@ Classement par gravité (P0 = pire)
 
 - [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion, largeur fixe, format texte par colonne), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
 - [x] plafonds-google-sheets : toast pour cellule > 50 000 car., ligne > MAX_ROWS, import CSV volumineux/tronqué, `ui/limits.ts`, `docs/plafonds.md`
+- [x] classeur-sans-plafond-avec-limites-visibles : plus de plafond de lignes (`engine/rows.ts`, la feuille grandit par blocs de 1000), indicateur de poids/niveau dans la barre d'état (`engine/weight.ts`, `ui/statusbar/weightBadge.ts`); rapport `docs/rapports/classeur-sans-plafond-avec-limites-visibles.md`, `docs/plafonds.md`. Reste : capture du niveau « lourd » (exige 200 000 cellules en e2e)
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`
@@ -298,3 +301,4 @@ Classement par gravité (P0 = pire)
 - [x] validation-a-l-epreuve-du-collage : règles de validation (entier, décimal, liste, longueur) contrôlées aussi au collage, remplissage et ouverture/import; panneau des cellules invalides + « Corriger » (`engine/validation/`, `ui/validation/`, `ui/appValidation.ts`, `docs/validation.md`, rapport `docs/rapports/validation-a-l-epreuve-du-collage.md`)
 - [x] identifiants-longs-intacts : saisie > 15 chiffres gardée en texte exact et signalée (`engine/longnum.ts`, `dkg-long`); `docs/identifiants-longs.md`, rapport `docs/rapports/identifiants-longs-intacts.md`
 - [x] Correction: npm test (2293 ok) + tsc verts; captures des rapports decimal-exact, identifiants-longs, plages-tronquees, statistiques-selection, tableaux-croises listees en chemins complets (les noms nus n etaient pas trouves par `validateReport`)
+- [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
