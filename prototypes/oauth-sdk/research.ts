@@ -9,6 +9,7 @@
  * Usage : `runResearch({ query, budgetUsd: 20 })` -> `{ markdown, items, totalCostUsd }`.
  */
 
+import { agentOptions, MODEL_BY_KIND, type Kind } from "./agentOptions";
 import type { Budget } from "./budget";
 import type { BoucleEvent } from "./server";
 
@@ -26,11 +27,7 @@ export type QueryFn = (a: {
   options: Record<string, unknown>;
 }) => AsyncIterable<ResultMsg>;
 
-/** Type de tache d'une requete : code (edition pure), think (recherche, choix, diagnostic, design), plan (orchestration). */
-export type Kind = "code" | "think" | "plan" | "summary";
-
-/** Modele par type de tache (seul endroit ou les modeles sont nommes). `plan` n'est utilise par aucune requete aujourd'hui. */
-export const MODEL_BY_KIND: Record<Kind, string> = { code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" };
+export { MODEL_BY_KIND, type Kind } from "./agentOptions";
 
 /** Un axe de recherche : titre de section, consigne, type de tache. */
 export interface Axis {
@@ -56,9 +53,6 @@ export const AXES: Axis[] = [
   { id: "mal", title: "Mal implementees ailleurs", kind: "think",
     ask: "Liste les fonctionnalites mal implementees que les utilisateurs de ces tableurs detestent." },
 ];
-
-/** Outils autorises (recherche web + lecture locale), rien d'autre. */
-export const ALLOWED_TOOLS = ["WebSearch", "WebFetch", "Read", "Grep", "Glob"];
 
 /** Parametres de `runResearch`. */
 export interface ResearchOpts {
@@ -113,12 +107,9 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
     let cost = 0;
     const stream = o.query({
       prompt,
-      options: {
-        model: MODEL_BY_KIND[a.kind], maxTurns: 15, maxBudgetUsd: share,
-        tools: ALLOWED_TOOLS, allowedTools: ALLOWED_TOOLS,
-        permissionMode: "dontAsk", settingSources: [], env: o.env,
-        cwd: o.cwd, abortController: o.abort,
-      },
+      options: agentOptions("research", {
+        model: MODEL_BY_KIND[a.kind], maxTurns: 15, maxBudgetUsd: share, env: o.env, cwd: o.cwd, abort: o.abort,
+      }),
     });
     for await (const m of stream) {
       if (m.type !== "result") continue;
