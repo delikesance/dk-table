@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import { cellKind, errorHint } from "./cellkind";
+import { cellKind, errorHint, markKind } from "./cellkind";
 
 describe("cellKind", () => {
   it.each(["12", "-3,5", "1 234,56", "1 234,56 €", "12 %", "3.14", "1,2E+5"])("number %s", (t) => {
@@ -20,5 +21,18 @@ describe("cellKind", () => {
     expect(errorHint("#N/A")).toMatch(/disponible/);
     expect(errorHint("#VALUE!")).toMatch(/valeur/i);
     expect(errorHint("#REF!")).toMatch(/référence/i);
+  });
+});
+
+describe("markKind format personnalisé", () => {
+  it("nombre avec unité aligné à droite quand le format est personnalisé", () => {
+    const el = document.createElement("div");
+    markKind(el, "12,5 cm", undefined, "formula", true);
+    expect(el.classList.contains("dkg-num")).toBe(true);
+  });
+  it("texte sans chiffre reste à gauche même avec un format personnalisé", () => {
+    const el = document.createElement("div");
+    markKind(el, "<abc>", undefined, "text", true);
+    expect(el.classList.contains("dkg-num")).toBe(false);
   });
 });

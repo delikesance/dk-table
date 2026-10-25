@@ -17,13 +17,13 @@ describe("limits", () => {
     expect(checkCells({ A1: "x".repeat(MAX_CELL_CHARS) })).toBe(false);
     expect(toast()).toBe("");
   });
-  it("ligne au-delà de MAX_ROWS : toast", () => {
-    expect(checkCells({ [`A${MAX_ROWS + 1}`]: "1" })).toBe(true);
-    expect(toast()).toContain(String(MAX_ROWS));
+  it("ligne au-delà de MAX_ROWS : pas de plafond, rien d'affiché", () => {
+    expect(checkCells({ [`A${MAX_ROWS + 1}`]: "1" })).toBe(false);
+    expect(toast()).toBe("");
   });
-  it("import : lignes en trop signalées", () => {
-    expect(checkImport({ cols: 2, rows: MAX_ROWS + 5, cells: { A1: { raw: "1" } } })).toBe(true);
-    expect(toast()).toContain(String(MAX_ROWS));
+  it("import : plus de lignes que MAX_ROWS n'est pas une troncature", () => {
+    expect(checkImport({ cols: 2, rows: MAX_ROWS + 5, cells: { A1: { raw: "1" } } })).toBe(false);
+    expect(toast()).toBe("");
   });
   it("import volumineux (cellules) signalé", () => {
     const cells: Record<string, { raw: string }> = {};

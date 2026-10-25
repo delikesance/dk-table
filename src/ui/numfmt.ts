@@ -1,10 +1,14 @@
 /** Display-only number formatting (fr-FR); never alters raw or computed values. */
+import { formatCustom } from "./numfmtCustom";
 
 const fmts: Record<string, Intl.NumberFormat> = {
   number: new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
   percent: new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 2 }),
   currency: new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }),
 };
+
+/** Préfixe du format personnalisé : `custom:<code>` (le code est stocké dans `CellStyle.format`). */
+export const CUSTOM = "custom:";
 
 const MAX_SERIAL = 2958465; // 31/12/9999
 const pad = (n: number, w = 2) => String(n).padStart(w, "0");
@@ -54,6 +58,7 @@ function accounting(n: number): string {
  * accepts an Excel serial (see `serialToDate`) or ISO text.
  */
 export function formatValue(text: string, format?: string): string {
+  if (format?.startsWith(CUSTOM)) return formatCustom(text, format.slice(CUSTOM.length)) ?? text;
   if (format === "accounting") {
     const n = Number(text);
     return text.trim() !== "" && Number.isFinite(n) ? accounting(n) : text;
