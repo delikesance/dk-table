@@ -14,6 +14,7 @@ import { blockFence, calcChip, refChip } from "./md/chip";
 import { formatSpec, type DocFormat } from "./md/format";
 import { toEditorText, toStoredText } from "./md/names";
 import { createCalc } from "./calc";
+import { codeHighlighting, codeLanguages } from "./live/codeHighlight";
 import { livePreview } from "./live/decorations";
 import { refreshFx, sheetsOf, type LiveHost } from "./live/host";
 import { docKeys } from "./live/keys";
@@ -71,7 +72,7 @@ export function createDocEditor(host: HTMLElement, md: string, onChange: (md: st
     doc: toEditorText(md, sheets()),
     extensions: [
       history(), indentUnit.of("  "), EditorView.lineWrapping,
-      markdown({ extensions: [chipConfig], addKeymap: false }),
+      markdown({ extensions: [chipConfig], addKeymap: false, codeLanguages }), codeHighlighting,
       docCompletion(live), docKeys,
       Prec.high(keymap.of(markdownKeymap)), keymap.of([...historyKeymap, ...defaultKeymap]),
       ...(live ? [livePreview] : []),

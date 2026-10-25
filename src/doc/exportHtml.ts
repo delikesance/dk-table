@@ -10,6 +10,8 @@ const CSS = "@page{size:A4;margin:2.5cm}body{font:12pt/1.5 'Times New Roman',Tim
   "h1,h2,h3{font-weight:bold;line-height:1.25;margin:1.2em 0 .5em}h1{font-size:18pt}h2{font-size:14pt}h3{font-size:12pt;font-style:italic}p{margin:0 0 .8em;text-align:justify}" +
   "table{border-collapse:collapse;width:100%;font-size:11pt;margin:.8em 0}th{background:#eee;text-align:left}" +
   "th,td{padding:4px 8px;border:1px solid #000}blockquote{margin:1em 0 1em 1cm;padding-left:.5cm;border-left:2px solid #000}" +
+  "pre.code{font:10pt/1.4 'Courier New',Courier,monospace;background:#f6f6f6;border:1px solid #000;padding:.3em .6em;margin:.8em 0;white-space:pre-wrap;page-break-inside:avoid}" +
+  "pre.code .lang{display:block;text-align:right;font:italic 9pt 'Times New Roman',serif;color:#444}" +
   "@media print{body{margin:0;max-width:none;padding:0}}";
 
 /** Inline content with marks. */
@@ -48,7 +50,10 @@ function block(n: JNode, x: Ctx): string {
     case "paragraph": return `<p>${inline(n.content, x)}</p>`;
     case "blockquote": return `<blockquote>${kids()}</blockquote>`;
     case "horizontal_rule": return "<hr>";
-    case "code_block": return `<pre>${esc((n.content ?? []).map((c) => c.text).join(""))}</pre>`;
+    case "code_block": {
+      const lang = String(n.attrs?.params ?? "").trim();
+      return `<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ""}>${lang ? `<span class="lang">${esc(lang)}</span>` : ""}${esc((n.content ?? []).map((c) => c.text).join(""))}</pre>`;
+    }
     case "bullet_list": return `<ul>${kids()}</ul>`;
     case "ordered_list": return `<ol>${kids()}</ol>`;
     case "list_item": return `<li>${kids()}</li>`;
