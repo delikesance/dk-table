@@ -1,4 +1,5 @@
 # Rapport : Stockage des instantanés de versions nommées (créer, lister)
+Statut : termine
 Visible : non
 
 ## Fait
@@ -16,3 +17,9 @@ Visible : non
 - Doublon comparé à l'égalité stricte après rognage (sensible à la casse). Choix simple, à revoir si l'utilisateur veut « v1 » = « V1 ».
 - Pas de restauration ni d'interface : hors de cette carte (cartes « Restauration d'une version » et « Panneau d'historique »). Le panneau existant `ui/dialogs/history.ts` affiche encore les anciens instantanés sans passer par `listVersions` : à brancher avec la carte panneau.
 - Aucune UI ajoutée : `Visible : non`, donc pas de captures.
+
+## Preuves
+- Tests : ok (5 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":5,"scope":"related"},"tsc":{"ok":true}} -->
