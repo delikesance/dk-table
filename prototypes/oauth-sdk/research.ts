@@ -26,10 +26,10 @@ export type QueryFn = (a: {
 }) => AsyncIterable<ResultMsg>;
 
 /** Type de tache d'une requete : code (edition pure), think (recherche, choix, diagnostic, design), plan (orchestration). */
-export type Kind = "code" | "think" | "plan";
+export type Kind = "code" | "think" | "plan" | "summary";
 
 /** Modele par type de tache (seul endroit ou les modeles sont nommes). `plan` n'est utilise par aucune requete aujourd'hui. */
-export const MODEL_BY_KIND: Record<Kind, string> = { code: "haiku", think: "sonnet", plan: "opus" };
+export const MODEL_BY_KIND: Record<Kind, string> = { code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" };
 
 /** Un axe de recherche : titre de section, consigne, type de tache. */
 export interface Axis {

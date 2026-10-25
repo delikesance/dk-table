@@ -23,8 +23,8 @@ function fake(cost: number, ms = 0) {
 }
 
 describe("MODEL_BY_KIND", () => {
-  it("table explicite: code=haiku, think=sonnet, plan=opus", () => {
-    expect(MODEL_BY_KIND).toEqual({ code: "haiku", think: "sonnet", plan: "opus" });
+  it("table explicite: code=haiku, think=sonnet, plan=opus, summary=haiku", () => {
+    expect(MODEL_BY_KIND).toEqual({ code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" });
   });
   it("chaque axe de recherche est de type think et lance le modele de sa table", async () => {
     const { q, calls } = fake(0.1);
