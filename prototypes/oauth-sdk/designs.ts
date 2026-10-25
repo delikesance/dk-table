@@ -13,6 +13,16 @@ export interface DesignFile { name: string; bytes: number; mtimeMs: number; stat
 const NAME = /^[\w.-]+\.html$/;
 const RECAP = "recap.html";
 
+/** Etat reel des fichiers: le dernier evenement `file` du nom l'emporte (le disque seul dit « ecrit »). */
+export function withStates(
+  files: DesignFile[],
+  steps: { type: string; message?: string; state?: DesignFile["state"] }[],
+): DesignFile[] {
+  const last = new Map<string, DesignFile["state"]>();
+  for (const s of steps) if (s.type === "file" && s.message && s.state) last.set(s.message, s.state);
+  return files.map((f) => ({ ...f, state: last.get(f.name) ?? f.state }));
+}
+
 /** Nom de fichier sur: pas de separateur ni de `..`. */
 const safe = (n: string): boolean => NAME.test(n) && !n.includes("..");
 

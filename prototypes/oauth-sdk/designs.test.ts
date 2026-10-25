@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { listDesigns, readDesign, watchDesigns, type DesignFile } from "./designs";
+import { listDesigns, readDesign, watchDesigns, withStates, type DesignFile } from "./designs";
 
 const dirs: string[] = [];
 const tmp = () => { const d = mkdtempSync(join(tmpdir(), "designs-")); dirs.push(d); return d; };
@@ -56,5 +56,16 @@ describe("watchDesigns", () => {
     writeFileSync(join(sub, "e.html"), "z");
     await wait(400);
     expect(got.length).toBe(n);
+  });
+});
+
+describe("withStates", () => {
+  it("reporte l'etat mis-a-jour des evenements file sur la liste (le fichier seul dit toujours ecrit)", () => {
+    const f = (name: string): DesignFile => ({ name, bytes: 1, mtimeMs: 1, state: "ecrit" });
+    const out = withStates([f("a.html"), f("b.html")], [
+      { type: "file", message: "a.html", state: "ecrit" }, { type: "file", message: "a.html", state: "mis-a-jour" },
+      { type: "start", message: "a.html", state: "mis-a-jour" },
+    ]);
+    expect(out.map((x) => x.state)).toEqual(["mis-a-jour", "ecrit"]);
   });
 });

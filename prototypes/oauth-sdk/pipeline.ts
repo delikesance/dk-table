@@ -112,7 +112,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
       let stopWatch: (() => void) | undefined;
       if (isDesign) {
         deps.onSectorDir?.(ddir);
-        stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name }));
+        stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name, state: f.state, ts: f.mtimeMs }));
       }
       let ok = false;
       try {

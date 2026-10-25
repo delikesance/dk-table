@@ -20,8 +20,8 @@ import { buildMoodboard, pickBudget } from "./moodboard";
 import { createPipeline } from "./pipeline";
 import type { QueryFn } from "./research";
 import { createServer, listen, type BoucleEvent } from "./server";
-import { listDesigns, readDesign } from "./designs";
-import { buildRecap } from "./recap"; // owned by worker-design-view (merge pending)
+import { listDesigns, readDesign, withStates } from "./designs";
+import { buildRecap } from "./recap";
 
 if (!process.env.CLAUDE_CODE_OAUTH_TOKEN) {
   process.stderr.write("CLAUDE_CODE_OAUTH_TOKEN absent (voir .env, `claude setup-token`).\n");
@@ -66,7 +66,7 @@ const server = createServer({
     designSteps.length = 0;
     return pipeline({ ...o, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); o.onEvent(e); } });
   },
-  designs: { list: () => listDesigns(designDir()), read: (n) => readDesign(designDir(), n), steps: () => designSteps },
+  designs: { list: async () => withStates(await listDesigns(designDir()), designSteps), read: (n) => readDesign(designDir(), n), steps: () => designSteps },
   designHtml: () => readOpt(join(here, "design.html")),
   parseBudgetEur,
   panelHtml: readFileSync(join(here, "panel.html"), "utf-8"),
