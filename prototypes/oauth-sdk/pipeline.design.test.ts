@@ -18,20 +18,20 @@ async function go(runner: Run = run) {
   const events: BoucleEvent[] = [];
   const written: Record<string, string> = {};
   const dirs: (string | null)[] = [];
-  const stops: string[] = [];
+  const stops: string[] = [], flushed: string[] = [];
   const file: DesignFile = { name: "d.html", bytes: 1, mtimeMs: 7, state: "ecrit", kind: "design" };
   let recapArgs: { designs: unknown; steps: BoucleEvent[] } | undefined;
   const pipeline = createPipeline({
     query, run: runner, cwd: "/repo", eurUsd: 1,
     writeFile: (p, t) => { written[p] = t; },
     onSectorDir: (d) => dirs.push(d),
-    watchDesigns: (dir, cb) => { cb(file); return () => stops.push(dir); },
+    watchDesigns: (dir, cb) => { cb(file); return Object.assign(() => stops.push(dir), { flush: async () => { flushed.push(dir); } }); },
     listDesigns: async () => [file],
     readDesign: async () => "<h1>d</h1>",
     buildRecap: (designs, steps) => { recapArgs = { designs, steps }; return "<recap/>"; },
   });
   await pipeline({ budgetEur: 20, onEvent: (e) => events.push(e), signal: new AbortController().signal });
-  return { events, written, dirs, stops, recapArgs };
+  return { events, written, dirs, stops, flushed, recapArgs };
 }
 
 describe("pipeline design", () => {
@@ -41,6 +41,10 @@ describe("pipeline design", () => {
     expect(dirs[0]).toMatch(/worktrees[\\/]+design-.*docs[\\/]+design$/);
     expect(dirs.at(-1)).toBeNull();
     expect(stops.length).toBeGreaterThanOrEqual(1);
+  });
+  it("releve les fichiers ecrits en toute fin avant d'arreter le watcher et d'ecrire le recap", async () => {
+    const { flushed } = await go();
+    expect(flushed.length).toBe(1);
   });
   it("design non fusionne (tests rouges): le dossier reste expose pour que la page Design l'affiche", async () => {
     const red: Run = async (cmd, args, cwd) => (cmd === "npm" && args[0] === "test" && !cwd?.includes("/base-") ? { code: 1, out: "FAIL x" } : run(cmd, args, cwd));

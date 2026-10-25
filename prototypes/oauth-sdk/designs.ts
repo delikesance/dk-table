@@ -53,8 +53,11 @@ export async function readDesign(dir: string, name: string): Promise<string | nu
   try { return await readFile(join(dir, name), "utf-8"); } catch { return null; }
 }
 
-/** Surveille `dir` (meme s'il n'existe pas encore); renvoie `stop()`. */
-export function watchDesigns(dir: string, onChange: (f: DesignFile) => void): () => void {
+/** Arret du suivi; `flush()` releve tout de suite ce qui vient d'etre ecrit (sans attendre l'anti-rebond de 150 ms). */
+export type DesignWatch = (() => void) & { flush: () => Promise<void> };
+
+/** Surveille `dir` (meme s'il n'existe pas encore); renvoie `stop()` (avec `flush`). */
+export function watchDesigns(dir: string, onChange: (f: DesignFile) => void): DesignWatch {
   const seen = new Map<string, number>();
   let watcher: FSWatcher | undefined;
   let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -81,5 +84,6 @@ export function watchDesigns(dir: string, onChange: (f: DesignFile) => void): ()
     } catch { retry = setTimeout(attach, 500); }
   };
   attach();
-  return () => { stopped = true; clearTimeout(debounce); clearTimeout(retry); watcher?.close(); };
+  const stop = () => { stopped = true; clearTimeout(debounce); clearTimeout(retry); watcher?.close(); };
+  return Object.assign(stop, { flush: () => { clearTimeout(debounce); return scan(); } });
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { loadHistory, stampSave, currentHistory, takeSnapshot, historyField, setBaseline } from "./store";
+import { loadHistory, stampSave, currentHistory, takeSnapshot, historyField, setBaseline, journalNow, resetHistory } from "./store";
 import type { DktDoc } from "../../io/types";
 
 const d = (cells: Record<string, string>): DktDoc => ({
@@ -27,5 +27,15 @@ describe("history store", () => {
     expect(currentHistory().snaps[0].name).toBe("v1");
     setBaseline(d({ A1: "5" }));
     expect(stampSave(d({ A1: "5" }), 8).history!.log).toEqual([]);
+  });
+  it("journalNow records unsaved changes (timeline works before any save)", () => {
+    journalNow(d({ A1: "9" }), 5);
+    expect(currentHistory().log).toEqual([{ t: 5, sheet: "s1", key: "A1", from: "1", to: "9" }]);
+    expect(stampSave(d({ A1: "9" }), 6).history!.log.length).toBe(1);
+  });
+  it("journalNow without a loaded file treats the sheets as initially empty", () => {
+    resetHistory();
+    journalNow(d({ A1: "9" }), 5);
+    expect(currentHistory().log).toEqual([{ t: 5, sheet: "s1", key: "A1", from: "", to: "9" }]);
   });
 });

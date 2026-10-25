@@ -35,4 +35,17 @@ describe("pivot", () => {
   it("defaultSpec: 1re colonne texte en lignes, 1re numérique en valeur", () => {
     expect(defaultSpec(T)).toEqual({ row: "Region", value: "Qte", agg: "SUM" });
   });
+  it("defaultSpec: ignore l'identifiant unique et les colonnes id/numéro/année", () => {
+    const t = [
+      ["Ref", "Id", "Année", "Region", "Montant"],
+      ["r1", "1", "2024", "Nord", "10"],
+      ["r2", "2", "2024", "Sud", "5"],
+      ["r3", "3", "2024", "Nord", "7"],
+    ];
+    expect(defaultSpec(t)).toEqual({ row: "Region", value: "Montant", agg: "SUM" });
+  });
+  it("defaultSpec: repli sur la 1re colonne texte si aucune ne se répète", () => {
+    const t = [["Ref", "Qte"], ["a", "1"], ["b", "2"]];
+    expect(defaultSpec(t)).toEqual({ row: "Ref", value: "Qte", agg: "SUM" });
+  });
 });
