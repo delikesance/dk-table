@@ -12,7 +12,9 @@ vi.setConfig({ testTimeout: 60_000 });
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
 const g = (cwd: string, ...a: string[]) => execFileSync("git", ["-c", "user.email=a@b", "-c", "user.name=a", "-c", "gc.auto=0", "-c", "core.fsync=none", ...a], { cwd, encoding: "utf8" }).trim();
-const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8" }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
+// identite par l'environnement: le pull qui cree un commit de fusion echoue sans identite (CI, machine neuve)
+const ident = { GIT_AUTHOR_NAME: "a", GIT_AUTHOR_EMAIL: "a@b", GIT_COMMITTER_NAME: "a", GIT_COMMITTER_EMAIL: "a@b" };
+const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env: { ...process.env, ...ident } }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 const commit = (cwd: string, file: string, text: string) => { writeFileSync(join(cwd, file), text); g(cwd, "add", "-A"); g(cwd, "commit", "-qm", `c ${file}`); };
 
 /** Depot distant bare + deux clones sur developpement. */
