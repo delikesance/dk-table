@@ -133,3 +133,24 @@ Cause du refus de fusion de la recherche sous Windows : `git.push.test.ts` (vrai
 - **Tests git** (`git.push.test.ts`, `git.parallel.test.ts`) : délai de 60 s pour les vrais dépôts, `gc.auto=0` et `core.fsync=none`.
 - **Échec préexistant** (`git.ts`, `testFailures.ts`) : si `npm test` est rouge dans le worktree, les seuls fichiers rouges sont relancés sur un worktree de référence (`developpement` détaché, créé une fois, retiré en fin de run). Un test déjà rouge sur la base ne bloque pas la fusion : il est listé dans `preexisting` et le journal affiche « anomalie : test(s) déjà rouge(s) sur developpement… ». Un test rouge seulement sur la branche, une sortie illisible ou `tsc` rouge bloquent toujours. Tests : `git.baseline.test.ts`, `testFailures.test.ts`, `pipeline.flow.test.ts`.
 - **Fusion sérialisée** (préparation des agents en parallèle) : verrou FIFO (`concurrency.ts`) pour la création des worktrees et les fusions; avant de fusionner, la branche intègre `developpement` (tests relancés si celui-ci a avancé), un conflit est détecté sans toucher à `developpement` (`conflict: true`); `TODO.md merge=union` dans `.gitattributes`. Tests : `git.parallel.test.ts` (vrai dépôt).
+
+## Agents en parallèle
+
+`BOUCLE_PARALLEL` (défaut 3, 1 = un seul agent pour tout le lot comme avant, plafond 8). `parallel.ts` `runBatch` : le lot de la tournée est séparé par `independent.ts` (`splitParallel`) : les cartes dont les chemins annoncés (fichiers ou dossiers cités dans le titre, la source, le résumé) ne se recoupent pas partent ensemble, un agent et un worktree par carte (`runPool`, au plus N simultanés); les cartes liées et celles qui ont déjà fait un conflit sont traitées ensuite par un seul agent, en série.
+
+- **Fusion** (`git.ts`) : un verrou FIFO protège la création des worktrees, le checkout, la fusion et le push. Avant de fusionner, la branche intègre `developpement` (qui a avancé avec les autres cartes), tests et `tsc` relancés si besoin. `TODO.md` est fusionné en union (`.gitattributes`).
+- **Conflit** : détecté sans toucher à `developpement` (`conflict: true`), la carte est relancée seule après les autres sur un worktree neuf et mémorisée (`avoid`) : plus jamais en parallèle pendant ce run.
+- **Budget** : la part du secteur est divisée entre les agents simultanés (`slots`), la réserve reste synchrone (jamais de dépassement).
+- **État** : les événements d'un agent portent `agent` (la carte); le panneau liste « N agents en parallèle » sous Implémentation, la phase reste en cours tant qu'un agent travaille; les rapports sont lus dans le worktree de chaque agent (`activeDirs`); la machine à états des cartes est inchangée (`reconcile.ts`).
+- Tests : `concurrency`, `independent`, `parallel`, `pipeline.parallel` (faux agents : concurrence 3, worktrees distincts, fusions une à une, conflit, budget, gain de temps), `git.parallel` (vrai dépôt), `panel.agents`. Captures : `docs/screenshots/boucle-parallele/`.
+- Limite : l'indépendance est prévue par les chemins annoncés; un recoupement non annoncé est rattrapé par le conflit à la fusion (relance en série), au prix d'un agent refait.
+
+## Recherche rapide et économe
+
+Run réel avant : 4 axes sonnet, 15 tours, 2 passes complètes, ~0,45 € et ~70 s par axe, ~3,7 € au total. Maintenant (`research.ts`, `researchSector.ts`, `researchMerge.ts`, `researchGate.ts`) :
+
+- **Haiku d'abord** (table de routage `research`: haiku → sonnet → opus), 8 tours, 4 recherches web au plus (consigne), 0,30 $ par requête au plus.
+- **Une passe** si chaque axe a au moins 3 idées; sinon seuls les axes pauvres sont relancés, avec le modèle suivant.
+- **Doublons** entre axes et idées déjà connues retirés par le code (`dedupe`, nom en gras normalisé); la synthèse précédente est conservée et complétée (`mergeDoc`, jamais réécrite de zéro), ses titres sont cités dans la consigne (cache des idées trouvées).
+- **Saut de la recherche** (`researchGate`) quand le moodboard a déjà `BOUCLE_RESEARCH_MIN` cartes non terminées (défaut 12) : aucun appel modèle.
+- Mesure sur faux agents (`research.measure.test.ts`) : 8 requêtes sonnet de 15 tours (coût relatif 24) → 4 requêtes haiku de 8 tours (coût relatif 4), plafond 5,40 $ → 0,30 $ par requête. Le coût en euros réel est à confirmer sur un run.

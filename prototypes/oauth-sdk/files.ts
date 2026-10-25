@@ -15,7 +15,7 @@ import type { Run } from "./git";
 export type Order = "live" | "merged";
 
 /** Dependances. */
-export interface FilesOpts { cwd: string; run: Run; activeDir: () => string | null; ref?: string }
+export interface FilesOpts { cwd: string; run: Run; activeDir: () => string | null; /** Worktrees des agents en parallele (en plus de `activeDir`). */ activeDirs?: () => string[]; ref?: string }
 
 /** Chemin relatif sur: ni absolu, ni `..`. */
 const safeRel = (p: string) => !!p && !p.startsWith("/") && !p.split(/[\\/]/).includes("..") && !/^[a-zA-Z]:/.test(p);
@@ -30,12 +30,14 @@ export function createFiles(o: FilesOpts) {
   };
   const dirExists = (dir: string | null, rel: string) => dir ? stat(join(dir, rel)).then((s) => s.isFile(), () => false) : Promise.resolve(false);
   const refExists = async (rel: string) => (await o.run("git", ["cat-file", "-e", `${ref}:${rel}`], o.cwd)).code === 0;
+  /** Worktrees actifs: le dernier demarre d'abord, puis les autres agents. */
+  const actives = () => [o.activeDir(), ...(o.activeDirs?.() ?? [])].filter((d, i, l): d is string => !!d && l.indexOf(d) === i);
   return {
     /** Contenu texte, `null` si absent ou chemin refuse. */
     async read(rel: string, order: Order = "live"): Promise<string | null> {
       if (!safeRel(rel)) return null;
       const steps = order === "live"
-        ? [() => fromDir(o.activeDir(), rel), () => fromDir(o.cwd, rel), () => fromRef(rel)]
+        ? [...actives().map((d) => () => fromDir(d, rel)), () => fromDir(o.cwd, rel), () => fromRef(rel)]
         : [() => fromRef(rel), () => fromDir(o.cwd, rel)];
       for (const s of steps) { const v = await s(); if (v !== null) return v; }
       return null;
@@ -44,7 +46,8 @@ export function createFiles(o: FilesOpts) {
     async exists(rel: string, order: Order = "live"): Promise<boolean> {
       if (!safeRel(rel)) return false;
       if (order === "merged") return (await refExists(rel)) || dirExists(o.cwd, rel);
-      return (await dirExists(o.activeDir(), rel)) || (await dirExists(o.cwd, rel)) || refExists(rel);
+      for (const d of actives()) if (await dirExists(d, rel)) return true;
+      return (await dirExists(o.cwd, rel)) || refExists(rel);
     },
   };
 }

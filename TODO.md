@@ -247,13 +247,14 @@ Classement par gravité (P0 = pire)
 - [x] Boucle, toile design libre (`docs/design-canvas.md`): scripts et animations permis dans l'iframe isolée, runtime (thème, pause, erreurs), largeurs/zoom/comparaison, skill `.claude/skills/design-canvas`
 - [ ] Boucle: préchauffage de processus (`startup()` alpha) non retenu; à reconsidérer si l'API se stabilise
 - [x] Boucle persistante: lots de 6, progrès par avancée d'état, rotation des cartes bloquées, raison d'arrêt (terminée / budget / bloquée) dans le panneau, jamais « terminée » s'il reste des cartes (`rounds.ts`)
-- [ ] Boucle: agents d'implémentation en parallèle sur cartes indépendantes (risque de conflits de fusion, à concevoir)
+- [x] Boucle: agents d'implémentation en parallèle sur cartes indépendantes (`BOUCLE_PARALLEL`, défaut 3): worktree par carte, fusion sérialisée, repli en série sur conflit, budget réparti, panneau (`parallel.ts`, `independent.ts`)
 - [x] Boucle: cartes « Terminées » durables (registre `.boucle/termines.jsonl`, survit nouvelle tournée, redémarrage, nouveau Go)
 - [x] Boucle: design absent de la toile sous Windows (arguments git non protégés sous cmd.exe, commit perdu): `shellArgs.ts`, fusion refusée sans commit
 - [x] Boucle: réconciliateur d'états (`reconcile.ts`): faux « en cours » supprimés, orphelines et finies-sans-rapport visibles (anomalies dans le moodboard et le journal), `docs/boucle-optimisee.md`
 - [x] Boucle: correction déclenchée par le code seulement (fusion refusée ou preuves manquantes), routage des modèles haiku-first avec escalade (`routing.ts`, `BOUCLE_MODELS`)
 - [x] Boucle: push automatique de `developpement` après fusion validée (`pushDev`, jamais master, `BOUCLE_PUSH=0` pour couper)
 - [x] Boucle: un test déjà rouge sur `developpement` ne bloque plus la fusion d'une carte (référence à la base, anomalie dans le journal), tests git à délai adapté (Windows)
+- [x] Boucle: recherche rapide et économe (haiku d'abord, 8 tours, une passe, doublons, synthèse fusionnée, saut si 12 cartes non terminées)
 - [ ] Boucle: sortie structurée du SDK (`outputFormat` json_schema) et hooks pour valider sans relire les fichiers; à étudier
 - [x] Boucle: tests/parseurs tolérants au CRLF (checkout Windows), `.gitattributes` eol=lf
 - [x] Boucle, comparaison app vs panneau (clair/sombre): barre du haut alignée sur la barre de menus, captures `docs/screenshots/boucle-theme-app/`

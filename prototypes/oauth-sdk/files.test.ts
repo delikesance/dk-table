@@ -40,3 +40,16 @@ describe("createFiles", () => {
     expect(await s.f.exists("p.png", "merged")).toBe(false);
   });
 });
+
+describe("plusieurs worktrees actifs (agents en parallele)", () => {
+  it("le rapport d'une carte est lu dans le worktree de l'agent qui l'ecrit, quel qu'il soit", async () => {
+    const s = setup();
+    const a2 = mkdtempSync(join(tmpdir(), "a2-"));
+    mkdirSync(join(a2, "docs"), { recursive: true });
+    writeFileSync(join(a2, "docs/r.md"), "agent 2");
+    const f = createFiles({ cwd: s.main, run: async () => ({ code: 1, out: "" }), activeDir: () => null, activeDirs: () => [s.act, a2] });
+    expect(await f.read("docs/r.md")).toBe("agent 2");
+    expect(await f.exists("docs/r.md")).toBe(true);
+    expect(await f.exists("docs/absent.md")).toBe(false);
+  });
+});

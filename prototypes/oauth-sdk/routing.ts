@@ -13,7 +13,7 @@ export type Task = "research" | "design" | "implementation" | "correction" | "su
 
 /** Chaines par defaut, du plus petit au plus gros. */
 export const ROUTES: Record<Task, string[]> = {
-  research: ["sonnet", "opus"],
+  research: ["haiku", "sonnet", "opus"],
   design: ["sonnet", "opus"],
   implementation: ["haiku", "sonnet", "opus"],
   correction: ["haiku", "sonnet", "opus"],

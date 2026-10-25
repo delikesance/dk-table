@@ -6,8 +6,9 @@ describe("modelFor", () => {
   it("taches simples sur haiku: resume, trancheur, correction, implementation au premier essai", () => {
     for (const t of ["summary", "trancheur", "correction", "implementation"] as const) expect(modelFor(t, 0)).toBe("haiku");
   });
-  it("recherche et design sur sonnet (raisonnement), jamais opus par defaut", () => {
-    expect(modelFor("research", 0)).toBe("sonnet");
+  it("design sur sonnet (raisonnement), recherche sur haiku (escalade sonnet), jamais opus par defaut", () => {
+    expect(modelFor("research", 0)).toBe("haiku");
+    expect(modelFor("research", 1)).toBe("sonnet");
     expect(modelFor("design", 0)).toBe("sonnet");
     for (const chain of Object.values(ROUTES)) expect(chain[0]).not.toBe("opus");
   });
