@@ -51,6 +51,8 @@ Itératif, convergence (sombre) :
 
 - Indicateur de barre d'état : masqué en automatique (rien d'affiché par défaut) ; placé juste après le poids du classeur, avant les statistiques.
 - Le design `docs/design/2026-10-25-200330.html` traite de l'analyse what-if (valeur cible, scénarios, espion), pas du mode de calcul : non utilisé comme base.
+- Le design `docs/design/2026-10-25-204816.html` (valeur cible et évaluation pas à pas) ne porte pas sur le mode de calcul : non utilisé comme base, même raison que ci-dessus.
+- Critère « référence circulaire itérative » : couvert intra-feuille. Le cas inter-feuilles reste dans « Non fait » (la propagation DFS de `workbook.ts` ne sait pas encore itérer).
 - Mode manuel : l'édition recalcule la cellule éditée seule ; ses dépendants (y compris sur d'autres feuilles) attendent F9. Les changements de mode décimal ou de fonctions nommées recalculent toujours tout (`recalcAll`, inchangé).
 - Itératif : les cellules restées en cycle (et leurs dépendants) sont recalculées dans un ordre fixe, à partir de 0 si pas de valeur ou valeur d'erreur, jusqu'à écart max < seuil ou nombre max d'itérations ; sans convergence, les dernières valeurs sont gardées (sans erreur, comme Excel).
 - Réglages par défaut : 100 itérations, écart 0,001 (valeurs de la carte). Valeurs saisies normalisées (entier >= 1, écart > 0).
