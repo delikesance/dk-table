@@ -19,7 +19,7 @@ export type Behavior =
 
 /** Script des faux agents. */
 export interface Script {
-  /** Comportement par carte (defaut: done). */
+  /** Comportement par carte et par essai, 0 = premier passage (defaut: done). */
   card?: (id: string, attempt: number) => Behavior;
   /** Attente avant de rendre la main (cartes ou secteur), pour observer le temps reel. */
   gate?: (what: string) => Promise<void> | undefined;
@@ -52,14 +52,18 @@ export const idsOf = (prompt: string): string[] =>
 
 /** Construit le faux `query`. */
 export function fakeQuery(s: Script = {}): QueryFn {
-  const cost = s.cost ?? 0.02;
+  const want = s.cost ?? 0.02, tries = new Map<string, number>();
   return ({ prompt, options }) => (async function* (): AsyncGenerator<ResultMsg> {
     const cwd = String(options.cwd ?? "");
+    const cost = Math.min(want, Number(options.maxBudgetUsd ?? want)); // comme le SDK : jamais au-dela du plafond de la requete
     const sector = /^Secteur (design|implementation|correction)/.exec(prompt)?.[1] ?? (prompt.startsWith("Compare") ? "research" : "autre");
     const ids = idsOf(prompt);
     s.seen?.push({ sector, cwd, ids });
     await s.onRun?.(sector, cwd, ids);
-    await s.gate?.(`${sector}:${ids.join(",")}`);
+    // comme le SDK : un abandon (bouton Stop) interrompt l'agent, sans resultat
+    const abort = options.abortController as AbortController | undefined;
+    const aborted = new Promise<"abort">((r) => abort?.signal.addEventListener("abort", () => r("abort"), { once: true }));
+    if ((await Promise.race([Promise.resolve(s.gate?.(`${sector}:${ids.join(",")}`)), aborted])) === "abort") return;
     if (sector === "research") yield { type: "result", subtype: "success", result: "- **Idee de test** : texte.", total_cost_usd: cost };
     if (sector === "design") {
       // le fichier de design du run est nomme dans la consigne (`docs/design/<date>-<HHmmss>.html`)
@@ -69,7 +73,8 @@ export function fakeQuery(s: Script = {}): QueryFn {
     }
     if (sector === "implementation") {
       for (const id of ids) {
-        const b = s.card?.(id, 0) ?? { kind: "done" as const };
+        const n = tries.get(id) ?? 0; tries.set(id, n + 1);
+        const b = s.card?.(id, n) ?? { kind: "done" as const };
         if (b.kind === "none") continue;
         if (b.kind === "done" || b.kind === "no-shot") {
           put(cwd, b.kind === "done" && b.file ? b.file : `src/${id}.ts`, b.kind === "done" && b.text ? b.text : `export const ${id.replace(/-/g, "_")} = 1;\n`);

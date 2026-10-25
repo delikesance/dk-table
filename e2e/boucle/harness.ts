@@ -36,6 +36,8 @@ export interface Boucle {
   events: BoucleEvent[];
   go: (budgetEur: number) => Promise<Response>;
   stop: () => Promise<Response>;
+  /** Coupe toutes les connexions (flux SSE compris): les navigateurs se reconnectent et le serveur rejoue l'historique. */
+  dropConnections: () => void;
   /** Attend l'evenement `done` (le suivant s'il y en a deja eu un avant). */
   waitDone: (ms?: number) => Promise<BoucleEvent>;
   close: () => Promise<void>;
@@ -59,23 +61,31 @@ export async function startBoucle(o: BoucleOpts): Promise<Boucle> {
   const events: BoucleEvent[] = [];
   const ac = new AbortController();
   let doneCount = 0, waiters: (() => void)[] = [];
+  /** Client SSE de reference: se reconnecte avec Last-Event-ID comme un navigateur. */
   void (async () => {
-    const res = await fetch(base + "/events", { signal: ac.signal }).catch(() => null);
-    if (!res?.body) return;
-    const rd = res.body.getReader(), dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await rd.read().catch(() => ({ value: undefined, done: true }));
-      if (done) return;
-      buf += dec.decode(value);
-      let i: number;
-      while ((i = buf.indexOf("\n\n")) >= 0) {
-        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
-        if (!chunk.startsWith("data: ")) continue;
-        const e = JSON.parse(chunk.slice(6)) as BoucleEvent;
-        events.push(e);
-        if (e.type === "done") { doneCount++; waiters.forEach((w) => w()); waiters = []; }
+    let lastId = "";
+    while (!ac.signal.aborted) {
+      const res = await fetch(base + "/events", { signal: ac.signal, headers: lastId ? { "last-event-id": lastId } : {} }).catch(() => null);
+      if (res?.body) {
+        const rd = res.body.getReader(), dec = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { value, done } = await rd.read().catch(() => ({ value: undefined, done: true }));
+          if (done) break;
+          buf += dec.decode(value);
+          let i: number;
+          while ((i = buf.indexOf("\n\n")) >= 0) {
+            const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+            const data = /^data: (.+)$/m.exec(chunk)?.[1];
+            if (!data) continue;
+            lastId = /^id: (.+)$/m.exec(chunk)?.[1] ?? lastId;
+            const e = JSON.parse(data) as BoucleEvent;
+            events.push(e);
+            if (e.type === "done") { doneCount++; waiters.forEach((w) => w()); waiters = []; }
+          }
+        }
       }
+      await new Promise((r) => setTimeout(r, 300));
     }
   })();
   const waitDone = async (ms = 60_000): Promise<BoucleEvent> => {
@@ -88,7 +98,7 @@ export async function startBoucle(o: BoucleOpts): Promise<Boucle> {
     return events.filter((e) => e.type === "done").at(-1)!;
   };
   return {
-    base, repo, events, waitDone,
+    base, repo, events, waitDone, dropConnections: () => server.closeAllConnections(),
     go: (budgetEur) => fetch(base + "/go", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ budgetEur }) }),
     stop: () => fetch(base + "/stop", { method: "POST" }),
     close: async () => { ac.abort(); const closed = new Promise<void>((r) => server.close(() => r())); server.closeAllConnections(); await closed; if (!o.repo) repo.cleanup(); },
