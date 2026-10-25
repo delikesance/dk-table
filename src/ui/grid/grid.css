@@ -81,7 +81,7 @@
   background: var(--c-surface);
   box-shadow: inset 0 0 0 var(--cursor-w) var(--c-accent);
 }
-.dkg-active::after {
+.dkg-h::after { /* poignée de recopie: coin bas-droit de la sélection (voir fillHandle.ts) */
   content: "";
   position: absolute;
   right: 0;

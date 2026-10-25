@@ -39,3 +39,11 @@ export function rangeKeys(a: Pos, b: Pos): string[] {
     for (let c = Math.min(a.col, b.col); c <= Math.max(a.col, b.col); c++) out.push(keyOf(c, r));
   return out;
 }
+
+/** Selection text: "A1" for one cell, else "A1:B3" (top-left to bottom-right). */
+export function selectionLabel(anchor: Pos, active: Pos): string {
+  const a = keyOf(anchor.col, anchor.row), b = keyOf(active.col, active.row);
+  if (a === b) return a;
+  const k = rangeKeys(anchor, active);
+  return `${k[0]}:${k[k.length - 1]}`;
+}
