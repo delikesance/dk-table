@@ -37,11 +37,14 @@ describe("definitions", () => {
 });
 
 describe("design d'abord", () => {
-  it("le design ecrit docs/design/<date>.md; l'implementation le lit, repli sur recherche + TODO", () => {
+  it("le design ecrit docs/design/<date>.html; l'implementation le lit, repli sur recherche + TODO", () => {
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
-    expect(designPath(new Date("2026-10-25T10:00:00Z"))).toBe("docs/design/2026-10-25.md");
+    expect(designPath(new Date("2026-10-25T10:00:00Z"))).toBe("docs/design/2026-10-25.html");
     expect(get("design").prompt).toContain(designPath());
     expect(get("design").prompt).toContain("interfaces");
+    expect(get("design").prompt).toContain("HTML autonome");
+    expect(get("design").prompt).toContain("sombre");
+    expect(get("design").prompt).not.toMatch(/^\/design/);
     expect(get("implementation").prompt).toContain(designPath());
     expect(get("implementation").prompt).toContain("docs/recherche/fonctionnalites.md");
     expect(get("implementation").prompt).toContain("TODO.md");
