@@ -18,6 +18,7 @@ import { openMerge } from "./dialogs/merge";
 import { openHistory } from "./dialogs/history";
 import { openDepMap } from "./dialogs/depmap";
 import { openAudit } from "./dialogs/audit";
+import { toggleKinds } from "./grid/kinds";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -116,6 +117,7 @@ export function installCommands(app: App): void {
   run("data.query", "Transformations…", () => openQuery(app), undefined, ["power query", "requête", "étapes", "filtrer", "scinder", "dédoublonner", "rejouer"]);
   run("data.depmap", "Qui utilise cette cellule ?", () => openDepMap(app), undefined, ["dépendances", "précédents", "dépendants", "références", "carte", "liens"]);
   run("data.audit", "Audit de modèle", () => openAudit(app), undefined, ["audit", "erreurs", "constantes", "incohérences", "volatile", "cycle", "plage", "vérifier"]);
+  run("view.kinds", "Surligner formules / constantes", () => void toggleKinds(), undefined, ["formules", "constantes", "valeurs en dur", "surligner", "anomalies", "atteindre", "audit"]);
   run("file.compare", "Comparer avec un fichier…", () => openCompare(app), undefined, ["diff", "différences", "fusion", "version"]);
   run("file.history", "Historique et versions…", () => openHistory(app), undefined, ["historique", "temps", "instantané", "version", "journal", "restaurer"]);
   run("file.merge", "Fusionner avec d'autres versions…", () => openMerge(app), undefined, ["fusion", "merge", "conflit", "version", "diff"]);

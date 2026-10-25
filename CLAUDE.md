@@ -183,6 +183,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## autoloop
 - `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`). Étape 2: `cycle.ts` (vérifs npm/tsc par l'orchestrateur -> `roles/audit.ts` -> `dedupe.ts` empreinte `<!-- fp:… -->` -> `github.ts` `GhClient`, issues `auto:bug`, max 3/cycle), `live.ts` (`--live`: SDK + gh réels, seul mode qui crée des issues). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
 
+## Decisions (formules / constantes)
+
+- Surlignage bascule (palette/Affichage `view.kinds`): `engine/audit-kinds.ts` `rawKind`, `ui/grid/kinds.ts` (classe `dk-kinds` sur `<html>`), `dkg-kf`/`dkg-kc` posées par `markKind`. Détail: `docs/formules-constantes.md`.
+
 ## Decisions (texte en colonnes)
 
 - `engine/textsplit.ts` (`splitLine`, `splitColumn`; délimiteurs, guillemets, fusion, `widths` largeur fixe, `formats` général/texte = préfixe `'`), dialogue `ui/dialogs/textToCols.ts` (menu Données), e2e `e2e/feat-texte-colonnes.spec.ts`. Détail: `docs/texte-en-colonnes.md`.
