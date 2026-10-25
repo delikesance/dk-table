@@ -22,6 +22,8 @@ export interface GitFlow {
    * fusion --no-ff, retrait du worktree, push. `conflict`: la synchro a echoue (la carte sera relancee en serie).
    */
   mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string; conflict?: boolean; preexisting?: string[]; push?: PushResult }>;
+  /** Agent non fusionne : retire son worktree (npm ci pese des centaines de Mo); la branche reste (le travail y est), sauf si elle est vide. Sans effet si le commit a echoue. */
+  release(branch: string, dir: string): Promise<void>;
   /** Retire le worktree de reference (fin du run). */
   dispose(): Promise<void>;
   /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
@@ -176,10 +178,20 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return r.code === 0 ? { pushed: true } : { pushed: false, reason: `push echoue : ${stripAnsi(r.out).slice(-300)}` };
   }
 
+  async function release(branch: string, dir: string): Promise<void> {
+    if (commitFail.has(dir)) return; // le travail n'existe que dans le dossier
+    installFail.delete(dir);
+    await lock.run(async () => {
+      const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
+      await git(["worktree", "remove", "--force", dir]);
+      if (ahead.code === 0 && ahead.out.trim() === "0") await git(["branch", "-D", branch]);
+    });
+  }
+
   async function dispose() {
     const d = baseDir; baseDir = null;
     if (d) await git(["worktree", "remove", "--force", d]);
   }
 
-  return { ensureDev, startSector, commit, mergeIfGreen, pushDev, dispose };
+  return { ensureDev, startSector, commit, mergeIfGreen, pushDev, release, dispose };
 }

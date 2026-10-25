@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Un seul run de release par ref ; un push plus récent n'interrompt pas une publication en cours.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-linux:
     runs-on: ubuntu-24.04

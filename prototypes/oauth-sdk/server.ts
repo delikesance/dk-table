@@ -97,10 +97,13 @@ export function createServer(deps: Deps): Server {
   const history: BoucleEvent[] = [];
   const clients = new Set<ServerResponse>();
   let ctl: AbortController | null = null;
+  /** Numero du run: les identifiants SSE sont `<run>-<rang>` (EventSource les renvoie en `Last-Event-ID` apres une coupure). */
+  let run = 0;
+  const frame = (e: BoucleEvent, n: number): string => `id: ${run}-${n}\ndata: ${JSON.stringify(e)}\n\n`;
 
   const emit = (e: BoucleEvent): void => {
     history.push(e);
-    for (const c of clients) c.write(`data: ${JSON.stringify(e)}\n\n`);
+    for (const c of clients) c.write(frame(e, history.length - 1));
   };
 
   const go = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -110,7 +113,7 @@ export function createServer(deps: Deps): Server {
     catch (err) { return send(res, 400, { error: (err as Error).message }); }
     if (ctl) return send(res, 409, { error: "déjà en cours" });
     const mine = (ctl = new AbortController());
-    history.length = 0;
+    history.length = 0; run++;
     send(res, 200, { ok: true });
     let complete: boolean | undefined, reason: string | undefined;
     deps.runPipeline({ budgetEur, onEvent: emit, signal: mine.signal })
@@ -170,7 +173,9 @@ export function createServer(deps: Deps): Server {
       send(res, 200, { ok: true, running: ctl !== null });
     } else if (route === "GET /events") {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
-      for (const e of history) res.write(`data: ${JSON.stringify(e)}\n\n`);
+      // reconnexion du meme run: seulement la suite (sinon le panneau compterait deux fois couts et journal)
+      const last = /^(\d+)-(\d+)$/.exec(String(req.headers["last-event-id"] ?? ""));
+      history.forEach((e, n) => { if (!(last && Number(last[1]) === run && n <= Number(last[2]))) res.write(frame(e, n)); });
       res.flushHeaders(); // sans historique, l'en-tête ne partirait pas: EventSource resterait en « connexion »
       clients.add(res);
       const beat = setInterval(() => res.write(": ping\n\n"), 15000); // garde la liaison ouverte

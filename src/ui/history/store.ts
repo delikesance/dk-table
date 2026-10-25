@@ -36,3 +36,12 @@ export function stampSave(doc: DktDoc, now = Date.now()): DktDoc {
 export function takeSnapshot(doc: DktDoc, name: string, now = Date.now()): void {
   history = addSnapshot(history, doc, name, now);
 }
+
+/** Journalise tout de suite les changements non enregistrés (avant un instantané), sans écrire de fichier. */
+export function journalNow(doc: DktDoc, now = Date.now()): void {
+  baseline ??= { ...doc, sheets: doc.sheets.map((x) => ({ ...x, cells: {} })) };
+  stampSave(doc, now);
+}
+
+/** Oublie tout (aucun fichier chargé). */
+export function resetHistory(): void { history = emptyHistory(); baseline = undefined; }
