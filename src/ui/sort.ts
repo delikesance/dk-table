@@ -39,10 +39,25 @@ function findBlock(e: Entry, key: string) {
 }
 
 /**
+ * Liste personnalisée applicable à une colonne: celle qui contient le plus de valeurs de la colonne
+ * (casse ignorée); undefined si aucune valeur n'y figure. Même logique que la recopie.
+ */
+function pickList(values: string[], lists: string[][]): string[] | undefined {
+  const vals = values.map((v) => v.trim().toLowerCase()).filter((v) => v !== "");
+  let best: string[] | undefined, bestHits = 0;
+  for (const l of lists) {
+    const low = l.map((x) => x.trim().toLowerCase());
+    const hits = vals.filter((v) => low.includes(v)).length;
+    if (hits > bestHits) { best = l; bestHits = hits; }
+  }
+  return best;
+}
+
+/**
  * Trie le bloc de données contenant `activeKey` selon sa colonne (un seul pas d'undo).
  * @returns false (sans rien modifier ni empiler d'undo) si colonne vide ou bloc d'une seule ligne.
  */
-export function sortColumn(e: Entry, activeKey: string, opts: { desc?: boolean }): boolean {
+export function sortColumn(e: Entry, activeKey: string, opts: { desc?: boolean; lists?: string[][] }): boolean {
   const b = findBlock(e, activeKey);
   if (!b || b.r1 === b.r0) return false;
   const block: string[][] = [];
@@ -52,7 +67,9 @@ export function sortColumn(e: Entry, activeKey: string, opts: { desc?: boolean }
     block.push(line);
   }
   const hasHeader = detectHeader(block);
-  const { rows, order } = sortRows(block, { col: b.col - b.c0, desc: opts.desc, hasHeader });
+  const col = b.col - b.c0;
+  const list = pickList(block.slice(hasHeader ? 1 : 0).map((r) => r[col]), opts.lists ?? []);
+  const { rows, order } = sortRows(block, { col, desc: opts.desc, hasHeader, list });
   const oldStyles: Record<string, CellStyle | undefined> = {};
   pushUndo(e);
   for (let i = 0; i < rows.length; i++) {

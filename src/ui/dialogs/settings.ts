@@ -7,6 +7,7 @@
 import { openDialog } from "./dialog";
 import { decimalMode, setDecimalMode } from "../../engine/decimal";
 import { calcMode, setCalcMode } from "../../engine/calc-mode";
+import { openCustomLists } from "./customLists";
 
 export const HOME_KEY = "dk-table.home";
 
@@ -48,5 +49,8 @@ export function openSettings(): void {
   field("iterative").addEventListener("change", () => setCalcMode({ iterative: field("iterative").checked }));
   field("maxIter").addEventListener("change", () => setCalcMode({ maxIter: Number(field("maxIter").value) }));
   field("maxChange").addEventListener("change", () => setCalcMode({ maxChange: Number(field("maxChange").value) }));
+  // Listes de tri et de recopie (boîte propre, ouverte par-dessus)
+  body.insertAdjacentHTML("beforeend", '<p><button type="button" class="dk-dialog__btn" data-action="lists">Listes personnalisées…</button></p>');
+  body.querySelector<HTMLButtonElement>('[data-action="lists"]')!.addEventListener("click", () => openCustomLists());
   openDialog("settings", "Paramètres", body);
 }

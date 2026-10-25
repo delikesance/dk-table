@@ -6,6 +6,7 @@ import { createMacroStore } from "../macros/store";
 import { buildGrid, paintKey, refreshCf, refreshTabs, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
 import { sortColumn } from "./sort";
+import { customLists } from "../io/customLists";
 import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
@@ -187,7 +188,7 @@ export function createApi(c: Ctx): App {
     openMacros: () => c.macroUi.open(),
     editMacro: (id) => openMacroView(c, id),
     sortColumn(desc) {
-      if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
+      if (!sortColumn(c.cur, firstKey(c), { desc, lists: customLists.lists() })) return false;
       touch(c);
       return true;
     },

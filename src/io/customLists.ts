@@ -35,5 +35,8 @@ export function createCustomLists(store: KeyValueStore | null) {
   };
 }
 
+/** Type du gestionnaire (pour l'injection dans les dialogues). */
+export type CustomLists = ReturnType<typeof createCustomLists>;
+
 /** Instance de l'application, adossée à localStorage quand il est disponible. */
 export const customLists = createCustomLists(typeof localStorage !== "undefined" ? localStorage : null);
