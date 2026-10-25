@@ -7,19 +7,19 @@ Visible : non
 - Critères : valeurs vides, texte et booléens ignorés ; variance et écart-type sur n-1 (échantillon) ; aucune valeur numérique -> erreur `#VALUE!` avec message « Aucune valeur numérique dans la plage » ; erreur de cellule propagée.
 - Tests `src/engine/stats/descriptive.test.ts` (8 cas, écrits avant le code).
 - Doc `docs/statistiques-descriptives.md`.
+- Tournée du 2026-10-25 : critères revérifiés, aucun code à ajouter.
 
 ## Non fait
-- Pas de fonction de feuille ni de commande UI (dialogue « Outils d'analyse ») : hors critères de la carte, à reprendre si besoin d'un rendu.
+- Pas de fonction de feuille ni de commande UI : relève de la carte « Dialogue d'outils d'analyse et sortie en feuille ».
 
 ## Captures
 Sans objet (pas d'effet visible).
 
 ## Decisions
-- Design `docs/design/2026-10-25-204816.html` (demandé par la consigne) : traite de Valeur cible et d'évaluation pas à pas, sans rapport avec les statistiques descriptives. Non suivi ; le module ne dépend d'aucune maquette.
-- Tests relancés cette tournée : `npx vitest run src/engine/stats/descriptive.test.ts` = 8/8 verts.
+- Design `docs/design/2026-10-25-204816.html` : il porte sur Valeur cible et l'évaluation pas à pas, sans rapport avec cette carte. Non suivi.
 - Erreurs de cellule propagées (convention du moteur, comme `collectNums`).
 - Variance et écart-type réutilisent `variance()` de `fn-stats.ts` (n-1) ; une valeur seule -> `null` au lieu de `#DIV/0!`.
-- Chemins probables `src/commands/descriptiveStats.ts` et `tests/descriptive.test.ts` non créés : le projet n'a pas de dossier `src/commands/` et les tests sont co-localisés (`*.test.ts`).
+- Chemins `src/commands/descriptiveStats.ts` et `tests/descriptive.test.ts` non créés : pas de dossier `src/commands/`, tests co-localisés (`*.test.ts`).
 - Mode absent (aucune répétition) -> `null`, pas d'erreur.
 
 ## Preuves

@@ -30,10 +30,14 @@ function compareKeys(a: string[], b: string[], groups: number[]): number {
   return 0;
 }
 
-/** Sous-totaux et total général. Plage vide : []. */
+/** Nombre maximal de niveaux de groupe. */
+export const MAX_LEVELS = 3;
+
+/** Sous-totaux et total général. Plage vide : [] ; plus de `MAX_LEVELS` groupes : RangeError. */
 export function subtotals(rows: string[][], spec: SubSpec): SubRow[] {
-  if (!rows.length) return [];
   const { groups, values, fn } = spec;
+  if (groups.length > MAX_LEVELS) throw new RangeError(`sous-totaux : ${MAX_LEVELS} niveaux au plus`);
+  if (!rows.length) return [];
   const width = Math.max(
     rows.reduce((w, r) => Math.max(w, r.length), 0),
     ...groups.map((g) => g + 1),
@@ -48,7 +52,7 @@ export function subtotals(rows: string[][], spec: SubSpec): SubRow[] {
   /** Ferme le niveau `lvl` : une ligne de sous-total après le groupe `key`. */
   const close = (lvl: number, key: string[]) => {
     const cells = new Array<string>(width).fill("");
-    cells[groups[lvl]] = `Total ${key[groups[lvl]] ?? ""}`;
+    cells[groups[lvl]] = `Total ${key[groups[lvl]] || "(vide)"}`;
     values.forEach((c, j) => (cells[c] = result(acc[lvl][j], fn)));
     out.push({ kind: "sub", level: lvl, cells });
     acc[lvl] = fresh();
