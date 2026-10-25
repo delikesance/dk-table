@@ -58,6 +58,18 @@ describe("design.html", () => {
     expect(document.querySelector("#viewer iframe")!.getAttribute("src")).toBe("/designs/a.html");
     expect(document.querySelector("#thumbs .thumb.sel")!.getAttribute("aria-current")).toBe("true");
   });
+  it("historique: liste tous les designs (recap signale), choisir ouvre le design sans run actif", async () => {
+    await load({ files: [...DATA.files, { name: "recap-x.html", bytes: 5, mtimeMs: 3000, state: "ecrit", kind: "recap" }], steps: [] });
+    const sel = document.getElementById("history") as HTMLSelectElement;
+    expect(sel.options.length).toBe(3);
+    expect([...sel.options].map((o) => o.value)).toEqual(["recap-x.html", "b.html", "a.html"]);
+    expect(sel.options[0].textContent).toContain("récap");
+    // le suivi automatique ignore le recap: le dernier design reste b.html
+    expect(document.querySelector("#viewer iframe")!.getAttribute("src")).toBe("/designs/b.html");
+    sel.value = "a.html"; sel.dispatchEvent(new Event("change"));
+    expect(document.querySelector("#viewer iframe")!.getAttribute("src")).toBe("/designs/a.html");
+    expect((document.getElementById("history") as HTMLSelectElement).value).toBe("a.html");
+  });
   it("etat vide", async () => {
     await load({ files: [], steps: [] });
     expect(document.querySelectorAll("#viewer .empty").length).toBe(1);

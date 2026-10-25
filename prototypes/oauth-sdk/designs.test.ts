@@ -13,13 +13,14 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function until(cond: () => boolean) { for (let i = 0; i < 80 && !cond(); i++) await wait(50); }
 
 describe("listDesigns", () => {
-  it("liste les .html (sans recap.html), plus recent d'abord; dossier absent => []", async () => {
+  it("liste les .html avec kind (recap-* = recap), plus recent d'abord; dossier absent => []", async () => {
     const d = tmp();
     writeFileSync(join(d, "a.html"), "A"); writeFileSync(join(d, "b.html"), "BB");
-    writeFileSync(join(d, "recap.html"), "R"); writeFileSync(join(d, "n.txt"), "x");
+    writeFileSync(join(d, "recap-2026-10-25-100000.html"), "R"); utimesSync(join(d, "recap-2026-10-25-100000.html"), 500, 500); writeFileSync(join(d, "n.txt"), "x");
     utimesSync(join(d, "a.html"), 1000, 1000); utimesSync(join(d, "b.html"), 2000, 2000);
     const l = await listDesigns(d);
-    expect(l.map((f) => f.name)).toEqual(["b.html", "a.html"]);
+    expect(l.map((f) => f.name)).toEqual(["b.html", "a.html", "recap-2026-10-25-100000.html"]);
+    expect(l.map((f) => f.kind)).toEqual(["design", "design", "recap"]);
     expect(l[0]).toMatchObject({ bytes: 2, state: "ecrit" });
     expect(await listDesigns(join(d, "nope"))).toEqual([]);
   });
@@ -61,7 +62,7 @@ describe("watchDesigns", () => {
 
 describe("withStates", () => {
   it("reporte l'etat mis-a-jour des evenements file sur la liste (le fichier seul dit toujours ecrit)", () => {
-    const f = (name: string): DesignFile => ({ name, bytes: 1, mtimeMs: 1, state: "ecrit" });
+    const f = (name: string): DesignFile => ({ name, bytes: 1, mtimeMs: 1, state: "ecrit", kind: "design" });
     const out = withStates([f("a.html"), f("b.html")], [
       { type: "file", message: "a.html", state: "ecrit" }, { type: "file", message: "a.html", state: "mis-a-jour" },
       { type: "start", message: "a.html", state: "mis-a-jour" },

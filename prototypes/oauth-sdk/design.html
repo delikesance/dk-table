@@ -35,6 +35,7 @@ main{display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px}
 <nav class="topnav" aria-label="Pages"><b>dk-table</b><a href="/">Boucle</a><a href="/moodboard.html">Moodboard</a><a href="/design.html" aria-current="page">Design</a></nav>
 <aside><h1>Étapes du designer</h1><ol id="timeline"></ol></aside>
 <main>
+  <select id="history" aria-label="Historique des designs"></select>
   <div id="viewer"></div>
   <div id="thumbs" role="list"></div>
 </main>
@@ -74,7 +75,7 @@ function stepItem(s) {
 /** Nom du design affiché: le choix, sinon le plus récent. */
 function current() {
   if (picked && byName(picked)) return picked;
-  var last = data.files.slice().sort(function (a, b) { return b.mtimeMs - a.mtimeMs; })[0];
+  var last = data.files.filter(function (f) { return f.kind !== "recap"; }).sort(function (a, b) { return b.mtimeMs - a.mtimeMs; })[0];
   return last ? last.name : null;
 }
 function frame(name) {
@@ -85,12 +86,24 @@ function frame(name) {
   return f;
 }
 
+/** Historique: tous les designs stockés (récap signalé), le plus récent d'abord; choisir ouvre le design. */
+function history(cur) {
+  var sel = document.getElementById("history");
+  sel.textContent = "";
+  data.files.slice().sort(function (a, b) { return b.mtimeMs - a.mtimeMs; }).forEach(function (f) {
+    var o = el("option", "", fmt(f.mtimeMs) + " — " + f.name + (f.kind === "recap" ? " [récap]" : ""));
+    o.value = f.name; o.selected = f.name === cur; sel.appendChild(o);
+  });
+  sel.onchange = function () { picked = sel.value; render(); };
+}
+
 /** Redessine timeline, visionneuse et miniatures. */
 function render() {
   var tl = document.getElementById("timeline"), vw = document.getElementById("viewer"), th = document.getElementById("thumbs");
   tl.textContent = ""; vw.textContent = ""; th.textContent = "";
   data.steps.forEach(function (s) { tl.appendChild(stepItem(s)); });
   var cur = current();
+  history(cur);
   if (!cur) { vw.appendChild(el("p", "empty", "Aucun design pour l'instant.")); return; }
   vw.appendChild(frame(cur));
   data.files.slice().sort(function (a, b) { return a.mtimeMs - b.mtimeMs; }).forEach(function (f) {

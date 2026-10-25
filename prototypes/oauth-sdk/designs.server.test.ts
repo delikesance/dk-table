@@ -10,7 +10,7 @@ afterEach(() => { servers.splice(0).forEach((s) => s.close()); });
 
 const steps: BoucleEvent[] = [{ type: "start", sector: "design" }];
 const designs: NonNullable<Deps["designs"]> = {
-  list: async () => [{ name: "d.html", bytes: 3, mtimeMs: 1, state: "ecrit" }],
+  list: async () => [{ name: "d.html", bytes: 3, mtimeMs: 1, state: "ecrit", kind: "design" }],
   read: async (n) => (n === "d.html" ? "<h1>d</h1>" : null),
   steps: () => steps,
 };
