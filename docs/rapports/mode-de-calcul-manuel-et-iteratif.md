@@ -1,4 +1,5 @@
 # Rapport : Mode de calcul manuel et itératif
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -49,3 +50,9 @@ Itératif, convergence (sombre) :
 - Activer/désactiver l'itératif relance un recalcul complet ; activer le manuel ne recalcule rien.
 - Maj+F9 recalcule la feuille active ; F9 recalcule toutes les feuilles du classeur.
 - Suite complète `npx vitest run` : 2466 tests verts ; 4 échecs dans `prototypes/oauth-sdk/orphans.test.ts` (balayage de worktrees git, sans lien avec le calcul), non vérifiés contre master.
+
+## Preuves
+- Tests : ok (911 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"count":911,"scope":"related"},"tsc":{"ok":true}} -->
