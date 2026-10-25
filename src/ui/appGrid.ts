@@ -12,6 +12,7 @@ import { formatValue } from "./numfmt";
 import { displayGap, decimalMode } from "../engine/decimal";
 import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
+import { markInvalid, notifyInvalid } from "./appValidation";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
 
 /** Per-sheet grid view state (column widths, filters): survives rebuilds, widths and freeze come from the entry (saved in files), filters are not saved; `viewOf(entry)` gets/creates it. */
@@ -70,6 +71,7 @@ export function touch(c: Ctx): void {
   c.grid.refresh();
   refreshCf(c);
   syncInfo(c);
+  markInvalid(c);
   c.docEd?.refresh();
 }
 
@@ -85,6 +87,7 @@ export function buildGrid(c: Ctx): void {
   view.freeze = c.cur.freeze;
   view.widths = c.cur.widths;
   refreshCf(c, false);
+  markInvalid(c); // before the grid exists: only fills `c.invalid`, cells are marked as they are created
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
@@ -98,6 +101,7 @@ export function buildGrid(c: Ctx): void {
       }
       setCell(c.cur.sheet, k, raw);
     },
+    onBulk: () => queueMicrotask(() => notifyInvalid(c)), // after the coalesced touch
     onSelect: () => syncInfo(c),
     onResizeStart: () => { pushUndo(c.cur); setTitle(c, true); syncInfo(c); },
     onFitColumn: (col) => { const sel = colsOfSelection(c.grid.getSelection()); fitColumns(c, sel.length > 1 && sel.includes(col) ? sel : [col]); },
@@ -111,6 +115,7 @@ export function buildGrid(c: Ctx): void {
     },
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k, el) => {
+      if (c.invalid?.has(k)) el.dataset.inv = "";
       const st = c.cur.styles[k], cf = c.cfMap?.get(k);
       if (st || cf) paintCell(el, st, cf);
     },

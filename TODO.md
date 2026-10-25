@@ -229,7 +229,7 @@ Classement par gravité (P0 = pire)
 - [x] Carte `audit-de-modele-integre`: panneau « Audit de modèle » (palette `data.audit`, `engine/model/audit.ts`, `ui/dialogs/audit.ts`; constantes, formules incohérentes, plages tronquées, volatiles, cycles; clic = va à la cellule), e2e `e2e/feat-audit.spec.ts`
 - [x] Carte `plages-tronquees-detectees`: correction en un clic (`Finding.fix`, bouton `.dk-audit__fix`) + détection nombres stockés en texte, `docs/rapports/plages-tronquees-detectees.md`
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
-- [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
+- [ ] Recherche, axe 2 (absent de dk-table): validation de données (fait, voir plus bas), tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `atteindre-formules-constantes`: palette + menu Affichage « Surligner formules / constantes » (`engine/audit-kinds.ts`, `ui/grid/kinds.ts`, classes `dkg-kf`/`dkg-kc`; `docs/formules-constantes.md`), e2e `e2e/feat-formules-constantes.spec.ts`
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
 - [x] Carte `fonctions-nommees`: fonction personnalisée (nom, paramètres, corps) dans `.dktable`, dialogue Données > Fonctions nommées… (`docs/fonctions-nommees.md`)
@@ -293,4 +293,5 @@ Classement par gravité (P0 = pire)
 - [x] CI/CD rapide: `ci.yml` léger sur push hors main (tsc + vitest --changed), `ci-full.yml` (test, cargo, e2e 3 shards) vers/sur main, concurrency, Chrome du runner; `docs/ci.md`, `src/config/ci.test.ts`
 - [x] import-texte-d-abord-avec-rapport-de-conversions-risquees : import CSV texte d'abord, rapport par colonne accepter/refuser (`io/csvText.ts`, `ui/dialogs/importReport.ts`, `docs/import-texte.md`)
 - [x] decimal-exact-mode-comptable : option par classeur (Paramètres), arrondi 15 chiffres (`engine/decimal.ts`), écart affiché ≠ stocké signalé (`dkg-gap`), champ `.dktable` `decimal`; `docs/decimal-exact.md`, rapport `docs/rapports/decimal-exact-mode-comptable.md`
+- [x] validation-a-l-epreuve-du-collage : règles de validation (entier, décimal, liste, longueur) contrôlées aussi au collage, remplissage et ouverture/import; panneau des cellules invalides + « Corriger » (`engine/validation/`, `ui/validation/`, `ui/appValidation.ts`, `docs/validation.md`, rapport `docs/rapports/validation-a-l-epreuve-du-collage.md`)
 - [x] identifiants-longs-intacts : saisie > 15 chiffres gardée en texte exact et signalée (`engine/longnum.ts`, `dkg-long`); `docs/identifiants-longs.md`, rapport `docs/rapports/identifiants-longs-intacts.md`

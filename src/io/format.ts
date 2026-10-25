@@ -3,6 +3,7 @@ import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacr
 
 import { DktParseError, isObj } from "./parseError";
 import { checkCf } from "./cfFormat";
+import { checkValidation } from "./validationFormat";
 import { checkDocs } from "./docsFormat";
 import { checkFunctions } from "./fnFormat";
 import { checkColWidths } from "./colWidthsFormat";
@@ -104,6 +105,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
   if (s.colWidths !== undefined) sheet.colWidths = checkColWidths(s.colWidths, `${at}.colWidths`);
   if (s.cf !== undefined) sheet.cf = checkCf(s.cf, `${at}.cf`);
+  if (s.validation !== undefined) sheet.validation = checkValidation(s.validation, `${at}.validation`);
   return sheet;
 }
 
