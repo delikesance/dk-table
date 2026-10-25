@@ -3,6 +3,7 @@
  * Routes: GET / (panneau), GET /moodboard(.html), POST /go, POST /stop, GET /events (SSE avec rejeu).
  * Le pipeline réel est injecté (`deps.runPipeline`); écoute sur 127.0.0.1 seulement.
  */
+import { isFontRoute, readFont } from "./fontRoute";
 import type { DesignFile } from "./designs";
 import { injectRuntime } from "./designRuntime";
 import type { MoodCard } from "./moodboard";
@@ -52,6 +53,7 @@ export interface Deps {
 /** Assets servis (seuls fichiers lisibles hors pages): route -> [fichier, type]. */
 const ASSETS: Record<string, [string, string]> = {
   "GET /panel.css": ["panel.css", "text/css; charset=utf-8"],
+  "GET /fonts.css": ["fonts.css", "text/css; charset=utf-8"],
   "GET /panel.js": ["panel.js", "text/javascript; charset=utf-8"],
   "GET /moodboard-view.css": ["moodboard-view.css", "text/css; charset=utf-8"],
   "GET /moodboard-view.js": ["moodboard-view.js", "text/javascript; charset=utf-8"],
@@ -138,6 +140,9 @@ export function createServer(deps: Deps): Server {
         (txt) => void res.writeHead(200, { "content-type": type, "x-content-type-options": "nosniff" }).end(txt),
         () => notFound(req, res),
       );
+    } else if (isFontRoute(route) && deps.assetsDir) {
+      const fail = (): void => notFound(req, res);
+      readFont(route, deps.assetsDir).then((b) => b ? void res.writeHead(200, { "content-type": "font/woff2", "x-content-type-options": "nosniff" }).end(b) : fail(), fail);
     } else if (route === "GET /moodboard.html") {
       const page = typeof deps.moodboardHtml === "function" ? deps.moodboardHtml() : deps.moodboardHtml;
       if (page === undefined) return notFound(req, res);
@@ -176,8 +181,10 @@ export function createServer(deps: Deps): Server {
     } else if (route === "GET /events") {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
       for (const e of history) res.write(`data: ${JSON.stringify(e)}\n\n`);
+      res.flushHeaders(); // sans historique, l'en-tête ne partirait pas: EventSource resterait en « connexion »
       clients.add(res);
-      req.on("close", () => clients.delete(res));
+      const beat = setInterval(() => res.write(": ping\n\n"), 15000); // garde la liaison ouverte
+      req.on("close", () => { clearInterval(beat); clients.delete(res); });
     } else {
       notFound(req, res);
     }

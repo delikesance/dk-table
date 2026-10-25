@@ -69,6 +69,22 @@ describe("boucle server", () => {
     expect(text).toContain('"start"');
     expect(text).toContain('"end"');
   });
+  it("SSE répond tout de suite, même sans événement (sinon le panneau croit la connexion perdue)", async () => {
+    const { base } = await boot();
+    const res = await fetch(base + "/events", { signal: AbortSignal.timeout(2000) });
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    await res.body!.cancel();
+  });
+  it("sert les polices de la DA et fonts.css, rien d'autre sous /fonts", async () => {
+    const { base } = await boot(undefined, { assetsDir: __dirname });
+    const css = await fetch(base + "/fonts.css");
+    expect(css.headers.get("content-type")).toContain("text/css");
+    const f = await fetch(base + "/fonts/inter-tight-latin-400-normal.woff2");
+    expect(f.status).toBe(200);
+    expect(f.headers.get("content-type")).toBe("font/woff2");
+    expect((await fetch(base + "/fonts/..%2Fserver.ts")).status).toBe(404);
+    expect((await fetch(base + "/fonts/absente.woff2")).status).toBe(404);
+  });
   it("hôte non loopback => 403", async () => {
     const { server } = await boot();
     const port = (server.address() as AddressInfo).port;
