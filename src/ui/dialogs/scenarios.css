@@ -1,0 +1,10 @@
+/* Dialogue « Scénarios » : liste des jeux nommés + formulaire, tokens du thème. */
+.dk-scn label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-sm); color: var(--c-text-2); }
+.dk-scn input { height: 28px; padding: 0 8px; border: 1px solid var(--c-line-strong); border-radius: var(--r-sm);
+  background: var(--c-surface); color: var(--c-text); font: 13px var(--font-mono); }
+.dk-scn input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-scn__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow: auto; }
+.dk-scn__list li { display: flex; align-items: center; gap: 8px; font: 13px var(--font-mono); }
+.dk-scn__list span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-scn__empty { color: var(--c-text-2); }
+.dk-scn__err { margin: 0; min-height: 16px; color: var(--c-error, #a8380a); font-size: var(--fs-sm); }

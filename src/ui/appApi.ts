@@ -25,6 +25,7 @@ import { recalcAll } from "../engine/userfn";
 import { calcApi, calcField, loadCalc } from "./appCalc";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
+import { loadScenarios, scenarioApi, scenarioField } from "./appScenarios";
 import { historyField, loadHistory } from "./history/store";
 import { goSpecial } from "./appSpecial";
 import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
@@ -87,10 +88,10 @@ export function createApi(c: Ctx): App {
       ...(decimalMode() ? { decimal: true } : {}),
       ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
-      ...historyField(), ...calcField(),
+      ...historyField(), ...calcField(), ...scenarioField(),
     }),
     loadDoc(doc, path) {
-      loadHistory(doc); loadCalc(doc);
+      loadHistory(doc); loadCalc(doc); loadScenarios(doc);
       leaveDoc(c);
       c.docs.load(doc.docs);
       setDecimalMode(doc.decimal === true);
@@ -171,8 +172,7 @@ export function createApi(c: Ctx): App {
     setOutlineLevels: (levels) => setOutlineLevels(c, levels),
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
-    getFunctions: getUserFunctions,
-    setFunctions: (list) => setFunctions(c, list),
+    getFunctions: getUserFunctions, setFunctions: (list) => setFunctions(c, list), ...scenarioApi(c),
     addDoc: () => addDoc(c),
     exportDoc: (kind) => exportDoc(c, kind),
     docFormat: (name) => docFormat(c, name),

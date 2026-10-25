@@ -8,6 +8,7 @@ import type { CellStyle } from "./model";
 import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
 import type { UserFn } from "../engine/userfnStore";
+import type { Scenario, ScenarioCell } from "../engine/scenario";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
 import type { Invalid, ValRule } from "../engine/validation/types";
@@ -106,6 +107,14 @@ export interface App {
   getFunctions(): UserFn[];
   /** Replace the named functions: recalculates every sheet, marks the document modified. */
   setFunctions(list: UserFn[]): void;
+  /** Scénarios du classeur (persistés avec le document). */
+  getScenarios(): Scenario[];
+  /** Remplace les scénarios (marque le document modifié). */
+  setScenarios(list: Scenario[]): void;
+  /** Applique un scénario : écrit ses valeurs puis recalcule (un pas d'annulation par feuille). */
+  applyScenario(s: Scenario): void;
+  /** Cellules de la sélection courante, à enregistrer comme cellules variables. */
+  selectionScenarioCells(): ScenarioCell[];
   /** Lua macros of the workbook (persisted with the document). */
   macros: MacroStore;
   /** Apply direct engine writes to the active sheet as one undo step, then redraw. */

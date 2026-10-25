@@ -1,6 +1,7 @@
 /** Shared types for the `.dktable` document format. */
 import type { CfRule } from "../engine/cf/types";
 import type { ValRule } from "../engine/validation/types";
+import type { Scenario } from "../engine/scenario";
 
 /** One cell: only the raw user input is persisted (values are recomputed). */
 export interface DocCell {
@@ -99,6 +100,8 @@ export interface DktDoc {
   macros?: DocMacro[];
   /** Fonctions nommées du classeur (optionnel, absent dans les anciens fichiers). */
   functions?: DocFn[];
+  /** Gestionnaire de scénarios (jeux nommés de valeurs d'entrée) ; absent = aucun. */
+  scenarios?: Scenario[];
   /** Mode décimal exact (arrondi 15 chiffres significatifs) ; absent = IEEE 754. */
   decimal?: boolean;
   /** Mode de calcul (manuel, itératif) ; absent = automatique (`io/calcFormat.ts`). */
