@@ -49,3 +49,12 @@ describe("serialize/parse", () => {
     expect(() => parse(bad([{ id: "", name: "x", code: "" }]))).toThrow(/macros\[0\].id/);
   });
 });
+
+describe("decimal flag", () => {
+  it("rétrocompatible et validé", () => {
+    const base = { version: 1, sheets: [{ id: "a", name: "A", cols: 3, rows: 3, cells: {} }] };
+    expect(parse(JSON.stringify(base)).decimal).toBeUndefined();
+    expect(parse(JSON.stringify({ ...base, decimal: true })).decimal).toBe(true);
+    expect(() => parse(JSON.stringify({ ...base, decimal: "x" }))).toThrow();
+  });
+});

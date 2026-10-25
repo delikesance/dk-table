@@ -1,9 +1,11 @@
 /**
  * Paramètres (Fichier > Paramètres…, Ctrl+,) : réglages persistants de l'application.
  * Aujourd'hui : afficher l'accueil au démarrage (clé `dk-table.home`, lue par main.ts).
+ * Option du classeur : décimal exact (`engine/decimal.ts`).
  * Le thème reste dans le menu Affichage (pas de doublon).
  */
 import { openDialog } from "./dialog";
+import { decimalMode, setDecimalMode } from "../../engine/decimal";
 
 export const HOME_KEY = "dk-table.home";
 
@@ -23,5 +25,11 @@ export function openSettings(): void {
   box.addEventListener("change", () => {
     try { localStorage.setItem(HOME_KEY, box.checked ? "1" : "0"); } catch { /* stockage indisponible */ }
   });
+  // Option du classeur (enregistrée dans le .dktable, pas dans le stockage local)
+  body.insertAdjacentHTML("beforeend",
+    '<label class="dk-dialog__check"><input type="checkbox" name="decimal"> Décimal exact (mode comptable)</label>');
+  const dec = body.querySelector<HTMLInputElement>('input[name="decimal"]')!;
+  dec.checked = decimalMode();
+  dec.addEventListener("change", () => setDecimalMode(dec.checked));
   openDialog("settings", "Paramètres", body);
 }

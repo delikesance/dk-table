@@ -4,6 +4,7 @@ import { expandRange, inBounds } from "./address";
 import { rectOf } from "./openrange";
 import { getFunction, wantsMatrix, type Arg } from "./functions";
 import { toBool, toNum, toText } from "./values";
+import { fix } from "./decimal";
 import { resolveSheet } from "./book";
 import { getState } from "./state";
 import { LAZY_FORMS } from "./lazy";
@@ -52,7 +53,7 @@ function binary(op: string, l: Value, r: Value): Value {
     if (b === 0) return err("#DIV/0!");
     v = a / b;
   } else v = a ** b;
-  return Number.isFinite(v) ? v : err("#VALUE!");
+  return Number.isFinite(v) ? fix(v) : err("#VALUE!");
 }
 
 /** Values of the rectangle a:b of `sheet` (flat, or rows when `matrix`); #REF! when out of bounds. */
@@ -154,7 +155,7 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
     }
     case "pct": {
       const v = toNum(evaluate(n.e, sheet, get));
-      return isErr(v) ? v : v / 100;
+      return isErr(v) ? v : fix(v / 100);
     }
     case "bin":
       return binary(n.op, evaluate(n.l, sheet, get), evaluate(n.r, sheet, get));

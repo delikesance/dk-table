@@ -18,6 +18,8 @@ import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
 import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
+import { decimalMode, onDecimalChange, setDecimalMode } from "../engine/decimal";
+import { recalcAll } from "../engine/userfn";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
 import { historyField, loadHistory } from "./history/store";
@@ -77,6 +79,7 @@ export function createApi(c: Ctx): App {
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(Object.keys(e.widths).length ? { colWidths: widthsToDoc(e.widths) } : {}),
         ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
+      ...(decimalMode() ? { decimal: true } : {}),
       ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
       ...historyField(),
@@ -85,6 +88,7 @@ export function createApi(c: Ctx): App {
       loadHistory(doc);
       leaveDoc(c);
       c.docs.load(doc.docs);
+      setDecimalMode(doc.decimal === true);
       setUserFunctions(doc.functions ?? []);
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
@@ -172,5 +176,7 @@ export function createApi(c: Ctx): App {
   macros.onChange(() => { if (!loading) setTitle(c, true); });
   watchDocs(c);
   setupAutosave(c);
+  // changer le mode décimal recalcule tout le classeur et marque le document modifié
+  onDecimalChange(() => { for (const e of c.entries) recalcAll(e.sheet); touch(c); setTitle(c, true); });
   return app;
 }
