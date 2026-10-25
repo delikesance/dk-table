@@ -1,25 +1,27 @@
-/** ProseMirror editor of one dk doc: schema, history, formatting shortcuts, JSON change callback. */
-import { EditorState, TextSelection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { Node } from "prosemirror-model";
-import { history, undo, redo } from "prosemirror-history";
-import { keymap } from "prosemirror-keymap";
-import { baseKeymap, toggleMark, setBlockType } from "prosemirror-commands";
-import { splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list";
-import { docSchema } from "./schema";
-import { mentionPlugin } from "./mention";
-import { RefView, type RefViewHost } from "./refView";
-import { BlockView, type BlockHost } from "./blockView";
-import { insertAfterBlock, pasteLink } from "./paste";
-import { CalcView, type CalcHost } from "./calcView";
+/**
+ * Editor of one dk doc, Obsidian "Live Preview" style: CodeMirror 6 over the Markdown text, syntax shown only on the
+ * element under the cursor (see live/decorations.ts). `@` references, `=` calculations and linked blocks are
+ * Markdown-level syntax (`{{@Feuille!B3}}`, `{{=…}}`, ```dkblock) drawn as widgets. The editor shows sheet names;
+ * the callback receives the stored text (sheet ids).
+ */
+import { defaultKeymap, history, historyKeymap, redo, undo } from "@codemirror/commands";
+import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
+import { indentUnit } from "@codemirror/language";
+import { EditorState, Prec } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
+import { chipConfig } from "./md/chipParser";
+import { blockFence, calcChip, refChip } from "./md/chip";
+import { formatSpec, type DocFormat } from "./md/format";
+import { toEditorText, toStoredText } from "./md/names";
 import { createCalc } from "./calc";
-import { handleEquals } from "./calcTrigger";
-import { docCommands, type DocFormat } from "./commands";
+import { livePreview } from "./live/decorations";
+import { refreshFx, sheetsOf, type LiveHost } from "./live/host";
+import { docKeys } from "./live/keys";
+import { docCompletion } from "./live/mention";
 import type { BlockAttrs } from "./blocks";
 import type { CopyInfo, RefBook, RefTarget } from "./refs";
 
-export type { CopyInfo };
-import type { DocText } from "../io/types";
+export type { CopyInfo, DocFormat };
 
 /** Handle of a mounted editor. */
 export interface DocEditor {
@@ -30,9 +32,9 @@ export interface DocEditor {
   focus(): void;
   /** Run a text command (bold, title, list...) on the selection. */
   command(name: DocFormat): boolean;
-  /** Insert a linked block at the cursor (after the current block). */
+  /** Insert a linked block after the cursor line. */
   insertBlock(a: BlockAttrs): void;
-  /** Insert an empty calculation chip at the cursor (opens in edit mode). */
+  /** Insert an empty calculation chip at the cursor (cursor inside). */
   insertCalc(): void;
   /** Insert text at the cursor. */
   insertText(t: string): void;
@@ -41,7 +43,7 @@ export interface DocEditor {
   destroy(): void;
 }
 
-/** Workbook access for live references (omitted: plain text editor). */
+/** Workbook access for live references (omitted: plain Markdown editor). */
 export interface DocEditorOptions {
   book: RefBook;
   /** Open the cited cell (click on a chip). */
@@ -50,69 +52,57 @@ export interface DocEditorOptions {
   lastCopy?(): CopyInfo | null | undefined;
 }
 
-/** Formatting and structure shortcuts (Ctrl+B/I/U, Ctrl+Alt+1..3 titles, lists, Tab to indent). */
-function shortcuts() {
-  const s = docSchema;
-  const li = s.nodes.list_item;
-  return keymap({
-    "Mod-b": toggleMark(s.marks.strong),
-    "Mod-i": toggleMark(s.marks.em),
-    "Mod-u": toggleMark(s.marks.underline),
-    "Mod-z": undo, "Mod-y": redo, "Shift-Mod-z": redo,
-    "Mod-Alt-0": setBlockType(s.nodes.paragraph),
-    "Mod-Alt-1": setBlockType(s.nodes.heading, { level: 1 }),
-    "Mod-Alt-2": setBlockType(s.nodes.heading, { level: 2 }),
-    "Mod-Alt-3": setBlockType(s.nodes.heading, { level: 3 }),
-    Enter: splitListItem(li), Tab: sinkListItem(li), "Shift-Tab": liftListItem(li),
-  });
-}
-
 /**
- * Mount an editor for `content` in `host`. `onChange` receives the new JSON after each
+ * Mount an editor for the stored Markdown `md` in `host`. `onChange` receives the new stored text after each
  * modification (never at load). The editor owns its undo history.
  */
-export function createDocEditor(host: HTMLElement, content: DocText["content"], onChange: (c: DocText["content"]) => void, opts?: DocEditorOptions): DocEditor {
-  const rh: RefViewHost | undefined = opts && { book: opts.book, open: opts.open, views: new Set() };
-  const bh: BlockHost | undefined = opts && { book: opts.book, views: new Set(), set: (pos, a) => view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, a)), insertAfter: (pos, kind, a) => insertAfterBlock(view, pos, kind, a) };
-  const ch: CalcHost | undefined = opts && {
-    book: opts.book, calc: createCalc(opts.book), views: new Set(),
-    set: (pos, a) => {
-      const tr = view.state.tr, cur = tr.doc.nodeAt(pos);
-      if (cur && (cur.attrs.src !== a.src || cur.attrs.fmt !== a.fmt)) tr.setNodeMarkup(pos, undefined, a);
-      view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(pos + 1))));
-      view.focus();
-    },
-    literal: (pos, text) => {
-      const tr = view.state.tr.replaceWith(pos, pos + 1, docSchema.text(text));
-      view.dispatch(tr.setSelection(TextSelection.near(tr.doc.resolve(pos + text.length), -1)));
-      view.focus();
-    },
+export function createDocEditor(host: HTMLElement, md: string, onChange: (md: string) => void, opts?: DocEditorOptions): DocEditor {
+  const live: LiveHost | null = !opts ? null : { book: opts.book, open: opts.open, calc: createCalc(opts.book), slot: "A1", version: { n: 0 } };
+  const sheets = () => (opts ? sheetsOf(live!) : []);
+  const name = (id: string): string => sheets().find((s) => s.id === id)?.name ?? id;
+  /** Put `text` as a block on its own lines after the cursor line. */
+  const blockAfterLine = (text: string): void => {
+    const line = view.state.doc.lineAt(view.state.selection.main.head), at = line.to;
+    const insert = (line.text.trim() ? "\n\n" : "") + text + "\n";
+    view.dispatch({ changes: { from: at, insert }, selection: { anchor: at + insert.length }, scrollIntoView: true });
+    view.focus();
   };
   const state = EditorState.create({
-    doc: Node.fromJSON(docSchema, content),
-    plugins: [...(opts ? [mentionPlugin(opts.book)] : []), history(), shortcuts(), keymap(baseKeymap)],
+    doc: toEditorText(md, sheets()),
+    extensions: [
+      history(), indentUnit.of("  "), EditorView.lineWrapping,
+      markdown({ extensions: [chipConfig], addKeymap: false }),
+      docCompletion(live), docKeys,
+      Prec.high(keymap.of(markdownKeymap)), keymap.of([...historyKeymap, ...defaultKeymap]),
+      ...(live ? [livePreview] : []),
+      EditorView.updateListener.of((u) => { if (u.docChanged) onChange(toStoredText(u.state.doc.toString(), sheets())); }),
+      EditorView.domEventHandlers({
+        paste(e) {
+          const copy = opts?.lastCopy?.(), text = e.clipboardData?.getData("text/plain") ?? "";
+          if (!copy || !text || copy.text !== text) return false;
+          e.preventDefault();
+          if (copy.ref.includes(":")) blockAfterLine(blockFence({ sheet: name(copy.sheet), ref: copy.ref, kind: "table", header: true, cols: null, value: null }));
+          else view.dispatch(view.state.replaceSelection(refChip({ sheet: name(copy.sheet), ref: copy.ref })));
+          return true;
+        },
+      }),
+    ],
   });
-  const view = new EditorView(host, {
-    state,
-    nodeViews: rh && bh && ch && { calc: (node, _v, getPos) => new CalcView(node, getPos, ch), cellRef: (node) => new RefView(node, rh), liveBlock: (node, _v, getPos) => new BlockView(node, getPos, bh) },
-    handleTextInput: (v, from, to, text) => !!opts && handleEquals(v, from, to, text),
-    handlePaste: (v, e) => !!opts?.lastCopy && pasteLink(v, e.clipboardData?.getData("text/plain") ?? "", opts.lastCopy()),
-    dispatchTransaction(tr) {
-      view.updateState(view.state.apply(tr));
-      if (tr.docChanged) onChange(view.state.doc.toJSON() as DocText["content"]);
-    },
-  });
-  const run = (cmd: typeof undo): boolean => cmd(view.state, view.dispatch);
+  const view = new EditorView({ state, parent: host });
   return {
     view,
-    undo: () => run(undo),
-    redo: () => run(redo),
+    undo: () => undo(view),
+    redo: () => redo(view),
     focus: () => view.focus(),
-    command: (name) => { view.focus(); return docCommands[name](view.state, view.dispatch, view); },
-    insertBlock: (a) => { view.dispatch(view.state.tr.replaceSelectionWith(docSchema.nodes.liveBlock.create({ ...a })).scrollIntoView()); view.focus(); },
-    insertCalc: () => { view.dispatch(view.state.tr.replaceSelectionWith(docSchema.nodes.calc.create({ src: "", fmt: "auto" }))); },
-    insertText: (t) => { view.dispatch(view.state.tr.insertText(t)); view.focus(); },
-    refresh: () => { rh?.views.forEach((v) => v.refresh()); bh?.views.forEach((v) => v.refresh()); ch?.views.forEach((v) => v.refresh()); },
+    command: (n) => { view.focus(); view.dispatch(formatSpec(view.state, n)); return true; },
+    insertBlock: (a) => blockAfterLine(blockFence({ ...a, sheet: name(a.sheet) })),
+    insertCalc: () => {
+      const at = view.state.selection.main.head;
+      view.dispatch({ changes: { from: at, insert: calcChip("", "auto") }, selection: { anchor: at + 3 } });
+      view.focus();
+    },
+    insertText: (t) => { view.dispatch({ ...view.state.replaceSelection(t), userEvent: "input.type" }); view.focus(); },
+    refresh: () => { if (live) { live.version.n++; view.dispatch({ effects: refreshFx.of(null) }); } },
     destroy: () => view.destroy(),
   };
 }

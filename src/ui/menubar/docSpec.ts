@@ -1,7 +1,7 @@
 /** Menus Format et Insertion quand un document est ouvert : agissent sur le texte et les liens du document. */
 import type { MenuDef } from "../toolbar/menus";
 import type { App } from "../appTypes";
-import type { DocFormat } from "../../doc/commands";
+import type { DocFormat } from "../../doc/md/format";
 
 /** Format du document : marques, titres, listes, citation. */
 export function docFormatMenu(app: App): MenuDef {

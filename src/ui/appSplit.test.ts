@@ -63,8 +63,8 @@ describe("vue scindée", () => {
     await openDoc();
     app.toggleSplit();
     const v = app.docEditor()!.view;
-    v.dispatch(v.state.tr.insert(1, v.state.schema.nodes.cellRef.create({ sheet: app.sheets()[0].id, ref: "B2" })));
-    root.querySelector<HTMLElement>(".dk-ref")!.click();
+    v.dispatch({ changes: { from: 0, insert: "{{@Feuille 1!B2}}" } });
+    root.querySelector<HTMLElement>(".dk-ref")!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
     expect(app.selection()).toBe("B2");
     expect(app.activeDocId()).toBeDefined();
   });

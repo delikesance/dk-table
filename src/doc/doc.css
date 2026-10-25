@@ -1,44 +1,39 @@
 /* dk doc: page on the grid background, Hermes type (condensed titles, Inter Tight body, DM Mono for live values). */
 .dk-app__doc { background: var(--c-bg); padding: var(--s-8) var(--s-4); }
-.dk-app__doc .ProseMirror {
-  max-width: 820px; min-height: 100%; margin: 0 auto; box-sizing: border-box; padding: var(--s-10) 56px;
+.dk-app__doc .cm-editor {
+  max-width: 820px; min-height: 100%; margin: 0 auto; box-sizing: border-box;
   background: var(--c-surface); border: 1px solid var(--c-line); color: var(--c-text);
-  font: var(--fw-regular) 18px/1.6 var(--font-ui); outline: none; white-space: pre-wrap; word-wrap: break-word;
+  font: var(--fw-regular) 18px/1.6 var(--font-ui); outline: none;
 }
-.dk-app__doc .ProseMirror:focus-visible { box-shadow: var(--focus-ring); }
-.dk-app__doc .ProseMirror p { margin: 0 0 var(--s-3); }
-.dk-app__doc .ProseMirror h1, .dk-app__doc .ProseMirror h2, .dk-app__doc .ProseMirror h3 {
-  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.05; margin: var(--s-6) 0 var(--s-3);
-}
-.dk-app__doc .ProseMirror h1 { font-size: 56px; font-weight: 300; margin-top: 0; }
-.dk-app__doc .ProseMirror h2 { font-size: 30px; font-weight: var(--fw-medium); color: var(--c-accent); }
-.dk-app__doc .ProseMirror h3 { font-size: 22px; font-weight: var(--fw-medium); }
-.dk-app__doc .ProseMirror blockquote { margin: var(--s-4) 0; padding-left: var(--s-4); border-left: 2px solid var(--c-accent); color: var(--c-text-2); }
-.dk-app__doc .ProseMirror hr { border: 0; border-top: 1px solid var(--c-line-strong); margin: var(--s-6) 0; }
-.dk-app__doc .ProseMirror a { color: var(--c-accent); }
+.dk-app__doc .cm-editor.cm-focused { box-shadow: var(--focus-ring); }
+.dk-app__doc .cm-scroller { font: inherit; overflow: visible; flex: 1; align-items: stretch; }
+.dk-app__doc .cm-content { padding: var(--s-10) 56px; caret-color: var(--c-accent); min-height: 100%; box-sizing: border-box; }
+.dk-app__doc .cm-content:focus-visible { outline: none; box-shadow: none; }
+.dk-app__doc .cm-line { padding: 0; }
+.dk-app__doc .cm-cursor { border-left-color: var(--c-accent); }
+.dk-app__doc .cm-selectionBackground { background: var(--c-accent-soft); }
+/* Live Preview: styles of the Markdown elements (the syntax marks are hidden by decorations away from the cursor). */
+.dk-h { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.05; padding-top: var(--s-4); }
+.dk-h1 { font-size: 56px; font-weight: 300; }
+.dk-h2 { font-size: 30px; font-weight: var(--fw-medium); color: var(--c-accent); }
+.dk-h3 { font-size: 22px; font-weight: var(--fw-medium); }
+.dk-strong { font-weight: 700; }
+.dk-em { font-style: italic; }
+.dk-under { text-decoration: underline; }
+.dk-link { color: var(--c-accent); text-decoration: underline; }
+.dk-code, .dk-codeblock, .dk-chip-src { font-family: var(--font-mono); font-size: 0.9em; background: var(--c-accent-soft); }
+.dk-codeblock { display: block; padding: 0 var(--s-3); }
+.dk-quote { padding-left: var(--s-4); border-left: 2px solid var(--c-accent); color: var(--c-text-2); }
+.dk-bullet { display: inline-block; width: 1.1em; color: var(--c-accent); }
+.dk-rule { border: 0; border-top: 1px solid var(--c-line-strong); margin: var(--s-2) 0; }
+.dk-rule-src { color: var(--c-text-2); font-family: var(--font-mono); }
+.dk-app__doc .cm-tooltip-autocomplete { background: var(--c-surface); border: 1px solid var(--c-accent); border-radius: var(--r-sm); box-shadow: var(--sh-2); font: var(--fw-regular) var(--fs-sm) var(--font-ui); color: var(--c-text); }
+.dk-app__doc .cm-tooltip-autocomplete > ul { font-family: inherit; max-height: 280px; }
+.dk-app__doc .cm-tooltip-autocomplete > ul > li { padding: var(--s-2) var(--s-3); }
+.dk-app__doc .cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
+.dk-app__doc .cm-completionDetail { margin-left: var(--s-3); font: var(--fs-xs) var(--font-mono); opacity: 0.8; font-style: normal; }
 .dk-tab--doc::before { content: ""; display: inline-block; width: 8px; height: 10px; margin-right: 6px; border: 1.5px solid currentColor; border-radius: 1px; }
-/* Live references: chip, error state, hover card, @ list. */
-.dk-ref { font: var(--fw-medium) 0.88em var(--font-mono); background: var(--c-accent-soft); color: var(--c-accent); padding: 1px 6px; border-bottom: 2px solid var(--c-accent); border-radius: var(--r-xs); cursor: pointer; white-space: nowrap; }
-.dk-ref--err { color: var(--c-error); background: var(--c-error-soft); border-bottom: 2px wavy var(--c-error); }
-.dk-ref.ProseMirror-selectednode { outline: 2px solid var(--c-accent); }
-.dk-refcard, .dk-mention { position: fixed; z-index: 60; background: var(--c-surface); border: 1px solid var(--c-accent); border-radius: var(--r-sm); box-shadow: var(--sh-2); font: var(--fw-regular) var(--fs-sm) var(--font-ui); color: var(--c-text); }
-.dk-refcard { width: 320px; }
-.dk-refcard__title { padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--c-line); font: var(--fw-medium) 16px var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-accent); }
-.dk-refcard__title--err { color: var(--c-error); }
-.dk-refcard__row { padding: var(--s-1) var(--s-3); white-space: pre; overflow: hidden; text-overflow: ellipsis; }
-.dk-refcard__mono { font-family: var(--font-mono); }
-.dk-refcard__hint { padding: var(--s-2) var(--s-3); border-top: 1px solid var(--c-line); color: var(--c-text-2); font-size: var(--fs-xs); }
-.dk-mention { width: 380px; }
-.dk-mention ul { list-style: none; margin: 0; padding: 0; }
-.dk-mention__item { display: flex; flex-direction: column; gap: 2px; padding: var(--s-2) var(--s-3); cursor: pointer; }
-.dk-mention__item small { font: var(--fs-xs) var(--font-mono); color: var(--c-text-2); }
-.dk-mention__item--on { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
-.dk-mention__item--on small { color: inherit; opacity: 0.85; }
-/* Calculation chips (=…): same family as the reference chip, field while editing. */
-.dk-calc { font: var(--fw-medium) 0.88em var(--font-mono); background: var(--c-accent-soft); color: var(--c-accent); padding: 1px 6px; border-bottom: 2px solid var(--c-accent); border-radius: var(--r-xs); cursor: pointer; white-space: nowrap; }
-.dk-calc--err { color: var(--c-error); background: var(--c-error-soft); border-bottom: 2px wavy var(--c-error); }
-.dk-calc--edit { cursor: text; padding: 0; background: var(--c-surface); border: 0; outline: 2px solid var(--c-accent); }
-.dk-calc__input, .dk-calc__fmt { font: inherit; color: var(--c-text); background: transparent; border: 0; outline: none; padding: 1px 6px; }
-.dk-calc__fmt { border-left: 1px solid var(--c-line); color: var(--c-text-2); }
+/* Live references and calculations: chips. */
+.dk-ref, .dk-calc { font: var(--fw-medium) 0.88em var(--font-mono); background: var(--c-accent-soft); color: var(--c-accent); padding: 1px 6px; border-bottom: 2px solid var(--c-accent); border-radius: var(--r-xs); cursor: pointer; white-space: nowrap; }
+.dk-ref--err, .dk-calc--err { color: var(--c-error); background: var(--c-error-soft); border-bottom: 2px wavy var(--c-error); }
 .dk-calc .live-chart { vertical-align: middle; }
-.dk-calc.ProseMirror-selectednode { outline: 2px solid var(--c-accent); }

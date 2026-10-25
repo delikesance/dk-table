@@ -2,7 +2,6 @@
 import { exportDocFile } from "../io/docFiles";
 import { showToast } from "./toast/toast";
 import { bookOf } from "./appDocs";
-import type { JNode } from "../doc/exportShared";
 import type { Ctx } from "./appState";
 
 /** Export the open document as `kind`; no-op when no document is open. Failures surface as a toast. */
@@ -10,7 +9,7 @@ export async function exportDoc(c: Ctx, kind: "md" | "html" | "pdf"): Promise<vo
   const d = c.curDoc ? c.docs.get(c.curDoc) : undefined;
   if (!d) return;
   try {
-    const book = bookOf(c), content = d.content as { content?: JNode[] };
+    const book = bookOf(c), content = (await import("../doc/md/toJson")).mdToJson(d.md);
     if (kind === "md") {
       const { toMarkdown } = await import("../doc/exportMd");
       await exportDocFile("md", toMarkdown(content, book));
