@@ -3,7 +3,7 @@ import { openApp, typeInCell, cellText, selectCell, cell } from "./helpers";
 
 /**
  * Shell / sheet tabs: add, rename (double-click and F2), switch, per-sheet data isolation,
- * and selection/focus kept when switching sheets.
+ * and per-sheet selection/focus kept when switching sheets.
  */
 test.beforeEach(async ({ page }) => { await openApp(page); });
 
@@ -66,16 +66,18 @@ test("renaming keeps the data", async ({ page }) => {
   expect(await cellText(page, "A1")).toBe("kept");
 });
 
-test("selection carries over a sheet switch and the grid keeps keyboard focus", async ({ page }) => {
+test("each sheet keeps its own selection and the grid keeps keyboard focus", async ({ page }) => {
   await page.locator(".dk-tab--add").click();
   await selectCell(page, "C3");
   await tab(page, "Feuille 1").click();
-  await expect(cell(page, "C3")).toHaveClass(/dkg-active/);
-  await page.keyboard.type("hi"); // focus is back on the grid: typing opens the editor on C3
+  await expect(cell(page, "A1")).toHaveClass(/dkg-active/); // Feuille 1 never left A1 (PR #31)
+  await expect(cell(page, "C3")).not.toHaveClass(/dkg-active/);
+  await page.keyboard.type("hi"); // focus is back on the grid: typing opens the editor on A1
   await page.keyboard.press("Enter");
-  expect(await cellText(page, "C3")).toBe("hi");
+  expect(await cellText(page, "A1")).toBe("hi");
   await tab(page, "Feuille 2").click();
-  expect(await cellText(page, "C3")).toBe("");
+  await expect(cell(page, "C3")).toHaveClass(/dkg-active/); // its own selection is restored
+  expect(await cellText(page, "A1")).toBe("");
 });
 
 test("ArrowRight/ArrowLeft on a focused tab switch sheets", async ({ page }) => {
