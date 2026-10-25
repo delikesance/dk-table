@@ -19,12 +19,11 @@ export function researchSector(write: (path: string, text: string) => void): Sec
       const out = await runResearch({
         query: ctx.query, budget: ctx.budget, env: ctx.env, cwd: ctx.dir, abort: toController(ctx.signal),
         emit: ctx.emit,
-        log: (message) => ctx.emit({ type: "info", sector: "research", message }),
       });
       write(join(ctx.dir, DOC), out.markdown);
       ctx.emit({
         type: "end", sector: "research", costUsd: out.totalCostUsd, elapsedS: Math.round((Date.now() - t0) / 1000),
-        totalUsd: ctx.budget.spent(), remainingUsd: ctx.budget.remaining(),
+        totalUsd: ctx.budget.spent(), remainingUsd: ctx.budget.left(),
       });
     },
   };

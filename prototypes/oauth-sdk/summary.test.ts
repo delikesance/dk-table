@@ -12,7 +12,7 @@ const state: PhaseState = {
     { name: "correction", status: "pending" },
   ],
   agents: [{ name: "sheet", status: "running", costUsd: 0.2 }],
-  spentUsd: 1, remainingUsd: 9,
+  spentUsd: 1, remainingUsd: 9, eurUsd: 1,
 };
 
 const reply = (text: string, cost = 0.01): QueryFn => () =>
@@ -24,7 +24,7 @@ describe("summarizePhase", () => {
     let opts: Record<string, unknown> = {};
     const q: QueryFn = (a) => { opts = a.options; return reply("  Les agents codent.  ")(a); };
     const s = await summarizePhase(state, { llm: true, query: q, budget });
-    expect(s).toBe("Les agents codent. Dépensé 1,00 $ sur 10,00 $ (reste 9,00 $).");
+    expect(s).toBe("Les agents codent. Dépensé 1,00 € sur 10,00 € (reste 9,00 €).");
     expect(opts).toMatchObject({ model: "haiku", maxTurns: 1, maxBudgetUsd: 0.05, tools: [] });
     expect(budget.spent()).toBeCloseTo(0.01);
     expect(budget.remaining()).toBeCloseTo(10 - 0.01);
@@ -32,7 +32,7 @@ describe("summarizePhase", () => {
 
   it("repli deterministe si query leve", async () => {
     const q: QueryFn = () => { throw new Error("boom"); };
-    expect(await summarizePhase(state, { llm: true, query: q })).toBe("Terminé : recherche. En cours : implémentation. Dépensé 1,00 $ sur 10,00 $ (reste 9,00 $).");
+    expect(await summarizePhase(state, { llm: true, query: q })).toBe("Terminé : recherche. En cours : implémentation. Dépensé 1,00 € sur 10,00 € (reste 9,00 €).");
   });
 
   it("repli si budget epuise (sans appeler query)", async () => {
@@ -56,13 +56,13 @@ describe("summarizePhase", () => {
 
   it("boucle finie: repli 'terminée', chiffres deterministes, prompt sans montants a citer", async () => {
     const done: PhaseState = { ...state, phases: ["recherche", "design"].map((name) => ({ name, status: "ok" as const })),
-      spentUsd: 3.06, remainingUsd: 18.54 };
+      spentUsd: 3.06, remainingUsd: 18.54, eurUsd: 1.08 };
     const fb = await summarizePhase(done, { llm: true, query: () => { throw new Error("x"); } });
-    expect(fb).toBe("Boucle terminée : recherche, design. Dépensé 3,06 $ sur 21,60 $ (reste 18,54 $).");
+    expect(fb).toBe("Boucle terminée : recherche, design. Dépensé 2,83 € sur 20,00 € (reste 17,17 €).");
     let prompt = "";
     const q: QueryFn = (a) => { prompt = a.prompt as string; return reply("Tout est fini.")(a); };
     const s = await summarizePhase(done, { llm: true, query: q });
-    expect(s).toBe("Tout est fini. Dépensé 3,06 $ sur 21,60 $ (reste 18,54 $).");
+    expect(s).toBe("Tout est fini. Dépensé 2,83 € sur 20,00 € (reste 17,17 €).");
     expect(prompt).toContain('"terminee":true');
     expect(prompt).toMatch(/jamais.*montant/i);
     expect(prompt).not.toContain("remainingUsd");
