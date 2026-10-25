@@ -7,6 +7,7 @@ import { ASSETS } from "./assets";
 import { isFontRoute, readFont } from "./fontRoute";
 import type { DesignFile } from "./designs";
 import { injectRuntime } from "./designRuntime";
+import { handleLogs, type LogSource } from "./logRoutes";
 import type { MoodCard } from "./moodboard";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -47,8 +48,9 @@ export interface Deps {
   moodboardHtml?: string | (() => string | undefined);
   /** Designs du secteur design (absent: /designs => 404). `steps` = evenements du secteur design. */
   designs?: { list: () => Promise<DesignFile[]>; read: (name: string) => Promise<string | null>; steps: () => BoucleEvent[] };
-  /** Page de suivi du design (relue a chaque requete; absente: 404). */
   designHtml?: string | (() => string | undefined);
+  onEmit?: (e?: BoucleEvent) => void; /** Appele a chaque evenement (invalide les caches derives). */
+  logs?: LogSource; /** Journaux techniques: GET /logs et /diagnostic (absent: 404). */
 }
 
 /** Canevas du design: scripts et animations en ligne permis, aucun reseau ni sortie du cadre. */
@@ -97,10 +99,15 @@ export function createServer(deps: Deps): Server {
   const history: BoucleEvent[] = [];
   const clients = new Set<ServerResponse>();
   let ctl: AbortController | null = null;
+  let run = 0; // numero du run (id SSE): un id d'un autre run ne permet pas la reprise
 
+  /** Trame SSE: `id` = `<run>-<rang>` pour que le navigateur reprenne apres une coupure (Last-Event-ID). */
+  const frame = (e: BoucleEvent, i: number): string => `id: ${run}-${i}\ndata: ${JSON.stringify(e)}\n\n`;
   const emit = (e: BoucleEvent): void => {
+    e.ts ??= Date.now();
     history.push(e);
-    for (const c of clients) c.write(`data: ${JSON.stringify(e)}\n\n`);
+    deps.onEmit?.(e);
+    for (const c of clients) c.write(frame(e, history.length - 1));
   };
 
   const go = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -110,7 +117,7 @@ export function createServer(deps: Deps): Server {
     catch (err) { return send(res, 400, { error: (err as Error).message }); }
     if (ctl) return send(res, 409, { error: "déjà en cours" });
     const mine = (ctl = new AbortController());
-    history.length = 0;
+    history.length = 0; run++;
     send(res, 200, { ok: true });
     let complete: boolean | undefined, reason: string | undefined;
     deps.runPipeline({ budgetEur, onEvent: emit, signal: mine.signal })
@@ -121,6 +128,7 @@ export function createServer(deps: Deps): Server {
 
   return httpServer((req, res) => {
     if (!isLoopback(req)) { res.writeHead(403).end("forbidden"); return; }
+    if (deps.logs && handleLogs(req, res, deps.logs)) return;
     const route = `${req.method} ${(req.url ?? "").split("?")[0]}`;
     if (route === "GET /") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(typeof deps.panelHtml === "function" ? deps.panelHtml() : deps.panelHtml);
@@ -170,7 +178,9 @@ export function createServer(deps: Deps): Server {
       send(res, 200, { ok: true, running: ctl !== null });
     } else if (route === "GET /events") {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
-      for (const e of history) res.write(`data: ${JSON.stringify(e)}\n\n`);
+      const last = /^(\d+)-(\d+)$/.exec(String(req.headers["last-event-id"] ?? ""));
+      const from = last && Number(last[1]) === run ? Number(last[2]) + 1 : 0; // meme run: seulement les manquants
+      history.forEach((e, i) => { if (i >= from) res.write(frame(e, i)); });
       res.flushHeaders(); // sans historique, l'en-tête ne partirait pas: EventSource resterait en « connexion »
       clients.add(res);
       const beat = setInterval(() => res.write(": ping\n\n"), 15000); // garde la liaison ouverte

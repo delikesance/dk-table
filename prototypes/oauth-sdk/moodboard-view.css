@@ -46,3 +46,6 @@
 #drawer .missing { color: var(--st-block); font-weight: 600; }
 .loaderr { margin: var(--s3) var(--s4) 0; padding: var(--s2) var(--s3); border: 1px solid var(--fail); border-radius: var(--r-lg); background: var(--warn-bg); }
 .loaderr button { font: inherit; margin-left: var(--s2); cursor: pointer; }
+.fresh { margin: 0; color: var(--mut); font: .8rem var(--f-mono); }
+#live.up { color: var(--st-done); } #live.down { color: var(--st-proof); }
+.tag.agent { color: var(--acc); }
