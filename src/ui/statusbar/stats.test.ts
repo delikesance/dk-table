@@ -31,14 +31,15 @@ describe("statItems", () => {
 });
 
 describe("createStatusBar", () => {
-  it("renders items and hides when empty", () => {
+  it("renders items; the bar stays visible and stats disappear below 2 cells", () => {
     const sb = createStatusBar();
     sb.update(2, [4, 6]);
     expect(sb.el.hidden).toBe(false);
     expect(sb.el.textContent).toContain("Somme");
     expect(sb.el.querySelector('[data-stat="Somme"]')!.textContent).toContain("10");
     sb.update(1, [4]);
-    expect(sb.el.hidden).toBe(true);
+    expect(sb.el.hidden).toBe(false);
+    expect(sb.el.querySelector('[data-stat]')).toBeNull();
   });
   it("menu toggles entries and persists them", () => {
     localStorage.clear();

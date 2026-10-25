@@ -285,6 +285,7 @@ Classement par gravité (P0 = pire)
 
 - [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion, largeur fixe, format texte par colonne), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
 - [x] plafonds-google-sheets : toast pour cellule > 50 000 car., ligne > MAX_ROWS, import CSV volumineux/tronqué, `ui/limits.ts`, `docs/plafonds.md`
+- [x] classeur-sans-plafond-avec-limites-visibles : plus de plafond de lignes (`engine/rows.ts`, la feuille grandit par blocs de 1000), indicateur de poids/niveau dans la barre d'état (`engine/weight.ts`, `ui/statusbar/weightBadge.ts`); rapport `docs/rapports/classeur-sans-plafond-avec-limites-visibles.md`, `docs/plafonds.md`. Reste : capture du niveau « lourd » (exige 200 000 cellules en e2e)
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`

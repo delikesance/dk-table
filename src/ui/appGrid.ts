@@ -3,6 +3,7 @@ import { getDisplay, getRaw, getValue, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
 import type { GridView } from "./grid/types";
 import { MAX_ROWS } from "./grid/virtual";
+import { lastUsedRow, rowsNeeded } from "../engine/rows";
 import { checkCells } from "./limits";
 import { pushUndo } from "./model";
 import { liveCell, paintCell } from "./cellview";
@@ -65,13 +66,29 @@ export function refreshCf(c: Ctx, repaint = true): void {
   }
 }
 
+/** Grow the sheet by blocks when the data reaches its free-row reserve (no row cap); rebuilds the grid only when it changes. */
+function growRows(c: Ctx): void {
+  const s = c.cur.sheet;
+  const rows = rowsNeeded(lastUsedRow(Object.keys(s.cells)), s.rows);
+  if (rows === s.rows) return;
+  s.rows = rows;
+  buildGrid(c);
+}
+
+/** Refresh the workbook weight shown in the status bar (O(cells): called on data changes and grid builds, not on selection). */
+export function weigh(c: Ctx): void {
+  c.status.weigh(Object.values(c.cur.sheet.cells).map((x) => x.raw));
+}
+
 /** After a data change: redraw all cells (dependents), conditional formats, and mark modified. */
 export function touch(c: Ctx): void {
+  growRows(c);
   setTitle(c, true);
   c.grid.refresh();
   refreshCf(c);
   syncInfo(c);
   markInvalid(c);
+  weigh(c);
   c.docEd?.refresh();
 }
 
@@ -82,12 +99,13 @@ export function buildGrid(c: Ctx): void {
   if (prev && old) saved.set(prev, { top: old.scrollTop, left: old.scrollLeft, sel: c.grid.getSelection() });
   c.grid?.destroy();
   c.gridHost.replaceChildren();
-  c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
+  c.cur.sheet.rows = rowsNeeded(lastUsedRow(Object.keys(c.cur.sheet.cells)), Math.max(c.cur.sheet.rows, MAX_ROWS));
   const view = viewOf(c.cur);
   view.freeze = c.cur.freeze;
   view.widths = c.cur.widths;
   refreshCf(c, false);
   markInvalid(c); // before the grid exists: only fills `c.invalid`, cells are marked as they are created
+  weigh(c);
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
