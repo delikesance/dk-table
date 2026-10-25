@@ -27,6 +27,7 @@ import type { QueryFn } from "./research";
 import { createServer, type BoucleEvent } from "./server";
 import { logEvent, trackBoard, wrapQuery, wrapRun } from "./instrument";
 import { createRunLogs } from "./wiringLogs";
+import { createFileStateStore } from "./runState";
 
 /** Dependances reelles (ou factices en test). */
 export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
@@ -71,7 +72,10 @@ export function buildBoucleServer(raw: WiringOpts): Server {
     query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
   });
   const tracked = (b: Promise<BoardCard[]>) => b.then((cs) => { trackBoard(rl.cur(), seen, cs); return cs; });
+  // Etat persistant du run (reprise apres crash); un fichier corrompu est journalise et ignore.
+  const state = createFileStateStore(join(o.cwd, ".boucle", "state.json"), { onWarn: (m) => rl.cur().warn("etat", m) });
   const pipeline = createPipeline({
+    state,
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
     unfinished: async () => (await boardOf("merged", new Set())).filter((c) => c.state !== "termine").length,
     board: (a) => { activeIds = new Set(a ?? []); return tracked(boardOf("merged", activeIds)); },

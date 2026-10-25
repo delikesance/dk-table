@@ -11,6 +11,7 @@
 import { allDone, type BoardCard } from "./cards";
 import { runBatch, type AgentResult } from "./parallel";
 import { reportRules } from "./reportRules";
+import type { PlannerState, StateStore } from "./runState";
 import type { BoucleEvent } from "./server";
 
 /** Raison de fin de boucle. */
@@ -59,6 +60,15 @@ export function createPlanner(o: PlannerOpts = {}) {
     },
     /** Tentative du lot: plus gros nombre d'echecs d'une de ses cartes (route vers un modele plus gros). */
     attempt: (ids: string[]): number => Math.max(0, ...ids.map((id) => fails.get(id) ?? 0)),
+    /** Etat serialisable (persiste dans .boucle/state.json). */
+    snapshot: (): PlannerState => ({ fails: Object.fromEntries(fails), seen: Object.fromEntries(seen), idle, rounds }),
+    /** Reprend un etat persiste (run interrompu). */
+    restore(s: PlannerState) {
+      fails.clear(); seen.clear();
+      for (const [k, v] of Object.entries(s.fails)) fails.set(k, v);
+      for (const [k, v] of Object.entries(s.seen)) seen.set(k, v);
+      idle = s.idle; rounds = s.rounds;
+    },
     /** Vrai apres `patience` tournees de suite sans aucune avancee. */
     stuck: () => idle >= patience,
   };
@@ -90,6 +100,10 @@ export interface RoundsCtx {
   halt: () => "abort" | "budget" | null;
   /** Cartes restantes apres chaque lecture du tableau. */
   progress: (remaining: number) => void;
+  /** Etat persistant (absent: rien n'est ecrit). Un run interrompu (`finished` faux) reprend planificateur et `avoid`. */
+  state?: StateStore;
+  /** Depense du run (USD), ecrite avec l'etat. */
+  spent?: () => number;
 }
 
 /** Tache de correction ciblee, ecrite par le code a partir des preuves manquantes (aucun modele ne « verifie »). */
@@ -105,6 +119,11 @@ function correctionTask(merged: boolean, bad: Pick<BoardCard, "id" | "missing">[
 export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reason: StopReason; cards: BoardCard[] }> {
   const planner = createPlanner();
   const avoid = new Set<string>(); // cartes dont la fusion a deja fait un conflit: jamais en parallele
+  const saved = c.state?.load();
+  if (saved && !saved.finished) { planner.restore(saved.planner); saved.avoid.forEach((a) => avoid.add(a)); }
+  const persist = (finished = false) => c.state?.update((s) => {
+    s.finished = finished; s.planner = planner.snapshot(); s.avoid = [...avoid]; s.budget = { spentUsd: c.spent?.() ?? 0, reservedUsd: 0 };
+  });
   const left = (cs: BoardCard[]) => cs.filter((x) => x.state !== "termine");
   let cards = await c.board();
   c.progress(left(cards).length);
@@ -130,8 +149,10 @@ export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reas
     } else if (merged) c.emit({ type: "info", round, message: "correction ignoree : lot valide par le code (aucun appel modele)" });
     c.progress(left(cards).length);
     planner.observe(cards);
+    persist();
     const anomalies = cards.flatMap((x) => (x.anomalies ?? []).map((a) => `${x.id} : ${a}`));
     if (anomalies.length) c.emit({ type: "info", round, message: `anomalies (${anomalies.length}) : ${anomalies.slice(0, 5).join(" | ")}` });
   }
+  persist(true);
   return { complete: allDone(cards), reason, cards };
 }
