@@ -20,16 +20,31 @@
   function frames() { return Array.prototype.slice.call($("viewer").querySelectorAll("iframe")); }
   function sendAll() { frames().forEach(function (f) { if (f.contentWindow) { post(f.contentWindow, { type: "theme", value: S.theme }); post(f.contentWindow, { type: "pause", value: S.paused }); } }); }
 
+  function usd(n) { return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $"; }
+  /** Libelle lisible + icone (texte, jamais la couleur seule) selon le type d'evenement. */
+  function describe(s, m) {
+    if (s.type === "start") return { ico: "▶", label: "Démarrage du design" };
+    if (s.type === "file") return { ico: "▤", label: "Fichier écrit : " + m };
+    if (s.type === "error") return { ico: "✕", label: "Erreur : " + m };
+    if (s.type === "end") return s.ok === false ? { ico: "✕", label: "Échec" + (s.costUsd != null ? " · " + usd(s.costUsd) : "") } : { ico: "✓", label: "Terminé" + (s.costUsd != null ? " · " + usd(s.costUsd) : "") };
+    if (/^resume\s*:/i.test(m)) return { ico: "❝", label: "Résumé", quote: m.replace(/^resume\s*:\s*/i, "") };
+    if (/non fusionn/i.test(m)) return { ico: "✕", label: "Non fusionné" };
+    if (/fusionn/i.test(m)) return { ico: "⑂", label: "Fusionné dans developpement" };
+    return { ico: "•", label: m || s.type };
+  }
+
   /** Une etape de la timeline. */
   function stepItem(s) {
-    var li = el("li", "step" + (s.type === "error" || (s.type === "end" && s.ok === false) ? " fail" : ""));
-    var f = s.type === "file" ? byName(s.message) : null;
-    var label = s.type === "start" ? "Début" : s.type === "file" ? "Fichier " + (s.message || "")
-      : s.type === "end" ? (s.ok === false ? "Fin : échec" : "Fin : ok") : s.type === "error" ? "Erreur " + (s.message || "") : (s.message || s.type);
-    li.appendChild(el("div", "", label));
-    if (s.type === "file") { var st = f ? f.state : "ecrit"; li.lastChild.appendChild(el("span", "badge" + (st === "mis-a-jour" ? " upd" : ""), STATES[st] || st)); }
-    if (f) li.appendChild(el("div", "when", fmt(f.mtimeMs)));
-    if (s.costUsd != null) li.appendChild(el("div", "when", "Coût " + s.costUsd.toFixed(2) + " $"));
+    var fail = s.type === "error" || (s.type === "end" && s.ok === false);
+    var li = el("li", "step" + (fail ? " fail" : ""));
+    var f = s.type === "file" ? byName(s.message) : null, kind = describe(s, s.message || "");
+    var head = el("div", "");
+    head.appendChild(el("span", "ico", kind.ico)); head.appendChild(document.createTextNode(kind.label));
+    if (s.type === "file") { var st = f ? f.state : "ecrit"; head.appendChild(el("span", "badge" + (st === "mis-a-jour" ? " upd" : ""), STATES[st] || st)); }
+    li.appendChild(head);
+    if (kind.quote) li.appendChild(el("p", "summary-card", kind.quote));
+    var ts = s.ts != null ? s.ts : f ? f.mtimeMs : null;
+    if (ts != null) li.appendChild(el("div", "when", fmt(ts)));
     return li;
   }
 
@@ -94,7 +109,7 @@
     designs().reverse().forEach(function (f) {
       var b = el("button", "thumb" + (f.name === cur ? " sel" : ""), f.name + (f.state === "mis-a-jour" ? " (mis à jour)" : ""));
       b.type = "button"; b.setAttribute("role", "listitem");
-      if (f.name === cur) b.setAttribute("aria-current", "true");
+      if (f.name === cur) { b.setAttribute("aria-current", "true"); b.appendChild(el("span", "badge-sel", "Affiché")); }
       b.onclick = function () { S.picked = f.name; render(); };
       th.appendChild(b);
     });

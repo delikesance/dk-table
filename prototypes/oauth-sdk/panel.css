@@ -1,5 +1,5 @@
 /* Feuille commune de la boucle : jetons (clair/sombre, contraste AA), nav, panneau. */
-:root { --bg:#f2f2f2; --card:#fff; --fg:#14142b; --mut:#4a4a60; --line:#c4c4d6; --acc:#0000f2; --on-acc:#fff;
+:root { color-scheme: light dark; --bg:#f2f2f2; --card:#fff; --fg:#14142b; --mut:#4a4a60; --line:#c4c4d6; --acc:#0000f2; --on-acc:#fff;
   --soft:#e4e4fb; --ok:#0f6b2c; --fail:#b3261e; --nav:#0000f2; --nav-fg:#fff; --nav-on:#fff; --nav-on-fg:#0000f2;
   --f-disp:"Sofia Sans Extra Condensed","Arial Narrow",system-ui,sans-serif; --f-mono:"DM Mono",ui-monospace,monospace;
   --warn-bg:#fdebea; --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; }

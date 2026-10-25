@@ -7,3 +7,6 @@ src-tauri/gen
 test-results
 playwright-report
 .env
+tools/autoloop/state.json
+tools/autoloop/runs.jsonl
+tools/autoloop/STOP

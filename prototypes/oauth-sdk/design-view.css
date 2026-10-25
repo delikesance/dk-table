@@ -23,5 +23,10 @@ body.dz { height: 100vh; display: grid; grid-template-columns: 280px 1fr; grid-t
 #errors { margin: var(--s2) 0 0; padding-left: var(--s5); max-height: 8rem; overflow: auto; font: 500 .85rem var(--f-mono); color: var(--fail); }
 #thumbs { display: flex; gap: var(--s2); overflow-x: auto; }
 .thumb { flex: none; max-width: 14rem; padding: var(--s1) var(--s3); font: 500 .85rem var(--f-mono); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.thumb.sel { outline: 2px solid var(--acc); outline-offset: 1px; }
-.thumb.sel::before { content: "\25B6 "; }
+.thumb { position: relative; }
+.thumb.sel { outline: 1px solid var(--acc); outline-offset: 1px; padding-right: 5.5rem; }
+.badge-sel { position: absolute; top: 50%; right: var(--s2); transform: translateY(-50%); padding: 0 var(--s2); border: 1px solid var(--acc); border-radius: 3px; background: var(--card); color: var(--fg); font: 600 .75rem var(--f-mono); }
+.lbl { font-weight: 600; }
+.ico { display: inline-block; width: 1.4em; font-weight: 700; }
+.summary-card { margin: var(--s1) 0 0; padding: var(--s2) var(--s3); border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+.summary-card::before { content: "\201C "; } .summary-card::after { content: " \201D"; }
