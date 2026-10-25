@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 /** Tests de la page moodboard : colonnes par etat, recherche/filtre, rapport en direct dans le tiroir, progression. */
+import { flush } from "./testUtil";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -26,11 +27,11 @@ async function load(cards: unknown[], reports: Record<string, unknown> = {}) {
   g.EventSource = class { addEventListener(_t: string, f: (e: { data: string }) => void) { handlers.push(f); } };
   document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
   new Function(js)();
-  await new Promise((r) => setTimeout(r, 10));
+  await flush();
   return { hits, emit: (o: object) => handlers.forEach((f) => f({ data: JSON.stringify(o) })) };
 }
 const n = (id: string) => document.querySelectorAll(`#${id} .card`).length;
-const tick = () => new Promise((r) => setTimeout(r, 10));
+const tick = (_ms?: number) => flush();
 
 describe("moodboard: fichiers", () => {
   it("<= 201 lignes chacun, nav commune, sombre, ids stables", () => {
@@ -132,13 +133,13 @@ describe("moodboard: fin de boucle", () => {
     g.EventSource = class { addEventListener() {} };
     document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
     new Function(js)();
-    await new Promise((r) => setTimeout(r, 10));
+    await flush();
     const err = document.getElementById("loaderr")!;
     expect(err.textContent).toMatch(/Impossible de charger.*Réessayer/s);
     expect(document.querySelectorAll(".empty").length).toBe(0);
     g.fetch = async () => ({ ok: true, json: async () => CARDS });
     (err.querySelector("button") as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 10));
+    await flush();
     expect(document.getElementById("loaderr")).toBeNull();
     expect(document.querySelectorAll(".card").length).toBe(6);
   });

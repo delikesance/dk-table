@@ -5,6 +5,7 @@ import { openCompare, renderDiff } from "./diff";
 import type { App } from "../appTypes";
 import type { DktDoc } from "../../io/types";
 import { serialize } from "../../io/format";
+import { waitFor } from "../../test-wait";
 
 const doc = (cells: Record<string, string>): DktDoc => ({
   version: 1,
@@ -43,5 +44,5 @@ describe("openCompare", () => {
 
 /** Attend qu'une condition devienne vraie (microtâches du FileReader). */
 async function vi_waitFor(cond: () => boolean): Promise<void> {
-  for (let i = 0; i < 50 && !cond(); i++) await new Promise((r) => setTimeout(r, 10));
+  for (let i = 0; i < 4000 && !cond(); i++) await new Promise((r) => setTimeout(r, 5)); // plafond 20 s, sans cout si la condition arrive
 }

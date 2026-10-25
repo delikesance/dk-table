@@ -6,15 +6,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGitFlow, type Run } from "./git";
+import { gitEnv } from "./testUtil";
 
 // vrais processus git: des dizaines de ms sous Linux mais des secondes sous Windows quand toute la suite tourne en parallele
 vi.setConfig({ testTimeout: 60_000 });
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
-const g = (cwd: string, ...a: string[]) => execFileSync("git", ["-c", "user.email=a@b", "-c", "user.name=a", "-c", "gc.auto=0", "-c", "core.fsync=none", ...a], { cwd, encoding: "utf8" }).trim();
-// identite par l'environnement: le pull qui cree un commit de fusion echoue sans identite (CI, machine neuve)
-const ident = { GIT_AUTHOR_NAME: "a", GIT_AUTHOR_EMAIL: "a@b", GIT_COMMITTER_NAME: "a", GIT_COMMITTER_EMAIL: "a@b" };
-const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env: { ...process.env, ...ident } }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
+// git hermetique (testUtil.gitEnv): identite par l'environnement (le pull qui fusionne echoue sans), config machine ignoree
+const env = gitEnv();
+const g = (cwd: string, ...a: string[]) => execFileSync("git", a, { cwd, encoding: "utf8", env }).trim();
+const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 const commit = (cwd: string, file: string, text: string) => { writeFileSync(join(cwd, file), text); g(cwd, "add", "-A"); g(cwd, "commit", "-qm", `c ${file}`); };
 
 /** Depot distant bare + deux clones sur developpement. */

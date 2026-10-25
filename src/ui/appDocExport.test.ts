@@ -2,6 +2,7 @@
 /** Export du document ouvert : Markdown / HTML via la boîte d'enregistrement, PDF via l'impression. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "./app";
+import { waitFor } from "../test-wait";
 
 let app: App;
 let written: Record<string, string>;
@@ -21,7 +22,7 @@ beforeEach(() => {
 
 async function docWithText(): Promise<void> {
   app.addDoc();
-  await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+  await waitFor(() => expect(app.docEditor()).toBeDefined());
   const v = app.docEditor()!.view;
   v.dispatch({ changes: { from: 0, insert: "Bonjour {{@Feuille 1!B2}}" } });
 }
