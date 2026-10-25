@@ -9,7 +9,7 @@
  */
 
 /** Deepest outline level (levels 0 to MAX_LEVEL). */
-export const MAX_LEVEL = 3;
+export const MAX_LEVEL = 8;
 
 /** A collapsed group: its summary row and depth (rows of level >= depth above it are hidden). */
 export interface Fold {
