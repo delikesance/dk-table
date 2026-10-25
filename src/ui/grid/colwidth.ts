@@ -31,6 +31,8 @@ export interface ResizeHooks {
   columnTexts(col: number): string[];
   /** Remplace l'ajustement intégré (estimation) par celui de l'application. */
   fit?(col: number): void;
+  /** Appelé une fois au début d'un glissement qui change une largeur (avant la modification). */
+  begin?(): void;
   /** Appliquer la nouvelle template de colonnes. */
   apply(): void;
 }
@@ -45,7 +47,9 @@ export function addResizers(heads: HTMLElement[], h: ResizeHooks): void {
       e.preventDefault();
       const x0 = e.clientX;
       const w0 = h.view.widths[c] || head.getBoundingClientRect().width || DEFAULT_W;
+      let started = false;
       const move = (m: MouseEvent): void => {
+        if (!started) { started = true; h.begin?.(); }
         h.view.widths[c] = clampWidth(w0 + m.clientX - x0);
         h.apply();
       };
@@ -59,6 +63,7 @@ export function addResizers(heads: HTMLElement[], h: ResizeHooks): void {
     grip.addEventListener("dblclick", (e) => {
       e.stopPropagation();
       if (h.fit) { h.fit(c); return; }
+      h.begin?.();
       h.view.widths[c] = fitWidth(h.columnTexts(c));
       h.apply();
     });
