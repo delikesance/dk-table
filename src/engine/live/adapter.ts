@@ -7,8 +7,8 @@
 import { registerFunction } from "../functions";
 import { liveFunctions, trendInfo, type LiveResult } from "./index";
 
-/** Matches a whole-cell live formula: =NAME(A1:A5) or =NAME(A1). */
-const LIVE_RE = /^=\s*(SPARKLINE|BAR|TREND)\s*\(\s*([A-Za-z]+\d+(?::[A-Za-z]+\d+)?)\s*\)\s*$/i;
+/** Matches a whole-cell live formula: =NAME(A1:A5), =NAME(A1) or an open range (B2:B, B:B, 2:2); `$` allowed. */
+const LIVE_RE = /^=\s*(SPARKLINE|BAR|TREND)\s*\(\s*(\$?[A-Za-z]*\$?\d*(?::\$?[A-Za-z]*\$?\d*)?)\s*\)\s*$/i;
 
 /** Register the live functions in the engine (text fallback as cell value). */
 export function registerLive(): void {

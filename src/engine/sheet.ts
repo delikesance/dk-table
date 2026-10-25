@@ -46,12 +46,12 @@ export function getDisplay(sheet: Sheet, key: string): string {
 }
 
 /**
- * Numeric values of a range like "A1:A5", row-major; non-numeric and empty
+ * Numeric values of a range like "A1:A5" or an open one ("B2:B", "A:C", "2:5"), row-major; non-numeric and empty
  * cells are skipped. Invalid/out-of-bounds range or errors yield [].
  */
 export function getRangeValues(sheet: Sheet, range: string): number[] {
   const [a, b = a] = range.toUpperCase().split(":");
-  const keys = expandRange(sheet, a, b) ?? [];
+  const keys = expandRange(sheet, a, b, true) ?? [];
   const out: number[] = [];
   for (const k of keys) {
     const v = getValue(sheet, k);

@@ -142,6 +142,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Remplace l'implémentation wasmoon (boîte textarea) arrivée en parallèle sur master : même besoin, éditeur et persistance en plus.
 - Une exécution = un pas d'annulation (`app.batch`), aucun pas si rien n'a changé. Macros persistées dans `.dktable` (`macros?: {id,name,code}[]`, format v1 rétrocompatible).
 
+## Decisions (plages ouvertes)
+
+- `engine/openrange.ts`: plages façon Sheets `B2:B` (de B2 à la dernière ligne utilisée), `B:B` / `A:C` (colonnes entières), `2:5` (lignes entières), aussi avec `Feuille!`. Le tokenizer les lit comme un jeton unique (sans `$`), nœuds `range`/`xrange` avec extrémités `"B2"`, `"B"` ou `"2"`; `rectOf(sheet, a, b, clip)` et `containsKey` en sont l'unique interprétation (`expandRange(..., clip)` s'appuie dessus).
+- Évaluation (`clip`) : le côté ouvert s'arrête à la dernière cellule non vide des colonnes (ou lignes) concernées, au moins la ligne de départ. Dépendances (`rewire`, `xprec`) : toute la feuille, donc une cellule ajoutée sous la plage recalcule la formule. Formes refusées (`B:B2`, `B:3`) : `#VALUE!`/`#REF!`.
+- `refs.ts` (recopie, `$` respectés, `B:B` ne bouge qu'en colonnes, `2:5` qu'en lignes) et `structure.ts` (extrémité ouverte immobile, `B:B` insensible aux lignes) traitent ces plages en une seule passe avec les références ordinaires. `liveResult` et `doc/calcSrc.liveCall` acceptent `=SPARKLINE(B2:B)`.
+
 ## Research
 
 - `docs/recherche-tableur.md`: synthesis of spreadsheet features (with priorities) and UX click-reduction rules.
