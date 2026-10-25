@@ -16,11 +16,11 @@ Visible : oui
 - Indicateur de mode dans la barre d'état : `src/ui/statusbar/calcBadge.ts` (masqué en automatique, « Manuel · F9 », « Itératif », infobulle des réglages), branché dans `statusbar.ts`, style dans `statusbar.css`. Test écrit en rouge d'abord : `src/ui/statusbar/calcBadge.test.ts`.
 
 - Persistance : champ optionnel `calc` du `.dktable` (`src/io/calcFormat.ts` `calcToDoc`/`checkCalc`, `format.ts`, `types.ts`), écrit/lu via `calcField`/`loadCalc` (`src/ui/appCalc.ts`, branchés dans `appApi.ts`). Tests rouges d'abord : `src/io/calcFormat.test.ts`, `src/ui/appCalc.test.ts` (aller-retour, fichier itératif ouvert calcule son cycle).
+- Cycles inter-feuilles en itératif : `workbook.ts` (`propagateFrom`, `converge`) saute le retour du cycle, puis répète la propagation depuis les formules inter-feuilles jusqu'à écart < seuil ou nombre max d'itérations. Test rouge d'abord : `src/engine/workbook-cycle.test.ts`. `gap` exporté de `recalc.ts`.
 - Documentation : `docs/mode-de-calcul.md`.
 
 ## Non fait
 
-- Références circulaires inter-feuilles : restent `#CYCLE!` même en mode itératif (`workbook.ts`).
 - Lint : aucun script dédié dans le projet, seuls `tsc --noEmit` et vitest ont été lancés.
 
 ## Captures
@@ -56,7 +56,7 @@ Itératif, convergence (sombre) :
 - Indicateur de barre d'état : masqué en automatique (rien d'affiché par défaut) ; placé juste après le poids du classeur, avant les statistiques.
 - Le design `docs/design/2026-10-25-200330.html` traite de l'analyse what-if (valeur cible, scénarios, espion), pas du mode de calcul : non utilisé comme base.
 - Le design `docs/design/2026-10-25-204816.html` (valeur cible et évaluation pas à pas) ne porte pas sur le mode de calcul : non utilisé comme base, même raison que ci-dessus.
-- Critère « référence circulaire itérative » : couvert intra-feuille. Le cas inter-feuilles reste dans « Non fait » (la propagation DFS de `workbook.ts` ne sait pas encore itérer).
+- Critère « référence circulaire itérative » : couvert intra-feuille et inter-feuilles. Hors itératif, les cycles inter-feuilles restent `#CYCLE!` (inchangé).
 - Mode manuel : l'édition recalcule la cellule éditée seule ; ses dépendants (y compris sur d'autres feuilles) attendent F9. Les changements de mode décimal ou de fonctions nommées recalculent toujours tout (`recalcAll`, inchangé).
 - Itératif : les cellules restées en cycle (et leurs dépendants) sont recalculées dans un ordre fixe, à partir de 0 si pas de valeur ou valeur d'erreur, jusqu'à écart max < seuil ou nombre max d'itérations ; sans convergence, les dernières valeurs sont gardées (sans erreur, comme Excel).
 - Réglages par défaut : 100 itérations, écart 0,001 (valeurs de la carte). Valeurs saisies normalisées (entier >= 1, écart > 0).
@@ -65,7 +65,7 @@ Itératif, convergence (sombre) :
 - Suite complète `npx vitest run` : 2466 tests verts ; 4 échecs dans `prototypes/oauth-sdk/orphans.test.ts` (balayage de worktrees git, sans lien avec le calcul), non vérifiés contre master.
 
 ## Preuves
-- Tests : ok (354 tests, tests lies aux fichiers modifies)
+- Tests : ok (924 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
 - Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":354,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"count":924,"scope":"related"},"tsc":{"ok":true}} -->

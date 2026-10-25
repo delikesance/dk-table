@@ -134,7 +134,7 @@ function solve(sheet: Sheet, st: State, affected: Set<string>, fixedKey?: string
 }
 
 /** Écart entre deux valeurs : |b - a| pour les nombres, 0 si identiques, sinon infini. */
-function gap(a: Value | undefined, b: Value): number {
+export function gap(a: Value | undefined, b: Value | undefined): number {
   if (typeof a === "number" && typeof b === "number") return Math.abs(b - a);
   return JSON.stringify(a) === JSON.stringify(b) ? 0 : Infinity;
 }
