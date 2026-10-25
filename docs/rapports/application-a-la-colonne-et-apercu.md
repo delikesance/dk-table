@@ -1,4 +1,5 @@
 # Rapport : Application à la colonne et aperçu
+Statut : bloque
 Visible : oui
 
 ## Fait
@@ -30,3 +31,9 @@ Aucune. La fonctionnalité n'existe pas dans l'application, il n'y a rien à cap
 ## Bloque
 
 - Carte marquée déjà réalisée à tort. Pour la traiter, il faut décider si elle doit être réellement construite (moteur d'inférence de motif + aperçu grisé, TDD) ou si la marque du lot doit être corrigée. Décision utilisateur ou boucle requise.
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
