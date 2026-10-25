@@ -19,6 +19,7 @@ import { openMerge } from "./dialogs/merge";
 import { openHistory } from "./dialogs/history";
 import { openDepMap } from "./dialogs/depmap";
 import { openAudit } from "./dialogs/audit";
+import { openGoToSpecial } from "./dialogs/goToSpecial";
 import { toggleKinds } from "./grid/kinds";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
@@ -40,6 +41,7 @@ function shortcuts(app: App): Record<string, (e: KeyboardEvent) => void> {
     j: () => toggleTools(),
     "\\": () => app.toggleSplit(),
     e: () => { if (app.activeDocId()) openExportDoc(app); },
+    g: () => openGoToSpecial(app),
     ",": () => openSettings(),
     "+": () => app.insertRows(),
     "-": () => app.deleteRows(),
@@ -134,6 +136,7 @@ export function installCommands(app: App): void {
   run("view.split", "Vue scindée feuille / document", () => app.toggleSplit(), "Ctrl+\\", ["document", "côte à côte", "split"]);
   run("doc.new", "Nouveau document", () => void app.addDoc(), undefined, ["dk doc", "texte", "rapport", "word"]);
   run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
+  run("edit.special", "Atteindre spécial…", () => openGoToSpecial(app), "Ctrl+G", ["go to special", "vides", "formules", "constantes", "sélectionner"]);
   run("app.about", "À propos de dk-table", openAbout);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
   run("view.tools", "Afficher/Masquer les outils", toggleTools, "Ctrl+J", ["barre", "outils", "toolbar"]);

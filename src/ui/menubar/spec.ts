@@ -10,6 +10,7 @@ import { parseKey } from "../grid/keys";
 import { insertFecHeaders } from "../fec";
 import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
+import { openGoToSpecial } from "../dialogs/goToSpecial";
 import { openValidationDialog } from "../validation/panel";
 import { toggleKinds } from "../grid/kinds";
 import { openTextToColumns } from "../dialogs/textToCols";
@@ -65,6 +66,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
     { label: "Édition", items: [
       { label: "Annuler", hint: "Ctrl+Z", run: () => app.undo() },
       { label: "Rétablir", hint: "Ctrl+Y", run: () => app.redo() },
+      { label: "Atteindre spécial…", hint: "Ctrl+G", run: () => openGoToSpecial(app) },
       { label: "Effacer le contenu", hint: "Suppr", sep: true,
         run: () => app.editMany(Object.fromEntries(app.selectedKeys().map((k) => [k, ""]))) },
     ] },
