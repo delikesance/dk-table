@@ -207,5 +207,6 @@ Classement par gravité (P0 = pire)
 - [x] D5 Puce de calcul `=` (formules du moteur, `@`, formats, mini-graphiques, exports)
 - [ ] D6 Bloc « Calcul » à lignes libellées (variables par libellé)
 - [x] D7 Rendu Live Preview façon Obsidian : texte Markdown comme document (CodeMirror 6), syntaxe cachée hors du curseur, puces `{{@…}}` / `{{=…}}` et blocs ```dkblock en widgets, anciens documents ProseMirror convertis (`doc/md/`, `doc/live/`)
+- [x] D8 Style administratif classique du contenu des documents (A4, sérif, titres noirs), exports HTML/PDF alignés
 - [x] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 

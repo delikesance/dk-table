@@ -6,11 +6,11 @@ import type { RefBook } from "./refs";
 /** HTML-escape text. */
 export const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const CSS = "body{font:16px/1.6 'Inter Tight',system-ui,sans-serif;max-width:780px;margin:32px auto;padding:0 24px;color:#0a0a5c}" +
-  "h1,h2,h3{font-family:'Sofia Sans Extra Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em}h2{color:#0000f2}" +
-  "table{border-collapse:collapse;width:100%;font:13.5px 'DM Mono',monospace;margin:16px 0}th{background:#e1e1ff;color:#0000f2;text-align:left}" +
-  "th,td{padding:8px 12px;border-top:1px solid #c9c9e6}blockquote{border-left:2px solid #0000f2;margin:16px 0;padding-left:16px;color:#55557a}" +
-  "@media print{body{margin:0;max-width:none}}";
+const CSS = "@page{size:A4;margin:2.5cm}body{font:12pt/1.5 'Times New Roman',Times,'Liberation Serif',serif;max-width:16cm;margin:2cm auto;padding:0 1cm;color:#000;background:#fff}" +
+  "h1,h2,h3{font-weight:bold;line-height:1.25;margin:1.2em 0 .5em}h1{font-size:18pt}h2{font-size:14pt}h3{font-size:12pt;font-style:italic}p{margin:0 0 .8em;text-align:justify}" +
+  "table{border-collapse:collapse;width:100%;font-size:11pt;margin:1em 0}th{background:#eee;text-align:left}" +
+  "th,td{padding:4px 8px;border:1px solid #000}blockquote{margin:1em 0 1em 1cm;padding-left:.5cm;border-left:2px solid #000}" +
+  "@media print{body{margin:0;max-width:none;padding:0}}";
 
 /** Inline content with marks. */
 /** Export context: the workbook and the evaluator of calculation chips. */
