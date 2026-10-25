@@ -40,6 +40,7 @@ export async function openDocView(c: Ctx, id: string): Promise<void> {
 /** Show the grid next to the document in split view, hide it behind the document otherwise. */
 function applySplit(c: Ctx): void {
   c.gridHost.hidden = !!c.curDoc && !c.split;
+  c.gridHost.dispatchEvent(new Event("dk-visibility"));
   c.docHost.parentElement?.classList.toggle("dk-app__main--split", !!c.split && !!c.curDoc);
 }
 

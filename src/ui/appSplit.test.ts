@@ -20,6 +20,15 @@ async function openDoc(): Promise<void> {
   await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
 }
 
+describe("barre flottante de la grille", () => {
+  it("n'apparaît pas par-dessus le document", async () => {
+    app.select("A1:B2");
+    expect(root.querySelector<HTMLElement>(".dk-floating")!.hidden).toBe(false);
+    await openDoc();
+    expect(root.querySelector<HTMLElement>(".dk-floating")!.hidden).toBe(true);
+  });
+});
+
 describe("vue scindée", () => {
   it("bascule entre le document seul et feuille + document", async () => {
     await openDoc();
