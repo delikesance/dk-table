@@ -7,13 +7,13 @@ import { describe, expect, it } from "vitest";
 const read = (f: string) => readFileSync(join(__dirname, f), "utf8");
 
 function load() {
-  let push: (e: object) => void = () => {};
+  let push: (e: object, id?: string) => void = () => {};
   const g = globalThis as Record<string, unknown>;
   g.fetch = async () => ({ ok: true, json: async () => ({}) });
-  g.EventSource = class { set onmessage(f: (m: { data: string }) => void) { push = (e) => f({ data: JSON.stringify(e) }); } set onopen(_: () => void) {} set onerror(_: () => void) {} };
+  g.EventSource = class { set onmessage(f: (m: { data: string; lastEventId: string }) => void) { push = (e, id = "") => f({ data: JSON.stringify(e), lastEventId: id }); } set onopen(_: () => void) {} set onerror(_: () => void) {} };
   document.documentElement.innerHTML = read("panel.html").replace(/^[\s\S]*?<html[^>]*>/i, "");
   new Function(read("panel.js"))();
-  return (e: object) => push(e);
+  return (e: object, id?: string) => push(e, id);
 }
 const phase = (re: RegExp) => [...document.querySelectorAll("#phasebar > li")].find((li) => re.test(li.textContent ?? ""))!;
 const agents = () => [...document.querySelectorAll("#phasebar .par li.agent")];
@@ -70,5 +70,17 @@ describe("arret", () => {
     send({ type: "done", message: "arrêté" });
     expect(run.disabled).toBe(false);
     expect(document.querySelector("#status")!.textContent).toMatch(/^Arrêté/);
+  });
+});
+
+describe("coupure du flux", () => {
+  it("un autre numero de run (nouveau run demarre pendant la coupure, « terminé » manque) remet le panneau a zero", () => {
+    const send = load();
+    send({ type: "end", sector: "design", costUsd: 1.08, ok: true }, "1-0");
+    send({ type: "end", sector: "design", costUsd: 1.08, ok: true }, "1-1"); // meme run: s'additionne
+    expect(phase(/Design/).textContent).toContain("2,00 €");
+    send({ type: "start", sector: "research" }, "2-0"); // le run 1 n'a jamais envoye `done` ici
+    expect(phase(/Design/).classList.contains("pending")).toBe(true);
+    expect(document.querySelectorAll("#log li").length).toBe(1);
   });
 });

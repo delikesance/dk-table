@@ -17,3 +17,14 @@ export async function openPages(ctx: BrowserContext, base: string): Promise<Page
 /** Texte d'une colonne du moodboard (titres des cartes). */
 export const column = (mood: Page, col: "idee" | "en-cours" | "preuves" | "termine"): Promise<string[]> =>
   mood.locator(`#col-${col} .card h3`).allInnerTexts();
+
+/** Captures clair puis sombre d'une page dans docs/screenshots/boucle-e2e/ (seulement avec `BOUCLE_SHOTS=1`). */
+export async function shoot(p: Page, name: string): Promise<void> {
+  if (process.env.BOUCLE_SHOTS !== "1") return;
+  for (const [scheme, suffix] of [["light", "clair"], ["dark", "sombre"]] as const) {
+    await p.emulateMedia({ colorScheme: scheme });
+    await p.waitForTimeout(150);
+    await p.screenshot({ path: `docs/screenshots/boucle-e2e/${name}-${suffix}.png`, fullPage: true });
+  }
+  await p.emulateMedia({ colorScheme: null });
+}

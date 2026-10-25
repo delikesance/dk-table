@@ -18,15 +18,13 @@
 
   /** Montant au format fr (virgule), `min` decimales minimum. */
   function fmt(n, min) { return n.toLocaleString("fr-FR", { minimumFractionDigits: min == null ? 2 : min, maximumFractionDigits: 2 }); }
-  function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; }
+  function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; } function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
   /** Duree lisible; rien sous 1 s (evite "0 s" au demarrage). */
   function dur(s) { return s == null || s < 1 ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
-  function cap() { return Number($("budgetEur").value) || 0; }
-  function clock(ts) { var d = new Date(ts); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function (n) { return (n < 10 ? "0" : "") + n; }).join(":"); }
+  function cap() { return Number($("budgetEur").value) || 0; } function clock(ts) { var d = new Date(ts); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function (n) { return (n < 10 ? "0" : "") + n; }).join(":"); }
   /** Texte brut: retire les codes ANSI que les commandes laissent dans leur sortie. */
   function clean(t) { return t ? String(t).replace(/\u001b\[[0-9;?]*[ -\/]*[@-~]/g, "") : t; }
-  function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
 
   /** Pose l'etat d'une phase/agent en gardant duree et cout. */
   function setState(o, st, e) {
@@ -45,8 +43,7 @@
     });
     var w = workers[e.agent] || (workers[e.agent] = { label: e.agent, state: "pending", elapsed: null, t0: 0 });
     setState(w, st, e);
-    var all = Object.keys(workers).map(function (k) { return workers[k]; });
-    var busy = all.some(function (x) { return x.state === "running"; });
+    var all = Object.keys(workers).map(function (k) { return workers[k]; }), busy = all.some(function (x) { return x.state === "running"; });
     if (busy) { if (ph.state !== "running") setState(ph, "running", {}); }
     else setState(ph, all.some(function (x) { return x.state === "fail"; }) ? "fail" : "ok", e);
   }
@@ -162,8 +159,7 @@
     init(); ended = false; alertMsg("");
     $("log").textContent = $("hist").textContent = $("phase-label").textContent = ""; $("history").hidden = $("latest").hidden = true;
   }
-  function alertMsg(msg) { $("alert").hidden = !msg; $("alert").textContent = msg || ""; }
-  function redraw() { drawNow(); drawSteps(); drawBudget(); }
+  function alertMsg(msg) { $("alert").hidden = !msg; $("alert").textContent = msg || ""; } function redraw() { drawNow(); drawSteps(); drawBudget(); }
 
   /** Point d'entree : applique un evenement SSE a toute l'interface. */
   function show(e) {
@@ -195,5 +191,10 @@
   var es = new EventSource("/events");
   es.onopen = function () { $("conn").hidden = true; };
   es.onerror = function () { $("conn").hidden = false; };
-  es.onmessage = function (m) { var e = JSON.parse(m.data); if (e.type !== "done") running(true); show(e); };
+  var run = null; // numero du run (id SSE `<run>-<rang>`): un autre numero = nouveau run, meme si « terminé » a ete manque pendant une coupure
+  es.onmessage = function (m) {
+    var e = JSON.parse(m.data), r = (m.lastEventId || "").split("-")[0];
+    if (run !== null && r !== run) fresh();
+    run = r; if (e.type !== "done") running(true); show(e);
+  };
 })();
