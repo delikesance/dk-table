@@ -50,13 +50,13 @@ describe("toolbar menus", () => {
     expect(document.activeElement).toBe(item(el, "Ouvrir"));
     key(document.activeElement as HTMLElement, "ArrowUp");
     key(document.activeElement as HTMLElement, "ArrowUp");
-    expect(document.activeElement).toBe(item(el, "Exporter FEC…"));
+    expect(document.activeElement).toBe(item(el, "Retirer le mot de passe"));
   });
   it("single File menu holds every entry in order, no Import/Export menu", () => {
     const { el } = mk();
     expect(el.querySelectorAll(".dk-menu__trigger").length).toBe(1);
     const labels = [...el.querySelectorAll(".dk-menu__label")].map((l) => l.textContent);
-    expect(labels).toEqual(["Nouveau", "Ouvrir", "Récents", "Enregistrer", "Enregistrer sous…", "Importer CSV", "Exporter CSV", "Exporter FEC…"]);
+    expect(labels).toEqual(["Nouveau", "Ouvrir", "Récents", "Enregistrer", "Enregistrer sous…", "Importer CSV", "Exporter CSV", "Exporter FEC…", "Chiffrer avec mot de passe…", "Retirer le mot de passe"]);
   });
   it("shortcut hints: Save=Ctrl+S, Save as=Ctrl+Maj+S", () => {
     const { el } = mk();

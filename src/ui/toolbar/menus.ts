@@ -9,6 +9,10 @@ export interface MenuHandlers {
   onImportCsv(): void; onExportCsv(): void;
   /** Export the active sheet as FEC (Fichier des Écritures Comptables). */
   onExportFec(): void;
+  /** Chiffre le classeur avec un mot de passe (demandé deux fois). */
+  onProtect?(): void;
+  /** Retire le mot de passe : le classeur est enregistré en clair. */
+  onUnprotect?(): void;
   /** Recent files, read each time the menu opens (omit: "Récents" stays empty). */
   recents?(): RecentItem[];
   onOpenRecent?(path: string): void;
@@ -122,6 +126,8 @@ export function fileEntries(h: MenuHandlers): Entry[] {
     { label: "Importer CSV", icon: "upload", run: h.onImportCsv, sep: true },
     { label: "Exporter CSV", icon: "download", run: h.onExportCsv },
     { label: "Exporter FEC…", icon: "download", run: h.onExportFec },
+    { label: "Chiffrer avec mot de passe…", run: h.onProtect, sep: true },
+    { label: "Retirer le mot de passe", run: h.onUnprotect },
   ];
 }
 

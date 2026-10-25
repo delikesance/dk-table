@@ -1,7 +1,7 @@
 /** Thin Tauri file wrappers (open/save) with injectable dialog + fs for tests. */
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
-import { parse, serialize } from "./format";
+import { decodeDocument, encodeDocument, PasswordRequiredError } from "./protected";
 import { fromCsv, toCsv, type CsvSheet } from "./csv";
 import type { DktDoc, DocSheet } from "./types";
 
@@ -25,34 +25,43 @@ export const defaultDeps: IoDeps = {
 
 const FILTERS = [{ name: "dk-table", extensions: ["dktable"] }];
 
-/** Asks for a file and loads it; null if the user cancels, throws on bad content. */
-export async function openDocument(deps: IoDeps = defaultDeps): Promise<{ path: string; doc: DktDoc } | null> {
-  const path = await deps.open({ multiple: false, filters: FILTERS });
-  if (!path) return null;
-  return { path, doc: parse(await deps.readTextFile(path)) };
+/** Asks for a `.dktable` path; null if the user cancels. */
+export async function pickDocument(deps: IoDeps = defaultDeps): Promise<string | null> {
+  return deps.open({ multiple: false, filters: FILTERS });
 }
 
-/** Saves to `path`, or asks one when absent. Returns the path, null on cancel. */
-export async function saveDocument(doc: DktDoc, path?: string, deps: IoDeps = defaultDeps): Promise<string | null> {
-  if (!path) return saveAs(doc, deps);
-  await deps.writeTextFile(path, serialize(doc));
+/** Asks for a file and loads it; null if the user cancels. Throws PasswordRequiredError for a protected file. */
+export async function openDocument(deps: IoDeps = defaultDeps): Promise<{ path: string; doc: DktDoc } | null> {
+  const path = await pickDocument(deps);
+  return path ? { path, doc: await openPath(path, deps) } : null;
+}
+
+/** Saves to `path` (encrypted when `password` is given), or asks one when absent. Returns the path, null on cancel. */
+export async function saveDocument(doc: DktDoc, path?: string, deps: IoDeps = defaultDeps, password?: string): Promise<string | null> {
+  if (!path) return saveAs(doc, deps, password);
+  await deps.writeTextFile(path, await encodeDocument(doc, password));
   return path;
 }
 
 /** Always asks for a destination (adds `.dktable` if missing). Null on cancel. */
-export async function saveAs(doc: DktDoc, deps: IoDeps = defaultDeps): Promise<string | null> {
+export async function saveAs(doc: DktDoc, deps: IoDeps = defaultDeps, password?: string): Promise<string | null> {
   const chosen = await deps.save({ filters: FILTERS });
   if (!chosen) return null;
   const path = /\.dktable$/i.test(chosen) ? chosen : `${chosen}.dktable`;
-  await deps.writeTextFile(path, serialize(doc));
+  await deps.writeTextFile(path, await encodeDocument(doc, password));
   return path;
 }
 
 const CSV_FILTERS = [{ name: "CSV", extensions: ["csv", "txt"] }];
 
-/** Loads a `.dktable` from a known path (recent files). */
-export async function openPath(path: string, deps: IoDeps = defaultDeps): Promise<DktDoc> {
-  return parse(await deps.readTextFile(path));
+/** Loads a `.dktable` from a known path; `password` is needed for a protected file (see PasswordRequiredError). */
+export async function openPath(path: string, deps: IoDeps = defaultDeps, password?: string): Promise<DktDoc> {
+  try {
+    return await decodeDocument(await deps.readTextFile(path), password);
+  } catch (e) {
+    if (e instanceof PasswordRequiredError) throw new PasswordRequiredError(path);
+    throw e;
+  }
 }
 
 /** Asks for a CSV file and parses it; null on cancel. */
