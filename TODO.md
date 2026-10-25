@@ -226,7 +226,7 @@ Classement par gravité (P0 = pire)
 - [ ] Secteur recherche v1 (`prototypes/oauth-sdk/`): lancer la boucle live (`CLAUDE_CODE_OAUTH_TOKEN`, plafond 20 USD) -> `docs/recherche/fonctionnalites.md`, puis ajouter les tâches issues des 4 axes
 - [x] Secteur recherche v1: run live (2,20 $ / 20 $), synthèse 4 axes dans `docs/recherche/fonctionnalites.md`
 - [x] Carte `carte-des-dependances-interactive`: panneau « Qui utilise cette cellule ? » (palette `data.depmap`, `engine/model/depmap.ts`, `ui/dialogs/depmap.ts`, rapport `docs/rapports/`)
-- [x] Carte `audit-de-modele-integre`: panneau « Audit de modèle » (palette `data.audit`, `engine/model/audit.ts`, `ui/dialogs/audit.ts`; constantes, formules incohérentes, plages tronquées, volatiles, cycles; clic = va à la cellule), e2e `e2e/feat-audit.spec.ts`
+- [x] Carte `audit-de-modele-integre`: panneau « Audit de modèle » (palette `data.audit`, `engine/model/audit.ts`, `ui/dialogs/audit.ts`; constantes, formules incohérentes, plages tronquées, volatiles, cycles; clic = va à la cellule), e2e `e2e/feat-audit.spec.ts` (partiel: correction 1-clic + nombres-en-texte)
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `atteindre-formules-constantes`: palette + menu Affichage « Surligner formules / constantes » (`engine/audit-kinds.ts`, `ui/grid/kinds.ts`, classes `dkg-kf`/`dkg-kc`; `docs/formules-constantes.md`), e2e `e2e/feat-formules-constantes.spec.ts`
