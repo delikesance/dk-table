@@ -194,4 +194,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## autoloop
 
-- `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`; `--live` non branché). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
+- `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`). Étape 2: `cycle.ts` (vérifs npm/tsc par l'orchestrateur -> `roles/audit.ts` -> `dedupe.ts` empreinte `<!-- fp:… -->` -> `github.ts` `GhClient`, issues `auto:bug`, max 3/cycle), `live.ts` (`--live`: SDK + gh réels, seul mode qui crée des issues). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
