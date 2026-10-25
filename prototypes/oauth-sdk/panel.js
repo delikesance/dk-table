@@ -2,7 +2,7 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var RATE = 1.08; // EUR -> USD (estimation d'affichage)
-  var PHASES = [["research", "Recherche"], ["implementation", "Implémentation"], ["correction", "Correction"], ["design", "Design"]];
+  var PHASES = [["research", "Recherche"], ["design", "Design"], ["implementation", "Implémentation"], ["correction", "Correction"]];
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
   var cards = {}, phases = {}, order = [], summaries = 0, current = null, started = false, spentUsd = 0;

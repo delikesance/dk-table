@@ -81,6 +81,14 @@ describe("panneau: rendu", () => {
   });
 });
 
+describe("panneau: ordre des phases", () => {
+  it("barre des phases: Recherche, Design, Implementation, Correction (design d'abord)", () => {
+    load();
+    const labels = [...document.querySelectorAll("#phasebar .step")].map((e) => e.textContent ?? "");
+    expect(labels.map((l) => /Recherche|Design|Implémentation|Correction/.exec(l)?.[0])).toEqual(["Recherche", "Design", "Implémentation", "Correction"]);
+  });
+});
+
 describe("panneau: fin de boucle", () => {
   it("start/end x4 puis done: 4 etapes reussies, rien en cours, statut unique", () => {
     const send = load();
