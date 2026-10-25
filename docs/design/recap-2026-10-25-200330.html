@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 21:04:53 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-200330.html</h2><div class="frame">
+<h1>Analyse what-if</h1>
+<p>Trois pistes non réalisées (recherche, axes 2 et 3) : Valeur cible, Scénarios vivants, Fenêtre Espion. Moteur pur, hors ligne, sans IA. Modèle de démonstration : prix, coût, volume, frais fixes, bénéfice.</p>
+
+<!-- ============ IDEE 1 ============ -->
+<section class="idea" id="i1">
+  <h2>1 — Valeur cible (Données &gt; Valeur cible…)</h2>
+  <p>Trouve l'entrée unique qui donne le résultat voulu. Réutilise <span class="mono">solve.ts</span> (Newton, repli bissection). Le mouvement montre la convergence : chaque itération réécrit l'entrée et recalcule le résultat.</p>
+  <div class="states" id="gs-states" role="group" aria-label="État de la valeur cible">
+    <button data-s="form" aria-pressed="true">Saisie</button><button data-s="run" aria-pressed="false">Calcul</button><button data-s="ok" aria-pressed="false">Résultat</button><button data-s="fail" aria-pressed="false">Échec</button>
+  </div>
+  <div class="row">
+    <div class="win"><div class="bar"><span>Valeur cible</span><span class="mono" id="gs-st">B6 → 2000</span></div><div class="body">
+      <label for="g-cell">Cellule à définir</label><input class="field" id="g-cell" value="B6" readonly>
+      <label for="g-val">Valeur cible</label><input class="field" id="g-val" value="2000" readonly>
+      <label for="g-by">En modifiant la cellule</label><input class="field" id="g-by" value="B2" readonly>
+      <div class="msg" id="g-msg">B6 = formule dépendant de B2. Entrée numérique requise.</div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p" id="g-go">Chercher</button><button id="g-cancel" hidden>Annuler</button></div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Feuille « Modèle »</span><span class="mono">recalcul</span></div><div class="body">
+      <div class="grid" style="--n:2" id="g-grid">
+        <div class="h"></div><div class="h">A</div><div class="h">B</div>
+        <div class="h">2</div><div class="l">Prix</div><div class="in" id="gb2">12,00</div>
+        <div class="h">3</div><div class="l">Coût</div><div id="gb3">7,00</div>
+        <div class="h">4</div><div class="l">Volume</div><div id="gb4">860</div>
+        <div class="h">5</div><div class="l">Frais fixes</div><div id="gb5">3 000</div>
+        <div class="h">6</div><div class="l">Bénéfice</div><div id="gb6">1 300</div>
+      </div>
+      <svg viewBox="0 0 300 120" aria-label="Convergence de l'erreur par itération" style="margin-top:10px">
+        <line x1="30" y1="100" x2="290" y2="100" stroke="var(--line2)"/><line x1="30" y1="10" x2="30" y2="100" stroke="var(--line2)"/>
+        <polyline id="g-curve" fill="none" stroke="var(--acc)" stroke-width="2"/><g id="g-dots" fill="var(--acc)"></g>
+        <text x="34" y="20">écart</text><text x="250" y="114">itération</text>
+      </svg>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ IDEE 2 ============ -->
+<section class="idea" id="i2">
+  <h2>2 — Scénarios vivants</h2>
+  <p>Jeux nommés d'hypothèses sur les cellules d'entrée, stockés dans le <span class="mono">.dktable</span>. Un clic applique le jeu : les entrées changent, le recalcul se propage (flash). Colonnes de comparaison recalculées en direct, sans synthèse statique.</p>
+  <div class="row">
+    <div class="win" style="flex:2 1 420px"><div class="bar"><span>Scénarios</span><span class="mono" id="s-act">Base</span></div><div class="body">
+      <div class="tabs" id="s-tabs" role="group" aria-label="Scénario actif"></div>
+      <div class="grid" style="--n:4" id="s-grid"></div>
+      <div class="msg">Entrées (barre bleue) : B2, B3. Colonnes C et D : résultats des autres jeux, évalués sans changer le jeu actif.</div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Gérer</span><span class="mono">3 jeux</span></div><div class="body">
+      <label for="s-name">Nom du jeu</label><input class="field" id="s-name" value="Pessimiste" readonly>
+      <label>Cellules du jeu</label><div class="field">B2, B3 <span style="color:var(--mut)">(sans limite)</span></div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p">Enregistrer l'état actuel</button><button>Supprimer</button></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ IDEE 3 ============ -->
+<section class="idea" id="i3">
+  <h2>3 — Fenêtre Espion</h2>
+  <p>Panneau qui suit des cellules (feuille, valeur, formule), même hors écran ou sur une autre feuille. Une valeur qui change clignote une fois. Clic sur une ligne = aller à la cellule.</p>
+  <div class="row">
+    <div class="win" style="flex:2 1 420px"><div class="bar"><span>Espion</span><span class="mono">4 cellules</span></div><div class="body">
+      <table class="watch" aria-label="Cellules espionnées"><thead><tr><th>Feuille</th><th>Cellule</th><th>Valeur</th><th>Formule</th></tr></thead><tbody id="w-body"></tbody></table>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p" id="w-edit">Prix +1 (Modèle!B2)</button><button id="w-reset">Rétablir</button></div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Ajouter</span><span class="mono">Ctrl+Maj+W</span></div><div class="body">
+      <label for="w-ref">Référence</label><input class="field" id="w-ref" value="Synthèse!C9" readonly>
+      <div class="msg err">Référence invalide ou feuille supprimée : ligne grisée, valeur #REF!, jamais retirée en silence.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ CONTRATS ============ -->
+<section class="idea">
+  <h2>Interfaces et contrats</h2>
+  <h3>1 — Valeur cible (TDD : <span class="mono">goalseek.test.ts</span> d'abord)</h3>
+<pre class="contract">// src/engine/goalseek.ts (pur, sans DOM)
+type GoalSpec = { target: string; value: number; by: string; maxIter?: number /*100*/; tol?: number /*1e-9*/ };
+type GoalStep = { iter: number; input: number; result: number; error: number };
+type GoalResult =
+  | { ok: true;  input: number; result: number; steps: GoalStep[] }
+  | { ok: false; reason: 'not-formula' | 'not-numeric' | 'no-dependency' | 'no-convergence' | 'cycle'; steps: GoalStep[] };
+goalSeek(sheet: Sheet, spec: GoalSpec): GoalResult   // solve.ts: Newton puis bissection; n'écrit pas dans la feuille
+// Évaluation d'essai: sheet cloné (setCell/getValue) ; aucune écriture undo pendant la recherche.
+// src/ui/dialogs/goalSeek.ts : openGoalSeek(app); événements: 'goalseek:step' (GoalStep) -> animation, 'goalseek:apply' (un seul pas d'annulation).
+// Menu Données &gt; Valeur cible…, palette 'data.goalseek'. Docs: docs/valeur-cible.md. e2e: e2e/feat-valeur-cible.spec.ts.
+// Messages d'échec en clair: « B6 ne dépend pas de B2 », « aucune solution dans 100 itérations ».</pre>
+  <h3>2 — Scénarios vivants</h3>
+<pre class="contract">// src/engine/scenarios.ts (pur)
+type Scenario = { id: string; name: string; values: Record&lt;string /*"Feuille!B2"*/, string /*brut*/&gt; };
+// DktDoc.scenarios?: Scenario[]  (io/format.ts; version inchangée, champ optionnel)
+applyScenario(book, sc): Patch[]                  // changements bruts, jamais de perte des valeurs courantes
+evalScenario(book, sc, outputs: string[]): Record&lt;string, Value&gt;   // sur un clone, pour colonnes de comparaison
+captureScenario(book, name, cells: string[]): Scenario
+// src/ui/appScenarios.ts : onglets (app.scenarioActive), clic = applyScenario en un pas d'annulation, événement 'scenario:applied' { id, changed: string[] } -> flash des cellules recalculées (grid.refresh).
+// src/ui/dialogs/scenarios.ts : gérer/renommer/supprimer ; colonnes de comparaison = sorties choisies (plage).
+// Menu Données &gt; Scénarios, palette 'data.scenarios'. Docs: docs/scenarios.md. e2e: e2e/feat-scenarios.spec.ts.</pre>
+  <h3>3 — Fenêtre Espion</h3>
+<pre class="contract">// src/engine/watch.ts (pur)
+type Watch = { sheetId: string; key: string };
+readWatch(book, w: Watch): { sheet: string; key: string; value: Value; formula: string | null; error?: '#REF!' }
+// DktDoc.watches?: Watch[]  (persisté)
+// src/ui/watch/panel.ts : panneau (même zone que le panneau de macros), mise à jour via le hook de recalcul existant (diff valeur -> classe .hit une fois).
+// Clic ligne: app.goTo(sheetId, key). Ajouter: sélection courante ou saisie; Supprimer: Suppr. Commande 'view.watch' (Affichage), raccourci Ctrl+Maj+W.
+// Docs: docs/espion.md. e2e: e2e/feat-espion.spec.ts.</pre>
+  <h3>Fichiers touchés (dépend de l'ordre)</h3>
+<pre class="contract">nouveaux: engine/{goalseek,scenarios,watch}.ts (+ .test.ts), ui/dialogs/{goalSeek,scenarios}.ts, ui/appScenarios.ts, ui/watch/panel.ts, docs/{valeur-cible,scenarios,espion}.md
+modifiés (une ligne chacun): io/format.ts (scenarios?, watches?), ui/menubar/spec.ts (Données, Affichage), ui/commands.ts (palette), TODO.md, CLAUDE.md
+disjoints: les 3 idées partagent seulement format.ts et spec.ts -> 3 workers, fusion séquentielle de ces 2 fichiers.</pre>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td>25/10/2026 21:03:30</td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 21:03:30</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 21:03:30</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 21:03:30</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-200330.html</td><td>25/10/2026 21:04:46</td><td>écrit</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.44 $</td></tr></table></section>
+</body></html>

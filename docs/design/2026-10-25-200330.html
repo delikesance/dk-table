@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analyse what-if : Valeur cible, Scénarios vivants, Espion</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css, theme-dark.css). Sombre: data-theme OU prefers-color-scheme. */
+:root { --bg:#f2f2f2; --card:#fafafa; --head:#e2e2f6; --fg:#0000f2; --mut:#4a4ac8; --line:rgba(0,0,242,.14); --line2:rgba(0,0,242,.28);
+  --acc:#0000f2; --on-acc:#f2f2f2; --soft:rgba(0,0,242,.06); --soft2:rgba(0,0,242,.14); --warn:#c2410c; --ok:#0000f2; --chrome:#0000f2; --on-chrome:#f2f2f2; }
+:root[data-theme="dark"] { --bg:#19192f; --card:#1f1f3a; --head:#2a2a52; --fg:#f2f2f2; --mut:#b8b8d4; --line:rgba(242,242,242,.16); --line2:rgba(242,242,242,.32);
+  --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.10); --soft2:rgba(140,140,255,.22); --warn:#ffa05c; --ok:#8c8cff; --chrome:#0000f2; --on-chrome:#f2f2f2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#19192f; --card:#1f1f3a; --head:#2a2a52; --fg:#f2f2f2; --mut:#b8b8d4; --line:rgba(242,242,242,.16); --line2:rgba(242,242,242,.32);
+  --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.10); --soft2:rgba(140,140,255,.22); --warn:#ffa05c; --ok:#8c8cff; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:24px; font:15px/1.5 "Inter Tight",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+h1,h2,h3 { font-family:"Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0; }
+h1 { font-size:2rem; font-weight:800; margin-bottom:4px; } h2 { font-size:1.5rem; font-weight:800; } h3 { font-size:1rem; font-weight:700; color:var(--mut); margin:16px 0 6px; }
+p { margin:4px 0 12px; color:var(--mut); max-width:80ch; }
+.idea { border:1px solid var(--line2); border-radius:4px; padding:16px; margin:20px 0; background:var(--bg); }
+.row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+.mono, .grid, .contract { font-family:"DM Mono",ui-monospace,monospace; }
+.win { background:var(--card); border:1px solid var(--line2); border-radius:4px; flex:1 1 320px; min-width:300px; }
+.win > .bar { background:var(--chrome); color:var(--on-chrome); padding:6px 10px; font:700 .95rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; border-radius:3px 3px 0 0; display:flex; justify-content:space-between; }
+.win > .body { padding:12px; }
+.grid { display:grid; grid-template-columns:28px repeat(var(--n,3),minmax(70px,1fr)); border:1px solid var(--line); border-radius:2px; font-size:.85rem; }
+.grid > div { padding:4px 8px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); text-align:right; background:var(--card); min-height:26px; }
+.grid > .h { background:var(--head); text-align:center; color:var(--mut); } .grid > .l { text-align:left; }
+.grid .in { color:var(--fg); box-shadow:inset 2px 0 0 var(--acc); }
+.hit { animation:hit .9s ease-out; } @keyframes hit { 0% { background:var(--acc); color:var(--on-acc); } 100% { background:var(--card); } }
+label { display:block; font-size:.8rem; color:var(--mut); margin:8px 0 2px; }
+.field { font:500 .9rem "DM Mono",monospace; padding:5px 8px; border:1px solid var(--line2); border-radius:2px; background:var(--card); color:var(--fg); width:100%; }
+button { font:700 .9rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; padding:6px 14px; border-radius:3px; border:1px solid var(--acc); background:transparent; color:var(--acc); cursor:pointer; }
+button.p { background:var(--acc); color:var(--on-acc); } button:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+.tabs { display:flex; gap:4px; margin-bottom:8px; } .tabs button[aria-pressed="true"] { background:var(--acc); color:var(--on-acc); }
+.states { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; } .states button[aria-pressed="true"] { background:var(--acc); color:var(--on-acc); }
+.msg { font-size:.85rem; margin-top:8px; padding:6px 8px; border-left:3px solid var(--acc); background:var(--soft); }
+.msg.err { border-color:var(--warn); color:var(--warn); }
+svg { width:100%; height:auto; display:block; } svg text { font:500 10px "DM Mono",monospace; fill:var(--mut); }
+.watch { width:100%; border-collapse:collapse; font:500 .85rem "DM Mono",monospace; }
+.watch th { text-align:left; background:var(--head); color:var(--mut); padding:4px 8px; font-weight:500; } .watch td { padding:4px 8px; border-bottom:1px solid var(--line); }
+.watch td.v { text-align:right; } .down { color:var(--warn); }
+.contract { white-space:pre-wrap; font-size:.82rem; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:4px; padding:12px; margin:0; }
+@media (prefers-reduced-motion: reduce) { .hit { animation:none; } }
+</style>
+</head>
+<body>
+<h1>Analyse what-if</h1>
+<p>Trois pistes non réalisées (recherche, axes 2 et 3) : Valeur cible, Scénarios vivants, Fenêtre Espion. Moteur pur, hors ligne, sans IA. Modèle de démonstration : prix, coût, volume, frais fixes, bénéfice.</p>
+
+<!-- ============ IDEE 1 ============ -->
+<section class="idea" id="i1">
+  <h2>1 — Valeur cible (Données &gt; Valeur cible…)</h2>
+  <p>Trouve l'entrée unique qui donne le résultat voulu. Réutilise <span class="mono">solve.ts</span> (Newton, repli bissection). Le mouvement montre la convergence : chaque itération réécrit l'entrée et recalcule le résultat.</p>
+  <div class="states" id="gs-states" role="group" aria-label="État de la valeur cible">
+    <button data-s="form" aria-pressed="true">Saisie</button><button data-s="run" aria-pressed="false">Calcul</button><button data-s="ok" aria-pressed="false">Résultat</button><button data-s="fail" aria-pressed="false">Échec</button>
+  </div>
+  <div class="row">
+    <div class="win"><div class="bar"><span>Valeur cible</span><span class="mono" id="gs-st">B6 → 2000</span></div><div class="body">
+      <label for="g-cell">Cellule à définir</label><input class="field" id="g-cell" value="B6" readonly>
+      <label for="g-val">Valeur cible</label><input class="field" id="g-val" value="2000" readonly>
+      <label for="g-by">En modifiant la cellule</label><input class="field" id="g-by" value="B2" readonly>
+      <div class="msg" id="g-msg">B6 = formule dépendant de B2. Entrée numérique requise.</div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p" id="g-go">Chercher</button><button id="g-cancel" hidden>Annuler</button></div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Feuille « Modèle »</span><span class="mono">recalcul</span></div><div class="body">
+      <div class="grid" style="--n:2" id="g-grid">
+        <div class="h"></div><div class="h">A</div><div class="h">B</div>
+        <div class="h">2</div><div class="l">Prix</div><div class="in" id="gb2">12,00</div>
+        <div class="h">3</div><div class="l">Coût</div><div id="gb3">7,00</div>
+        <div class="h">4</div><div class="l">Volume</div><div id="gb4">860</div>
+        <div class="h">5</div><div class="l">Frais fixes</div><div id="gb5">3 000</div>
+        <div class="h">6</div><div class="l">Bénéfice</div><div id="gb6">1 300</div>
+      </div>
+      <svg viewBox="0 0 300 120" aria-label="Convergence de l'erreur par itération" style="margin-top:10px">
+        <line x1="30" y1="100" x2="290" y2="100" stroke="var(--line2)"/><line x1="30" y1="10" x2="30" y2="100" stroke="var(--line2)"/>
+        <polyline id="g-curve" fill="none" stroke="var(--acc)" stroke-width="2"/><g id="g-dots" fill="var(--acc)"></g>
+        <text x="34" y="20">écart</text><text x="250" y="114">itération</text>
+      </svg>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ IDEE 2 ============ -->
+<section class="idea" id="i2">
+  <h2>2 — Scénarios vivants</h2>
+  <p>Jeux nommés d'hypothèses sur les cellules d'entrée, stockés dans le <span class="mono">.dktable</span>. Un clic applique le jeu : les entrées changent, le recalcul se propage (flash). Colonnes de comparaison recalculées en direct, sans synthèse statique.</p>
+  <div class="row">
+    <div class="win" style="flex:2 1 420px"><div class="bar"><span>Scénarios</span><span class="mono" id="s-act">Base</span></div><div class="body">
+      <div class="tabs" id="s-tabs" role="group" aria-label="Scénario actif"></div>
+      <div class="grid" style="--n:4" id="s-grid"></div>
+      <div class="msg">Entrées (barre bleue) : B2, B3. Colonnes C et D : résultats des autres jeux, évalués sans changer le jeu actif.</div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Gérer</span><span class="mono">3 jeux</span></div><div class="body">
+      <label for="s-name">Nom du jeu</label><input class="field" id="s-name" value="Pessimiste" readonly>
+      <label>Cellules du jeu</label><div class="field">B2, B3 <span style="color:var(--mut)">(sans limite)</span></div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p">Enregistrer l'état actuel</button><button>Supprimer</button></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ IDEE 3 ============ -->
+<section class="idea" id="i3">
+  <h2>3 — Fenêtre Espion</h2>
+  <p>Panneau qui suit des cellules (feuille, valeur, formule), même hors écran ou sur une autre feuille. Une valeur qui change clignote une fois. Clic sur une ligne = aller à la cellule.</p>
+  <div class="row">
+    <div class="win" style="flex:2 1 420px"><div class="bar"><span>Espion</span><span class="mono">4 cellules</span></div><div class="body">
+      <table class="watch" aria-label="Cellules espionnées"><thead><tr><th>Feuille</th><th>Cellule</th><th>Valeur</th><th>Formule</th></tr></thead><tbody id="w-body"></tbody></table>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="p" id="w-edit">Prix +1 (Modèle!B2)</button><button id="w-reset">Rétablir</button></div>
+    </div></div>
+    <div class="win"><div class="bar"><span>Ajouter</span><span class="mono">Ctrl+Maj+W</span></div><div class="body">
+      <label for="w-ref">Référence</label><input class="field" id="w-ref" value="Synthèse!C9" readonly>
+      <div class="msg err">Référence invalide ou feuille supprimée : ligne grisée, valeur #REF!, jamais retirée en silence.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ CONTRATS ============ -->
+<section class="idea">
+  <h2>Interfaces et contrats</h2>
+  <h3>1 — Valeur cible (TDD : <span class="mono">goalseek.test.ts</span> d'abord)</h3>
+<pre class="contract">// src/engine/goalseek.ts (pur, sans DOM)
+type GoalSpec = { target: string; value: number; by: string; maxIter?: number /*100*/; tol?: number /*1e-9*/ };
+type GoalStep = { iter: number; input: number; result: number; error: number };
+type GoalResult =
+  | { ok: true;  input: number; result: number; steps: GoalStep[] }
+  | { ok: false; reason: 'not-formula' | 'not-numeric' | 'no-dependency' | 'no-convergence' | 'cycle'; steps: GoalStep[] };
+goalSeek(sheet: Sheet, spec: GoalSpec): GoalResult   // solve.ts: Newton puis bissection; n'écrit pas dans la feuille
+// Évaluation d'essai: sheet cloné (setCell/getValue) ; aucune écriture undo pendant la recherche.
+// src/ui/dialogs/goalSeek.ts : openGoalSeek(app); événements: 'goalseek:step' (GoalStep) -> animation, 'goalseek:apply' (un seul pas d'annulation).
+// Menu Données &gt; Valeur cible…, palette 'data.goalseek'. Docs: docs/valeur-cible.md. e2e: e2e/feat-valeur-cible.spec.ts.
+// Messages d'échec en clair: « B6 ne dépend pas de B2 », « aucune solution dans 100 itérations ».</pre>
+  <h3>2 — Scénarios vivants</h3>
+<pre class="contract">// src/engine/scenarios.ts (pur)
+type Scenario = { id: string; name: string; values: Record&lt;string /*"Feuille!B2"*/, string /*brut*/&gt; };
+// DktDoc.scenarios?: Scenario[]  (io/format.ts; version inchangée, champ optionnel)
+applyScenario(book, sc): Patch[]                  // changements bruts, jamais de perte des valeurs courantes
+evalScenario(book, sc, outputs: string[]): Record&lt;string, Value&gt;   // sur un clone, pour colonnes de comparaison
+captureScenario(book, name, cells: string[]): Scenario
+// src/ui/appScenarios.ts : onglets (app.scenarioActive), clic = applyScenario en un pas d'annulation, événement 'scenario:applied' { id, changed: string[] } -> flash des cellules recalculées (grid.refresh).
+// src/ui/dialogs/scenarios.ts : gérer/renommer/supprimer ; colonnes de comparaison = sorties choisies (plage).
+// Menu Données &gt; Scénarios, palette 'data.scenarios'. Docs: docs/scenarios.md. e2e: e2e/feat-scenarios.spec.ts.</pre>
+  <h3>3 — Fenêtre Espion</h3>
+<pre class="contract">// src/engine/watch.ts (pur)
+type Watch = { sheetId: string; key: string };
+readWatch(book, w: Watch): { sheet: string; key: string; value: Value; formula: string | null; error?: '#REF!' }
+// DktDoc.watches?: Watch[]  (persisté)
+// src/ui/watch/panel.ts : panneau (même zone que le panneau de macros), mise à jour via le hook de recalcul existant (diff valeur -> classe .hit une fois).
+// Clic ligne: app.goTo(sheetId, key). Ajouter: sélection courante ou saisie; Supprimer: Suppr. Commande 'view.watch' (Affichage), raccourci Ctrl+Maj+W.
+// Docs: docs/espion.md. e2e: e2e/feat-espion.spec.ts.</pre>
+  <h3>Fichiers touchés (dépend de l'ordre)</h3>
+<pre class="contract">nouveaux: engine/{goalseek,scenarios,watch}.ts (+ .test.ts), ui/dialogs/{goalSeek,scenarios}.ts, ui/appScenarios.ts, ui/watch/panel.ts, docs/{valeur-cible,scenarios,espion}.md
+modifiés (une ligne chacun): io/format.ts (scenarios?, watches?), ui/menubar/spec.ts (Données, Affichage), ui/commands.ts (palette), TODO.md, CLAUDE.md
+disjoints: les 3 idées partagent seulement format.ts et spec.ts -> 3 workers, fusion séquentielle de ces 2 fichiers.</pre>
+</section>
+
+<script>
+(function () {
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+  var fr = function (n, d) { return n.toLocaleString("fr-FR", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  function hit(el) { el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }
+
+  /* ---- 1: Valeur cible. Newton reel sur un modele non lineaire (volume depend du prix). ---- */
+  var cost = 7, fixed = 3000;
+  function vol(p) { return 860 - 40 * (p - 12); }
+  function profit(p) { return vol(p) * (p - cost) - fixed; }
+  var target = 2000, steps = [], timer = 0;
+  (function solve() {
+    var p = 12, h = 1e-4;
+    for (var i = 0; i < 12; i++) {
+      var f = profit(p) - target; steps.push({ p: p, f: f });
+      if (Math.abs(f) < 1e-6) break;
+      var d = (profit(p + h) - profit(p)) / h; p = p - f / d;
+    }
+  })();
+  var gview = function (p) { $("gb2").textContent = fr(p, 2); $("gb4").textContent = fr(vol(p), 0); $("gb6").textContent = fr(profit(p), 0); hit($("gb6")); };
+  function curve(k) {
+    var mx = Math.abs(steps[0].f), pts = [], dots = "";
+    for (var i = 0; i < k; i++) { var x = 30 + i * (260 / Math.max(steps.length - 1, 1)), y = 100 - 88 * Math.sqrt(Math.abs(steps[i].f) / mx); pts.push(x + "," + y); dots += '<circle cx="' + x + '" cy="' + y + '" r="3"/>'; }
+    $("g-curve").setAttribute("points", pts.join(" ")); $("g-dots").innerHTML = dots;
+  }
+  function gstate(s) {
+    clearTimeout(timer);
+    document.querySelectorAll("#gs-states button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.s === s)); });
+    var m = $("g-msg"); m.className = "msg"; $("g-cancel").hidden = s !== "run"; $("g-go").hidden = s === "run";
+    if (s === "form") { gview(12); curve(0); m.textContent = "B6 = formule dépendant de B2. Entrée numérique requise."; $("gs-st").textContent = "B6 → 2000"; $("g-go").textContent = "Chercher"; }
+    if (s === "run") { $("gs-st").textContent = "Itération…"; var i = 0; (function tick() { if (i >= steps.length) return gstate("ok"); var st = steps[i]; gview(st.p); curve(i + 1); m.textContent = "Itération " + i + " · B2 = " + fr(st.p, 4) + " · écart " + fr(st.f, 2); i++; timer = setTimeout(tick, reduce ? 0 : 650); })(); }
+    if (s === "ok") { var last = steps[steps.length - 1]; gview(last.p); curve(steps.length); $("gs-st").textContent = "Solution trouvée"; m.textContent = "B2 = " + fr(last.p, 4) + " donne B6 = 2 000 (" + steps.length + " itérations)."; $("g-go").textContent = "Appliquer"; $("g-cancel").hidden = false; $("g-cancel").textContent = "Annuler"; }
+    if (s === "fail") { gview(12); curve(0); $("gs-st").textContent = "Sans solution"; m.className = "msg err"; m.textContent = "Aucune solution en 100 itérations : B6 ne dépasse jamais 3 120 en modifiant B2."; $("g-go").textContent = "Fermer"; }
+  }
+  document.querySelectorAll("#gs-states button").forEach(function (b) { b.addEventListener("click", function () { gstate(b.dataset.s); }); });
+  $("g-go").addEventListener("click", function () { gstate($("g-go").textContent === "Chercher" ? "run" : "form"); });
+  $("g-cancel").addEventListener("click", function () { gstate("form"); });
+  gstate("form");
+
+  /* ---- 2: Scenarios. Resultat = B2*B3 - B4 ; jeux evalues sur clone. ---- */
+  var SC = [{ n: "Base", a: 100, b: 12 }, { n: "Pessimiste", a: 80, b: 9 }, { n: "Optimiste", a: 130, b: 15 }], fixedS = 600, cur = 0;
+  var res = function (s) { return s.a * s.b - fixedS; };
+  function sRender(changed) {
+    var tabs = $("s-tabs"); tabs.innerHTML = "";
+    SC.forEach(function (s, i) { var b = document.createElement("button"); b.textContent = s.n; b.setAttribute("aria-pressed", String(i === cur)); b.onclick = function () { cur = i; sRender(true); }; tabs.appendChild(b); });
+    $("s-act").textContent = SC[cur].n;
+    var o = [0, 1, 2].filter(function (i) { return i !== cur; }), s = SC[cur];
+    var cells = ['<div class="h"></div><div class="h">A</div><div class="h">B (actif)</div><div class="h">' + SC[o[0]].n + '</div><div class="h">' + SC[o[1]].n + '</div>'];
+    cells.push('<div class="h">2</div><div class="l">Volume</div><div class="in" id="sx0">' + fr(s.a) + '</div><div>' + fr(SC[o[0]].a) + '</div><div>' + fr(SC[o[1]].a) + '</div>');
+    cells.push('<div class="h">3</div><div class="l">Prix</div><div class="in" id="sx1">' + fr(s.b) + '</div><div>' + fr(SC[o[0]].b) + '</div><div>' + fr(SC[o[1]].b) + '</div>');
+    cells.push('<div class="h">4</div><div class="l">Frais</div><div>' + fr(fixedS) + '</div><div>' + fr(fixedS) + '</div><div>' + fr(fixedS) + '</div>');
+    cells.push('<div class="h">5</div><div class="l">Résultat</div><div id="sx2">' + fr(res(s)) + '</div><div>' + fr(res(SC[o[0]])) + '</div><div>' + fr(res(SC[o[1]])) + '</div>');
+    var g = $("s-grid"); g.style.setProperty("--n", "4"); g.style.gridTemplateColumns = "28px repeat(4,minmax(70px,1fr))"; g.innerHTML = cells.join("");
+    if (changed && !reduce) { hit($("sx0")); setTimeout(function () { hit($("sx1")); }, 250); setTimeout(function () { hit($("sx2")); }, 500); }
+  }
+  sRender(false);
+
+  /* ---- 3: Espion ---- */
+  var W0 = { price: 12, units: 100 }, W = { price: 12, units: 100 };
+  function wRender(changed) {
+    var ca = W.price * W.units, tax = ca * 0.2;
+    var rows = [["Modèle", "B2", fr(W.price, 2), "12"], ["Modèle", "B6", fr(ca), "=B2*B3"], ["Synthèse", "C9", fr(ca + tax), "=Modèle!B6*1,2"], ["Synthèse", "C12", fr(tax), "=C9-Modèle!B6"]];
+    var html = rows.map(function (r, i) { return "<tr><td>" + r[0] + "</td><td>" + r[1] + '</td><td class="v" id="wv' + i + '">' + r[2] + "</td><td>" + r[3] + "</td></tr>"; }).join("");
+    $("w-body").innerHTML = html;
+    if (changed) for (var i = 0; i < 4; i++) (function (i) { setTimeout(function () { hit($("wv" + i)); }, reduce ? 0 : i * 220); })(i);
+  }
+  $("w-edit").addEventListener("click", function () { W.price += 1; wRender(true); });
+  $("w-reset").addEventListener("click", function () { W = { price: W0.price, units: W0.units }; wRender(true); });
+  wRender(false);
+})();
+</script>
+</body>
+</html>
