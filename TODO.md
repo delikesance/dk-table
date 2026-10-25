@@ -212,3 +212,4 @@ Classement par gravité (P0 = pire)
 - [x] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 
 - [x] Somme rapide (Σ, Alt+=) : une sélection multi-cellules est sommée (une SOMME par colonne dessous, ou à droite d’une ligne), `ui/autosum.ts`, tests unitaires + e2e
+- [x] Filtre de colonne : champ de recherche en tête du popover (focus à l'ouverture, casse/accents ignorés, « Tout sélectionner » sur les résultats visibles, Entrée = OK, Échap ferme). `filter.ts matchesSearch`, `grid/filterPopover.ts`; tests unitaires + `e2e/feat-filter.spec.ts`
