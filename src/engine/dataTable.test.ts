@@ -1,5 +1,6 @@
 /** Tests de dataTable.ts : tables de données à 1 et 2 variables (substitution, restauration, erreurs). */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { setCalcMode } from "./calc-mode";
 import { createSheet, getRaw, getValue, setCell } from "./sheet";
 import { dataTable1, dataTable2 } from "./dataTable";
 
@@ -97,5 +98,18 @@ describe("dataTable2: table à 2 variables", () => {
     const s = sheet();
     const r = dataTable2(s, { formula: "C2", rowInput: "C1", colInput: "C2", rowValues: ["1"], colValues: ["1"] });
     expect(r).toMatchObject({ ok: false, reason: "not-formula" });
+  });
+});
+
+describe("dataTable: mode de calcul manuel", () => {
+  afterEach(() => setCalcMode({ manual: false }));
+
+  it("recalcule la formule résultat à chaque valeur, et la remet à sa valeur d'origine", () => {
+    const s = sheet();
+    setCalcMode({ manual: true });
+    const r = dataTable1(s, { formula: "D1", input: "C1", values: ["1", "2", "3"] });
+    expect(r).toEqual({ ok: true, results: [11, 21, 31] });
+    expect(getRaw(s, "C1")).toBe("5");
+    expect(getValue(s, "D1")).toBe(51);
   });
 });

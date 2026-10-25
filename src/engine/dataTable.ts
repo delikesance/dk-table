@@ -8,6 +8,8 @@ import type { Sheet, Value } from "./types";
 import { getRaw, getValue, setCell } from "./sheet";
 import { inBounds, normKey } from "./address";
 import { getState } from "./state";
+import { calcMode } from "./calc-mode";
+import { recalc } from "./recalc";
 
 /** Raison d'échec: entrée invalide ou dupliquée, entrée circulaire, cellule résultat non formule. */
 export type DataTableReason = "bad-input" | "input-circular" | "not-formula";
@@ -47,9 +49,15 @@ function check(sheet: Sheet, formula: string, inputs: string[]): DataTableReason
   return null;
 }
 
+/** Écrit la saisie `raw` dans `k`; en mode manuel, propage aux dépendants (setCell ne le fait pas). */
+function write(sheet: Sheet, k: string, raw: string): void {
+  setCell(sheet, k, raw);
+  if (calcMode().manual) recalc(sheet, k);
+}
+
 /** Écrit les saisies `assign`, puis lit la valeur de la formule. */
 function probe(sheet: Sheet, formula: string, assign: [string, string][]): Value {
-  for (const [k, raw] of assign) setCell(sheet, k, raw);
+  for (const [k, raw] of assign) write(sheet, k, raw);
   return getValue(sheet, formula);
 }
 
@@ -59,7 +67,7 @@ function restoreAfter<T>(sheet: Sheet, keys: string[], run: () => T): T {
   try {
     return run();
   } finally {
-    for (const [k, raw] of saved) setCell(sheet, k, raw);
+    for (const [k, raw] of saved) write(sheet, k, raw);
   }
 }
 
