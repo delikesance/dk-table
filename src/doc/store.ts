@@ -1,6 +1,5 @@
 /** In-memory list of the workbook's rich-text documents (persisted as `DktDoc.docs`). */
 import type { DocText } from "../io/types";
-import { emptyDoc } from "./emptyDoc";
 import { uid } from "../ui/model";
 
 /** Store of documents: add / rename / remove / reorder / content, with a change hook. */
@@ -10,7 +9,7 @@ export interface DocStore {
   /** New empty document named "Document N"; returns it. */
   add(): DocText;
   rename(id: string, name: string): void;
-  setContent(id: string, content: DocText["content"]): void;
+  setText(id: string, md: string): void;
   remove(id: string): void;
   /** Keep the documents in the order of `ids` (unknown ids ignored). */
   reorder(ids: string[]): void;
@@ -31,7 +30,7 @@ export function createDocStore(): DocStore {
     list: () => docs,
     get: (id) => docs.find((d) => d.id === id),
     add() {
-      const d: DocText = { id: uid(), name: `Document ${docs.length + 1}`, content: emptyDoc() as DocText["content"] };
+      const d: DocText = { id: uid(), name: `Document ${docs.length + 1}`, md: "" };
       docs = [...docs, d];
       changed();
       return d;
@@ -40,8 +39,8 @@ export function createDocStore(): DocStore {
       docs = docs.map((d) => (d.id === id ? { ...d, name } : d));
       changed();
     },
-    setContent(id, content) {
-      docs = docs.map((d) => (d.id === id ? { ...d, content } : d));
+    setText(id, md) {
+      docs = docs.map((d) => (d.id === id ? { ...d, md } : d));
       changed();
     },
     remove(id) {

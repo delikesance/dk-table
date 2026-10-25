@@ -8,7 +8,7 @@ import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
-import type { DocFormat } from "../doc/commands";
+import type { DocFormat } from "../doc/md/format";
 import type { DocEditor } from "../doc/editor";
 
 /** Hooks set by the command layer (file ops, context menu). */
