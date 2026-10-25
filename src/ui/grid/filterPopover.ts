@@ -1,6 +1,9 @@
-/** Popover de filtre de colonne: cases à cocher (valeurs distinctes + compte), OK, « Effacer le filtre ». */
+/**
+ * Popover de filtre de colonne: recherche, cases à cocher (valeurs distinctes + compte), OK, « Effacer le filtre ».
+ * La recherche masque les valeurs non correspondantes; « Tout sélectionner » ne concerne que les valeurs visibles.
+ */
 import { icon } from "../icons";
-import { EMPTY_LABEL, type Distinct } from "./filter";
+import { EMPTY_LABEL, matchesSearch, type Distinct } from "./filter";
 import "./filterPopover.css";
 
 /** Paramètres du popover. */
@@ -33,6 +36,11 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   const pop = document.createElement("div");
   pop.className = "dkg-pop";
   pop.setAttribute("role", "dialog");
+  const search = document.createElement("input");
+  search.type = "search";
+  search.className = "dkg-pop__search";
+  search.placeholder = "Rechercher";
+  search.setAttribute("aria-label", "Rechercher une valeur");
   const allLabel = document.createElement("label");
   allLabel.className = "dkg-pop__all";
   const all = document.createElement("input");
@@ -66,16 +74,22 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   };
   mk("clear", "Effacer le filtre");
   mk("ok", "OK");
-  pop.append(allLabel, list, btns);
+  pop.append(search, allLabel, list, btns);
   const boxes = (): HTMLInputElement[] => [...list.querySelectorAll<HTMLInputElement>("input")];
+  const shown = (): HTMLInputElement[] => boxes().filter((i) => !i.closest("label")!.hidden);
   const syncAll = (): void => {
-    const on = boxes().filter((i) => i.checked).length;
-    all.checked = on === boxes().length;
-    all.indeterminate = on > 0 && on < boxes().length;
+    const v = shown();
+    const on = v.filter((i) => i.checked).length;
+    all.checked = v.length > 0 && on === v.length;
+    all.indeterminate = on > 0 && on < v.length;
   };
   syncAll();
-  all.addEventListener("change", () => { boxes().forEach((i) => { i.checked = all.checked; }); });
+  all.addEventListener("change", () => { shown().forEach((i) => { i.checked = all.checked; }); });
   list.addEventListener("change", syncAll);
+  search.addEventListener("input", () => {
+    boxes().forEach((i) => { i.closest("label")!.hidden = !matchesSearch(i.dataset.v!, search.value); });
+    syncAll();
+  });
 
   const r = o.anchor.getBoundingClientRect();
   pop.style.left = `${Math.max(0, r.left)}px`;
@@ -89,15 +103,19 @@ export function openFilterPopover(o: PopoverOpts): () => void {
   };
   const away = (e: Event): void => { if (!pop.contains(e.target as Node)) close(); };
   const esc = (e: KeyboardEvent): void => { if (e.key === "Escape") close(); };
+  const apply = (clear: boolean): void => {
+    const checked = boxes().filter((i) => i.checked).map((i) => i.dataset.v!);
+    close();
+    o.onApply(clear || checked.length === o.values.length ? null : checked);
+  };
+  search.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); apply(false); } });
   document.addEventListener("mousedown", away, true);
   document.addEventListener("keydown", esc);
   pop.addEventListener("click", (e) => {
     const act = (e.target as HTMLElement).closest<HTMLElement>("[data-act]")?.dataset.act;
     if (!act) return;
-    const checked = boxes().filter((i) => i.checked).map((i) => i.dataset.v!);
-    close();
-    o.onApply(act === "clear" || checked.length === o.values.length ? null : checked);
+    apply(act === "clear");
   });
-  pop.querySelector("input")?.focus();
+  search.focus();
   return close;
 }
