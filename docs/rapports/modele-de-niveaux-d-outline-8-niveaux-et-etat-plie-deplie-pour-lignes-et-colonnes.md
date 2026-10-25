@@ -1,4 +1,5 @@
 # Rapport : Modèle de niveaux d'outline (8 niveaux) et état plié/déplié pour lignes et colonnes
+Statut : termine
 Visible : non
 
 ## Fait
@@ -15,3 +16,9 @@ Visible : non
 - Chemins : `src/model/` n'existe pas dans ce dépôt ; le modèle d'outline vit dans `src/engine/`, on reste dedans.
 - Le modèle par axe réutilise `outline.ts` (même logique pour lignes et colonnes) ; `outlineState.ts` ne fait que les regrouper.
 - Hors carte : câblage dans le format `.dktable` (`DocSheet`) et rendu de la grille (masquage, boutons +/-) : cartes séparées.
+
+## Preuves
+- Tests : ok (345 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":345,"scope":"related"},"tsc":{"ok":true}} -->
