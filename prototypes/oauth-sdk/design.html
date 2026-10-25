@@ -8,7 +8,7 @@
 :root{--bg:#f2f2f2;--panel:#fff;--ink:#0a0a8a;--mute:#555;--line:#c8c8d8;--acc:#0000f2;--bad:#b3400a}
 @media (prefers-color-scheme: dark){:root{--bg:#19192f;--panel:#22223f;--ink:#f2f2f2;--mute:#b0b0cc;--line:#3a3a66;--acc:#8c8cff;--bad:#ff9a5c}}
 *{box-sizing:border-box}
-body{margin:0;height:100vh;display:grid;grid-template-columns:320px 1fr;font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;height:100vh;display:grid;grid-template-columns:320px 1fr;grid-template-rows:auto minmax(0,1fr);font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 aside{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px}
 h1{font-size:15px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em}
 ol{list-style:none;margin:0;padding:0}
@@ -29,8 +29,10 @@ main{display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px}
 .thumb.sel{outline:2px solid var(--acc);outline-offset:1px}
 .thumb.sel span::before{content:"\25B6 "}
 </style>
+<link rel="stylesheet" href="/panel.css">
 </head>
 <body>
+<nav class="topnav" aria-label="Pages"><b>dk-table</b><a href="/">Boucle</a><a href="/moodboard.html">Moodboard</a><a href="/design.html" aria-current="page">Design</a></nav>
 <aside><h1>Étapes du designer</h1><ol id="timeline"></ol></aside>
 <main>
   <div id="viewer"></div>

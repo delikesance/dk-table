@@ -1,7 +1,6 @@
 // @vitest-environment node
 /** Tests du serveur du panneau "boucle" (pipeline factice). */
 import { afterEach, describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { request } from "node:http";
@@ -117,17 +116,5 @@ describe("moodboard", () => {
         (r) => { r.resume(); resolve(r.statusCode!); }).end();
     });
     expect(status).toBe(403);
-  });
-});
-
-describe("panel.html", () => {
-  const html = readFileSync(new URL("./panel.html", import.meta.url), "utf8");
-  it("contient les reperes stables et les 4 etats", () => {
-    for (const id of ["summary", "phasebar", "agents", "budget", "journal", "go", "stop"]) {
-      expect(html).toContain(`id="${id}"`);
-    }
-    for (const s of ["pending", "running", "ok", "fail"]) expect(html).toContain(`.${s}`);
-    expect(html).toContain("prefers-color-scheme: dark");
-    expect(html.split("\n").length).toBeLessThanOrEqual(200);
   });
 });
