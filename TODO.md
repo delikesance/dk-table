@@ -223,3 +223,8 @@ Classement par gravité (P0 = pire)
 - [x] Règle CLAUDE.md : captures d'écran (clair/sombre, `docs/screenshots/`) obligatoires dans toute PR de fonctionnalité visible
 - [x] Largeurs de colonnes enregistrées dans `.dktable` (`DocSheet.colWidths`, lettres → px, absent si aucune), restaurées à l'ouverture (anciens fichiers OK), annulables (glisser et ajustement = un pas), suivent l'insertion/suppression de colonnes. `io/colWidthsFormat.ts`, `Entry.widths`; tests unitaires + `e2e/feat-colwidth.spec.ts`
 - [ ] Secteur recherche v1 (`prototypes/oauth-sdk/`): lancer la boucle live (`CLAUDE_CODE_OAUTH_TOKEN`, plafond 20 USD) -> `docs/recherche/fonctionnalites.md`, puis ajouter les tâches issues des 4 axes
+- [x] Secteur recherche v1: run live (2,20 $ / 20 $), synthèse 4 axes dans `docs/recherche/fonctionnalites.md`
+- [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
+- [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
+- [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)
+- [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles
