@@ -1,5 +1,4 @@
 # Rapport : Moteur de sous-totaux et total général par groupes (3 niveaux)
-Statut : en-cours
 Visible : non
 
 ## Fait
@@ -23,8 +22,4 @@ Aucune (moteur pur, sans effet visible).
 - COUNT compte les nombres (comme Excel COUNT), pas les cellules non vides.
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
 
-## Preuves
-- Tests : ok (9 tests, tests lies aux fichiers modifies)
-- Typecheck : ok
-- Captures : sans objet
 <!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
