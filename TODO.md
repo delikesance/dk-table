@@ -230,7 +230,7 @@ Classement par gravité (P0 = pire)
 - [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles
 - Boucle autonome (`prototypes/oauth-sdk/`, panneau local `boucle.ts`), état honnête :
   - [x] research : exécuté en réel une seule fois (2,20 $, version série); version parallèle + budget partagé testée avec requêtes factices seulement
-  - [x] implementation / correction / design : implémentés (`sectors.ts`, prompts + outils sans git) et testés avec requêtes factices, jamais lancés en réel
+  - [x] design (spec écrite d'abord dans `docs/design/<date>.md`, lue par l'implementation) / implementation / correction : implémentés (`sectors.ts`, prompts + outils sans git) et testés avec requêtes factices, jamais lancés en réel
   - [x] panneau (`server.ts`, `panel.html`, budget en euros, Go/Stop, SSE) et git (`git.ts` : `developpement`, worktree par secteur, fusion si `npm test` + tsc verts, jamais master/push) : testés avec factices, jamais lancés en réel
   - [x] résumé Haiku par phase (`summary.ts`, repli déterministe sans LLM, événement `summary`, `ok` sur `end`); [x] zone résumé + cartes d'agents + barre de phases dans `panel.html` ; événements start/end par axe de recherche (contrat panneau vérifié par test)
   - [x] moodboard de recherche, côté données (`moodboard.ts` + tests, routes `/moodboard` et `/moodboard.html` dans `server.ts`, câblage `boucle.ts`); la page `moodboard.html` est faite à part (worker-mood-view)

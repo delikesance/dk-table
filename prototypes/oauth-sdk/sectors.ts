@@ -1,5 +1,5 @@
 /**
- * Secteurs de la boucle autres que la recherche : implementation, correction, design.
+ * Secteurs de la boucle autres que la recherche : design (spec ecrite), implementation, correction.
  *
  * Quoi : definition de chaque secteur (prompt, modele, outils) + `runSector`, une requete
  *        Agent SDK avec `query` injectee (testable sans reseau).
@@ -40,12 +40,28 @@ const RULES =
   "lance `npm test`), fichiers de 200 lignes max, tout est documente, mets TODO.md a jour. " +
   "Ne touche pas a git (pas de commit, branche, push): la boucle s'en charge. Reponds brievement.";
 
-/** Definitions des trois secteurs, dans l'ordre d'execution. */
+/** Chemin du document de design du jour (ecrit par le secteur design, lu par l'implementation). */
+export function designPath(d: Date = new Date()): string {
+  return `docs/design/${d.toISOString().slice(0, 10)}.md`;
+}
+const DESIGN = designPath(); // fige au chargement: design et implementation d'un meme run s'accordent
+
+/** Definitions des trois secteurs, dans l'ordre d'execution (design d'abord). */
 export const SECTOR_DEFS: SectorDef[] = [
+  {
+    id: "design", kind: "think", maxTurns: 40, share: 0.15, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    prompt:
+      "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
+      "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
+      `ecris un document court dans ${DESIGN} : parcours UX/UI (ecrans, etats, themes clair et sombre, ` +
+      "accessibilite) et interfaces/contrats (fonctions, types, evenements, fichiers touches) pour chacune. " +
+      "Ne modifie aucun autre fichier. Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
+  },
   {
     id: "implementation", kind: "think", maxTurns: 60, share: 0.4, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
     prompt:
-      "Secteur implementation. Lis docs/recherche/fonctionnalites.md et TODO.md, choisis 1 a 3 " +
+      `Secteur implementation. Lis d'abord le design ${DESIGN} et construis dessus. S'il est absent, dis-le ` +
+      "et replie-toi sur docs/recherche/fonctionnalites.md et TODO.md : choisis 1 a 3 " +
       "fonctionnalites non cochees, prioritaires et petites, et implemente-les. " + RULES,
   },
   {
@@ -54,13 +70,6 @@ export const SECTOR_DEFS: SectorDef[] = [
       "Secteur correction. Lance `npm test` puis `npx tsc --noEmit`. Pour chaque echec ou erreur de " +
       "type, ecris un test qui reproduit le bug, puis corrige le code (jamais en affaiblissant un " +
       "test existant). Repete jusqu'a ce que tout soit vert. " + RULES,
-  },
-  {
-    id: "design", kind: "think", maxTurns: 40, share: 0.15, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
-    prompt:
-      "Secteur design/UX. Relis la charte (section Design de CLAUDE.md, src/styles/) et corrige " +
-      "1 a 3 ecarts visibles de l'interface (contraste, alignement, theme sombre, accessibilite), " +
-      "chacun avec un test (styles.test.ts ou test d'UI). " + RULES,
   },
 ];
 

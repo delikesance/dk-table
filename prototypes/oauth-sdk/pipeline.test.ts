@@ -1,4 +1,4 @@
-/** Tests de la chaine research -> implementation -> correction -> design (query et git factices, sans cout). */
+/** Tests de la chaine research -> design -> implementation -> correction (query et git factices, sans cout). */
 import { describe, expect, it } from "vitest";
 import type { Run } from "./git";
 import { createPipeline } from "./pipeline";
@@ -45,7 +45,7 @@ describe("runPipeline", () => {
   it("enchaine les 4 secteurs, ecrit la recherche dans le worktree et fusionne dans developpement", async () => {
     const { calls, files, events } = await go({});
     const ended = events.filter((e) => e.type === "end" && !e.axis).map((e) => e.sector);
-    expect(ended).toEqual(["research", "implementation", "correction", "design"]);
+    expect(ended).toEqual(["research", "design", "implementation", "correction"]);
     expect(files[0]).toMatch(/\.claude[\\/]+worktrees[\\/]+research-.*docs[\\/]+recherche[\\/]+fonctionnalites\.md$/);
     const merges = calls.filter((c) => c.cmd === "git" && c.args[0] === "merge");
     expect(merges).toHaveLength(4);
@@ -56,7 +56,7 @@ describe("runPipeline", () => {
     const { events } = await go({});
     expect(events.filter((e) => e.type === "end" && !e.axis).every((e) => e.ok === true)).toBe(true);
     const sums = events.filter((e) => e.type === "summary");
-    expect(sums.map((e) => e.phase)).toEqual(["research", "implementation", "correction", "design"]);
+    expect(sums.map((e) => e.phase)).toEqual(["research", "design", "implementation", "correction"]);
     expect(sums[0].message).toBeTruthy();
     expect(events.some((e) => e.type === "info" && /^resume: /.test(e.message ?? ""))).toBe(true);
   });

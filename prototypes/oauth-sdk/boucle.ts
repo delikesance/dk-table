@@ -2,7 +2,7 @@
  * Point d'entree de la boucle autonome : panneau local + pipeline reel.
  *
  * Quoi : serveur sur 127.0.0.1 (PORT, defaut 4317) servant `panel.html`; "Go" lance
- *        research -> implementation -> correction -> design avec le Claude Agent SDK.
+ *        research -> design -> implementation -> correction avec le Claude Agent SDK.
  * Usage : npx tsx --env-file=.env prototypes/oauth-sdk/boucle.ts   puis ouvrir http://127.0.0.1:4317
  *        Dep : `npm install --no-save @anthropic-ai/claude-agent-sdk tsx`.
  * Securite : le token n'est jamais affiche; ANTHROPIC_API_KEY est retiree de l'env du SDK.
