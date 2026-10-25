@@ -48,7 +48,7 @@ describe("outline model", () => {
   it("collapsing a row without detail above is a no-op", () => {
     const o = collapse(base(), 6);
     expect(collapse(emptyOutline(3), 2).collapsed).toEqual([]);
-    expect(o.collapsed).toContain(6);
+    expect(o.collapsed.map((f) => f.row)).toContain(6);
   });
 
   it("showLevel(n) hides every row deeper than n and keeps the others visible", () => {
@@ -56,5 +56,19 @@ describe("outline model", () => {
     expect([...hiddenRows(o)].sort()).toEqual([0, 1, 3, 4]);
     expect(showLevel(base(), 3).collapsed).toEqual([]);
     expect(hiddenRows(showLevel(base(), 0)).size).toBe(6);
+  });
+
+  it("showLevel(n) with mixed levels never hides a row of level <= n", () => {
+    let o = emptyOutline(4);
+    [3, 1, 3, 0].forEach((l, r) => (o = setLevel(o, r, l)));
+    expect([...hiddenRows(showLevel(o, 2))].sort()).toEqual([0, 2]);
+    expect([...hiddenRows(showLevel(o, 0))].sort()).toEqual([0, 1, 2]);
+  });
+
+  it("expanding a summary after showLevel shows its group, inner folds kept", () => {
+    const o = expand(showLevel(base(), 0), 6);
+    expect([...hiddenRows(o)].sort()).toEqual([]);
+    const p = expand(collapse(collapse(base(), 2), 6), 6);
+    expect([...hiddenRows(p)].sort()).toEqual([0, 1]);
   });
 });
