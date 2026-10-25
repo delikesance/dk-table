@@ -19,15 +19,16 @@ Visible : oui
 - Modification d'une liste: `io/customLists.ts` `replace(i, raw)` (même validation; la liste elle-même n'est pas comparée à son ancienne valeur); dialogue: bouton « Modifier » par liste recharge la saisie, le bouton devient « Enregistrer la modification ». Tests: `src/io/customLists.test.ts`, `src/ui/dialogs/customLists.test.ts`; e2e « modifie une liste existante ».
 
 ## Non fait
-- Tri: choix de la liste par l'utilisateur (la liste est détectée automatiquement); pas de tri par liste dans l'e2e (couvert par les tests unitaires).
 
 ## Captures
-- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png`, `liste-ajoutee-sombre.png` (liste enregistrée)
-- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png`, `refus-doublon-sombre.png` (doublon refusé, raison affichée)
-- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png`, `liste-supprimee-sombre.png` (liste supprimée)
-- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png`, `liste-modifiee-sombre.png` (liste modifiée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png`, `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-sombre.png` (liste enregistrée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png`, `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-sombre.png` (doublon refusé, raison affichée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png`, `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-sombre.png` (liste supprimée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png`, `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-sombre.png` (liste modifiée)
 
 ## Decisions
+- Tri: pas de choix manuel de la liste (détection automatique suffisante pour le critère « ordonne par position dans la liste »); tri par liste couvert par les tests unitaires, pas par l'e2e.
+- Rapport: chemins complets des captures sombres (la boucle les marquait absentes).
 - Dialogue `ui/dialogs/customLists.ts` ouvert depuis Paramètres (bouton « Listes personnalisées… »): saisie par ligne/virgule, erreur affichée si refus.
 - Tri (`ui/sort.ts`): la liste utilisée est celle qui contient le plus de valeurs de la colonne (au moins une); les autres valeurs passent après, triées normalement.
 - Design `docs/design/2026-10-25-200330.html` ignoré: il traite de l'analyse what-if, pas des listes (avis du sous-agent `trancheur`, confirmé).
