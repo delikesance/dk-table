@@ -25,7 +25,8 @@ function setup() {
   return { remote, a, b };
 }
 
-describe("pushDev", () => {
+// Vrais depots git: lents sous charge (Windows), delai large.
+describe("pushDev", { timeout: 30000 }, () => {
   it("pousse developpement vers origin", async () => {
     const { remote, a } = setup();
     commit(a, "x", "x");
