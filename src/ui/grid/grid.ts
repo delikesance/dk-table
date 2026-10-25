@@ -18,7 +18,7 @@ import { stepRow } from "./filterView";
 import { openEditor, type Editor } from "./editor";
 import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
-import { markKind } from "./cellkind";
+import { markKind, rawKind } from "./cellkind";
 import { bindMouse } from "./mouse";
 import { bindFillHandle } from "./fillHandle";
 import { addFreezeHandles } from "./freezeHandle";
@@ -71,10 +71,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (!el) return;
     const custom = opts.renderCell?.(key) ?? null;
     const text = custom ? "" : opts.getDisplay(key);
-    const sig = custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`;
+    const kind = rawKind(opts.getRaw(key)), sig = `${kind}|` + (custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`);
     if (sigs.get(key) === sig) return;
     sigs.set(key, sig);
-    markKind(el, text, opts.gap?.(key));
+    markKind(el, text, opts.gap?.(key), kind);
     if (custom) el.replaceChildren(custom);
     else el.textContent = text;
   }

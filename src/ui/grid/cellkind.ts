@@ -1,3 +1,6 @@
+import { rawKind, type RawKind } from "../../engine/audit-kinds";
+export { rawKind };
+
 /** Classification of a displayed cell value: drives alignment (numbers right) and error styling. */
 export type CellKind = "num" | "text" | "err";
 
@@ -31,7 +34,9 @@ const HINTS: Record<string, string> = {
  * Set the `dkg-num` / `dkg-err` classes and the error tooltip on a cell element for display text `text`;
  * `dkg-ml` marks multi-line text (Alt+Enter) so only those cells wrap with pre-wrap.
  */
-export function markKind(el: HTMLElement, text: string, gap?: string): void {
+export function markKind(el: HTMLElement, text: string, gap?: string, raw?: RawKind): void {
+  el.classList.toggle("dkg-kf", raw === "formula"); // surlignage formules / constantes (voir kinds.ts)
+  el.classList.toggle("dkg-kc", raw === "number");
   el.classList.toggle("dkg-ml", text.includes("\n"));
   const kind = cellKind(text);
   el.classList.toggle("dkg-num", kind === "num");

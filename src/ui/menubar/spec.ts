@@ -10,6 +10,7 @@ import { parseKey } from "../grid/keys";
 import { insertFecHeaders } from "../fec";
 import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
+import { toggleKinds } from "../grid/kinds";
 import { openTextToColumns } from "../dialogs/textToCols";
 import { openNamedFns } from "../dialogs/namedFns";
 import { openMerge } from "../dialogs/merge";
@@ -110,7 +111,8 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       ...freezeEntries(app, "both"),
       { label: "Figer jusqu'à la cellule active", run: () => freezeAt(app) },
       { label: "Libérer les volets", run: () => app.setFreeze({ rows: 0, cols: 0 }) },
-      { label: "Panneau des fonctions", sep: true, run: () => app.toggleSidebar() },
+      { label: "Surligner formules / constantes", sep: true, run: () => void toggleKinds() },
+      { label: "Panneau des fonctions", run: () => app.toggleSidebar() },
       vue,
     ] },
     { label: "Aide", items: [
