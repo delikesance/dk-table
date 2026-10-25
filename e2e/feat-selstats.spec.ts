@@ -12,7 +12,7 @@ for (const [theme, label] of [["light", "clair"], ["dark", "sombre"]] as const) 
     await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
     await fillColumn(page, "A", ["10", "20", "x", "30"]);
     await selectCell(page, "A1");
-    await expect(page.locator(".dk-status")).toBeHidden();
+    await expect(page.locator(".dk-status [data-stat]")).toHaveCount(0);
     await page.locator('.dkg-cell[data-key="A1"]').hover();
     await page.mouse.down();
     await page.locator('.dkg-cell[data-key="A4"]').hover();
