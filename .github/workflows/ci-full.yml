@@ -4,7 +4,7 @@ name: CI complète
 
 on:
   push:
-    branches: [main, claude/project-thread-jf5yib] # TMP validation
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -27,7 +27,7 @@ jobs:
       - name: npm test
         run: npm test
 
-  # Rust en parallèle des tests JS : le crate Tauri a besoin de webkit2gtk (paquets mis en cache).
+  # Rust en parallèle des tests JS : le crate Tauri a besoin de webkit2gtk .
   cargo:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -37,10 +37,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-      - uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libxdo-dev
-          version: 1.0
+      # Parallèle aux autres jobs : ne rallonge pas le chemin critique.
+      - name: Paquets système Tauri
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf build-essential libssl-dev libxdo-dev
       # Le build Tauri embarque `dist/` : un dossier vide suffit aux tests.
       - run: mkdir -p dist
       - name: cargo test
