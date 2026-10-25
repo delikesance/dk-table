@@ -8,7 +8,7 @@ export const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g,
 
 const CSS = "@page{size:A4;margin:2.5cm}body{font:12pt/1.5 'Times New Roman',Times,'Liberation Serif',serif;max-width:16cm;margin:2cm auto;padding:0 1cm;color:#000;background:#fff}" +
   "h1,h2,h3{font-weight:bold;line-height:1.25;margin:1.2em 0 .5em}h1{font-size:18pt}h2{font-size:14pt}h3{font-size:12pt;font-style:italic}p{margin:0 0 .8em;text-align:justify}" +
-  "table{border-collapse:collapse;width:100%;font-size:11pt;margin:1em 0}th{background:#eee;text-align:left}" +
+  "table{border-collapse:collapse;width:100%;font-size:11pt;margin:.8em 0}th{background:#eee;text-align:left}" +
   "th,td{padding:4px 8px;border:1px solid #000}blockquote{margin:1em 0 1em 1cm;padding-left:.5cm;border-left:2px solid #000}" +
   "@media print{body{margin:0;max-width:none;padding:0}}";
 

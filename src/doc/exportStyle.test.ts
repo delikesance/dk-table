@@ -19,3 +19,11 @@ describe("style administratif des documents", () => {
     expect(heads.join("\n")).not.toMatch(/accent|display/);
   });
 });
+
+describe("blocs liés", () => {
+  it("pas de grande marge au-dessus, légende sous le tableau sans couper le cadre", () => {
+    const css2 = readFileSync("src/doc/blocks.css", "utf8");
+    expect(css2).not.toMatch(/margin:\s*52px/);
+    expect(css2.split("\n").find((l: string) => l.startsWith(".dk-block__tag"))).not.toMatch(/position:\s*absolute|italic/);
+  });
+});
