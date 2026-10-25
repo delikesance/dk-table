@@ -35,7 +35,7 @@ Visible : oui
 - Doublon refusé à casse près et au niveau de la séquence (même liste dans un autre ordre = liste différente, acceptée).
 
 ## Preuves
-- Tests : ok (394 tests, tests lies aux fichiers modifies)
+- Tests : ok (355 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":394,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"count":355,"scope":"related"},"tsc":{"ok":true}} -->
