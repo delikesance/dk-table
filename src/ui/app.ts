@@ -21,6 +21,8 @@ import { installMacros } from "./macros/wire";
 import { watchMacros } from "./appMacros";
 import { relink, type Ctx } from "./appState";
 import { createDocStore } from "../doc/store";
+import "./statusbar/statusbar.css";
+import { createStatusBar } from "./statusbar/statusbar";
 import "../doc/doc.css";
 import "../doc/blocks.css";
 import type { App } from "./appTypes";
@@ -30,7 +32,7 @@ export type { App, Hooks } from "./appTypes";
 const LAYOUT =
   '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__menubar"></div><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
   '<div class="dk-app__main"><div class="dk-app__grid"></div><div class="dk-app__doc" hidden></div><div class="dk-app__macro" hidden></div></div>' +
-  '<div class="dk-app__tabs"></div></div>';
+  '<div class="dk-app__status-slot"></div><div class="dk-app__tabs"></div></div>';
 
 /** Disposer of the previous mount (palette hotkey, menus click listener), run before a remount. */
 let disposePrev: (() => void) | undefined;
@@ -51,6 +53,8 @@ export function mount(root: HTMLElement): App {
     entries: [first], cur: first, recents: [], coalescing: false,
   } as unknown as Ctx;
   relink(c);
+  c.status = createStatusBar();
+  root.querySelector(".dk-app__status-slot")!.replaceWith(c.status.el);
   c.app = createApi(c);
   createWidgets(c, root);
   watchMacros(c);

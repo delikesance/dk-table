@@ -1,5 +1,5 @@
 /** Grid lifecycle of the app: (re)build, info sync, redraw after edits, tabs refresh. */
-import { getDisplay, getRaw, setCell } from "../engine/sheet";
+import { getDisplay, getRaw, getValue, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
 import type { GridView } from "./grid/types";
 import { MAX_ROWS } from "./grid/virtual";
@@ -11,7 +11,7 @@ import { sheetEnv } from "../engine/cf/env";
 import { formatValue } from "./numfmt";
 import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
-import { firstKey, setTitle, type Ctx } from "./appState";
+import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
 
 /** Per-sheet grid view state (column widths, filters): survives rebuilds, widths and freeze come from the entry (saved in files), filters are not saved; `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
@@ -32,6 +32,8 @@ export function syncInfo(c: Ctx): void {
   const raw = getRaw(c.cur.sheet, key);
   c.fbar.setCell(key, raw);
   c.sidebar.setCellInfo({ ref: key, raw, display: getDisplay(c.cur.sheet, key), format: "Standard" });
+  const keys = keysOf(c.grid.getSelection());
+  c.status.update(keys.length, keys.length > 1 ? keys.map((k) => getValue(c.cur.sheet, k)) : []);
   const st = c.cur.styles[key] ?? {};
   c.toolbar.setState({ bold: !!st.bold, italic: !!st.italic, underline: !!st.underline, wrap: !!st.wrap, align: st.align ?? "left",
     format: st.format ?? "general", canUndo: c.cur.undo.length > 0, canRedo: c.cur.redo.length > 0 });
