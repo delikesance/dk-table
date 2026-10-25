@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
 import { MODEL_BY_KIND, type QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
-import { SECTORS, SECTOR_DEFS, designPath, runSector } from "./sectors";
+import { SECTORS, SECTOR_DEFS, beginDesignRun, currentDesignPath, designPath, promptFor, recapPath, runSector } from "./sectors";
 
 /** Query factice : enregistre les options, cout `cost` borne par maxBudgetUsd. */
 function fake(cost: number, subtype = "success") {
@@ -37,15 +37,29 @@ describe("definitions", () => {
 });
 
 describe("design d'abord", () => {
-  it("le design ecrit docs/design/<date>.html; l'implementation le lit, repli sur recherche + TODO", () => {
+  it("chaque run a son fichier horodate; l'implementation lit celui du design du run", () => {
+    const d = new Date("2026-10-25T10:30:05Z");
+    expect(designPath(d)).toBe("docs/design/2026-10-25-103005.html");
+    expect(recapPath(designPath(d))).toBe("docs/design/recap-2026-10-25-103005.html");
+    const get = (id: string) => SECTOR_DEFS.find((x) => x.id === id)!;
+    const p = beginDesignRun(new Date("2030-01-02T03:04:05Z"));
+    expect(p).toBe("docs/design/2030-01-02-030405.html");
+    expect(currentDesignPath()).toBe(p);
+    expect(promptFor(get("design"))).toContain(p);
+    expect(promptFor(get("implementation"))).toContain(p);
+    expect(promptFor(get("design"))).toContain("jamais ecrase");
+    beginDesignRun(new Date("2030-01-02T03:04:06Z"));
+    expect(promptFor(get("implementation"))).not.toContain(p);
+  });
+  it("le design ecrit docs/design/<date>-<HHmmss>.html; l'implementation le lit, repli sur recherche + TODO", () => {
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
-    expect(designPath(new Date("2026-10-25T10:00:00Z"))).toBe("docs/design/2026-10-25.html");
-    expect(get("design").prompt).toContain(designPath());
+    expect(designPath(new Date("2026-10-25T10:00:00Z"))).toBe("docs/design/2026-10-25-100000.html");
+    expect(promptFor(get("design"))).toContain(currentDesignPath());
     expect(get("design").prompt).toContain("interfaces");
     expect(get("design").prompt).toContain("HTML autonome");
     expect(get("design").prompt).toContain("sombre");
     expect(get("design").prompt).not.toMatch(/^\/design/);
-    expect(get("implementation").prompt).toContain(designPath());
+    expect(promptFor(get("implementation"))).toContain(currentDesignPath());
     expect(get("implementation").prompt).toContain("docs/recherche/fonctionnalites.md");
     expect(get("implementation").prompt).toContain("TODO.md");
   });

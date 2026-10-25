@@ -70,7 +70,8 @@ describe("designs de bout en bout", () => {
       const recap = join(cwd, ".claude", "worktrees");
       const found = existsSync(recap) ? readdirSync(recap).filter((n) => n.startsWith("design-")) : [];
       expect(found).toHaveLength(1);
-      const html = readFileSync(join(recap, found[0], "docs", "design", "recap.html"), "utf-8");
+      const dd = join(recap, found[0], "docs", "design");
+      const html = readFileSync(join(dd, readdirSync(dd).filter((n) => /^recap-\d{4}-\d{2}-\d{2}-\d{6}\.html$/.test(n))[0]), "utf-8");
       expect(html).toContain("Canva");
       expect(html).toContain("Maquette X");
       expect(html).not.toContain("alert(1)");

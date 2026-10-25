@@ -12,7 +12,8 @@ import type { Server } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseBudgetEur, type Budget } from "./budget";
-import { listDesigns, readDesign, withStates } from "./designs";
+import { withStates } from "./designs";
+import { createDesignStore } from "./designStore";
 import type { Run } from "./git";
 import { buildMoodboard, pickBudget } from "./moodboard";
 import { createPipeline } from "./pipeline";
@@ -34,9 +35,9 @@ export function buildBoucleServer(o: WiringOpts): Server {
   // Moodboard : budget du run en cours (partage, jamais au-dela du plafond utilisateur), sinon <= 0,05 EUR par rafraichissement.
   let activeBudget: Budget | null = null;
   const moodCache = new Map<string, string>();
-  // Designs : dossier du secteur design en cours (sinon l'arbre principal) et etapes du secteur.
+  // Designs : tous les designs stockes (secteur actif + arbre principal + ref developpement) et etapes du secteur.
   let activeDesignDir: string | null = null;
-  const designDir = (): string => activeDesignDir ?? join(o.cwd, "docs", "design");
+  const store = createDesignStore({ cwd: o.cwd, run: o.run, activeDir: () => activeDesignDir });
   const designSteps: BoucleEvent[] = [];
   const pipeline = createPipeline({
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap,
@@ -47,7 +48,7 @@ export function buildBoucleServer(o: WiringOpts): Server {
       designSteps.length = 0;
       return pipeline({ ...r, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); r.onEvent(e); } });
     },
-    designs: { list: async () => withStates(await listDesigns(designDir()), designSteps), read: (n) => readDesign(designDir(), n), steps: () => designSteps },
+    designs: { list: async () => withStates(await store.list(), designSteps), read: (n) => store.read(n), steps: () => designSteps },
     designHtml: () => page("design.html"),
     parseBudgetEur,
     panelHtml: () => page("panel.html") ?? "<p>panel.html introuvable</p>",
