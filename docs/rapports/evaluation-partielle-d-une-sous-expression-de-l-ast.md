@@ -1,4 +1,5 @@
 # Rapport : Évaluation partielle d'une sous-expression de l'AST
+Statut : termine
 Visible : non
 
 ## Fait
@@ -17,3 +18,9 @@ Sans objet : pas d'effet visible (moteur pur, aucune UI câblée).
 - Mapping texte -> nœud : par reconstitution du texte (unparse) des nœuds, comparée au texte sélectionné sans espaces ni casse. Le parseur n'enregistre pas de positions, donc il n'est pas modifié (parser.ts reste sous 200 lignes).
 - Limite connue : la comparaison ignore les espaces, donc des chaînes littérales qui ne diffèrent que par des espaces sont confondues.
 - Pas de câblage dans la barre de formule ni dans F9 : hors critères (carte parente « F9 »).
+
+## Preuves
+- Tests : ok (11 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":11,"scope":"related"},"tsc":{"ok":true}} -->

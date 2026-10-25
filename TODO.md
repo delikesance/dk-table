@@ -306,6 +306,7 @@ Classement par gravité (P0 = pire)
 - [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
 
 ## Boucle
+- [x] Évaluation partielle d'une sous-expression de l'AST (carte evaluation-partielle-d-une-sous-expression-de-l-ast)
 - [x] Modèle de niveaux d'outline (8 niveaux) et état plié/déplié pour lignes et colonnes (carte modele-de-niveaux-d-outline-8-niveaux-et-etat-plie-deplie-pour-lignes-et-colonnes)
 - [x] Stockage des instantanés de versions nommées (créer, lister) (carte stockage-des-instantanes-de-versions-nommees-creer-lister)
 - [x] Vue Kanban (groupement par colonne de statut) (carte vue-kanban-groupement-par-colonne-de-statut)
