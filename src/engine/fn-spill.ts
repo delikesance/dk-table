@@ -5,6 +5,7 @@
  */
 import { err, isErr, type CellError, type Value } from "./types";
 import { toBool, toNum, toText } from "./values";
+import { SMOOTH_FORMS } from "./fn-smooth";
 
 /** Argument évalué : scalaire ou matrice de lignes. */
 export type SArg = Value | Value[][];
@@ -94,4 +95,5 @@ export const SPILL_FORMS: Record<string, (args: SArg[]) => SpillResult> = {
   UNIQUE: unique,
   FILTER: filter,
   SORT: sort,
+  ...SMOOTH_FORMS,
 };
