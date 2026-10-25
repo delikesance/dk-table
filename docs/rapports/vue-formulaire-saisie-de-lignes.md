@@ -1,4 +1,5 @@
 # Rapport : Vue Formulaire (saisie de lignes)
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -27,3 +28,9 @@ Visible : oui
 - « Obligatoire » se choisit dans la boîte et n'est pas enregistré dans le classeur (pas de changement de format).
 - La ligne ajoutée est la première ligne après la dernière ligne utilisée (dk-table n'a pas de tableaux structurés).
 - Limite visuelle: le libellé « Obligatoire » touche le bord de la boîte à 1200 px; non corrigé.
+
+## Preuves
+- Tests : ok (232 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-initial-clair.png, docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-initial-sombre.png, docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-obligatoire-clair.png, docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-obligatoire-sombre.png, docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-resultat-clair.png, docs/screenshots/vue-formulaire-saisie-de-lignes/formulaire-resultat-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":232,"scope":"related"},"tsc":{"ok":true}} -->
