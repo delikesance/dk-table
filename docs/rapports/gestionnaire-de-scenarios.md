@@ -1,4 +1,5 @@
 # Rapport : Gestionnaire de scénarios
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -26,3 +27,9 @@ Visible : oui
 - `scenarioStore.test.ts` écrit après le store (écart au TDD, comportement vérifié par le test).
 - `ui/appApi.ts` était à exactement 200 lignes : câblage des scénarios regroupé dans `ui/appScenarios.ts` (`scenarioApi`, `scenarioField`, `loadScenarios`) et deux entrées d'objet fusionnées sur une ligne.
 - CLAUDE.md non modifié (la boucle/orchestrateur gère la doc de structure) ; `docs/gestionnaire-de-scenarios.md` ajouté.
+
+## Preuves
+- Tests : ok (374 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/gestionnaire-de-scenarios/enregistrer-clair.png, docs/screenshots/gestionnaire-de-scenarios/enregistrer-sombre.png, docs/screenshots/gestionnaire-de-scenarios/appliquer-clair.png, docs/screenshots/gestionnaire-de-scenarios/appliquer-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":374,"scope":"related"},"tsc":{"ok":true}} -->
