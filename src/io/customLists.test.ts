@@ -45,4 +45,30 @@ describe("createCustomLists", () => {
     expect(createCustomLists(store).lists()).toEqual([["X", "Y"]]);
     expect(cl.remove(5)).toBe(false);
   });
+  it("remplace une liste par position et persiste", () => {
+    const store = memStore();
+    const cl = createCustomLists(store);
+    cl.add(["A", "B"]); cl.add(["X", "Y"]);
+    expect(cl.replace(1, ["Nord", "Sud", "Est"]).ok).toBe(true);
+    expect(cl.lists()).toEqual([["A", "B"], ["Nord", "Sud", "Est"]]);
+    expect(createCustomLists(store).lists()).toEqual([["A", "B"], ["Nord", "Sud", "Est"]]);
+  });
+  it("refuse une modification en doublon d'une autre liste, sans rien changer", () => {
+    const cl = createCustomLists(memStore());
+    cl.add(["A", "B"]); cl.add(["X", "Y"]);
+    expect(cl.replace(1, ["a", "b"]).ok).toBe(false);
+    expect(cl.replace(1, ["Q"]).ok).toBe(false);
+    expect(cl.lists()).toEqual([["A", "B"], ["X", "Y"]]);
+  });
+  it("accepte de réenregistrer la même liste à sa position (pas un doublon de soi-même)", () => {
+    const cl = createCustomLists(memStore());
+    cl.add(["A", "B"]);
+    expect(cl.replace(0, ["A", "B", "C"]).ok).toBe(true);
+    expect(cl.replace(0, ["a", "b", "c"]).ok).toBe(true);
+    expect(cl.lists()).toEqual([["a", "b", "c"]]);
+  });
+  it("replace renvoie faux pour une position inexistante", () => {
+    const cl = createCustomLists(memStore());
+    expect(cl.replace(3, ["A", "B"]).ok).toBe(false);
+  });
 });
