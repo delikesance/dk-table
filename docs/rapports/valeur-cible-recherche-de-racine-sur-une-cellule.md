@@ -1,4 +1,5 @@
 # Rapport : Valeur cible (recherche de racine sur une cellule)
+Statut : termine
 Visible : non
 
 ## Fait
@@ -26,3 +27,9 @@ Aucune (pas d'effet visible dans cette carte).
 - Annulation utilisateur : le moteur ne sait pas que l'utilisateur annule. Il renvoie `original` ; c'est à l'UI de réécrire cette valeur si l'utilisateur annule après un succès.
 - Hors de cette carte (carte suivante) : pas d'UI (menu Données, dialogue, palette). La partie moteur est prête.
 - Hors de cette carte : tables de données et autres parties de la carte parente.
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
