@@ -18,7 +18,8 @@
  */
 import { createHash } from "node:crypto";
 import { createBudget, type Budget } from "./budget";
-import { MODEL_BY_KIND, type QueryFn } from "./research";
+import { modelFor } from "./routing";
+import type { QueryFn } from "./research";
 
 /** Carte du moodboard (contrat avec la vue). */
 export interface MoodCard {
@@ -117,7 +118,7 @@ async function summarize(cards: MoodCard[], d: MoodDeps, cache: Map<string, stri
         'Reponds uniquement par des lignes "numero|resume".\n' +
         lot.map((c, n) => `${n + 1}. ${c.title} : ${c.source.slice(0, 400)}`).join("\n");
       const stream = d.query({ prompt, options: {
-        model: MODEL_BY_KIND.summary, maxTurns: 1, maxBudgetUsd: granted, tools: [], allowedTools: [],
+        model: modelFor("summary", 0), maxTurns: 1, maxBudgetUsd: granted, tools: [], allowedTools: [],
         permissionMode: "dontAsk", settingSources: [], env: d.env } });
       for await (const m of stream) {
         if (m.type !== "result") continue;

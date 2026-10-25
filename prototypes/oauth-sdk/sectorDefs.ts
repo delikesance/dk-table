@@ -2,13 +2,10 @@
  * Definitions des secteurs (prompts, chemins du design du run), extraites de sectors.ts pour tenir sous 200 lignes.
  * Usage : `import { SECTOR_DEFS, promptFor } from "./sectorDefs"` (re-exporte par sectors.ts).
  */
-import type { Kind } from "./agentOptions";
 
 /** Definition d'un secteur (prompt et outils). */
 export interface SectorDef {
   id: "implementation" | "correction" | "design";
-  /** Une seule requete melange choix et edition: think (sonnet), pas code (haiku). */
-  kind: Kind;
   prompt: string;
   maxTurns: number;
   /** Part du plafond total reservee a ce secteur. */
@@ -16,8 +13,7 @@ export interface SectorDef {
 }
 
 const RULES =
-  "Les regles du projet (CLAUDE.md) sont deja chargees: TDD (ecris un test qui echoue AVANT tout code, " +
-  "lance `npm test`), fichiers de 200 lignes max, tout est documente. " +
+  "Les regles du projet (CLAUDE.md) sont deja chargees: TDD (ecris un test qui echoue AVANT tout code), fichiers de 200 lignes max, tout est documente. " +
   "Ne touche ni a git (pas de commit, branche, push) ni a TODO.md : la boucle s'en charge. Reponds brievement.";
 
 /** Chemin horodate `docs/design/<date>-<HHmmss>.html` (UTC): un fichier par run, jamais ecrase. */
@@ -41,7 +37,7 @@ export function promptFor(s: SectorDef): string { return s.prompt.split(DESIGN).
 /** Definitions des trois secteurs, dans l'ordre d'execution (design d'abord). */
 export const SECTOR_DEFS: SectorDef[] = [
   {
-    id: "design", kind: "think", maxTurns: 40, share: 0.15,
+    id: "design", maxTurns: 40, share: 0.15,
     prompt:
       "Secteur design/UX, AVANT tout code. Lis src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
@@ -55,14 +51,15 @@ export const SECTOR_DEFS: SectorDef[] = [
       "Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
   },
   {
-    id: "implementation", kind: "think", maxTurns: 60, share: 0.4,
+    id: "implementation", maxTurns: 60, share: 0.4,
     prompt:
       `Secteur implementation. Les cartes a traiter sont listees plus bas : le lot est decide par la boucle, n'en choisis aucune autre. ` +
       `Si le design ${DESIGN} existe, construis dessus. Sans liste de cartes, replie-toi sur docs/recherche/fonctionnalites.md : ` +
-      "choisis 1 a 3 fonctionnalites non realisees, prioritaires et petites. " + RULES,
+      "choisis 1 a 3 fonctionnalites non realisees, prioritaires et petites. " +
+      "Lance seulement les tests concernes (`npx vitest run <fichier>`) : la boucle lance la suite complete du lot. " + RULES,
   },
   {
-    id: "correction", kind: "think", maxTurns: 40, share: 0.2,
+    id: "correction", maxTurns: 40, share: 0.2,
     prompt:
       "Secteur correction. Lance `npm test` puis `npx tsc --noEmit`. Pour chaque echec ou erreur de " +
       "type, ecris un test qui reproduit le bug, puis corrige le code (jamais en affaiblissant un " +

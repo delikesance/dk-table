@@ -9,7 +9,8 @@
  * Usage : `await summarizePhase(state, { query, budget, env })` -> chaine.
  */
 import type { Budget } from "./budget";
-import { MODEL_BY_KIND, type QueryFn } from "./research";
+import { modelFor } from "./routing";
+import type { QueryFn } from "./research";
 
 /** Etat d'une phase ou d'un agent. */
 export type Status = "pending" | "running" | "ok" | "failed";
@@ -88,7 +89,7 @@ export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<
     const stream = deps.query({
       prompt,
       options: {
-        model: MODEL_BY_KIND.summary, maxTurns: 1, maxBudgetUsd: granted, tools: [], allowedTools: [],
+        model: modelFor("summary", 0), maxTurns: 1, maxBudgetUsd: granted, tools: [], allowedTools: [],
         permissionMode: "dontAsk", settingSources: [], env: deps.env,
       },
     });
