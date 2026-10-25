@@ -58,6 +58,8 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
   let activeDir: string | null = null, activeDirs: string[] = [];
   const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir, activeDirs: () => activeDirs });
+  // Etat persistant du run (reprise apres crash); un fichier corrompu est journalise et ignore.
+  const state = createFileStateStore(join(o.cwd, ".boucle", "state.json"), { onWarn: (m) => rl.cur().warn("etat", m) });
   // Cartes terminees: registre durable (jamais purge), hors depot (.boucle/ ignore par git).
   const ledger = createFileLedger(join(o.cwd, ".boucle", "termines.jsonl"));
   // Rapports « en cours » d'un run interrompu: archives au demarrage, ignores ensuite (hors depot).
@@ -67,13 +69,12 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   let events = 0; // compteur d'evenements: tout evenement invalide le cache du moodboard (temps reel)
   const boardOf = (order: Order, active: ReadonlySet<string> = activeIds) => buildBoard({
     ledger, active, stale,
+    deferred: () => new Map(Object.entries(state.load().cards).filter(([, c]) => c.deferred).map(([id, c]) => [id, c.deferred!])),
     readFile: async (p) => (await files.read(p, order)) ?? Promise.reject(new Error("absent")),
     exists: (p) => files.exists(p, order),
     query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
   });
   const tracked = (b: Promise<BoardCard[]>) => b.then((cs) => { trackBoard(rl.cur(), seen, cs); return cs; });
-  // Etat persistant du run (reprise apres crash); un fichier corrompu est journalise et ignore.
-  const state = createFileStateStore(join(o.cwd, ".boucle", "state.json"), { onWarn: (m) => rl.cur().warn("etat", m) });
   const pipeline = createPipeline({
     state, onLock: (s) => rl.cur()[s.waitMs >= 1000 ? "info" : "debug"]("verrou", s.name, { lock: s.name, waitMs: s.waitMs, holdMs: s.holdMs }),
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",

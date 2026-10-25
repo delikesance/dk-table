@@ -68,19 +68,19 @@ export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDe
 
   const suiteLock = createMutex({ name: "suiteLock", onLock }); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
   /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
-  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[]; proof?: Proof }> {
+  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[]; proof?: Proof; kind?: "tsc" | "tests"; failed?: string[] }> {
     const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
-    if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
+    if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}`, kind: "tsc" };
     const proof: Proof = { tests: { ok: true, count: testCount(t.out), scope: "full" }, tsc: { ok: true } };
     if (t.code === 0) return { reason: null, proof };
     const mine = failedTests(t.out);
     const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
-    if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}` };
+    if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}`, kind: "tests", failed: mine };
     const added = onlyOnBranch(mine, base);
-    if (added.length) return { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` };
+    if (added.length) return { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}`, kind: "tests", failed: added };
     const changed = (await git(["diff", "--name-only", `${DEV}...HEAD`], dir)).out.split(/\r?\n/).filter(Boolean);
     const linked = relatedFailures(mine, changed);
-    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}` } : { reason: null, preexisting: mine, proof };
+    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}`, kind: "tests", failed: linked } : { reason: null, preexisting: mine, proof };
   }
 
   /** Retire le worktree de reference (fin du run). */

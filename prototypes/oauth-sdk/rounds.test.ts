@@ -11,14 +11,15 @@ const card = (id: string, state: BoardCard["state"]) => ({ id, title: id, source
 
 describe("createPlanner", () => {
   it("snapshot/restore: un planificateur repris apres un crash retrouve ses echecs et ses tournees", () => {
-    const p = createPlanner({ batch: 1, tries: 2 });
+    const p = createPlanner({ batch: 1, patience: 3 });
     const cards = [card("dur", "en-cours"), card("a", "idee")];
-    for (let i = 0; i < 2; i++) { p.nextBatch(cards); p.observe(cards); }
+    for (let i = 0; i < 3; i++) { p.nextBatch(cards); p.observe(cards); }
     const snap = JSON.parse(JSON.stringify(p.snapshot()));
-    const q = createPlanner({ batch: 1, tries: 2 });
+    const q = createPlanner({ batch: 1, patience: 3 });
     q.restore(snap);
-    expect(q.nextBatch(cards).map((c) => c.id)).toEqual(["a"]);
+    expect(p.attempt(["dur"])).toBeGreaterThan(0);
     expect(q.attempt(["dur"])).toBe(p.attempt(["dur"]));
+    expect(q.stuck()).toBe(p.stuck());
   });
 
   it("lots de 6 cartes: les plus avancees d'abord", () => {
@@ -29,14 +30,19 @@ describe("createPlanner", () => {
     expect(b.slice(0, 2).map((c) => c.id)).toEqual(["p", "e"]);
   });
 
-  it("une carte qui n'avance pas apres 3 essais laisse la place aux autres (rotation), sans etre abandonnee", () => {
-    const p = createPlanner({ batch: 1, tries: 3 });
-    let cards = [card("dur", "en-cours"), card("a", "idee"), card("b", "idee")];
-    for (let i = 0; i < 3; i++) { p.nextBatch(cards); p.observe(cards); }
-    expect(p.nextBatch(cards).map((c) => c.id)).toEqual(["a"]);          // « dur » passe derriere
-    cards = [card("dur", "en-cours"), card("a", "termine"), card("b", "termine")];
-    p.observe(cards);
-    expect(p.nextBatch(cards).map((c) => c.id)).toEqual(["dur"]);        // reprise quand il ne reste que lui
+  it("une carte bloquee par le code n'est plus jamais dans le lot, meme s'il ne reste qu'elle", () => {
+    const p = createPlanner({ batch: 2 });
+    const cards = [{ ...card("dur", "bloque"), blockReason: "3 essais" } as BoardCard, card("a", "idee")];
+    expect(p.nextBatch(cards).map((c) => c.id)).toEqual(["a"]);
+    expect(p.nextBatch([cards[0]])).toEqual([]);
+  });
+
+  it("idee -> bloque n'est pas un progres (bloque ne compte pas comme en-cours)", () => {
+    const p = createPlanner({ patience: 1 });
+    p.observe([card("a", "idee")]);
+    p.nextBatch([card("a", "idee")]);
+    expect(p.observe([card("a", "bloque")])).toBe(false);
+    expect(p.stuck()).toBe(true);
   });
 
   it("le progres compte chaque avancee d'etat (idee -> en-cours -> preuves), pas seulement « termine »", () => {
@@ -64,6 +70,22 @@ describe("stopMessage", () => {
     expect(stopMessage("stuck", left)).toMatch(/bloquee.*a \(en-cours\), b \(idee\)/i);
     expect(stopMessage("abort", left)).toMatch(/arrete/i);
     expect(stopMessage("max-rounds", left)).toMatch(/tournees max/i);
+  });
+});
+
+describe("runRounds: borne dure d'essais", () => {
+  it("3 essais sans carte terminee: carte bloquee avec raison, plus d'agent, arret « blocked »", async () => {
+    const st = createFileStateStore(join(mkdtempSync(join(tmpdir(), "rr-")), "state.json"));
+    let impl = 0;
+    const board = async () => [{ ...card("a", "en-cours"), ...(st.load().cards.a?.deferred ? { state: "bloque", blockReason: st.load().cards.a.deferred!.reason } : {}) } as BoardCard];
+    const r = await runRounds({
+      board, state: st, emit: () => {}, halt: () => null, progress: () => {}, corr: async () => true,
+      impl: async () => { impl++; st.update((s) => { const c = s.cards.a ?? { tries: 0, models: [] }; c.tries++; c.lastReason = "tests rouges"; s.cards.a = c; }); return { merged: false }; },
+    });
+    expect(impl).toBe(3);
+    expect(r.reason).toBe("blocked");
+    expect(st.load().cards.a.deferred).toMatchObject({ kind: "max-tries" });
+    expect(stopMessage("blocked", [{ ...card("a", "bloque"), blockReason: "3 essais" } as BoardCard])).toContain("a (3 essais)");
   });
 });
 

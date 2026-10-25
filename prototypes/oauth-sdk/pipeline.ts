@@ -23,6 +23,7 @@ import { parseOverride } from "./routing";
 import type { AgentResult } from "./parallel";
 import { runRounds, stopMessage, type StopReason } from "./rounds";
 import { createProver } from "./proveCards";
+import { planRetry, recordAttempt } from "./retry";
 import { beginRun } from "./resume";
 import { watchReports as defaultWatchReports } from "./reportWatch";
 import { SECTORS, type Sector } from "./sectors";
@@ -76,7 +77,9 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     const setDir = (dir: string, on: boolean) => { if (on) live.add(dir); else live.delete(dir); deps.onDir?.(on ? dir : [...live].at(-1) ?? null); deps.onDirs?.([...live]); };
     const runOne = async (sector: Sector, task?: string, attempt = 0, cards: { id: string; title: string }[] = []): Promise<AgentResult> => {
       const agent = cards.map((c) => c.id).join(", ") || undefined;
-      const { branch, dir } = await flow.startSector(sector.name, cards.map((c) => c.id).join("-"));
+      // carte refusee precedemment: on rouvre sa branche (le code fautif y est) au lieu de repartir de developpement
+      const plan = sector.name === "implementation" ? await planRetry(deps.state, flow, cards) : { skipped: [] as string[] };
+      const { branch, dir } = plan.reuse ?? await flow.startSector(sector.name, cards.map((c) => c.id).join("-"));
       setDir(dir, true); inflight[sector.name] = (inflight[sector.name] ?? 0) + 1;
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
@@ -98,7 +101,9 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         ? (deps.watchReports ?? defaultWatchReports)(join(dir, "docs", "rapports"), (id) => send({ type: "card", sector: "implementation", cardId: id }))
         : undefined;
       try {
-        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task, attempt, models, slots: sector.name === "implementation" ? parallel : 1 });
+        if (plan.reuse) send({ type: "info", sector: sector.name, message: `reprise de la branche refusee ${branch}${plan.resume ? " (session reprise)" : ""}` });
+        if (plan.skipped.length) send({ type: "info", sector: sector.name, message: `branches refusees conservees, non reprises : ${plan.skipped.join(", ")}` });
+        const out = await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task: plan.prompt ? `${task ?? ""}\n\n${plan.prompt}` : task, retryPrompt: plan.prompt, resume: plan.resume, attempt, models, slots: sector.name === "implementation" ? parallel : 1 });
         await stopWatch?.flush?.(); // le fichier ecrit juste avant la fin compte aussi (frise du designer)
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
@@ -106,7 +111,12 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir, sector.name === "implementation" && cards.length ? { prove: createProver({ cwd: deps.cwd, cards }) } : undefined);
-        ok = m.merged; conflict = !!m.conflict; if (!ok && !isDesign) await flow.release(branch, dir); // le design non fusionne reste affiche par la toile
+        ok = m.merged; conflict = !!m.conflict;
+        // refus sur le code lui-meme (tsc, tests, arbre): worktree et branche conserves pour l'essai suivant; sinon liberation (la branche garde le travail)
+        const keep = !ok && !isDesign && cards.length > 0 && ["tsc", "tests", "tree", "dev"].includes(m.kind ?? "");
+        const changed = keep ? (await deps.run("git", ["diff", "--name-only", `developpement...${branch}`], deps.cwd)).out.split(/\r?\n/).filter(Boolean) : [];
+        if (!ok && !isDesign && !keep) await flow.release(branch, dir); // le design non fusionne reste affiche par la toile
+        if (cards.length) recordAttempt(deps.state, { cards, models: out?.models ?? [], merged: ok, refusal: m, kept: keep ? { branch, dir } : undefined, changed, session: { id: out?.sessionId, costUsd: out?.sessionCostUsd } });
         send({
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
