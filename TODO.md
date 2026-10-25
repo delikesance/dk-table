@@ -229,7 +229,7 @@ Classement par gravité (P0 = pire)
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
 - [x] Carte `fonctions-nommees`: fonction personnalisée (nom, paramètres, corps) dans `.dktable`, dialogue Données > Fonctions nommées… (`docs/fonctions-nommees.md`)
 - [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)
-- [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles
+- [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles (annulation après macro : fait, `docs/rapports/annulation-detruite-par-les-macros.md`)
 - Boucle autonome (`prototypes/oauth-sdk/`, panneau local `boucle.ts`), état honnête :
   - [x] research : exécuté en réel une seule fois (2,20 $, version série); version parallèle + budget partagé testée avec requêtes factices seulement
   - [x] design (maquette HTML autonome produite d'abord dans `docs/design/<date>.html`, lue par l'implementation) / implementation / correction : implémentés (`sectors.ts`, prompts + outils sans git) et testés avec requêtes factices, jamais lancés en réel
@@ -272,7 +272,8 @@ Classement par gravité (P0 = pire)
 
 ## Cartes boucle (implémentation)
 
-- [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
+- [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion, largeur fixe, format texte par colonne), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
 - [x] plafonds-google-sheets : toast pour cellule > 50 000 car., ligne > MAX_ROWS, import CSV volumineux/tronqué, `ui/limits.ts`, `docs/plafonds.md`
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
+- [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`

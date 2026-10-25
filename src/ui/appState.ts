@@ -3,6 +3,7 @@ import { parseKey, rangeKeys } from "./grid/keys";
 import type { Grid } from "./grid/grid";
 import type { Toolbar, FormulaBar } from "./toolbar";
 import type { SheetTabs } from "./tabs/tabs";
+import type { StatusBar } from "./statusbar/statusbar";
 import type { Sidebar, RecentFile } from "./sidebar/sidebar";
 import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
@@ -50,6 +51,8 @@ export interface Ctx {
   grid: Grid;
   toolbar: Toolbar;
   fbar: FormulaBar;
+  /** Selection statistics bar. */
+  status: StatusBar;
   sidebar: Sidebar;
   tabs: SheetTabs;
   app: App;
