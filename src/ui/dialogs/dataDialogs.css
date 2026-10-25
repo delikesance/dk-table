@@ -1,0 +1,13 @@
+/* Dialogues Tableau croisé et Comparer : champs en colonne, tableau de différences (tokens Hermes). */
+.dk-data { min-width: 380px; }
+.dk-data__field { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: var(--s-2); }
+.dk-data select, .dk-data input[name] { height: 28px; border: 1px solid var(--c-line); border-radius: var(--r-sm);
+  background: var(--c-surface); color: var(--c-text); font: var(--fs-md) var(--font-mono); padding: 0 6px; }
+.dk-data__msg { margin: 0; min-height: 1em; color: var(--c-text-2); font: 12px var(--font-mono); }
+.dk-diff { max-height: 360px; overflow: auto; font: 12px var(--font-mono); }
+.dk-diff__sheet { margin: var(--s-2) 0 4px; font: var(--fw-medium) 13px var(--font-display); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+.dk-diff__table { width: 100%; border-collapse: collapse; }
+.dk-diff__table th, .dk-diff__table td { text-align: left; padding: 2px 8px; border-bottom: 1px solid var(--c-line); }
+.dk-diff--add td:last-child { color: var(--c-accent); }
+.dk-diff--del td:nth-child(2) { color: var(--c-error); text-decoration: line-through; }
+.dk-diff--mod td:last-child { font-weight: var(--fw-medium); }

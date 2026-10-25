@@ -72,10 +72,12 @@ export function wantsMatrix(name: string): boolean {
 const SPECIAL = ["IF", "IFERROR", "IFNA", "IFS", "SWITCH"];
 /** Live-chart functions (registered by `registerLive`; listed even before it runs). */
 const LIVE = ["SPARKLINE", "BAR", "TREND"];
+/** Spill functions (fn-spill.ts, evaluated by the evaluator, not in the registry). */
+const SPILL = ["SPLIT", "UNIQUE", "FILTER", "SORT"];
 
 /** Sorted names of every callable function: registry + special forms + live charts. */
 export function listFunctionNames(): string[] {
-  return [...new Set([...registry.keys(), ...SPECIAL, ...LIVE])].sort();
+  return [...new Set([...registry.keys(), ...SPECIAL, ...LIVE, ...SPILL])].sort();
 }
 
 /** Look up a function by (upper-case) name. */

@@ -18,6 +18,8 @@ export interface State {
   deps: Map<string, Set<string>>;
   /** key -> cells of other sheets it reads (only formulas with qualified refs). */
   xprec: Map<string, XDep[]>;
+  /** origin -> zone de débordement : rectangle visé (tête incluse) et cellules réellement écrites. */
+  spills: Map<string, { rect: string[]; live: string[] }>;
 }
 
 const states = new WeakMap<Sheet, State>();
@@ -26,7 +28,7 @@ const states = new WeakMap<Sheet, State>();
 export function getState(sheet: Sheet): State {
   let s = states.get(sheet);
   if (!s) {
-    s = { values: new Map(), asts: new Map(), prec: new Map(), deps: new Map(), xprec: new Map() };
+    s = { values: new Map(), asts: new Map(), prec: new Map(), deps: new Map(), xprec: new Map(), spills: new Map() };
     states.set(sheet, s);
   }
   return s;

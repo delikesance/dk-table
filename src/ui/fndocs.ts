@@ -7,6 +7,7 @@ import { FN_DOCS_MATH2 } from "./fndocs-math2";
 import { FN_DOCS_TEXT2 } from "./fndocs-text2";
 import { FN_DOCS_FINANCE } from "./fndocs-finance";
 import { FN_DOCS_ACCT } from "./fndocs-acct";
+import { FN_DOCS_SPILL } from "./fndocs-spill";
 
 /** Documented functions; `name` is inserted as `=NAME(`. */
 export const FN_DOCS: FnDoc[] = [
@@ -27,6 +28,7 @@ export const FN_DOCS: FnDoc[] = [
   ...FN_DOCS_MORE,
   ...FN_DOCS_MATH2,
   ...FN_DOCS_TEXT2,
+  ...FN_DOCS_SPILL,
   ...FN_DOCS_FINANCE,
   ...FN_DOCS_ACCT,
 ];

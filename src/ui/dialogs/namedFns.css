@@ -1,0 +1,10 @@
+/* Dialogue « Fonctions nommées » : liste + formulaire, tokens du thème. */
+.dk-fns label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-sm); color: var(--c-text-2); }
+.dk-fns input { height: 28px; padding: 0 8px; border: 1px solid var(--c-line-strong); border-radius: var(--r-sm);
+  background: var(--c-surface); color: var(--c-text); font: 13px var(--font-mono); }
+.dk-fns input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dk-fns__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow: auto; }
+.dk-fns__list li { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); }
+.dk-fns__list span { flex: 1; color: var(--c-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-fns__list button { border: 1px solid var(--c-line-strong); border-radius: var(--r-sm); background: none; color: var(--c-text); cursor: pointer; font-size: 11px; }
+.dk-fns__err { margin: 0; min-height: 16px; color: var(--c-error, #a8380a); font-size: var(--fs-sm); }

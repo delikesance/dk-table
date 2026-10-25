@@ -49,6 +49,13 @@ export interface DocMacro {
   code: string;
 }
 
+/** Fonction nommée stockée avec le document (voir src/engine/userfnStore.ts). */
+export interface DocFn {
+  name: string;
+  params: string[];
+  body: string;
+}
+
 /** Document (dk doc) stored in the workbook; `md` is its Markdown text, sheets cited by id (see src/doc/md). */
 export interface DocText {
   id: string;
@@ -64,6 +71,8 @@ export interface DktDoc {
   active?: string;
   /** Lua macros of the workbook (optional, absent in older files). */
   macros?: DocMacro[];
+  /** Fonctions nommées du classeur (optionnel, absent dans les anciens fichiers). */
+  functions?: DocFn[];
   /** Rich-text documents of the workbook, shown as tabs after the sheets (optional). */
   docs?: DocText[];
 }
