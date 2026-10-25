@@ -33,6 +33,9 @@ Visible : oui
 - Tri: éléments de la liste d'abord (ordre de la liste), les autres ensuite triés normalement; en `desc`, l'ordre de la liste est inversé, les autres restent après.
 - Saisie: séparateurs retour à la ligne, virgule, point-virgule.
 - Doublon refusé à casse près et au niveau de la séquence (même liste dans un autre ordre = liste différente, acceptée).
+- Design `docs/design/2026-10-25-204816.html` non suivi: il porte sur « Valeur cible et évaluation pas à pas » (Données > Valeur cible), sans rapport avec les listes. Décision prise sans sous-agent (sujet évident).
+- Chemins de la carte (`src/data/custom-lists.ts`, `src/ui/OptionsDialog.tsx`, `src/engine/autofill.ts`) n'existent pas: l'implémentation réelle est `engine/custom-lists.ts`, `io/customLists.ts`, `ui/dialogs/customLists.ts`, `engine/series-names.ts`.
+- Ce tour: aucun changement de code. Vérification des critères (mémorisation, recopie cyclique, tri par liste, refus vide/doublon) par les tests liés (7 fichiers, 57 tests) et `tsc --noEmit`.
 
 ## Preuves
 - Tests : ok (355 tests, tests lies aux fichiers modifies)
