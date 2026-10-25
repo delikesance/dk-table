@@ -1,4 +1,5 @@
 import { rawKind, type RawKind } from "../../engine/audit-kinds";
+import { LONG_HINT } from "../../engine/longnum";
 export { rawKind };
 
 /** Classification of a displayed cell value: drives alignment (numbers right) and error styling. */
@@ -41,7 +42,8 @@ export function markKind(el: HTMLElement, text: string, gap?: string, raw?: RawK
   const kind = cellKind(text);
   el.classList.toggle("dkg-num", kind === "num");
   el.classList.toggle("dkg-err", kind === "err");
-  el.title = kind === "err" ? errorHint(text) : gap ?? "";
+  el.classList.toggle("dkg-long", raw === "long"); // identifiant > 15 chiffres gardé en texte exact
+  el.title = kind === "err" ? errorHint(text) : raw === "long" ? LONG_HINT : gap ?? "";
   el.classList.toggle("dkg-gap", !!gap && kind !== "err"); // affiché ≠ stocké (mode décimal)
 }
 

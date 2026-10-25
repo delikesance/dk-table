@@ -292,3 +292,4 @@ Classement par gravité (P0 = pire)
 - [x] CI/CD rapide: `ci.yml` léger sur push hors main (tsc + vitest --changed), `ci-full.yml` (test, cargo, e2e 3 shards) vers/sur main, concurrency, Chrome du runner; `docs/ci.md`, `src/config/ci.test.ts`
 - [x] import-texte-d-abord-avec-rapport-de-conversions-risquees : import CSV texte d'abord, rapport par colonne accepter/refuser (`io/csvText.ts`, `ui/dialogs/importReport.ts`, `docs/import-texte.md`)
 - [x] decimal-exact-mode-comptable : option par classeur (Paramètres), arrondi 15 chiffres (`engine/decimal.ts`), écart affiché ≠ stocké signalé (`dkg-gap`), champ `.dktable` `decimal`; `docs/decimal-exact.md`, rapport `docs/rapports/decimal-exact-mode-comptable.md`
+- [x] identifiants-longs-intacts : saisie > 15 chiffres gardée en texte exact et signalée (`engine/longnum.ts`, `dkg-long`); `docs/identifiants-longs.md`, rapport `docs/rapports/identifiants-longs-intacts.md`
