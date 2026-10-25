@@ -26,7 +26,10 @@ test("fuzzy filter narrows the list (subsequence and keywords)", async ({ page }
   await page.locator(".dk-palette__input").fill("ensous");
   await expect(items(page).first()).toContainText("Enregistrer sous");
   await page.locator(".dk-palette__input").fill("csv");
-  await expect(items(page)).toHaveText([/Importer un CSV/, /Exporter en CSV/]);
+  // les commandes plus recentes (« Comparer… », « Tableau croise… ») contiennent aussi c, s, v dans l'ordre: elles suivent
+  await expect(items(page).nth(0)).toContainText("Importer un CSV");
+  await expect(items(page).nth(1)).toContainText("Exporter en CSV");
+  expect(await items(page).count()).toBeLessThan(10);
   await page.locator(".dk-palette__input").fill("zzzzqq");
   await expect(items(page)).toHaveCount(0);
 });
