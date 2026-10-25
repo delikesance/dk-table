@@ -18,3 +18,6 @@
 .dk-hist { max-width: 560px; }
 .dk-hist ul { margin: 0; padding-left: 16px; font: 12px var(--font-mono); }
 .dk-hist input[type="range"] { width: 100%; }
+.dk-merge__count { margin: 0 0 var(--s-2); font: var(--fw-medium) 13px var(--font-display); }
+.dk-merge--conflict td { background: var(--c-error-soft); color: var(--c-error); font-weight: var(--fw-medium); }
+.dk-data label { display: block; margin-bottom: var(--s-2); }
