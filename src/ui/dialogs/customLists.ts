@@ -2,6 +2,7 @@
  * Listes personnalisées (Paramètres > Listes personnalisées…): ajout d'une suite de textes (ex. Bas, Moyen, Haut)
  * utilisée par le tri et la poignée de recopie. Saisie: un élément par ligne, ou séparé par virgule / point-virgule.
  * Un refus (vide, doublon, liste déjà existante) est affiché sous le formulaire; rien n'est enregistré.
+ * Chaque liste a un bouton « Supprimer ».
  */
 import { openDialog } from "./dialog";
 import { parseListText } from "../../engine/custom-lists";
@@ -21,11 +22,19 @@ export function openCustomLists(store: CustomLists = appLists): void {
   const err = body.querySelector<HTMLElement>('[role="alert"]')!;
   const shown = body.querySelector<HTMLElement>('[data-role="lists"]')!;
 
-  /** Affiche les listes enregistrées (texte seul, pas de HTML saisi). */
+  /** Affiche les listes enregistrées (texte seul, pas de HTML saisi), chacune avec son bouton Supprimer. */
   const render = (): void => {
-    shown.replaceChildren(...store.lists().map((l) => {
+    shown.replaceChildren(...store.lists().map((l, i) => {
       const p = document.createElement("p");
-      p.textContent = l.join(", ");
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "dk-dialog__btn";
+      del.dataset.action = "remove";
+      del.dataset.index = String(i);
+      del.textContent = "Supprimer";
+      del.setAttribute("aria-label", `Supprimer ${l.join(", ")}`);
+      del.addEventListener("click", () => { store.remove(i); render(); });
+      p.append(l.join(", "), " ", del);
       return p;
     }));
   };
