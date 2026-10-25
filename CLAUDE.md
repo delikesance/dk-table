@@ -195,6 +195,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Decisions (validation)
 - `engine/validation/` (`checkValue`, `invalidCells`), `DocSheet.validation`, `ui/validation/panel.ts`, `ui/appValidation.ts` (`data-inv`, toast après collage/remplissage/ouverture via hook grille `onBulk`). Détail: `docs/validation.md`.
 
+## Decisions (classeur sans plafond)
+
+- Pas de plafond de lignes: `engine/rows.ts` (`ROW_STEP` = 1000, réserve d'un bloc après la dernière ligne utilisée, `growRows` dans `appGrid.ts` `touch`). `MAX_ROWS` n'est qu'un plancher initial; `ui/limits.ts` n'avertit plus pour les lignes.
+- Poids visible: `engine/weight.ts` (léger / lourd / très lourd, seuils = `WEIGHT_*`), `ui/statusbar/weightBadge.ts` dans la barre d'état (toujours visible). Détail: `docs/plafonds.md`.
+
 ## Decisions (croisé, diff)
 
 - `engine/pivot.ts` (`pivot(table, spec)`, `defaultSpec`) + `pivotCalc.ts` (champ calculé `Qte*Prix`, noms de colonnes sans espace): pur, sortie = grille de chaînes; dialogue `ui/dialogs/pivot.ts` (palette `data.pivot`) crée la feuille « Croisé » (`importSheet`). Agrégations SUM/COUNT/AVG, totaux recalculés, vides ignorés.
