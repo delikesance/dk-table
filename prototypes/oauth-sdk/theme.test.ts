@@ -59,4 +59,11 @@ describe("theme de la boucle", () => {
     expect(js.headers.get("content-type")).toContain("javascript");
     expect(await js.text()).toContain("data-theme");
   });
+
+  it("la barre du haut reprend la barre de menus de l'app : Sofia condensée en capitales", () => {
+    const css = read("panel.css");
+    const nav = css.match(/\.topnav a \{[^}]*\}/)![0];
+    expect(nav).toContain("var(--f-disp)");
+    expect(nav).toContain("uppercase");
+  });
 });
