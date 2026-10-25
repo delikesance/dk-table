@@ -24,3 +24,12 @@ describe("reportRules", () => {
     expect(b.some((c) => c.id === "d")).toBe(false);
   });
 });
+
+describe("reportRules: qualification", () => {
+  it("ajoute fichiers probables et criteres d'acceptation quand la carte est qualifiee", () => {
+    const t = reportRules([{ ...(card("a", "idee") as object), files: ["src/a.ts"], criteria: ["c1", "c2"] } as never]);
+    expect(t).toContain("fichiers probables : src/a.ts");
+    expect(t).toContain("criteres d'acceptation : c1 ; c2");
+    expect(reportRules([card("b", "idee")])).not.toContain("fichiers probables");
+  });
+});

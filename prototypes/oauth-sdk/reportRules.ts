@@ -23,8 +23,9 @@ export function pickBatch<T extends Pick<BoardCard, "state">>(cards: T[]): T[] {
 }
 
 /** Texte a ajouter au prompt d'implementation pour ce lot. */
-export function reportRules(batch: Pick<BoardCard, "id" | "title" | "source" | "state"> & { missing?: string[] }[]): string {
+export function reportRules(batch: (Pick<BoardCard, "id" | "title" | "source" | "state"> & { missing?: string[]; files?: string[]; criteria?: string[] })[]): string {
   const list = batch.map((c) => `- ${c.id} (${c.state}, rapport docs/rapports/${c.id}.md) : ${c.title} — ${c.source.slice(0, 300)}` +
+    (c.files?.length ? ` — fichiers probables : ${c.files.join(", ")}` : "") + (c.criteria?.length ? ` — criteres d'acceptation : ${c.criteria.join(" ; ")}` : "") +
     (c.missing?.includes("rapport") ? " — DEJA IMPLEMENTEE (TODO coche) : ne la recode pas; verifie dans le code et les tests existants, ecris seulement le rapport et les preuves." : "")).join("\n");
   return [
     "Cartes a traiter dans cette tournee (traite-les toutes) :", list, "",

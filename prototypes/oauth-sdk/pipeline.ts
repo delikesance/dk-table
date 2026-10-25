@@ -22,6 +22,7 @@ import { researchSector } from "./researchSector";
 import { parseOverride } from "./routing";
 import type { AgentResult } from "./parallel";
 import { runRounds, stopMessage, type StopReason } from "./rounds";
+import { createQualifier } from "./qualifyStep";
 import { makeFinish, recoverUnpushed } from "./finishLot";
 import { createProver } from "./proveCards";
 import { planRetry, recordAttempt } from "./retry";
@@ -169,6 +170,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       impl: (task, attempt, cards) => runOne(implementation, task, attempt, cards), parallel,
       corr: async (task, attempt) => (await runOne(correction, task, attempt)).merged,
       emit: onEvent, progress: (n) => { remaining = n; }, state: deps.state, spent: () => budget.spent(), finish: () => finish(),
+      qualify: deps.qualif ? createQualifier({ query: deps.query, budget, env: deps.env, ...deps.qualif, commitDocs: (f, m) => flow.commitDocs(f, m), emit: (message) => onEvent({ type: "info", message }) }) : undefined,
       prove: async (cs) => {
         const r = await flow.reprove(createProver({ cwd: deps.cwd, cards: cs }));
         onEvent({ type: "info", message: r.proved.length ? `preuves ecrites par le code sans agent (commit ${r.proofCommit ?? "?"}) : ${r.proved.join(", ")}` : `preuves non ecrites : ${r.reason ?? "aucun rapport"}` });

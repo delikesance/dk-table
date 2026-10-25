@@ -28,6 +28,7 @@ import { createServer, type BoucleEvent } from "./server";
 import { logEvent, trackBoard, wrapQuery, wrapRun } from "./instrument";
 import { createRunLogs } from "./wiringLogs";
 import { createFileStateStore } from "./runState";
+import { createFileQualifCache } from "./qualifyStep";
 
 /** Dependances reelles (ou factices en test). */
 export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
@@ -76,7 +77,8 @@ export function buildBoucleServer(raw: WiringOpts): Server {
   });
   const tracked = (b: Promise<BoardCard[]>) => b.then((cs) => { trackBoard(rl.cur(), seen, cs); return cs; });
   const pipeline = createPipeline({
-    state, onLock: (s) => rl.cur()[s.waitMs >= 1000 ? "info" : "debug"]("verrou", s.name, { lock: s.name, waitMs: s.waitMs, holdMs: s.holdMs }),
+    state, qualif: { read: async (p) => (await files.read(p, "merged")) ?? null, doneTitles: async () => (await ledger.load()).map((e) => e.title), cache: createFileQualifCache(join(o.cwd, ".boucle", "qualif.json")) },
+    onLock: (s) => rl.cur()[s.waitMs >= 1000 ? "info" : "debug"]("verrou", s.name, { lock: s.name, waitMs: s.waitMs, holdMs: s.holdMs }),
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
     unfinished: async () => (await boardOf("merged", new Set())).filter((c) => c.state !== "termine").length,
     board: (a) => { activeIds = new Set(a ?? []); return tracked(boardOf("merged", activeIds)); },

@@ -11,6 +11,7 @@ import { createProofs } from "./gitProofs";
 import { createPush, type PushResult } from "./gitPush";
 import { createMutex, type LockStat } from "./concurrency";
 import { createChecks } from "./gitChecks";
+import { createDocs } from "./gitDocs";
 
 /** Runs a command; resolves with exit code and combined output. */
 export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code: number; out: string }>;
@@ -39,6 +40,8 @@ export interface GitFlow {
   finishBatch(force?: boolean): Promise<BatchResult>;
   /** Commits locaux de developpement absents d'origin (run interrompu avant le push). */
   unpushed(): Promise<number>;
+  /** Ecrit et commite des documents dans l'arbre principal (sur developpement, sous verrou); hash court du commit ou `null`. */
+  commitDocs(files: { path: string; text: string }[], message: string): Promise<string | null>;
   /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
   pushDev(): Promise<PushResult>;
 }
@@ -55,7 +58,7 @@ export interface MergeResult {
 }
 
 /** Fichiers ecrits par le code (rapports, TODO.md): un changement qui ne touche qu'eux ne relance aucune verification. */
-export const isMeta = (p: string) => p === "TODO.md" || p.startsWith("docs/rapports/");
+export const isMeta = (p: string) => p === "TODO.md" || p.startsWith("docs/rapports/") || p === "docs/recherche/fonctionnalites.md";
 
 export type { PushResult } from "./gitPush";
 export type { BatchResult } from "./gitBatch";
@@ -95,6 +98,7 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
 
   const { startSector, resumeSector, commit, release, ensureInstalled, installFail, commitFail } = createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER, ensureDev });
   const { writeProofs, reprove } = createProofs({ git, lock, onDev, check: () => checkBase(), trailer: TRAILER });
+  const commitDocs = createDocs({ git, lock, onDev, cwd, trailer: TRAILER });
   const pushDev = createPush(git, DEV, !!opts.push);
   const { checks, checkBase, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock, install: (d) => ensureInstalled(d) });
   const { finishBatch, unpushed, markDirty } = createBatch({ git, lock, dev: DEV, onDev, check: () => checkBase(), pushDev });
@@ -151,5 +155,5 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
 
   const dispose = disposeChecks;
 
-  return { ensureDev, startSector, resumeSector, commit, mergeIfGreen, reprove: async (p) => { const r = await reprove(p); if (r.proofCommit) markDirty(); return r; }, finishBatch, unpushed, pushDev, release, dispose };
+  return { ensureDev, startSector, resumeSector, commit, mergeIfGreen, reprove: async (p) => { const r = await reprove(p); if (r.proofCommit) markDirty(); return r; }, finishBatch, unpushed, commitDocs, pushDev, release, dispose };
 }
