@@ -7,6 +7,8 @@ import { toBool, toNum, toText } from "./values";
 import { resolveSheet } from "./book";
 import { getState } from "./state";
 import { LAZY_FORMS } from "./lazy";
+import { expandUserCall } from "./userfnStore";
+import { SPILL_FORMS, type SArg, type SpillResult } from "./fn-spill";
 
 /** Reads the current computed value of a cell key ("" if empty). */
 export type Getter = (key: string) => Value;
@@ -84,6 +86,25 @@ function evalArg(n: Node, sheet: Sheet, get: Getter, matrix = false): Arg {
   return evaluate(n, sheet, get);
 }
 
+/** Matrix view of a spill-function argument; an operator with a range operand is applied cell by cell (A1:A9>2). */
+function spillArg(n: Node, sheet: Sheet, get: Getter): SArg {
+  const isR = (x: Node) => x.t === "range" || x.t === "xrange";
+  if (n.t !== "bin" || !(isR(n.l) || isR(n.r) || n.l.t === "bin" || n.r.t === "bin")) return evalArg(n, sheet, get, true) as SArg;
+  const as = (x: SArg): Value[][] => (Array.isArray(x) ? x : [[x]]);
+  const l = as(spillArg(n.l, sheet, get));
+  const r = as(spillArg(n.r, sheet, get));
+  const h = Math.max(l.length, r.length);
+  const w = Math.max(l[0]?.length ?? 0, r[0]?.length ?? 0);
+  const at = (m: Value[][], i: number, j: number) => m[m.length === 1 ? 0 : i]?.[m[0].length === 1 ? 0 : j] ?? "";
+  return Array.from({ length: h }, (_, i) => Array.from({ length: w }, (_, j) => binary(n.op, at(l, i, j), at(r, i, j))));
+}
+
+/** Matrix result of a spill function call (SPLIT/UNIQUE/FILTER/SORT), or undefined for any other node. */
+export function spillResult(n: Node, sheet: Sheet, get: Getter): SpillResult | undefined {
+  const f = n.t === "call" ? SPILL_FORMS[n.name] : undefined;
+  return f && n.t === "call" ? f(n.args.map((a) => spillArg(a, sheet, get))) : undefined;
+}
+
 /**
  * IFERROR(value, if_error) / IFNA(value, if_na): lazy, the fallback is only evaluated
  * when needed. IFERROR catches every error (incl. #CYCLE!); IFNA only #N/A.
@@ -93,6 +114,18 @@ function lazyCatch(n: Extract<Node, { t: "call" }>, sheet: Sheet, get: Getter): 
   const v = evaluate(n.args[0], sheet, get);
   if (!isErr(v) || (n.name === "IFNA" && v.error !== "#N/A")) return v;
   return evaluate(n.args[1], sheet, get);
+}
+
+/** Profondeur d'imbrication des fonctions nommées (garde contre la récursion infinie). */
+let userDepth = 0;
+
+/** Appel d'une fonction nommée : corps évalué avec arguments substitués ; inconnue -> #NAME?. */
+function userCall(n: Extract<Node, { t: "call" }>, sheet: Sheet, get: Getter): Value {
+  const body = expandUserCall(n);
+  if (!body) return err("#NAME?");
+  if (userDepth > 40) return err("#VALUE!");
+  userDepth++;
+  try { return evaluate(body, sheet, get); } finally { userDepth--; }
 }
 
 /** Evaluate an AST to a scalar value (a bare range is #VALUE!). */
@@ -135,10 +168,12 @@ export function evaluate(n: Node, sheet: Sheet, get: Getter): Value {
         return br ? evaluate(br, sheet, get) : false;
       }
       if (n.name === "IFERROR" || n.name === "IFNA") return lazyCatch(n, sheet, get);
+      const sp = spillResult(n, sheet, get);
+      if (sp) return Array.isArray(sp) ? (sp[0]?.[0] ?? "") : sp;
       const lazy = LAZY_FORMS[n.name];
       if (lazy) return lazy(n.args, (a) => evaluate(a, sheet, get));
       const fn = getFunction(n.name);
-      if (!fn) return err("#NAME?");
+      if (!fn) return userCall(n, sheet, get);
       const mx = wantsMatrix(n.name);
       return fn(n.args.map((a) => evalArg(a, sheet, get, mx)));
     }

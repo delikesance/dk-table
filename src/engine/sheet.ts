@@ -2,7 +2,7 @@
 import type { Sheet, Value } from "./types";
 import { isErr } from "./types";
 import { expandRange, inBounds, normKey } from "./address";
-import { getState, rewire } from "./recalc";
+import { getState, rewire, spillHeads } from "./recalc";
 import { recalcBook } from "./workbook";
 import { displayValue } from "./values";
 import "./wire";
@@ -28,6 +28,8 @@ export function setCell(sheet: Sheet, key: string, raw: string): void {
   else sheet.cells[key] = { raw };
   rewire(sheet, key);
   recalcBook(sheet, key);
+  // A cell typed inside (or removed from) a spill zone blocks (or frees) the formula that owns it.
+  for (const head of spillHeads(sheet, key)) recalcBook(sheet, head);
 }
 
 /** Raw user input of a cell ("" if empty). */

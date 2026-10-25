@@ -226,6 +226,8 @@ Classement par gravité (P0 = pire)
 - [x] Secteur recherche v1: run live (2,20 $ / 20 $), synthèse 4 axes dans `docs/recherche/fonctionnalites.md`
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
+- [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
+- [x] Carte `fonctions-nommees`: fonction personnalisée (nom, paramètres, corps) dans `.dktable`, dialogue Données > Fonctions nommées… (`docs/fonctions-nommees.md`)
 - [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)
 - [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles
 - Boucle autonome (`prototypes/oauth-sdk/`, panneau local `boucle.ts`), état honnête :
@@ -261,3 +263,10 @@ Classement par gravité (P0 = pire)
 - [x] Étape 2 (MVP) : cycle audit -> dédoublonnage (empreinte `fp`) -> issues `auto:bug` (`github.ts`, `dedupe.ts`, `roles/audit.ts`, `checks.ts`, `cycle.ts`, `live.ts`); `--live` branché mais jamais lancé; SDK en devDependency
 - [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees
 - [x] Fix e2e `shell-tabs.spec.ts` : test de sélection aligné sur la sélection propre à chaque feuille (PR #31)
+- [x] Tableau croisé : `engine/pivot.ts` + `pivotCalc.ts` (lignes, colonnes, SUM/COUNT/AVG, champ calculé, totaux), dialogue `ui/dialogs/pivot.ts` (palette « Tableau croisé… ») -> nouvelle feuille « Croisé ». Rapport `docs/rapports/tableaux-croises-de-calc-incomplets-non-verifie.md`
+- [x] Diff / fusion `.dktable` : `io/diff.ts` (`diffCells`, `merge3`, `diffDocs`), dialogue `ui/dialogs/diff.ts` (palette « Comparer avec un fichier… », lecture seule). Rapport `docs/rapports/diff-et-fusion-cellule-par-cellule-du-dktable.md`. Suite : UI de fusion 3 voies
+
+## Cartes boucle (implémentation)
+
+- [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
+- [x] plafonds-google-sheets : toast pour cellule > 50 000 car., ligne > MAX_ROWS, import CSV volumineux/tronqué, `ui/limits.ts`, `docs/plafonds.md`
