@@ -1,8 +1,9 @@
 /**
  * Serveur HTTP local du panneau "boucle" (node:http uniquement).
- * Routes: GET / (panneau), POST /go, POST /stop, GET /events (SSE avec rejeu).
+ * Routes: GET / (panneau), GET /moodboard(.html), POST /go, POST /stop, GET /events (SSE avec rejeu).
  * Le pipeline réel est injecté (`deps.runPipeline`); écoute sur 127.0.0.1 seulement.
  */
+import type { MoodCard } from "./moodboard";
 import { createServer as httpServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 /** Options passées au pipeline. */
@@ -22,6 +23,10 @@ export interface Deps {
   runPipeline: (o: RunOpts) => Promise<void>;
   parseBudgetEur: (v: unknown) => number;
   panelHtml: string;
+  /** Cartes du moodboard (absent: GET /moodboard => 404 + liste vide). */
+  moodboard?: () => Promise<MoodCard[]>;
+  /** Page du moodboard (absente: 404). */
+  moodboardHtml?: string;
 }
 
 const LOOPBACK_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
@@ -79,6 +84,11 @@ export function createServer(deps: Deps): Server {
     const route = `${req.method} ${(req.url ?? "").split("?")[0]}`;
     if (route === "GET /") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(deps.panelHtml);
+    } else if (route === "GET /moodboard.html" && deps.moodboardHtml !== undefined) {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(deps.moodboardHtml);
+    } else if (route === "GET /moodboard") {
+      if (!deps.moodboard) return send(res, 404, []);
+      deps.moodboard().then((cards) => send(res, 200, cards), () => send(res, 500, { error: "moodboard indisponible" }));
     } else if (route === "POST /go") {
       void go(req, res);
     } else if (route === "POST /stop") {

@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { request } from "node:http";
-import { createServer, listen, type BoucleEvent, type RunOpts } from "./server";
+import { createServer, listen, type BoucleEvent, type Deps, type RunOpts } from "./server";
 
 const servers: Server[] = [];
 afterEach(() => { servers.splice(0).forEach((s) => s.close()); });
@@ -22,11 +22,12 @@ function fake() {
   return { st, runPipeline };
 }
 
-async function boot(runPipeline = fake().runPipeline) {
+async function boot(runPipeline = fake().runPipeline, extra: Partial<Deps> = {}) {
   const server = createServer({
     runPipeline,
     parseBudgetEur: (v) => { const n = Number(v); if (!(n > 0)) throw new Error("budget"); return n; },
     panelHtml: "<html>panel</html>",
+    ...extra,
   });
   servers.push(server);
   await listen(server, 0);
@@ -74,6 +75,37 @@ describe("boucle server", () => {
     const port = (server.address() as AddressInfo).port;
     const status = await new Promise<number>((resolve) => {
       request({ host: "127.0.0.1", port, path: "/", headers: { host: "evil.example.com" } },
+        (r) => { r.resume(); resolve(r.statusCode!); }).end();
+    });
+    expect(status).toBe(403);
+  });
+});
+
+describe("moodboard", () => {
+  const card = { id: "a", title: "A", status: "found" as const, summary: "s", source: "x" };
+  it("GET /moodboard renvoie le JSON, GET /moodboard.html la page", async () => {
+    const { base } = await boot(undefined, { moodboard: async () => [card], moodboardHtml: "<html>mood</html>" });
+    expect(await (await fetch(base + "/moodboard")).json()).toEqual([card]);
+    expect(await (await fetch(base + "/moodboard.html")).text()).toContain("mood");
+  });
+  it("sans dependances: /moodboard => [] et /moodboard.html => 404", async () => {
+    const { base } = await boot();
+    const r = await fetch(base + "/moodboard");
+    expect(r.status).toBe(404);
+    expect(await r.json()).toEqual([]);
+    expect((await fetch(base + "/moodboard.html")).status).toBe(404);
+  });
+  it("moodboard qui echoue => 500 sans fuite", async () => {
+    const { base } = await boot(undefined, { moodboard: async () => { throw new Error("secret"); } });
+    const r = await fetch(base + "/moodboard");
+    expect(r.status).toBe(500);
+    expect(await r.text()).not.toContain("secret");
+  });
+  it("hote non loopback => 403", async () => {
+    const { server } = await boot(undefined, { moodboard: async () => [card] });
+    const port = (server.address() as AddressInfo).port;
+    const status = await new Promise<number>((resolve) => {
+      request({ host: "127.0.0.1", port, path: "/moodboard", headers: { host: "evil.example.com" } },
         (r) => { r.resume(); resolve(r.statusCode!); }).end();
     });
     expect(status).toBe(403);

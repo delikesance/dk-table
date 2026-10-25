@@ -10,14 +10,17 @@
  */
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { parseBudgetEur } from "./budget";
 import type { Run } from "./git";
+import { buildMoodboard } from "./moodboard";
 import { createPipeline } from "./pipeline";
 import type { QueryFn } from "./research";
 import { createServer, listen } from "./server";
+import { createBudget } from "./budget";
 
 if (!process.env.CLAUDE_CODE_OAUTH_TOKEN) {
   process.stderr.write("CLAUDE_CODE_OAUTH_TOKEN absent (voir .env, `claude setup-token`).\n");
@@ -41,11 +44,22 @@ const run: Run = (cmd, args, cwd) =>
     p.on("close", (code) => resolve({ code: code ?? 1, out }));
   });
 
+// Moodboard : budget propre (0,5 EUR) et cache de resumes, partages entre les requetes de la page.
+const moodBudget = createBudget(0.5);
+const moodCache = new Map<string, string>();
+/** Page du moodboard (ecrite par ailleurs); absente => 404. */
+const readOpt = (p: string): string | undefined => { try { return readFileSync(p, "utf-8"); } catch { return undefined; } };
+
 const here = dirname(fileURLToPath(import.meta.url));
 const server = createServer({
   runPipeline: createPipeline({ query: query as unknown as QueryFn, run, cwd: process.cwd(), env }),
   parseBudgetEur,
   panelHtml: readFileSync(join(here, "panel.html"), "utf-8"),
+  moodboard: () => buildMoodboard({
+    readFile: (p) => readFile(join(process.cwd(), p), "utf-8"),
+    query: query as unknown as QueryFn, budget: moodBudget, cache: moodCache, env,
+  }),
+  moodboardHtml: readOpt(join(here, "moodboard.html")),
 });
 const port = Number(process.env.PORT) || 4317;
 listen(server, port).then(() => console.error(`boucle: http://127.0.0.1:${port}`));
