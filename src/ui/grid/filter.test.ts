@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { distinctValues, buildMask, combineMasks, hiddenRows, EMPTY_LABEL } from "./filter";
+import { distinctValues, buildMask, combineMasks, hiddenRows, matchesSearch, EMPTY_LABEL } from "./filter";
 
 const rows = [
   ["Nom", "Ville"],
@@ -42,5 +42,11 @@ describe("filter", () => {
   });
   it("hiddenRows", () => {
     expect(hiddenRows([true, false, true, false])).toEqual([1, 3]);
+  });
+  it("matchesSearch: casse et accents ignorés, requête vide = tout", () => {
+    expect(matchesSearch("Élodie", "elo")).toBe(true);
+    expect(matchesSearch("Paris", "RIS")).toBe(true);
+    expect(matchesSearch("Paris", "lyon")).toBe(false);
+    expect(matchesSearch("Paris", "  ")).toBe(true);
   });
 });
