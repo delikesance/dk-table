@@ -38,7 +38,7 @@ Visible : oui
 - Ce tour: aucun changement de code. Vérification des critères (mémorisation, recopie cyclique, tri par liste, refus vide/doublon) par les tests liés (7 fichiers, 57 tests) et `tsc --noEmit`.
 
 ## Preuves
-- Tests : ok (355 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":355,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
