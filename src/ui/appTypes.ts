@@ -6,6 +6,7 @@ import type { Sheet } from "../engine/sheet";
 import type { CellStyle } from "./model";
 import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
+import type { UserFn } from "../engine/userfnStore";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
 import type { DocFormat } from "../doc/md/format";
@@ -85,6 +86,10 @@ export interface App {
   setFreeze(f: { rows: number; cols: number }): void;
   /** Frozen rows/cols of the active sheet ({0,0} when none). */
   getFreeze(): { rows: number; cols: number };
+  /** Named (user-defined) functions of the workbook, persisted with the document. */
+  getFunctions(): UserFn[];
+  /** Replace the named functions: recalculates every sheet, marks the document modified. */
+  setFunctions(list: UserFn[]): void;
   /** Lua macros of the workbook (persisted with the document). */
   macros: MacroStore;
   /** Apply direct engine writes to the active sheet as one undo step, then redraw. */

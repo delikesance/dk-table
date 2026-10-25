@@ -11,6 +11,8 @@ import { BORDER_LABELS } from "./borders";
 import { parseKey } from "./grid/keys";
 import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } from "./fileops";
 import { openCfDialog } from "./cf/panel";
+import { openPivot } from "./dialogs/pivot";
+import { openCompare } from "./dialogs/diff";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -105,6 +107,8 @@ export function installCommands(app: App): void {
   run("format.italic", "Italique", () => app.style({ italic: !app.activeStyle().italic }), "Ctrl+I");
   run("format.underline", "Souligné", () => app.style({ underline: !app.activeStyle().underline }), "Ctrl+U");
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
+  run("data.pivot", "Tableau croisé…", () => openPivot(app), undefined, ["pivot", "croisé", "dynamique", "agrégation", "somme"]);
+  run("file.compare", "Comparer avec un fichier…", () => openCompare(app), undefined, ["diff", "différences", "fusion", "version"]);
   run("format.cf", "Formatage conditionnel…", () => openCfDialog(app), undefined, ["conditionnel", "règle", "échelle", "barres", "doublons", "surligner"]);
   for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);

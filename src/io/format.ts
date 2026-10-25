@@ -4,6 +4,7 @@ import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacr
 import { DktParseError, isObj } from "./parseError";
 import { checkCf } from "./cfFormat";
 import { checkDocs } from "./docsFormat";
+import { checkFunctions } from "./fnFormat";
 import { checkColWidths } from "./colWidthsFormat";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
@@ -152,6 +153,7 @@ export function parse(text: string): DktDoc {
     doc.active = data.active;
   }
   if (data.macros !== undefined) doc.macros = checkMacros(data.macros);
+  if (data.functions !== undefined) doc.functions = checkFunctions(data.functions);
   if (data.docs !== undefined) doc.docs = checkDocs(data.docs, ids);
   return doc;
 }

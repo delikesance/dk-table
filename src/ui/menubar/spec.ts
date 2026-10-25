@@ -10,6 +10,8 @@ import { parseKey } from "../grid/keys";
 import { insertFecHeaders } from "../fec";
 import { freezeEntries } from "../freeze/freezeMenu";
 import { openCfDialog } from "../cf/panel";
+import { openTextToColumns } from "../dialogs/textToCols";
+import { openNamedFns } from "../dialogs/namedFns";
 import { docFormatMenu, insertionMenu } from "./docSpec";
 import type { App } from "../appTypes";
 
@@ -90,7 +92,9 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
     { label: "Données", items: [
       { label: "Trier A → Z", run: () => void app.sortColumn(false) },
       { label: "Trier Z → A", run: () => void app.sortColumn(true) },
-      { label: "Somme rapide", hint: "Alt+=", sep: true, run: d.autosum },
+      { label: "Texte en colonnes…", sep: true, run: () => openTextToColumns(app) },
+      { label: "Somme rapide", hint: "Alt+=", run: d.autosum },
+      { label: "Fonctions nommées…", run: () => openNamedFns(app) },
       { label: "Insérer les en-têtes FEC", sep: true, run: () => insertFecHeaders(app) },
     ] },
     { label: "Scripts", items: () => [

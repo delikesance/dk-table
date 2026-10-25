@@ -1,7 +1,7 @@
 /** Classification of a displayed cell value: drives alignment (numbers right) and error styling. */
 export type CellKind = "num" | "text" | "err";
 
-const ERR = /^#(CYCLE!|DIV\/0!|N\/A|VALUE!|REF!|NAME\?|NUM!|NULL!)$/;
+const ERR = /^#(CYCLE!|DIV\/0!|N\/A|VALUE!|REF!|NAME\?|NUM!|NULL!|SPILL!)$/;
 /** fr-FR / en numbers: optional sign, digit groups (space, nbsp, narrow nbsp), decimal , or ., exponent, % or currency suffix. */
 const NUM = /^[-+]?\d[\d   ]*(?:[.,]\d+)?(?:[eE][-+]?\d+)?\s*(?:%|[€$£])?$/;
 
@@ -24,6 +24,7 @@ const HINTS: Record<string, string> = {
   "#REF!": "Référence invalide.",
   "#NAME?": "Nom de fonction inconnu.",
   "#NUM!": "Nombre invalide dans la formule.",
+  "#SPILL!": "Débordement bloqué : une cellule de la zone n'est pas vide.",
 };
 
 /**
