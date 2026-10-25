@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table : validation, espion, plages tronquées</title>
+<style>
+/* Jetons de src/styles (tokens.css, theme-dark.css). Clair par défaut; sombre via data-theme OU prefers-color-scheme. */
+:root { color-scheme: light; --bg:#f2f2f2; --surface:#fafafa; --head:#e2e2f6; --fg:#0000f2; --txt:#14142b; --mut:#4a4ac8; --line:rgba(0,0,242,.28); --line2:rgba(0,0,242,.14);
+  --acc:#0000f2; --on-acc:#f2f2f2; --soft:rgba(0,0,242,.06); --err:#a8380a; --err-soft:rgba(194,65,12,.1); --ok:#13703c; --chrome:#0000f2; --chrome-deep:#0000a6; --chrome-fg:#f2f2f2; --warn:#9a4708; --warn-soft:rgba(154,71,8,.12); }
+:root[data-theme="dark"] { color-scheme: dark; --bg:#19192f; --surface:#141426; --head:#24244a; --fg:#f2f2f2; --txt:#f2f2f2; --mut:#b4b4c4; --line:rgba(148,148,162,.32); --line2:rgba(148,148,162,.18);
+  --acc:#8c8cff; --on-acc:#19192f; --soft:rgba(0,0,242,.16); --err:#ffb08a; --err-soft:rgba(255,176,138,.12); --ok:#8ef0a8; --chrome:#19192f; --chrome-deep:#10102a; --warn:#ffd166; --warn-soft:rgba(255,209,102,.12); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --bg:#19192f; --surface:#141426; --head:#24244a; --fg:#f2f2f2; --txt:#f2f2f2; --mut:#b4b4c4; --line:rgba(148,148,162,.32); --line2:rgba(148,148,162,.18);
+  --acc:#8c8cff; --on-acc:#19192f; --soft:rgba(0,0,242,.16); --err:#ffb08a; --err-soft:rgba(255,176,138,.12); --ok:#8ef0a8; --chrome:#19192f; --chrome-deep:#10102a; --warn:#ffd166; --warn-soft:rgba(255,209,102,.12); } }
+* { box-sizing: border-box; }
+body { margin:0; padding:24px; background:var(--bg); color:var(--txt); font:15px/1.45 "Inter Tight", system-ui, sans-serif; }
+h1 { font:800 2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; color:var(--fg); margin:0 0 4px; }
+h2 { font:700 1.4rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; color:var(--fg); margin:0 0 12px; }
+h3 { font:700 .95rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--mut); margin:0 0 8px; }
+.idea { border:1px solid var(--line); border-radius:4px; background:var(--surface); padding:16px; margin:20px 0; }
+.row { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.state { border:1px solid var(--line2); border-radius:3px; padding:10px; background:var(--bg); min-width:0; }
+.mono, .grid, pre { font:500 .85rem "DM Mono", ui-monospace, monospace; }
+pre { white-space:pre-wrap; color:var(--mut); margin:0; }
+p.n { margin:6px 0 0; color:var(--mut); font-size:.85rem; }
+/* mini-grille */
+.grid { display:grid; grid-template-columns:28px repeat(3,1fr); border:1px solid var(--line); border-radius:2px; background:var(--surface); position:relative; }
+.grid > div { padding:4px 6px; border-right:1px solid var(--line2); border-bottom:1px solid var(--line2); text-align:right; height:26px; overflow:hidden; white-space:nowrap; }
+.grid .h { background:var(--head); color:var(--mut); text-align:center; }
+.grid .t { text-align:left; }
+.grid .sel { outline:2px solid var(--acc); outline-offset:-2px; }
+.grid .bad { background:var(--err-soft); box-shadow:inset 0 0 0 1px var(--err); color:var(--err); }
+.grid .bad::after { content:""; position:absolute; margin:-4px 0 0 -2px; }
+.tri { position:relative; }
+.tri.bad::before { content:""; position:absolute; top:0; right:0; border-style:solid; border-width:0 8px 8px 0; border-color:transparent var(--err) transparent transparent; }
+.warnc { background:var(--warn-soft); box-shadow:inset 0 0 0 1px var(--warn); }
+.pop { position:absolute; z-index:2; background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:0 4px 14px rgba(0,0,40,.22); font:500 .8rem "Inter Tight",sans-serif; padding:6px 8px; text-align:left; white-space:normal; height:auto; }
+.pop.err { border-color:var(--err); color:var(--err); }
+.pop li { list-style:none; padding:3px 8px; margin:0 -8px; font-family:"DM Mono",monospace; }
+.pop li.on { background:var(--chrome); color:var(--chrome-fg); }
+.pop ul { margin:0; padding:0; }
+/* panneaux */
+.panel { border:1px solid var(--line); border-radius:3px; background:var(--surface); overflow:hidden; }
+.panel > header { background:var(--chrome); color:var(--chrome-fg); padding:6px 10px; font:700 .9rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; display:flex; justify-content:space-between; }
+.panel table { width:100%; border-collapse:collapse; font:500 .8rem "DM Mono",monospace; }
+.panel td, .panel th { padding:4px 8px; border-bottom:1px solid var(--line2); text-align:left; }
+.panel th { color:var(--mut); font-weight:500; background:var(--head); }
+.panel td.r { text-align:right; }
+.up { color:var(--ok); } .dn { color:var(--err); }
+.flash { animation:fl 1.2s ease-out 1; }
+@keyframes fl { 0% { background:var(--acc); color:var(--on-acc); } 100% { background:transparent; } }
+.btn { font:600 .78rem "Inter Tight",sans-serif; background:var(--acc); color:var(--on-acc); border:0; border-radius:2px; padding:4px 10px; cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
+.ctl { display:flex; gap:8px; margin:8px 0; flex-wrap:wrap; }
+.bar { height:6px; background:var(--line2); border-radius:2px; overflow:hidden; } .bar i { display:block; height:100%; background:var(--acc); }
+.tab { display:flex; gap:12px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line2); }
+code { font-family:"DM Mono",monospace; font-size:.85em; }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<h1>Trois pistes à réaliser</h1>
+<div class="mono" style="color:var(--mut)">Absentes du code et de TODO.md (hors lignes « Recherche, axes 2 et 3 » qui les citent seulement). Grille : <code>.dkg-cell</code>, sidebar existante, <code>showToast</code> existant.</div>
+
+<!-- ============ IDEE 1 ============ -->
+<section class="idea" id="i1">
+<h2>1. Validation de données, contrôlée aussi au collage</h2>
+<div class="row">
+ <div class="state"><h3>État 1 : liste déroulante</h3>
+  <div class="grid" style="margin-bottom:96px">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Statut</div><div class="t">Montant</div><div class="t">Date</div>
+   <div class="h">2</div><div class="t sel" id="v-sel">Payé</div><div>120,00</div><div>03/10</div>
+   <div class="h">3</div><div class="t">Ouvert</div><div>85,50</div><div>05/10</div>
+   <div class="pop" style="left:32px;top:84px;width:140px"><ul id="v-list"><li class="on">Payé</li><li>Ouvert</li><li>Annulé</li></ul></div>
+  </div>
+  <p class="n">Cellule avec règle « liste » : flèche à droite, ↑↓ Entrée. Valeur hors liste refusée à la saisie.</p></div>
+ <div class="state"><h3>État 2 : saisie refusée</h3>
+  <div class="grid" style="margin-bottom:56px">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Statut</div><div class="t">Montant</div><div class="t">Date</div>
+   <div class="h">2</div><div class="t">Payé</div><div class="sel bad" id="v-bad">-5</div><div>03/10</div>
+   <div class="pop err" style="left:32px;top:84px;width:180px">Montant : nombre ≥ 0 attendu</div>
+  </div><p class="n">Édition conservée ouverte, message sous la cellule, Échap annule.</p></div>
+ <div class="state"><h3>État 3 : collage invalide (animé)</h3>
+  <div class="grid" id="v-paste">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">2</div><div class="t">Payé</div><div data-v>120,00</div><div>03/10</div>
+   <div class="h">3</div><div class="t tri" data-v>?</div><div data-v>abc</div><div>05/10</div>
+   <div class="h">4</div><div class="t tri" data-v>Perdu</div><div data-v>-5</div><div>06/10</div>
+  </div>
+  <div class="ctl"><button class="btn" id="v-go">Coller</button><button class="btn ghost" id="v-reset">Réinitialiser</button></div>
+  <p class="n" id="v-msg">Le collage s'applique; les cellules invalides sont marquées (coin) et listées.</p></div>
+ <div class="state"><h3>Panneau « Valeurs invalides »</h3>
+  <div class="panel"><header><span>Invalides</span><span id="v-count">0</span></header>
+  <table><tr><th>Cellule</th><th>Valeur</th><th>Règle</th></tr>
+  <tbody id="v-rows"><tr><td colspan="3" style="color:var(--mut)">Aucune</td></tr></tbody></table></div>
+  <p class="n">Clic sur une ligne : sélectionne la cellule. Menu Données &gt; Validation / Valeurs invalides.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Rule = { range: string; kind: "list"|"number"|"date"|"length"|"formula";
+  list?: string[]|string /* plage */; op?: "between"|"gte"|"lte"|"eq"; a?: string; b?: string;
+  onInvalid: "reject"|"warn"; message?: string }
+engine/validation.ts    validate(rule, raw:string, getValue): { ok:true } | { ok:false; msg:string }   (pur)
+                        rulesFor(rules, key): Rule|undefined; findInvalid(sheet, rules): string[]
+io/validationFormat.ts  DocSheet.validation?: Rule[]  (sérialisation .dktable, absent = aucune règle)
+ui/grid/dropdown.ts     attachDropdown(cell, rule) : liste déroulante clavier (↑↓ Entrée Échap)
+ui/grid/editor.ts       commit appelle validate; reject garde l'éditeur ouvert + message
+ui/appPaste.ts          après collage/recopie/import : findInvalid -> marque (data-invalid) + toast + panneau
+ui/dialogs/validation.ts  dialogue de règle (menu Données); ui/dialogs/invalid.ts  panneau
+événement : app.emit("validation:invalid", { keys: string[] })
+Un pas d'annulation par collage (inchangé). Les valeurs invalides collées sont conservées et marquées, jamais perdues.
+tests d'abord : validation.test.ts (list/number/date/formula), validationFormat.test.ts (aller-retour), appPaste.test.ts, e2e feat-validation.spec.ts
+fichiers prévus ≤200 lignes : validation.ts (~120), validationFormat.ts (~50), dropdown.ts (~90), invalid.ts (~80), validation dialogue (~120)</pre>
+</section>
+
+<!-- ============ IDEE 2 ============ -->
+<section class="idea" id="i2">
+<h2>2. Fenêtre Espion</h2>
+<div class="row">
+ <div class="state"><h3>Feuille « Saisie » active (animé)</h3>
+  <div class="grid"><div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Prix</div><div id="w-b1">100</div><div class="t">Qté</div>
+   <div class="h">2</div><div class="t">TVA</div><div>0,2</div><div id="w-c2">3</div></div>
+  <div class="ctl"><button class="btn" id="w-inc">B1 + 10</button><button class="btn ghost" id="w-rst">Réinitialiser</button></div>
+  <p class="n">On édite ici; le total est sur une autre feuille.</p></div>
+ <div class="state"><h3>Panneau Espion (flottant, toujours visible)</h3>
+  <div class="panel"><header><span>Espion</span><span>3</span></header>
+  <table><tr><th>Feuille</th><th>Cell.</th><th>Valeur</th><th>Formule</th></tr>
+   <tr><td>Saisie</td><td>B1</td><td class="r" id="w-v1">100</td><td>100</td></tr>
+   <tr><td>Synthèse</td><td>B9</td><td class="r" id="w-v2">360,00</td><td>=SUM(Saisie!B1:B3)*1,2</td></tr>
+   <tr><td>Synthèse</td><td>C9</td><td class="r dn">#DIV/0!</td><td>=B9/Saisie!C2</td></tr></table></div>
+  <p class="n">Valeur modifiée : flash 1,2 s. Clic = va à la cellule. Erreurs en couleur d'erreur.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Watch = { sheetId: string; key: string }
+engine/watch.ts   watchValues(doc, watches): { watch, display:string, raw:string, error:boolean }[]  (pur)
+                  changed(prev, next): Watch[]  (pour le flash)
+io/watchFormat.ts DktDoc.watches?: Watch[]  (.dktable, absent = vide)
+ui/watch/panel.ts  mountWatch(app): panneau flottant déplaçable; + / - ; clic -> app.goto(sheetId,key)
+ui/watch/watch.css
+événements : app.on("recalc") -> rafraîchit; app.emit("watch:add", Watch)
+entrées : menu Affichage > Espion, menu contextuel cellule « Espionner », palette view.watch
+tests d'abord : watch.test.ts (valeur, erreur, changed), watchFormat.test.ts, panel.test.ts (jsdom), e2e feat-espion.spec.ts
+fichiers prévus ≤200 lignes : watch.ts (~60), watchFormat.ts (~40), panel.ts (~150), watch.css (~60)</pre>
+</section>
+
+<!-- ============ IDEE 3 ============ -->
+<section class="idea" id="i3">
+<h2>3. Plages tronquées détectées</h2>
+<div class="row">
+ <div class="state"><h3>Détection (animé)</h3>
+  <div class="grid"><div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Janv.</div><div>100</div><div></div>
+   <div class="h">2</div><div class="t">Févr.</div><div>120</div><div></div>
+   <div class="h">3</div><div class="t">Mars</div><div>90</div><div class="t" id="t-f">=SUM(B1:B3)</div>
+   <div class="h">4</div><div class="t">Avril</div><div id="t-new" class="warnc">140</div><div></div></div>
+  <div class="ctl"><button class="btn" id="t-add">Ajouter Avril</button><button class="btn ghost" id="t-rst">Réinitialiser</button></div>
+  <p class="n" id="t-msg">SUM(B1:B3) couvre 3 valeurs; rien dessous.</p></div>
+ <div class="state"><h3>Alerte et correction en un clic</h3>
+  <div class="panel"><header><span>Plages tronquées</span><span>1</span></header>
+  <div style="padding:8px 10px">
+   <div class="tab"><span class="mono">C3 =SUM(B1:B3)</span><span class="mono" style="color:var(--warn)">B4 non incluse</span></div>
+   <div class="tab"><span class="mono">=SUM(B1:B4)</span><span><button class="btn">Étendre</button> <button class="btn ghost">Ignorer</button></span></div>
+   <div class="tab"><span class="mono">ou =SUM(B1:B)</span><span class="mono" style="color:var(--mut)">plage ouverte</span></div>
+  </div></div>
+  <p class="n">Marqueur ambre sur C3 + entrée dans la barre d'état. Cas : ligne adjacente de même nature, nombres stockés en texte.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Truncation = { formulaKey: string; range: string; extra: string[] /* cellules */; reason: "adjacent"|"text-number"; fix: string /* nouvelle formule */ }
+engine/truncated.ts  findTruncated(sheet): Truncation[]   (pur; SUM/AVERAGE/MIN/MAX/COUNT, réutilise engine/openrange.ts rectOf)
+                     applyFix(sheet, t) -> setCell(formulaKey, t.fix)
+ui/statusbar/statusbar.ts  indicateur « n alertes » ; clic ouvre ui/audit/truncated.ts (liste, Étendre / Ignorer)
+ui/audit/ignored.ts  ignorés persistés dans DktDoc.auditIgnored?: string[] (clé formule+plage)
+événement : app.on("recalc") -> findTruncated (debounce 250 ms, feuille active seulement)
+tests d'abord : truncated.test.ts (ligne ajoutée dessous, nombres-texte, plage ouverte non signalée), audit/truncated.test.ts, e2e feat-tronquees.spec.ts
+fichiers prévus ≤200 lignes : truncated.ts (~110), audit/truncated.ts (~120), ignored.ts (~40)</pre>
+</section>
+
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  /* Idée 1 : simulation du collage et de la liste d'invalides */
+  var rows = [["?", "A3:", "liste Payé/Ouvert/Annulé"], ["abc", "B3", "nombre ≥ 0"], ["Perdu", "A4", "liste Payé/Ouvert/Annulé"], ["-5", "B4", "nombre ≥ 0"]];
+  $("v-go").onclick = function () {
+    document.querySelectorAll("#v-paste [data-v]").forEach(function (c) { c.classList.add("bad", "flash"); });
+    $("v-count").textContent = rows.length;
+    $("v-rows").innerHTML = rows.map(function (r, i) { return "<tr><td>" + ["A3", "B3", "A4", "B4"][i] + "</td><td>" + r[0] + "</td><td>" + r[2] + "</td></tr>"; }).join("");
+    $("v-msg").textContent = "Collé en un pas d'annulation; 4 valeurs invalides marquées.";
+  };
+  $("v-reset").onclick = function () {
+    document.querySelectorAll("#v-paste [data-v]").forEach(function (c) { c.classList.remove("bad", "flash"); });
+    $("v-count").textContent = "0"; $("v-rows").innerHTML = '<tr><td colspan="3" style="color:var(--mut)">Aucune</td></tr>';
+  };
+  /* Idée 2 : l'espion suit la saisie */
+  var b1 = 100;
+  function flash(el) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+  function fmt(n) { return n.toFixed(2).replace(".", ","); }
+  $("w-inc").onclick = function () {
+    b1 += 10; $("w-b1").textContent = b1; $("w-v1").textContent = b1; $("w-v2").textContent = fmt((b1 + 160) * 1.2);
+    flash($("w-b1")); flash($("w-v1")); setTimeout(function () { flash($("w-v2")); }, 300);
+  };
+  $("w-rst").onclick = function () { b1 = 100; $("w-b1").textContent = "100"; $("w-v1").textContent = "100"; $("w-v2").textContent = "360,00"; };
+  /* Idée 3 : détection quand une ligne est ajoutée sous la plage */
+  $("t-add").onclick = function () {
+    $("t-new").classList.add("flash"); $("t-f").classList.add("warnc");
+    $("t-msg").textContent = "C3 ignore B4 (140) : plage tronquée détectée.";
+  };
+  $("t-rst").onclick = function () { $("t-new").classList.remove("flash"); $("t-f").classList.remove("warnc"); $("t-msg").textContent = "SUM(B1:B3) couvre 3 valeurs; rien dessous."; };
+})();
+</script>
+</body>
+</html>
