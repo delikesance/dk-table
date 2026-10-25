@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toile — titre du design</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css). Clair par defaut; sombre via data-theme (page parente) OU prefers-color-scheme. */
+:root { --bg:#f2f2f2; --card:#fff; --fg:#14142b; --mut:#4a4a60; --line:#c4c4d6; --acc:#0000f2; --on-acc:#fff; }
+:root[data-theme="dark"] { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#b8b8d4; --line:#44446e; --acc:#8c8cff; --on-acc:#0a0a2a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#b8b8d4; --line:#44446e; --acc:#8c8cff; --on-acc:#0a0a2a; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 24px; font: 16px/1.5 "Inter Tight", system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+h1 { font: 800 2rem "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; text-transform: uppercase; margin: 0 0 16px; }
+.idea { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 16px; margin-bottom: 16px; }
+.idea h2 { margin: 0 0 8px; font-size: 1.1rem; }
+/* Mouvement qui explique: ici la propagation d'un recalcul de A1 vers B1 puis C1. */
+.cells { display: flex; gap: 8px; font: 500 1rem "DM Mono", ui-monospace, monospace; }
+.cell { width: 72px; padding: 8px; border: 1px solid var(--line); border-radius: 2px; text-align: right; background: var(--bg); animation: flash 3s ease-in-out infinite; }
+.cell:nth-child(2) { animation-delay: .4s; } .cell:nth-child(3) { animation-delay: .8s; }
+@keyframes flash { 0%, 60%, 100% { background: var(--bg); } 20% { background: var(--acc); color: var(--on-acc); } }
+@media (prefers-reduced-motion: reduce) { .cell { animation: none; } }
+.contract { font: 500 .9rem "DM Mono", ui-monospace, monospace; color: var(--mut); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Titre du design</h1>
+<section class="idea">
+  <h2>Idée 1 — propagation visible des recalculs</h2>
+  <div class="cells" aria-label="Cellules A1, B1, C1"><div class="cell" id="a1">10</div><div class="cell" id="b1">20</div><div class="cell" id="c1">30</div></div>
+</section>
+<section class="idea">
+  <h2>Interfaces et contrats</h2>
+  <div class="contract">fonction(entrees) -> sortie
+evenement : { type, ... }
+fichiers touches : src/...</div>
+</section>
+<script>
+/* Interactions et logique libres: tout est en ligne, aucun reseau. Exemple: un clic modifie A1 et relance l'animation. */
+document.getElementById("a1").addEventListener("click", function (e) {
+  e.target.textContent = String(Number(e.target.textContent) + 1);
+  document.querySelectorAll(".cell").forEach(function (c) { c.style.animation = "none"; void c.offsetWidth; c.style.animation = ""; });
+});
+</script>
+</body>
+</html>

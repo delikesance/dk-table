@@ -53,9 +53,12 @@ export const SECTOR_DEFS: SectorDef[] = [
     prompt:
       "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
-      `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : page HTML autonome (CSS et JS en ligne, aucune ressource externe) ` +
-      "avec, pour chaque idee, une maquette visuelle (ecrans et etats, theme clair ET sombre, tokens de " +
-      "src/styles/, outil professionnel sans texte decoratif) puis une section interfaces/contrats " +
+      `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : toile libre, page HTML autonome ` +
+      "(CSS et JS en ligne; scripts, animations, canvas/SVG et interactions permis; aucune requete ni ressource externe: la CSP les bloque). " +
+      "La page parente peut poser `data-theme=\"dark\"` ou `\"light\"` sur <html>: prevois les themes clair ET sombre (data-theme ET prefers-color-scheme). " +
+      "Conventions et gabarit: skill `design-canvas` (.claude/skills/design-canvas). " +
+      "Pour chaque idee: une maquette visuelle (ecrans et etats, tokens de " +
+      "src/styles/, outil professionnel sans texte decoratif), animee quand le mouvement explique le comportement, puis une section interfaces/contrats " +
       "(fonctions, types, evenements, fichiers touches). Ne modifie aucun autre fichier. " +
       "Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
   },

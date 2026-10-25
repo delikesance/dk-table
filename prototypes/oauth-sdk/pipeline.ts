@@ -43,6 +43,8 @@ export interface PipelineDeps {
   onSectorDir?: (designDir: string | null) => void;
   /** Recap HTML des designs (recap.ts `buildRecap`); absent: pas de recap.html. */
   buildRecap?: (designs: { name: string; html: string; mtimeMs: number }[], steps: BoucleEvent[]) => string;
+  /** Opt-in: resumes de fin de phase rediges par Haiku (defaut: texte deterministe, aucun processus Claude). */
+  llmSummaries?: boolean;
   /** Etat des cartes une fois fusionne (absent: un seul passage implementation + correction, sans boucle). */
   board?: () => Promise<BoardCard[]>;
   /** Surveillance des rapports d'un worktree (defaut: reportWatch.ts; injectable pour les tests). */
@@ -81,7 +83,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         phase: LABEL[name] ?? name,
         phases: all.map((x) => ({ name: LABEL[x.name] ?? x.name, status: status[x.name] })),
         agents: [], spentUsd: budget.spent(), remainingUsd: budget.remaining(),
-      }, { query: deps.query, budget, env: deps.env });
+      }, { query: deps.query, budget, env: deps.env, llm: deps.llmSummaries });
       onEvent({ type: "summary", phase: name, message });
       onEvent({ type: "info", sector: name, message: `resume: ${message}` });
     };
