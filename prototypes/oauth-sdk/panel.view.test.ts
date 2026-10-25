@@ -39,7 +39,7 @@ describe("panneau: fichiers", () => {
     expect(html).toContain('aria-current="page"');
   });
   it("jetons de contraste clair + sombre, focus, 4 etats", () => {
-    expect(css).toContain("prefers-color-scheme: dark");
+    expect(css).toContain("var(--c-accent)"); // jetons de l'app (clair + sombre via theme-dark.css)
     for (const t of ["--fg", "--mut", "--acc", "--on-acc", "--ok", "--fail", ":focus-visible"]) expect(css).toContain(t);
     for (const s of ["pending", "running", "ok", "fail"]) expect(css).toContain(`.${s}`);
   });

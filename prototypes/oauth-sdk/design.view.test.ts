@@ -41,7 +41,7 @@ describe("design: fichiers", () => {
   it("<= 201 lignes chacun, nav commune, theme sombre, ids stables", () => {
     for (const t of [html, css, js]) expect(t.split("\n").length).toBeLessThanOrEqual(201);
     expect(html).toContain('href="/panel.css"');
-    expect(read("panel.css")).toContain("prefers-color-scheme: dark");
+    expect(read("panel.css")).toContain("theme-dark.css"); // theme sombre = celui de l'app
     for (const id of ["timeline", "viewer", "thumbs", "history", "errors", "zoom", "pause", "reload", "compare"]) expect(html).toContain(`id="${id}"`);
   });
 });
@@ -78,7 +78,7 @@ describe("design: toile", () => {
 describe("design: lisibilite", () => {
   it("historique: etiquette visible; color-scheme declare pour les controles natifs", () => {
     expect(html).toMatch(/<label[^>]*for="history"[^>]*>Historique<\/label>/);
-    expect(read("panel.css")).toContain("color-scheme");
+    expect(readFileSync(join(__dirname, "../../src/styles/tokens.css"), "utf8")).toContain("color-scheme"); // pose par les tokens de l'app (clair/sombre)
   });
   it("etapes: libelles lisibles, icones, carte de resume, horodatage", async () => {
     await load({ files: DATA.files, steps: [
