@@ -56,8 +56,8 @@ describe("agents en parallele", () => {
     expect(h.mergePeak()).toBe(1);
   });
   it("gain de temps mesure: meme travail, 3 agents plus rapides que 1", async () => {
-    const serial = await harness({ cards: six(), parallel: 1, ms: 40 }).go();
-    const par = await harness({ cards: six(), parallel: 3, ms: 40 }).go();
+    const serial = await harness({ cards: six(), parallel: 1, ms: 150 }).go();
+    const par = await harness({ cards: six(), parallel: 3, ms: 150 }).go();
     console.log(`MESURE parallele serie=${serial.ms} ms, 3 agents=${par.ms} ms, gain x${(serial.ms / par.ms).toFixed(1)}`);
     expect(par.ms).toBeLessThan(serial.ms * 0.7);
   });
