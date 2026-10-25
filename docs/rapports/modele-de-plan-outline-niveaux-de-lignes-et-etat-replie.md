@@ -26,6 +26,7 @@ Visible : non
 - Limite : un groupe sans ligne de sous-total en dessous (fin de feuille) ne peut pas être replié.
 - Tournée suivante : le design `docs/design/2026-10-25-200330.html` ne parle que d'analyse what-if (aucune mention de plan ni de sous-total) : ignoré, comme au premier passage.
 - Tournée suivante : critères d'acceptation relus, tous couverts par les 7 tests existants (niveaux 0-3, repli, dépli sans sous-groupes, `showLevel`). Aucun changement de code.
+- Tournée suivante (3e) : `docs/design/2026-10-25-204816.html` est « Valeur cible et évaluation pas à pas » (hors plan, ignoré). Relecture : `npx vitest run src/engine/outline.test.ts` = 7 verts. Aucun changement de code; `docs/plan-outline.md` (26 lignes) vérifié.
 
 ## Preuves
 - Tests : ok (non executes : documentation seule)
