@@ -10,6 +10,7 @@ import { liveCell, paintCell } from "./cellview";
 import { computeCf } from "../engine/cf/compute";
 import { sheetEnv } from "../engine/cf/env";
 import { formatValue } from "./numfmt";
+import { toInput } from "./formula/syntax";
 import { displayGap, decimalMode } from "../engine/decimal";
 import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
@@ -34,7 +35,7 @@ export function syncInfo(c: Ctx): void {
   const key = firstKey(c);
   const raw = getRaw(c.cur.sheet, key);
   c.fbar.setCell(key, raw);
-  c.sidebar.setCellInfo({ ref: key, raw, display: getDisplay(c.cur.sheet, key), format: "Standard" });
+  c.sidebar.setCellInfo({ ref: key, raw: toInput(raw), display: getDisplay(c.cur.sheet, key), format: "Standard" });
   const keys = keysOf(c.grid.getSelection());
   c.status.update(keys.length, keys.length > 1 ? keys.map((k) => getValue(c.cur.sheet, k)) : []);
   const st = c.cur.styles[key] ?? {};

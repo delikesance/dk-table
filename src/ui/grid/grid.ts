@@ -10,7 +10,7 @@ import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
 import { createFreezeCtl } from "./freezeView";
 import { markSelection } from "./mark";
 import { bindClipboard } from "./clipboard";
-import { shiftFormula } from "../../engine/refs";
+import { shiftTyped } from "../formula/syntax";
 import { bindKeys } from "./gridKeys";
 import { fillPlan } from "./fill";
 import { createFilterCtl } from "./gridFilter";
@@ -137,7 +137,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     const key = keyOf(active.col, active.row);
     for (const k of all ? rangeKeys(anchor, active) : [key]) { // Ctrl+Enter: refs shift from the active cell (Excel)
       const p = parseKey(k);
-      if (commit) opts.onEdit(k, shiftFormula(input.value, p.col - active.col, p.row - active.row)); paint(k);
+      if (commit) opts.onEdit(k, shiftTyped(input.value, p.col - active.col, p.row - active.row)); paint(k);
     }
     if (refocus) root.focus();
   }

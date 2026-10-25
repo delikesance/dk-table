@@ -1,5 +1,6 @@
 import { cycleRefIn } from "../grid/refcycle";
 import { attachFnComplete } from "../formula/fnPopup";
+import { fromInput, toInput } from "../formula/syntax";
 
 /** Formula bar callbacks. */
 export interface FormulaBarOpts {
@@ -46,13 +47,13 @@ export function createFormulaBar(host: HTMLElement, opts: FormulaBarOpts): Formu
   });
   attachFnComplete(fx);
   fx.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); raw = fx.value; opts.onCommit(fx.value); }
+    if (e.key === "Enter") { e.preventDefault(); raw = fx.value; opts.onCommit(fromInput(fx.value)); }
     else if (e.key === "Escape") { fx.value = raw; }
     else if (e.key === "F4") { e.preventDefault(); cycleRefIn(fx); }
   });
   return {
     el,
-    setCell(k, r) { key = k; raw = r; name.value = k; fx.value = r; },
+    setCell(k, r) { key = k; raw = toInput(r); name.value = k; fx.value = raw; },
     focus() { fx.focus(); },
   };
 }
