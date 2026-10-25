@@ -47,7 +47,7 @@ describe("runPipeline", () => {
     const ended = events.filter((e) => e.type === "end" && !e.axis).map((e) => e.sector);
     expect(ended).toEqual(["research", "design", "implementation", "correction"]);
     expect(files[0]).toMatch(/\.claude[\\/]+worktrees[\\/]+research-.*docs[\\/]+recherche[\\/]+fonctionnalites\.md$/);
-    const merges = calls.filter((c) => c.cmd === "git" && c.args[0] === "merge");
+    const merges = calls.filter((c) => c.cmd === "git" && c.args[0] === "merge" && c.args.includes("--no-ff"));
     expect(merges).toHaveLength(4);
     expect(merges[0].args).toContain("--no-ff");
   });

@@ -4,12 +4,14 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGitFlow, type Run } from "./git";
 
+// vrais processus git: des dizaines de ms sous Linux mais des secondes sous Windows quand toute la suite tourne en parallele
+vi.setConfig({ testTimeout: 60_000 });
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
-const g = (cwd: string, ...a: string[]) => execFileSync("git", ["-c", "user.email=a@b", "-c", "user.name=a", ...a], { cwd, encoding: "utf8" }).trim();
+const g = (cwd: string, ...a: string[]) => execFileSync("git", ["-c", "user.email=a@b", "-c", "user.name=a", "-c", "gc.auto=0", "-c", "core.fsync=none", ...a], { cwd, encoding: "utf8" }).trim();
 const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8" }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 const commit = (cwd: string, file: string, text: string) => { writeFileSync(join(cwd, file), text); g(cwd, "add", "-A"); g(cwd, "commit", "-qm", `c ${file}`); };
 

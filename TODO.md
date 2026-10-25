@@ -253,6 +253,7 @@ Classement par gravité (P0 = pire)
 - [x] Boucle: réconciliateur d'états (`reconcile.ts`): faux « en cours » supprimés, orphelines et finies-sans-rapport visibles (anomalies dans le moodboard et le journal), `docs/boucle-optimisee.md`
 - [x] Boucle: correction déclenchée par le code seulement (fusion refusée ou preuves manquantes), routage des modèles haiku-first avec escalade (`routing.ts`, `BOUCLE_MODELS`)
 - [x] Boucle: push automatique de `developpement` après fusion validée (`pushDev`, jamais master, `BOUCLE_PUSH=0` pour couper)
+- [x] Boucle: un test déjà rouge sur `developpement` ne bloque plus la fusion d'une carte (référence à la base, anomalie dans le journal), tests git à délai adapté (Windows)
 - [ ] Boucle: sortie structurée du SDK (`outputFormat` json_schema) et hooks pour valider sans relire les fichiers; à étudier
 - [x] Boucle: tests/parseurs tolérants au CRLF (checkout Windows), `.gitattributes` eol=lf
 - [x] Boucle, comparaison app vs panneau (clair/sombre): barre du haut alignée sur la barre de menus, captures `docs/screenshots/boucle-theme-app/`

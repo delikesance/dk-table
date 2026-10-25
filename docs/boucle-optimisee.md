@@ -125,3 +125,11 @@ Maquette du flux : https://claude.ai/artifact/8eVb5xZRpYMELx3xQW9NVm.
 **Push automatique** (`git.ts` `pushDev`) : après chaque fusion validée, `git push origin developpement:developpement`. Jamais master/main (refus si la branche courante n'est pas `developpement`); si le distant a avancé : `git pull --no-rebase`, conflit = abandon propre (`merge --abort`) + message dans le journal (« push non effectué : … »). Désactiver : `BOUCLE_PUSH=0`. Tests avec un vrai dépôt distant nu : `git.push.test.ts`; flux complet avec faux agents : `pipeline.flow.test.ts`.
 
 **Limites** : pas d'agents en parallèle (risque de conflits de fusion); coût comparé en unités relatives et en nombre d'appels sur faux agents, pas en euros réels; non vérifié sous Windows.
+
+## Vérification avant fusion : référence à la base
+
+Cause du refus de fusion de la recherche sous Windows : `git.push.test.ts` (vrais processus git) dépassait 5 s dans la suite complète, et ce test infrastructurel bloquait une carte sans rapport avec lui. Correctifs :
+
+- **Tests git** (`git.push.test.ts`, `git.parallel.test.ts`) : délai de 60 s pour les vrais dépôts, `gc.auto=0` et `core.fsync=none`.
+- **Échec préexistant** (`git.ts`, `testFailures.ts`) : si `npm test` est rouge dans le worktree, les seuls fichiers rouges sont relancés sur un worktree de référence (`developpement` détaché, créé une fois, retiré en fin de run). Un test déjà rouge sur la base ne bloque pas la fusion : il est listé dans `preexisting` et le journal affiche « anomalie : test(s) déjà rouge(s) sur developpement… ». Un test rouge seulement sur la branche, une sortie illisible ou `tsc` rouge bloquent toujours. Tests : `git.baseline.test.ts`, `testFailures.test.ts`, `pipeline.flow.test.ts`.
+- **Fusion sérialisée** (préparation des agents en parallèle) : verrou FIFO (`concurrency.ts`) pour la création des worktrees et les fusions; avant de fusionner, la branche intègre `developpement` (tests relancés si celui-ci a avancé), un conflit est détecté sans toucher à `developpement` (`conflict: true`); `TODO.md merge=union` dans `.gitattributes`. Tests : `git.parallel.test.ts` (vrai dépôt).
