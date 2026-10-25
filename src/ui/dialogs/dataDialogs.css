@@ -11,3 +11,10 @@
 .dk-diff--add td:last-child { color: var(--c-accent); }
 .dk-diff--del td:nth-child(2) { color: var(--c-error); text-decoration: line-through; }
 .dk-diff--mod td:last-child { font-weight: var(--fw-medium); }
+.dk-dep__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.dk-dep__link { background: none; border: 0; padding: 2px 4px; cursor: pointer; font: 12px var(--font-mono); color: var(--c-accent); text-decoration: underline; }
+.dk-import__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); max-height: 320px; overflow: auto; font: 12px var(--font-mono); }
+.dk-import__col { display: grid; gap: 2px; padding-bottom: 4px; border-bottom: 1px solid var(--c-line); }
+.dk-hist { max-width: 560px; }
+.dk-hist ul { margin: 0; padding-left: 16px; font: 12px var(--font-mono); }
+.dk-hist input[type="range"] { width: 100%; }
