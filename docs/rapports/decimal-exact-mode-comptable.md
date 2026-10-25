@@ -11,7 +11,7 @@ Visible : oui
 ## Preuves
 - Tests : ok (`npm test` : 307 fichiers passés + 4 ignorés; 2240 tests passés, 4 ignorés; `npx tsc --noEmit` sans erreur)
 - E2E : `npm run test:e2e -- feat-decimal` : 2 passed (clair 655ms, sombre 604ms)
-- Captures : docs/screenshots/decimal-exact-mode-comptable/option-clair.png, option-sombre.png, ecart-clair.png, ecart-sombre.png
+- Captures : docs/screenshots/decimal-exact-mode-comptable/option-clair.png, docs/screenshots/decimal-exact-mode-comptable/option-sombre.png, docs/screenshots/decimal-exact-mode-comptable/ecart-clair.png, docs/screenshots/decimal-exact-mode-comptable/ecart-sombre.png
 
 ## Decisions
 - Pas de lib : arrondi à 15 chiffres significatifs après + - * / ^ (0,1+0,2 = 0,3), suffisant en décimal comptable.
