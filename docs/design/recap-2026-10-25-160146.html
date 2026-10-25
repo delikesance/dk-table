@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 17:03:02 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-160146.html</h2><div class="frame">
+<h1>Espion et validation de données</h1>
+<div class="mono" style="color:var(--fg2)">Deux idées absentes de dk-table (TODO axes 2 et 3). Écarté : analyse rapide Ctrl+Q (doublon avec la palette).</div>
+
+<section class="idea" id="i1">
+  <h2>1. Fenêtre Espion</h2>
+  <div class="row">
+    <div class="screen">
+      <h3>Interactif : modifier une cellule de la feuille Ventes</h3>
+      <div class="tabs" role="tablist"><span class="tab" role="tab" aria-selected="true">Ventes</span><span class="tab" role="tab" aria-selected="false">Bilan</span></div>
+      <table class="g" id="wg"><tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+        <tr><th>1</th><td class="t">T1</td><td data-k="B1">1200</td><td class="t">Marge</td></tr>
+        <tr><th>2</th><td class="t">T2</td><td data-k="B2">1500</td><td data-k="C2">=B3*0,2</td></tr>
+        <tr><th>3</th><td class="t">Total</td><td data-k="B3">2700</td><td></td></tr></table>
+      <div class="cap">Cliquer B1 ou B2 : +100. Les lignes de l'Espion qui changent clignotent et affichent l'écart.</div>
+      <button id="wb">Ajouter C2 à l'Espion</button>
+    </div>
+    <div class="screen">
+      <h3>Espion (fenêtre flottante, reste visible sur tous les onglets)</h3>
+      <div class="float watch" id="wl" role="table" aria-label="Espion">
+        <div class="hd"><span>Cellule</span><span>Formule</span><span class="num">Valeur</span><span class="num">Écart</span></div>
+      </div>
+      <div class="cap">Clic sur une ligne : active la feuille et sélectionne la cellule. Ligne en erreur : texte orange.</div>
+    </div>
+  </div>
+  <h3 style="margin-top:12px">États</h3>
+  <div class="row">
+    <div class="screen state"><h3>Vide</h3><div class="float" style="padding:10px">Aucune cellule surveillée. Clic droit sur une cellule : « Espionner ».</div></div>
+    <div class="screen state"><h3>Erreur</h3><div class="float watch"><div class="it"><span>Bilan!D4</span><span>=Ventes!B9/0</span><span class="num dn">#DIV/0!</span><span class="num">-</span></div></div></div>
+  </div>
+</section>
+
+<section class="idea" id="i2">
+  <h2>2. Validation de données</h2>
+  <div class="row">
+    <div class="screen">
+      <h3>Interactif : colonne Statut = liste (Brouillon, Validé, Payé)</h3>
+      <table class="g" id="vg"><tr><th></th><th>A</th><th>B</th></tr>
+        <tr><th>1</th><td class="t">Facture 1</td><td class="t chev" data-v="1">Validé</td></tr>
+        <tr><th>2</th><td class="t">Facture 2</td><td class="t chev" data-v="2">Brouillon</td></tr>
+        <tr><th>3</th><td class="t">Facture 3</td><td class="t chev" data-v="3">Payé</td></tr></table>
+      <div class="cap">Clic : liste déroulante (flèches, Entrée). Bouton : simule une saisie hors liste (collage).</div>
+      <button id="vb">Coller « Archivé » en B3</button> <button id="vr">Réinitialiser</button>
+    </div>
+    <div class="screen">
+      <h3>Dialogue Données &gt; Validation (palette : data.validate)</h3>
+      <div class="float dlg">
+        <label>Plage</label><div class="f">B1:B200</div>
+        <label>Critère</label><div class="f">Liste : Brouillon, Validé, Payé ▾</div>
+        <label>Si invalide</label><div class="f">● Refuser &nbsp; ○ Avertir &nbsp; ○ Marquer seulement</div>
+        <label>Message</label><div class="f">Choisir un statut de la liste.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button>Annuler</button><button class="p">Appliquer</button></div>
+      </div>
+      <div class="cap">Critères : liste, nombre entre, entier, date après, longueur de texte, formule personnalisée.</div>
+    </div>
+  </div>
+</section>
+
+<section class="idea" id="ct">
+  <h2>Interfaces et contrats</h2>
+  <div class="row">
+    <div class="screen"><h3>Espion</h3><pre class="c">Types (engine/watch.ts, pur, sans DOM)
+  WatchRef = { sheet: string; key: string }
+  WatchRow = { ref; formula: string; value: string;
+               prev: string|null; delta: number|null; error: boolean }
+  watchRows(book, refs: WatchRef[], prev: Map<string,string>): WatchRow[]
+    delta = nombre courant - précédent, sinon null
+    feuille/cellule supprimée -> error, value "#REF!"
+Persistance : DktDoc.watch?: WatchRef[] (io/format.ts, validation stricte)
+UI : ui/watch/panel.ts (fenêtre flottante, drag), ui/watch/watch.css
+  createWatchPanel(app): { toggle(): void; add(ref): void; remove(ref): void }
+Événements : app.on("recalc") -> panel.refresh() ; "watch:goto" {sheet,key}
+Entrées : menu Affichage « Espion », menu contextuel « Espionner », palette view.watch
+Fichiers : engine/watch.ts, io/format.ts, ui/watch/{panel.ts,watch.css},
+  ui/menubar/spec.ts, ui/commands.ts (chacun reste &lt;= 200 lignes)
+Tests d'abord (vitest) :
+  engine/watch.test.ts : delta chiffré, texte sans delta, #REF!, ordre conservé
+  io/format.test.ts : aller-retour watch, refus d'une ref invalide
+  ui/watch/panel.test.ts : refresh ne reconstruit que les lignes changées,
+    clic ligne émet watch:goto, vide affiche le message
+  e2e/feat-watch.spec.ts : modifier B1, la ligne Espion se met à jour</pre></div>
+    <div class="screen"><h3>Validation</h3><pre class="c">Types (engine/validate.ts, pur)
+  Rule = { range: string;
+    kind: "list"|"number"|"integer"|"date"|"length"|"custom";
+    op?: "between"|"gt"|"lt"|"eq"; a?: string; b?: string;
+    items?: string[]; mode: "reject"|"warn"|"mark"; message?: string }
+  checkValue(rule, raw: string, lookup): { ok: boolean; reason?: string }
+  invalidCells(sheet, rules): string[]   // clés marquées (collage inclus)
+  ruleAt(rules, key): Rule | undefined
+Persistance : DocSheet.validation?: Rule[] (io/format.ts), suit insert/suppr de
+  lignes et colonnes comme engine/cf (structure.ts)
+Annulation : un pas par modification de règle ; saisie refusée = aucun pas
+UI : ui/validate/{dropdown.ts, tip.ts, dialog.ts, validate.css}
+  openDropdown(cell, rule): choix -> app.setCell ; tip(cell, reason)
+Événements : "cell:commit" passe par checkValue avant écriture ;
+  mode reject = annule la saisie + info-bulle, warn = confirmer, mark = écrit
+Rendu : coin orange + fond --err-bg (grille), chevron sur cellules liste
+Fichiers : engine/validate.ts, io/format.ts, ui/validate/*, ui/grid/editor.ts,
+  ui/cellview.ts, ui/menubar/spec.ts (menu Données), palette data.validate
+Tests d'abord (vitest) :
+  engine/validate.test.ts : list, between, entier, date, custom, plage ouverte
+  io/format.test.ts : aller-retour, règle invalide refusée
+  ui/validate/dropdown.test.ts : flèches + Entrée écrivent, Échap annule
+  ui/grid/editor.validate.test.ts : reject bloque, warn demande, mark écrit
+  e2e/feat-validate.spec.ts : liste, saisie hors liste, marqueur après collage</pre></div>
+  </div>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td></td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 17:01:32</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-160146.html</td><td>25/10/2026 17:02:50</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-160146.html</td><td>25/10/2026 17:02:57</td><td>mis à jour</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.50 $</td></tr></table></section>
+</body></html>

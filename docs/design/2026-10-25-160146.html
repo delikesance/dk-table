@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table : fenêtre Espion, validation de données</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css, theme-dark.css). Clair par défaut; sombre via data-theme OU prefers-color-scheme. */
+:root { --bg:#f2f2f2; --surface:#fafafa; --header:#e2e2f6; --fg:#0000f2; --fg2:#4a4ac8; --line:rgba(0,0,242,.14); --line2:rgba(0,0,242,.28);
+  --acc:#0000f2; --on-acc:#f2f2f2; --soft:rgba(0,0,242,.06); --soft2:rgba(0,0,242,.14); --err:#a8380a; --err-bg:rgba(168,56,10,.12); --float:#fafafa; }
+:root[data-theme="dark"] { --bg:#19192f; --surface:#1f1f3a; --header:#2a2a4c; --fg:#f2f2f2; --fg2:#b8b8d4; --line:rgba(140,140,255,.22); --line2:rgba(140,140,255,.4);
+  --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.1); --soft2:rgba(140,140,255,.22); --err:#ff9a66; --err-bg:rgba(255,154,102,.16); --float:#23233f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#19192f; --surface:#1f1f3a; --header:#2a2a4c; --fg:#f2f2f2; --fg2:#b8b8d4; --line:rgba(140,140,255,.22); --line2:rgba(140,140,255,.4);
+  --acc:#8c8cff; --on-acc:#0a0a2a; --soft:rgba(140,140,255,.1); --soft2:rgba(140,140,255,.22); --err:#ff9a66; --err-bg:rgba(255,154,102,.16); --float:#23233f; } }
+* { box-sizing: border-box; }
+body { margin:0; padding:24px; font:15px/1.45 "Inter Tight", system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+h1 { font:800 2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h2 { font:800 1.35rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 12px; }
+h3 { font:600 .8rem "DM Mono",ui-monospace,monospace; text-transform:uppercase; letter-spacing:.04em; color:var(--fg2); margin:0 0 6px; }
+.idea { border:1px solid var(--line2); border-radius:4px; padding:16px; margin:16px 0; background:var(--surface); }
+.row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+.screen { border:1px solid var(--line2); border-radius:4px; background:var(--bg); padding:8px; position:relative; min-width:300px; flex:1; }
+.mono { font-family:"DM Mono",ui-monospace,monospace; }
+.tabs { display:flex; gap:2px; margin-bottom:6px; font:700 .85rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; }
+.tab { padding:3px 10px; border:1px solid var(--line); border-radius:2px; background:var(--header); cursor:pointer; color:var(--fg); }
+.tab[aria-selected="true"] { background:var(--acc); color:var(--on-acc); }
+table.g { border-collapse:collapse; font:500 .85rem "DM Mono",ui-monospace,monospace; width:100%; }
+.g th { background:var(--header); font-weight:500; color:var(--fg2); border:1px solid var(--line); padding:2px 6px; }
+.g td { border:1px solid var(--line); padding:3px 6px; text-align:right; background:var(--surface); height:26px; position:relative; cursor:cell; }
+.g td.t { text-align:left; } .g td.sel { outline:2px solid var(--acc); outline-offset:-2px; }
+.g td.flash { animation:fl 1.2s ease-out; }
+@keyframes fl { 0% { background:var(--acc); color:var(--on-acc); } 100% { background:var(--surface); } }
+.g td.bad::after { content:""; position:absolute; top:0; right:0; border:6px solid transparent; border-top-color:var(--err); border-right-color:var(--err); }
+.g td.bad { background:var(--err-bg); }
+.g td.chev::before { content:""; position:absolute; left:4px; top:10px; border:4px solid transparent; border-top-color:var(--fg2); }
+.float { background:var(--float); border:1px solid var(--line2); border-radius:4px; box-shadow:0 4px 14px rgba(0,0,0,.25); font:500 .85rem "DM Mono",ui-monospace,monospace; }
+.watch { width:100%; } .watch .hd, .watch .it { display:grid; grid-template-columns:1.1fr 1.2fr 1fr 1fr; gap:6px; padding:4px 8px; align-items:center; }
+.watch .hd { background:var(--header); color:var(--fg2); border-radius:4px 4px 0 0; font-size:.75rem; text-transform:uppercase; }
+.watch .it { border-top:1px solid var(--line); cursor:pointer; } .watch .it:hover { background:var(--soft); }
+.watch .it.flash { animation:fl 1.2s ease-out; } .watch .num { text-align:right; }
+.delta { font-size:.75rem; } .up { color:var(--acc); } .dn { color:var(--err); }
+.pop { position:absolute; z-index:2; min-width:130px; } .pop div { padding:4px 10px; cursor:pointer; } .pop div:hover, .pop div[aria-selected="true"] { background:var(--acc); color:var(--on-acc); }
+.tip { position:absolute; z-index:2; padding:6px 8px; max-width:240px; border-color:var(--err); color:var(--fg); }
+.tip b { color:var(--err); }
+button { font:600 .8rem "DM Mono",ui-monospace,monospace; padding:4px 10px; border:1px solid var(--acc); background:transparent; color:var(--fg); border-radius:2px; cursor:pointer; }
+button:hover { background:var(--soft2); } button.p { background:var(--acc); color:var(--on-acc); }
+.state { margin-bottom:12px; }
+.cap { font:500 .75rem "DM Mono",ui-monospace,monospace; color:var(--fg2); margin-top:6px; }
+pre.c { font:500 .8rem/1.5 "DM Mono",ui-monospace,monospace; white-space:pre-wrap; margin:0; color:var(--fg); }
+.dlg { width:100%; max-width:360px; padding:10px; } .dlg label { display:block; margin:6px 0 2px; color:var(--fg2); font-size:.75rem; text-transform:uppercase; }
+.dlg .f { border:1px solid var(--line2); padding:3px 6px; background:var(--surface); border-radius:2px; }
+@media (prefers-reduced-motion: reduce) { .flash { animation:none !important; } }
+</style>
+</head>
+<body>
+<h1>Espion et validation de données</h1>
+<div class="mono" style="color:var(--fg2)">Deux idées absentes de dk-table (TODO axes 2 et 3). Écarté : analyse rapide Ctrl+Q (doublon avec la palette).</div>
+
+<section class="idea" id="i1">
+  <h2>1. Fenêtre Espion</h2>
+  <div class="row">
+    <div class="screen">
+      <h3>Interactif : modifier une cellule de la feuille Ventes</h3>
+      <div class="tabs" role="tablist"><span class="tab" role="tab" aria-selected="true">Ventes</span><span class="tab" role="tab" aria-selected="false">Bilan</span></div>
+      <table class="g" id="wg"><tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+        <tr><th>1</th><td class="t">T1</td><td data-k="B1">1200</td><td class="t">Marge</td></tr>
+        <tr><th>2</th><td class="t">T2</td><td data-k="B2">1500</td><td data-k="C2">=B3*0,2</td></tr>
+        <tr><th>3</th><td class="t">Total</td><td data-k="B3">2700</td><td></td></tr></table>
+      <div class="cap">Cliquer B1 ou B2 : +100. Les lignes de l'Espion qui changent clignotent et affichent l'écart.</div>
+      <button id="wb">Ajouter C2 à l'Espion</button>
+    </div>
+    <div class="screen">
+      <h3>Espion (fenêtre flottante, reste visible sur tous les onglets)</h3>
+      <div class="float watch" id="wl" role="table" aria-label="Espion">
+        <div class="hd"><span>Cellule</span><span>Formule</span><span class="num">Valeur</span><span class="num">Écart</span></div>
+      </div>
+      <div class="cap">Clic sur une ligne : active la feuille et sélectionne la cellule. Ligne en erreur : texte orange.</div>
+    </div>
+  </div>
+  <h3 style="margin-top:12px">États</h3>
+  <div class="row">
+    <div class="screen state"><h3>Vide</h3><div class="float" style="padding:10px">Aucune cellule surveillée. Clic droit sur une cellule : « Espionner ».</div></div>
+    <div class="screen state"><h3>Erreur</h3><div class="float watch"><div class="it"><span>Bilan!D4</span><span>=Ventes!B9/0</span><span class="num dn">#DIV/0!</span><span class="num">-</span></div></div></div>
+  </div>
+</section>
+
+<section class="idea" id="i2">
+  <h2>2. Validation de données</h2>
+  <div class="row">
+    <div class="screen">
+      <h3>Interactif : colonne Statut = liste (Brouillon, Validé, Payé)</h3>
+      <table class="g" id="vg"><tr><th></th><th>A</th><th>B</th></tr>
+        <tr><th>1</th><td class="t">Facture 1</td><td class="t chev" data-v="1">Validé</td></tr>
+        <tr><th>2</th><td class="t">Facture 2</td><td class="t chev" data-v="2">Brouillon</td></tr>
+        <tr><th>3</th><td class="t">Facture 3</td><td class="t chev" data-v="3">Payé</td></tr></table>
+      <div class="cap">Clic : liste déroulante (flèches, Entrée). Bouton : simule une saisie hors liste (collage).</div>
+      <button id="vb">Coller « Archivé » en B3</button> <button id="vr">Réinitialiser</button>
+    </div>
+    <div class="screen">
+      <h3>Dialogue Données &gt; Validation (palette : data.validate)</h3>
+      <div class="float dlg">
+        <label>Plage</label><div class="f">B1:B200</div>
+        <label>Critère</label><div class="f">Liste : Brouillon, Validé, Payé ▾</div>
+        <label>Si invalide</label><div class="f">● Refuser &nbsp; ○ Avertir &nbsp; ○ Marquer seulement</div>
+        <label>Message</label><div class="f">Choisir un statut de la liste.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button>Annuler</button><button class="p">Appliquer</button></div>
+      </div>
+      <div class="cap">Critères : liste, nombre entre, entier, date après, longueur de texte, formule personnalisée.</div>
+    </div>
+  </div>
+</section>
+
+<section class="idea" id="ct">
+  <h2>Interfaces et contrats</h2>
+  <div class="row">
+    <div class="screen"><h3>Espion</h3><pre class="c">Types (engine/watch.ts, pur, sans DOM)
+  WatchRef = { sheet: string; key: string }
+  WatchRow = { ref; formula: string; value: string;
+               prev: string|null; delta: number|null; error: boolean }
+  watchRows(book, refs: WatchRef[], prev: Map<string,string>): WatchRow[]
+    delta = nombre courant - précédent, sinon null
+    feuille/cellule supprimée -> error, value "#REF!"
+Persistance : DktDoc.watch?: WatchRef[] (io/format.ts, validation stricte)
+UI : ui/watch/panel.ts (fenêtre flottante, drag), ui/watch/watch.css
+  createWatchPanel(app): { toggle(): void; add(ref): void; remove(ref): void }
+Événements : app.on("recalc") -> panel.refresh() ; "watch:goto" {sheet,key}
+Entrées : menu Affichage « Espion », menu contextuel « Espionner », palette view.watch
+Fichiers : engine/watch.ts, io/format.ts, ui/watch/{panel.ts,watch.css},
+  ui/menubar/spec.ts, ui/commands.ts (chacun reste &lt;= 200 lignes)
+Tests d'abord (vitest) :
+  engine/watch.test.ts : delta chiffré, texte sans delta, #REF!, ordre conservé
+  io/format.test.ts : aller-retour watch, refus d'une ref invalide
+  ui/watch/panel.test.ts : refresh ne reconstruit que les lignes changées,
+    clic ligne émet watch:goto, vide affiche le message
+  e2e/feat-watch.spec.ts : modifier B1, la ligne Espion se met à jour</pre></div>
+    <div class="screen"><h3>Validation</h3><pre class="c">Types (engine/validate.ts, pur)
+  Rule = { range: string;
+    kind: "list"|"number"|"integer"|"date"|"length"|"custom";
+    op?: "between"|"gt"|"lt"|"eq"; a?: string; b?: string;
+    items?: string[]; mode: "reject"|"warn"|"mark"; message?: string }
+  checkValue(rule, raw: string, lookup): { ok: boolean; reason?: string }
+  invalidCells(sheet, rules): string[]   // clés marquées (collage inclus)
+  ruleAt(rules, key): Rule | undefined
+Persistance : DocSheet.validation?: Rule[] (io/format.ts), suit insert/suppr de
+  lignes et colonnes comme engine/cf (structure.ts)
+Annulation : un pas par modification de règle ; saisie refusée = aucun pas
+UI : ui/validate/{dropdown.ts, tip.ts, dialog.ts, validate.css}
+  openDropdown(cell, rule): choix -> app.setCell ; tip(cell, reason)
+Événements : "cell:commit" passe par checkValue avant écriture ;
+  mode reject = annule la saisie + info-bulle, warn = confirmer, mark = écrit
+Rendu : coin orange + fond --err-bg (grille), chevron sur cellules liste
+Fichiers : engine/validate.ts, io/format.ts, ui/validate/*, ui/grid/editor.ts,
+  ui/cellview.ts, ui/menubar/spec.ts (menu Données), palette data.validate
+Tests d'abord (vitest) :
+  engine/validate.test.ts : list, between, entier, date, custom, plage ouverte
+  io/format.test.ts : aller-retour, règle invalide refusée
+  ui/validate/dropdown.test.ts : flèches + Entrée écrivent, Échap annule
+  ui/grid/editor.validate.test.ts : reject bloque, warn demande, mark écrit
+  e2e/feat-validate.spec.ts : liste, saisie hors liste, marqueur après collage</pre></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var vals = { B1: 1200, B2: 1500 }, watch = [], prev = {};
+  function tot() { return vals.B1 + vals.B2; }
+  function cur(k) { return k === "B3" ? tot() : k === "C2" ? tot() * 0.2 : vals[k]; }
+  function fmt(n) { return Math.round(n * 10) / 10; }
+  var wl = document.getElementById("wl"), wg = document.getElementById("wg");
+  function cellEl(k) { return wg.querySelector('[data-k="' + k + '"]'); }
+  function paint(flash) {
+    ["B1", "B2", "B3", "C2"].forEach(function (k) { cellEl(k).textContent = k === "C2" ? fmt(cur(k)) : cur(k); });
+    var rows = wl.querySelectorAll(".it"); rows.forEach(function (r) { r.remove(); });
+    watch.forEach(function (k) {
+      var v = fmt(cur(k)), d = v - (prev[k] == null ? v : prev[k]), r = document.createElement("div");
+      r.className = "it" + (flash && d ? " flash" : "");
+      r.innerHTML = "<span>Ventes!" + k + "</span><span>" + (k === "B3" ? "=B1+B2" : k === "C2" ? "=B3*0,2" : "valeur") + "</span><span class='num'>" + v + "</span><span class='num delta " + (d < 0 ? "dn" : "up") + "'>" + (d ? (d > 0 ? "+" : "") + fmt(d) : "-") + "</span>";
+      r.onclick = function () { wg.querySelectorAll(".sel").forEach(function (c) { c.classList.remove("sel"); }); cellEl(k).classList.add("sel"); };
+      wl.appendChild(r); prev[k] = v;
+    });
+  }
+  function bump(k) { prev = {}; watch.forEach(function (w) { prev[w] = fmt(cur(w)); }); vals[k] += 100; paint(true); var e = cellEl(k); e.classList.remove("flash"); void e.offsetWidth; e.classList.add("flash"); }
+  ["B1", "B2"].forEach(function (k) { cellEl(k).onclick = function () { bump(k); }; });
+  document.getElementById("wb").onclick = function () { if (watch.indexOf("C2") < 0) { watch.push("C2"); prev.C2 = fmt(cur("C2")); paint(false); } };
+  watch = ["B3"]; prev.B3 = tot(); paint(false);
+
+  var vg = document.getElementById("vg"), items = ["Brouillon", "Validé", "Payé"], pop = null, tip = null, scr = vg.parentNode;
+  function clear() { if (pop) pop.remove(); if (tip) tip.remove(); pop = tip = null; }
+  function place(el, td, dy) { var a = td.getBoundingClientRect(), b = scr.getBoundingClientRect(); el.style.left = (a.left - b.left) + "px"; el.style.top = (a.bottom - b.top + dy) + "px"; scr.appendChild(el); }
+  vg.querySelectorAll("td.chev").forEach(function (td) {
+    td.onclick = function (e) {
+      e.stopPropagation(); clear(); pop = document.createElement("div"); pop.className = "float pop";
+      items.forEach(function (it) { var d = document.createElement("div"); d.textContent = it; if (it === td.textContent) d.setAttribute("aria-selected", "true");
+        d.onclick = function () { td.textContent = it; td.classList.remove("bad"); clear(); }; pop.appendChild(d); });
+      place(pop, td, 2);
+    };
+  });
+  document.addEventListener("click", clear);
+  document.getElementById("vb").onclick = function () {
+    clear(); var td = vg.querySelector('[data-v="3"]'); td.textContent = "Archivé"; td.classList.add("bad");
+    tip = document.createElement("div"); tip.className = "float tip"; tip.innerHTML = "<b>Valeur refusée</b><br>Choisir un statut de la liste."; place(tip, td, 4);
+  };
+  document.getElementById("vr").onclick = function () { clear(); vg.querySelector('[data-v="3"]').textContent = "Payé"; vg.querySelector('[data-v="3"]').classList.remove("bad"); };
+})();
+</script>
+</body>
+</html>
