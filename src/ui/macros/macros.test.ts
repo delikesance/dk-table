@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "../app";
 import { defaultRegistry } from "../palette/registry";
+import { waitFor } from "../../test-wait";
 
 let app: App;
 let root: HTMLElement;
@@ -53,7 +54,7 @@ describe("macros in the app", () => {
     expect(ids()).toContain("Macros");
     const cmd = defaultRegistry.list().find((c) => c.label === "Macro : Nettoyer")!;
     cmd.run();
-    await vi.waitFor(() => expect(cell("C1").textContent).toBe("ok"));
+    await waitFor(() => expect(cell("C1").textContent).toBe("ok"));
     expect(cell("C1").textContent).toBe("ok");
     app.macros.remove(m.id);
     expect(ids()).not.toContain("Macro : Nettoyer");
@@ -63,7 +64,7 @@ describe("macros in the app", () => {
     app.edit("A1", "1");
     const m = app.macros.create();
     await app.editMacro(m.id);
-    await vi.waitFor(() => expect(root.querySelector(".dk-mview .cm-content")).not.toBeNull());
+    await waitFor(() => expect(root.querySelector(".dk-mview .cm-content")).not.toBeNull());
     const content = root.querySelector<HTMLElement>(".dk-mview .cm-content")!;
     content.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true }));
     expect(cell("A1").textContent).toBe("1");

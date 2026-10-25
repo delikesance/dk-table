@@ -2,6 +2,7 @@
 /** Vue scindée : feuille à gauche, document à droite (Ctrl+\). */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "./app";
+import { waitFor } from "../test-wait";
 
 let app: App;
 let root: HTMLElement;
@@ -17,7 +18,7 @@ beforeEach(() => {
 });
 async function openDoc(): Promise<void> {
   app.addDoc();
-  await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+  await waitFor(() => expect(app.docEditor()).toBeDefined());
 }
 
 describe("barre flottante de la grille", () => {
@@ -42,7 +43,7 @@ describe("vue scindée", () => {
   });
   it("sans document ouvert, ouvre le premier en vue scindée (ou en crée un)", async () => {
     app.toggleSplit();
-    await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+    await waitFor(() => expect(app.docEditor()).toBeDefined());
     expect(grid().hidden).toBe(false);
     expect(doc().hidden).toBe(false);
   });

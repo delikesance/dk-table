@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 /** Tests de la page design : toile libre (scripts permis dans l'iframe isolee), viewports, theme, pause, erreurs, comparaison. */
+import { flush } from "./testUtil";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -27,7 +28,7 @@ async function load(data: unknown = DATA) {
   g.EventSource = class { set onmessage(f: () => void) { handlers.push(f); } };
   document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
   new Function(js)();
-  await new Promise((r) => setTimeout(r, 10));
+  await flush();
   return {
     fetches: () => fetches,
     set: (d: unknown) => { current = d; },
@@ -35,7 +36,7 @@ async function load(data: unknown = DATA) {
   };
 }
 const frame = () => document.querySelector("#viewer iframe") as HTMLIFrameElement;
-const tick = (ms = 10) => new Promise((r) => setTimeout(r, ms));
+const tick = (_ms?: number) => flush();
 
 describe("design: fichiers", () => {
   it("<= 201 lignes chacun, nav commune, theme sombre, ids stables", () => {

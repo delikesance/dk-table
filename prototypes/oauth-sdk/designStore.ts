@@ -34,7 +34,7 @@ async function listRef(run: Run, cwd: string, ref: string): Promise<DesignFile[]
   const log = await run("git", ["log", "-1", "--format=%ct", ref, "--", REL], cwd);
   const commitMs = log.code === 0 ? Number(log.out.trim()) * 1000 || 0 : 0;
   const out: DesignFile[] = [];
-  for (const line of t.out.split("\n")) {
+  for (const line of t.out.split(/\r?\n/)) {
     const m = /^\d+ blob \w+\s+(\d+)\t(.+)$/.exec(line.trim());
     const name = m?.[2].split("/").pop() ?? "";
     if (m && safe(name)) out.push({ name, bytes: Number(m[1]), mtimeMs: stampMs(name) ?? commitMs, state: "ecrit", kind: kindOf(name) });
