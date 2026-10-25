@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 21:49:23 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-204816.html</h2><div class="frame">
+<h1>Valeur cible et évaluation pas à pas</h1>
+<p class="sub">Deux outils d'analyse locaux, sans IA, appuyés sur le moteur existant (<span class="mono">solve.ts</span>, <span class="mono">evaluator.ts</span>). Hors TODO et hors code à ce jour.</p>
+
+<section class="idea" id="goal">
+  <h2>1 — Valeur cible (Données &gt; Valeur cible…)</h2>
+  <p class="sub">Trouve l'entrée unique qui donne le résultat voulu. Les itérations sont visibles; l'écriture en cellule se fait en un seul pas d'annulation.</p>
+  <div class="row">
+    <div class="col">
+      <p class="lbl">Écran 1 — dialogue + grille (état en cours)</p>
+      <div class="dlg">
+        <div class="f"><span>Cellule cible</span><span class="v">B5 (Bénéfice)</span></div>
+        <div class="f"><span>Valeur voulue</span><span class="v">0</span></div>
+        <div class="f"><span>Cellule à varier</span><span class="v">B2 (Prix)</span></div>
+        <div class="bar" aria-hidden="true"><i id="gbar"></i></div>
+        <div class="mono" id="gstat">Itération 0 — écart —</div>
+        <div style="margin-top:8px;display:flex;gap:8px"><button class="p" id="grun">Résoudre</button><button id="gapply" disabled>Appliquer</button><button id="gcancel">Annuler</button></div>
+      </div>
+      <h3>Grille</h3>
+      <table class="g" aria-label="Grille du modèle">
+        <tr><th></th><th>A</th><th>B</th></tr>
+        <tr><th>1</th><td class="l">Quantité</td><td>1 200</td></tr>
+        <tr><th>2</th><td class="l">Prix</td><td class="in" id="gB2">5,00</td></tr>
+        <tr><th>3</th><td class="l">Coût unitaire</td><td>8,40</td></tr>
+        <tr><th>4</th><td class="l">Charges fixes</td><td>2 500</td></tr>
+        <tr><th>5</th><td class="l">Bénéfice <span style="color:var(--mut)">=B1*(B2-B3)-B4</span></td><td class="out" id="gB5">-6 580,00</td></tr>
+      </table>
+      <p class="mono" style="color:var(--mut);margin:6px 0 0"><span style="color:var(--in)">■</span> cellule variée &nbsp; <span style="color:var(--out)">■</span> cellule cible</p>
+    </div>
+    <div class="col">
+      <p class="lbl">Écran 2 — convergence (Newton puis bissection)</p>
+      <svg class="chart" viewBox="0 0 320 180" role="img" aria-label="Écart en fonction du prix, points d'itération">
+        <line class="ax" x1="30" y1="90" x2="310" y2="90"/><line class="ax" x1="30" y1="10" x2="30" y2="170"/>
+        <text x="34" y="20">Bénéfice</text><text x="270" y="104">Prix</text>
+        <path class="cv" d="M30 132 L310 51"/>
+        <g id="gpts"></g>
+      </svg>
+      <p class="lbl" style="margin-top:12px">États de fin</p>
+      <p><span class="state ok">Trouvé</span> B2 = 10,48, écart &lt; 1e-9 en 14 itérations (bissection) ou 4 (Newton). « Appliquer » écrit B2 (annulable d'un coup).</p>
+      <p><span class="state er">Sans solution</span> la cible n'est pas atteinte dans [min; max] : B2 inchangée, message « B5 reste au-dessus de 0 sur toute la plage ».</p>
+      <p><span class="state er">Invalide</span> la cible n'est pas une formule, ou la cellule variée contient une formule : bouton Résoudre désactivé, champ en erreur.</p>
+    </div>
+  </div>
+  <h3>Interfaces et contrats</h3>
+  <pre class="contract">// src/engine/goalseek.ts (pur, sans DOM)
+type GoalSpec = { target: CellRef; goal: number; vary: CellRef; min?: number; max?: number; tol?: number; maxIter?: number }
+type GoalStep = { iter: number; x: number; y: number; gap: number }
+type GoalResult = { ok: boolean; x: number | null; steps: GoalStep[]; reason?: "no-sign-change" | "target-not-formula" | "vary-is-formula" | "max-iter" }
+goalSeek(book: Book, spec: GoalSpec, onStep?: (s: GoalStep) =&gt; void): GoalResult
+  - évalue la cible sur une copie jetable de la feuille (jamais d'écriture avant « Appliquer »)
+  - réutilise solve.ts (Newton, repli bissection); défauts tol=1e-9, maxIter=100
+// src/ui/dialogs/goalSeek.ts : openGoalSeek(app); sélecteurs de cellules = sélection grille; Échap/Annuler = aucune écriture
+// Appliquer : app.batch(() =&gt; app.setCell(vary, String(x))) =&gt; 1 pas d'annulation, décimal exact respecté (engine/decimal.ts)
+// Événements : "goalseek:step" {GoalStep} pour la courbe et la barre; "goalseek:done" {GoalResult}
+// Fichiers : engine/goalseek.ts + goalseek.test.ts, ui/dialogs/goalSeek.ts (+ css), menu Données (ui/menubar/spec.ts), palette data.goalseek, docs/valeur-cible.md, e2e/feat-valeur-cible.spec.ts
+// Test à écrire d'abord : goalSeek sur B1*(B2-B3)-B4 = 0 renvoie x = 10,4833… et ne modifie pas le classeur d'origine</pre>
+</section>
+
+<section class="idea" id="step">
+  <h2>2 — Évaluer la formule pas à pas (Formule &gt; Évaluer, F9)</h2>
+  <p class="sub">Réduit la formule d'une cellule une sous-expression à la fois, comme l'outil d'audit d'Excel; sélection d'un morceau + F9 = résultat provisoire dans la barre, Échap restaure.</p>
+  <div class="row">
+    <div class="col">
+      <p class="lbl">Écran 1 — lecture animée (cellule D2)</p>
+      <div class="fx" id="fx" aria-live="polite"></div>
+      <ol class="steps" id="steps"></ol>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sprev">Précédent</button><button class="p" id="snext">Pas suivant</button><button id="sall">Tout évaluer</button><button id="sreset">Début</button></div>
+    </div>
+    <div class="col fail" id="failcol">
+      <p class="lbl">Écran 2 — erreur localisée</p>
+      <div class="fx">=SI(B2&gt;100;B2*0,2;0)+<span class="sel">RECHERCHEV(C2;F1:G9;3;FAUX)</span></div>
+      <p><span class="state er">#REF!</span> Le pas fautif est surligné et la colonne 3 est signalée hors plage F1:G9 : l'évaluation s'arrête là, sans écrire dans la feuille.</p>
+      <p class="lbl">Valeurs liées</p>
+      <table class="g"><tr><th>Cellule</th><th>Valeur</th></tr><tr><td class="l">B2</td><td>140</td></tr><tr><td class="l">C2</td><td>7,5</td></tr></table>
+      <p style="color:var(--mut)">Clic sur une valeur liée = aller à la cellule.</p>
+    </div>
+  </div>
+  <h3>Interfaces et contrats</h3>
+  <pre class="contract">// src/engine/evalsteps.ts (pur; s'appuie sur l'AST de parser.ts et sur evaluator.ts)
+type EvalStep = { span: [number, number]; text: string; value: Value }   // span = position dans la formule source
+type EvalTrace = { steps: EvalStep[]; error?: { index: number; code: ErrorCode } }
+evalSteps(book: Book, sheet: SheetId, key: string): EvalTrace
+evalSpan(book: Book, sheet: SheetId, key: string, span: [number, number]): Value   // F9 sur sélection
+  - IF/IFS/SWITCH paresseux (engine/lazy.ts) : la branche non prise n'est jamais évaluée ni listée
+  - lecture seule : aucune écriture, aucun recalcul global
+// src/ui/formula/evaluate.ts : panneau (états : lecture, erreur), touches F9 / Échap, aria-live sur la formule
+// Événement : "evalsteps:select" {index} pour surligner span dans la barre de formule
+// Fichiers : engine/evalsteps.ts + evalsteps.test.ts, ui/formula/evaluate.ts (+ css), ui/formula/formulabar.ts (F9), menu Formule, docs/evaluer-formule.md, e2e/feat-evaluer.spec.ts
+// Test à écrire d'abord : =SI(B2>100;B2*0,2;0)+ARRONDI(C2/3;1) avec B2=140, C2=7,5 donne 5 étapes, dernière valeur 30,5</pre>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td>25/10/2026 21:48:16</td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 21:48:15</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 21:48:15</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 21:48:15</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-200330.html</td><td>25/10/2026 21:48:15</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-204816.html</td><td>25/10/2026 21:49:15</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-204816.html</td><td>25/10/2026 21:49:19</td><td>mis à jour</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.35 $</td></tr></table></section>
+</body></html>
