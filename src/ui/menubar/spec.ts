@@ -17,6 +17,7 @@ import { openTextToColumns } from "../dialogs/textToCols";
 import { openSubtotals } from "../dialogs/subtotals";
 import { openCustomFormat } from "../dialogs/customFormat";
 import { openNamedFns } from "../dialogs/namedFns";
+import { openScenarios } from "../dialogs/scenarios";
 import { openMerge } from "../dialogs/merge";
 import { docFormatMenu, insertionMenu } from "./docSpec";
 import type { App } from "../appTypes";
@@ -105,6 +106,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
       { label: "Somme rapide", hint: "Alt+=", run: d.autosum },
       { label: "Validation des données…", run: () => openValidationDialog(app) },
       { label: "Fonctions nommées…", run: () => openNamedFns(app) },
+      { label: "Scénarios…", run: () => openScenarios(app) },
       { label: "Fusionner…", run: () => openMerge(app) },
       { label: "Insérer les en-têtes FEC", sep: true, run: () => insertFecHeaders(app) },
     ] },

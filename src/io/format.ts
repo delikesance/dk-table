@@ -6,6 +6,7 @@ import { checkCf } from "./cfFormat";
 import { checkValidation } from "./validationFormat";
 import { checkDocs } from "./docsFormat";
 import { checkFunctions } from "./fnFormat";
+import { checkScenarios } from "./scenarioFormat";
 import { checkColWidths } from "./colWidthsFormat";
 import { checkHistory } from "./historyFormat";
 import { checkCalc } from "./calcFormat";
@@ -158,6 +159,7 @@ export function parse(text: string): DktDoc {
   }
   if (data.macros !== undefined) doc.macros = checkMacros(data.macros);
   if (data.functions !== undefined) doc.functions = checkFunctions(data.functions);
+  if (data.scenarios !== undefined) doc.scenarios = checkScenarios(data.scenarios, ids);
   if (data.docs !== undefined) doc.docs = checkDocs(data.docs, ids);
   if (data.decimal !== undefined) {
     if (typeof data.decimal !== "boolean") throw new DktParseError("decimal must be a boolean");
