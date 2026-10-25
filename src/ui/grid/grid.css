@@ -12,7 +12,7 @@
 }
 .dkg-corner, .dkg-colh, .dkg-rowh {
   position: sticky;
-  background: var(--c-surface-2);
+  background: var(--c-header);
   color: var(--c-text-2);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -40,10 +40,11 @@
 .dkg-resizer:hover { background: var(--c-accent-soft-2); }
 .dkg-rowh { left: 0; border-right-color: var(--c-line-strong); }
 /* En-têtes de la sélection: teinte douce + arête accent côté grille; ceux du curseur, plus appuyés. */
-.dkg-colh.dkg-on, .dkg-rowh.dkg-on { background: var(--c-accent-soft); color: var(--c-accent); }
+/* La teinte est translucide: elle se pose sur le fond d'en-tête opaque, sinon les cellules défilent à travers. */
+.dkg-colh.dkg-on, .dkg-rowh.dkg-on { background: linear-gradient(var(--c-accent-soft), var(--c-accent-soft)) var(--c-header); color: var(--c-accent); }
 .dkg-colh.dkg-on { box-shadow: inset 0 -2px 0 var(--c-accent); }
 .dkg-rowh.dkg-on { box-shadow: inset -2px 0 0 var(--c-accent); }
-.dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active { background: var(--c-accent-soft-2); font-weight: var(--fw-semibold); }
+.dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active { background: linear-gradient(var(--c-accent-soft-2), var(--c-accent-soft-2)) var(--c-header); font-weight: var(--fw-semibold); }
 .dkg-cell {
   position: relative;
   padding: 0 var(--cell-px);
