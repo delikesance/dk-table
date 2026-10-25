@@ -67,17 +67,30 @@ describe("runResearch", () => {
     expect(calls[0].options.allowedTools).toContain("WebSearch");
   });
 
-  it("journalise debut, fin (cout, secondes), total et reste", async () => {
+  it("journalise fin (cout, secondes), total et reste", async () => {
     const { q } = fake(1);
     const lines: string[] = [];
     let t = 0;
     await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1, log: (l) => lines.push(l), now: () => (t += 1000) });
-    expect(lines.filter((l) => l.includes("debut"))).toHaveLength(4);
     const end = lines.filter((l) => l.includes("fin"));
     expect(end).toHaveLength(4);
     expect(end[3]).toMatch(/\$1\.00/);
     expect(end[3]).toMatch(/\d+s/);
     expect(end[3]).toMatch(/total \$4\.00/);
     expect(end[3]).toMatch(/reste \$16\.00/);
+  });
+});
+
+describe("evenements des axes (sans doublon avec le journal)", () => {
+  it("la fin d'un axe porte cout, duree, total et reste (reste = plafond - depense)", async () => {
+    const { q } = fake(1);
+    const ev: Record<string, unknown>[] = [];
+    let t = 0;
+    await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1, emit: (e) => ev.push(e as never), now: () => (t += 1000) });
+    const ends = ev.filter((e) => e.type === "end");
+    expect(ends).toHaveLength(4);
+    expect(ends[0]).toMatchObject({ axis: expect.any(String), costUsd: 1, totalUsd: 1, remainingUsd: 19 });
+    expect(ends[3]).toMatchObject({ totalUsd: 4, remainingUsd: 16 });
+    expect(typeof ends[0].elapsedS).toBe("number");
   });
 });

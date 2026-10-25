@@ -12,6 +12,12 @@ export interface Budget {
   spent(): number;
   /** Remaining USD, excluding in-flight reservations. */
   remaining(): number;
+  /** Plafond total (USD). */
+  cap(): number;
+  /** Reste a depenser (USD) = plafond - depense, reservations en vol comprises: sert a l'affichage (ne saute pas). */
+  left(): number;
+  /** Taux EUR -> USD utilise (pour afficher en euros). */
+  readonly eurUsd: number;
   /** True once spent+reserved >= 90% of cap. */
   exhausted(): boolean;
 }
@@ -35,6 +41,9 @@ export function createBudget(
       reserved = Math.max(0, reserved - granted);
       spent += cost;
     },
+    cap: () => cap,
+    left: () => Math.max(0, cap - spent),
+    eurUsd,
     spent: () => spent,
     remaining: free,
     exhausted: () => spent + reserved >= cap * 0.9 - 1e-12,

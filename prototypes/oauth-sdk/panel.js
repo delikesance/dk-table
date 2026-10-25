@@ -20,6 +20,8 @@
   function cap() { return Number($("budgetEur").value) || 0; }
   function two(n) { return (n < 10 ? "0" : "") + n; }
   function clock(ts) { var d = new Date(ts); return two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds()); }
+  /** Texte brut: retire les codes ANSI que les commandes laissent dans leur sortie. */
+  function clean(t) { return t ? String(t).replace(/\u001b\[[0-9;?]*[ -\/]*[@-~]/g, "") : t; }
   function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
 
   /** Pose l'etat d'une phase/agent en gardant duree et cout. */
@@ -117,11 +119,13 @@
 
   /** Ligne du journal: heure, type, lieu et message; defile seulement si on lit deja le bas. */
   function logLine(e) {
+    var msg = clean(e.message);
+    if (/^resume: /.test(msg)) return; // deja affiche par l'evenement « resume »
     var where = [e.sector, e.axis].filter(Boolean).join(" / ");
     var li = el("li", e.type), log = $("log"), bottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 24;
     li.appendChild(el("time", null, clock(e.ts || Date.now())));
     li.appendChild(el("span", "tag", TAGS[e.type] || e.type));
-    li.appendChild(el("span", null, [where, e.message, e.costUsd != null && fmt(e.costUsd / RATE) + " €",
+    li.appendChild(el("span", null, [where, msg, e.costUsd != null && fmt(e.costUsd / RATE) + " €",
       e.elapsedS != null && dur(e.elapsedS)].filter(Boolean).join(" · ")));
     li.hidden = $("onlyErr").checked && e.type !== "error";
     log.appendChild(li); if (bottom) log.scrollTop = log.scrollHeight;

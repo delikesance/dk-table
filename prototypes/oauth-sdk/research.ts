@@ -103,7 +103,6 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
       `source (URL), valeur pour dk-table", 5 a 8 puces.${known}`;
     const t0 = now();
     o.emit?.({ type: "start", sector: "research", axis: a.id });
-    log(`[${a.id}] debut (plafond ${money(share)})`);
     let cost = 0;
     const stream = o.query({
       prompt,
@@ -118,8 +117,9 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
     }
     o.budget.settle(share, cost);
     totalCost += cost;
-    o.emit?.({ type: "end", sector: "research", axis: a.id, totalUsd: o.budget.spent(), remainingUsd: o.budget.remaining() });
-    log(`[${a.id}] fin ${money(cost)} ${Math.round((now() - t0) / 1000)}s | total ${money(o.budget.spent())} reste ${money(o.budget.remaining())}`);
+    const elapsedS = Math.round((now() - t0) / 1000);
+    o.emit?.({ type: "end", sector: "research", axis: a.id, costUsd: cost, elapsedS, totalUsd: o.budget.spent(), remainingUsd: o.budget.left() });
+    log(`[${a.id}] fin ${money(cost)} ${elapsedS}s | total ${money(o.budget.spent())} reste ${money(o.budget.left())}`);
   }
 
   for (let r = 0; r < rounds && !o.budget.exhausted() && !o.abort?.signal.aborted; r++) {

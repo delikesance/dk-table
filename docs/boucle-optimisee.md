@@ -68,3 +68,16 @@ puis `shots.board.mjs`.
 - `/events` envoie les en-têtes tout de suite et un `: ping` toutes les 15 s : sans historique, le navigateur restait en
   « connexion » puis affichait « Connexion perdue ».
 - Captures avant/après : `docs/screenshots/boucle-polices/`.
+
+## Run réel : échecs de fusion lisibles, journal propre
+
+- L'échec « npm test failed » n'affichait que les 500 derniers caractères de la sortie (bilan de vitest, jamais le test rouge).
+  `cleanOutput.ts` retire les codes ANSI et garde les lignes `FAIL`, `Error`, le bilan (`failureDigest`, 1500 caractères au plus) :
+  le journal nomme maintenant le test qui échoue.
+- Journal : un seul évènement par début/fin d'axe (la ligne `info` en double est supprimée, la fin porte coût et durée),
+  plus de ligne `resume:` en double du résumé, codes ANSI retirés aussi côté panneau.
+- Budget : `left()` = plafond − dépensé (ne saute plus quand les réservations en vol se libèrent), `cap()` = plafond; le résumé
+  s'affiche en euros comme le panneau.
+- Design non fusionné : son dossier reste exposé (worktree conservé), la page Design l'affiche au lieu de « Aucun design ».
+- Preuve sans réseau : `shots.journal.mjs` (captures `docs/screenshots/boucle-run/`) et un run complet avec faux agent, vrai git
+  et vrai `npm test` + `tsc` (recherche fusionnée dans `developpement`).
