@@ -1,9 +1,12 @@
 # CI: guarded steps so it passes on a near-empty repo.
 name: CI
 
+# Stratégie de branches : PR vers `développement`, merge sur `main` = build.
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [développement]
 
 jobs:
   test:
