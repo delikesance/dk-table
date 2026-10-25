@@ -32,6 +32,8 @@ export interface GridOptions {
   onCellCreated?(key: string, el: HTMLElement): void;
   /** Freeze drag handles in the corner (Sheets); called with the dropped freeze. No handles when omitted. */
   onFreeze?(f: Freeze): void;
+  /** A column drag-resize is about to change a width (called once per drag): the app records an undo step. */
+  onResizeStart?(): void;
   /** Double-click on a column border: fit that column to its content (the app also fits a selected block). Falls back to a built-in estimate. */
   onFitColumn?(col: number): void;
   /** Ctrl+PageUp (-1) / Ctrl+PageDown (+1): switch to the previous / next sheet. */

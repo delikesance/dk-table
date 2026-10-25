@@ -105,3 +105,22 @@ test("Live Preview : la syntaxe Markdown n'apparaît que sous le curseur", async
   await page.keyboard.press("ArrowUp");
   await expect(page.locator(".cm-content")).toContainText("# Titre");
 });
+
+test("bloc de code : colorisation par langage, ``` masqués hors du curseur", async ({ page }) => {
+  await openApp(page);
+  await menu(page, "Fichier", /Nouveau document/);
+  await page.locator(".cm-content").click();
+  await page.keyboard.type("```js");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type('const a = "x"; // note');
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("```");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("fin");
+  await expect(page.locator(".cm-content")).not.toContainText("```");
+  await expect(page.locator(".dk-cb-lang")).toHaveText("js");
+  await expect(page.locator(".cm-content .dk-t-kw").first()).toHaveText("const");
+  await expect(page.locator(".cm-content .dk-t-str")).toHaveText('"x"');
+  await expect(page.locator(".cm-content .dk-t-com")).toContainText("note");
+});

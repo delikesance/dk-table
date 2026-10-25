@@ -98,3 +98,10 @@ export class RuleWidget extends WidgetType {
   eq(o: WidgetType): boolean { return o instanceof RuleWidget; }
   toDOM(): HTMLElement { return mk("hr", "dk-rule"); }
 }
+
+/** Language name of a fenced code block, shown in place of the opening ``` line. */
+export class LangWidget extends WidgetType {
+  constructor(private readonly lang: string) { super(); }
+  eq(o: LangWidget): boolean { return o.lang === this.lang; }
+  toDOM(): HTMLElement { const e = document.createElement("span"); e.className = "dk-cb-lang"; e.textContent = this.lang; return e; }
+}

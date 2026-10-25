@@ -8,6 +8,7 @@ import { sortColumn } from "./sort";
 import { createRecents } from "../io/recents";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { DocSheet } from "../io/types";
+import { widthsToDoc } from "../io/colWidthsFormat";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
 import { fitColumns } from "./appFit";
@@ -67,7 +68,8 @@ export function createApi(c: Ctx): App {
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
-        ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
+        ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(Object.keys(e.widths).length ? { colWidths: widthsToDoc(e.widths) } : {}),
+        ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
     }),

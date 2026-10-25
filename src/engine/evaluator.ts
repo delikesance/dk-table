@@ -1,6 +1,7 @@
 /** Formula evaluator: walks a parsed AST against a sheet and returns a Value (errors propagate as #-codes). */
 import { err, isErr, type Node, type Sheet, type Value } from "./types";
-import { expandRange, inBounds, parseKey } from "./address";
+import { expandRange, inBounds } from "./address";
+import { rectOf } from "./openrange";
 import { getFunction, wantsMatrix, type Arg } from "./functions";
 import { toBool, toNum, toText } from "./values";
 import { resolveSheet } from "./book";
@@ -54,11 +55,12 @@ function binary(op: string, l: Value, r: Value): Value {
 
 /** Values of the rectangle a:b of `sheet` (flat, or rows when `matrix`); #REF! when out of bounds. */
 function rangeArg(sheet: Sheet, get: Getter, a: string, b: string, matrix: boolean): Arg {
-  const keys = expandRange(sheet, a, b);
-  if (!keys) return err("#REF!");
+  const r = rectOf(sheet, a, b, true);
+  const keys = expandRange(sheet, a, b, true);
+  if (!r || !keys) return err("#REF!");
   const vals = keys.map(get);
   if (!matrix) return vals;
-  const w = Math.abs(parseKey(a)!.col - parseKey(b)!.col) + 1;
+  const w = r.c2 - r.c1 + 1;
   const rows: Value[][] = [];
   for (let i = 0; i < vals.length; i += w) rows.push(vals.slice(i, i + w));
   return rows as unknown as Arg;

@@ -1,12 +1,15 @@
 /** Formula tokenizer and recursive-descent parser: text "=..." to AST, plus `collectRefs` for dependency wiring. */
 import type { ErrorCode, Node } from "./types";
 import { normKey, parseKey } from "./address";
+import { OPEN_RANGE_SRC } from "./openrange";
 
 /** Token: kind + text. */
 interface Tok {
-  k: "num" | "str" | "id" | "op" | "end" | "sheet" | "err";
+  k: "num" | "str" | "id" | "op" | "end" | "sheet" | "err" | "orange";
   v: string;
 }
+
+const OPEN = new RegExp("^(?:" + OPEN_RANGE_SRC + ")");
 
 /** Split a formula body into tokens; throws on illegal characters. */
 function tokenize(src: string): Tok[] {
@@ -15,6 +18,9 @@ function tokenize(src: string): Tok[] {
   while (i < src.length) {
     const c = src[i];
     if (/\s/.test(c)) { i++; continue; }
+    // Open range (B2:B, B:B, A:C, 2:5): one token "a:b" without "$".
+    const open = OPEN.exec(src.slice(i));
+    if (open) { out.push({ k: "orange", v: open[0].replace(/\$/g, "").toUpperCase() }); i += open[0].length; continue; }
     const num = /^(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/.exec(src.slice(i));
     if (num) { out.push({ k: "num", v: num[0] }); i += num[0].length; continue; }
     if (c === '"') {
@@ -120,6 +126,7 @@ class Parser {
       this.eat(")");
       return n;
     }
+    if (tk.k === "orange") return this.open(tk.v);
     if (tk.k === "id") return this.ident(tk.v);
     if (tk.k === "sheet") return this.qualified(tk.v);
     throw new Error("unexpected token");
@@ -148,8 +155,18 @@ class Parser {
     return { t: "ref", key: up };
   }
 
+  /** Open range token "a:b" (B2:B, A:C, 2:5) as a range node. */
+  private open(v: string): Node {
+    const [a, b] = v.split(":");
+    return { t: "range", a, b };
+  }
+
   /** After a `Sheet!` token: a cell (`xref`) or a range (`xrange`) of that sheet. */
   private qualified(sheet: string): Node {
+    if (this.peek().k === "orange") {
+      const [a, b] = this.t[this.p++].v.split(":");
+      return { t: "xrange", sheet, a, b };
+    }
     const cell = (): string => {
       const e = this.t[this.p++];
       if (e.k !== "id" || !parseKey(e.v)) throw new Error("bad sheet ref");
