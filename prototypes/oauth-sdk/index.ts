@@ -8,6 +8,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { query } from "@anthropic-ai/claude-agent-sdk";
+import { createBudget } from "./budget";
 import { runResearch, type QueryFn } from "./research";
 
 /** Echec propre (stderr + code 1) avant tout appel reseau. */
@@ -29,7 +30,7 @@ for (const [k, v] of Object.entries(process.env)) {
 const budgetUsd = Number(process.argv[2] ?? 20);
 
 runResearch({
-  query: query as unknown as QueryFn, budgetUsd, env,
+  query: query as unknown as QueryFn, budget: createBudget(budgetUsd, 1), env,
   log: (l) => process.stderr.write(`${l}
 `),
 })

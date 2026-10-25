@@ -9,6 +9,8 @@
  * Usage : `runResearch({ query, budgetUsd: 20 })` -> `{ markdown, items, totalCostUsd }`.
  */
 
+import type { Budget } from "./budget";
+
 /** Message minimal du flux SDK utilise ici. */
 export interface ResultMsg {
   type: string;
@@ -54,7 +56,8 @@ export const ALLOWED_TOOLS = ["WebSearch", "WebFetch", "Read", "Grep", "Glob"];
 /** Parametres de `runResearch`. */
 export interface ResearchOpts {
   query: QueryFn;
-  budgetUsd: number;
+  /** Budget partage (reserve/settle), parallele-sur. */
+  budget: Budget;
   /** Tours max par axe (defaut 2). */
   maxRounds?: number;
   /** Env transmis au SDK (token OAuth, sans cle API). */
@@ -63,6 +66,9 @@ export interface ResearchOpts {
   log?: (line: string) => void;
   /** Horloge en ms (defaut: Date.now). */
   now?: () => number;
+  /** Abandon (bouton Stop) et dossier de travail des agents. */
+  abort?: AbortController;
+  cwd?: string;
 }
 
 /** Resultat : markdown des 4 sections, puces par axe, cout total. */
@@ -83,10 +89,10 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
   const log = o.log ?? (() => {});
   const now = o.now ?? Date.now;
   const items: Record<string, string[]> = Object.fromEntries(AXES.map((a) => [a.id, []]));
-  let total = 0;
+  let totalCost = 0;
   const money = (n: number) => `$${n.toFixed(2)}`;
 
-  /** Une requete d'axe, plafonnee a `share` USD; ajoute son cout reel au total. */
+  /** Une requete d'axe, plafonnee a `share` USD (deja reserves); regle le cout reel. */
   async function one(a: Axis, share: number): Promise<void> {
     const known = items[a.id].length ? `\nDeja trouve (ne pas repeter):\n${items[a.id].join("\n")}` : "";
     const prompt =
@@ -101,6 +107,7 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
         model: a.model, maxTurns: 15, maxBudgetUsd: share,
         tools: ALLOWED_TOOLS, allowedTools: ALLOWED_TOOLS,
         permissionMode: "dontAsk", settingSources: [], env: o.env,
+        cwd: o.cwd, abortController: o.abort,
       },
     });
     for await (const m of stream) {
@@ -108,16 +115,19 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
       cost += m.total_cost_usd ?? 0;
       if (m.subtype === "success") items[a.id].push(...parseItems(m.result ?? ""));
     }
-    total += cost;
-    log(`[${a.id}] fin ${money(cost)} ${Math.round((now() - t0) / 1000)}s | total ${money(total)} reste ${money(o.budgetUsd - total)}`);
+    o.budget.settle(share, cost);
+    totalCost += cost;
+    log(`[${a.id}] fin ${money(cost)} ${Math.round((now() - t0) / 1000)}s | total ${money(o.budget.spent())} reste ${money(o.budget.remaining())}`);
   }
 
-  for (let r = 0; r < rounds && total < 0.9 * o.budgetUsd; r++) {
-    const share = (o.budgetUsd - total) / AXES.length; // somme des plafonds <= reste
-    await Promise.all(AXES.map((a) => one(a, share)));
+  for (let r = 0; r < rounds && !o.budget.exhausted() && !o.abort?.signal.aborted; r++) {
+    const share = o.budget.remaining() / AXES.length;
+    // reserve synchrone: la somme des plafonds en vol ne depasse jamais le reste
+    const runs = AXES.map((a) => ({ a, got: o.budget.reserve(share) })).filter((x) => x.got > 0);
+    await Promise.all(runs.map((x) => one(x.a, x.got)));
   }
   const markdown =
     "# Recherche de fonctionnalites\n\n" +
     AXES.map((a) => `## ${a.title}\n\n${items[a.id].join("\n")}\n`).join("\n");
-  return { markdown, items, totalCostUsd: total };
+  return { markdown, items, totalCostUsd: totalCost };
 }

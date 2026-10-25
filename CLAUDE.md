@@ -62,6 +62,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Window 1200x800 "dk-table", id `com.delikesance.dktable`; capabilities in `src-tauri/capabilities/default.json` (dialog open/save, fs read/write text file scopés sur $HOME/$DOCUMENT/$DESKTOP/$DOWNLOAD ; `tauri-plugin-persisted-scope` conserve les chemins choisis via dialogue hors de ces dossiers, ex. fichiers récents sur un autre disque).
 - `src-tauri/icons/` = placeholder flat icon, to replace.
 
+- Boucle autonome (prototype, hors build): `npx tsx --env-file=.env prototypes/oauth-sdk/boucle.ts` puis http://127.0.0.1:4317 (budget en euros, Go/Stop). Chaîne research -> implementation -> correction -> design sur worktrees `wt/<secteur>-<ts>`, fusion dans `developpement` si tests + tsc verts, jamais master ni push. Env: `CLAUDE_CODE_OAUTH_TOKEN` (`.env`, ignoré par git), `EUR_USD` (1.08), `PORT` (4317). Recherche seule: `prototypes/oauth-sdk/index.ts`.
 - `npm run test:e2e` (Playwright, Chrome headless, `e2e/`, hors vitest). Prérequis: `npx playwright install chromium` (ou `E2E_CHANNEL=chrome` pour le Chrome système). Lance son propre Vite sur un port aléatoire (`E2E_PORT` s'il est fixé), jamais réutilisé (`reuseExistingServer: false`); pas de Tauri (dialog/fs absents). Helpers: `e2e/helpers.ts` (cellules = `.dkg-cell[data-key="A1"]`).
 
 ## Structure (src/)
