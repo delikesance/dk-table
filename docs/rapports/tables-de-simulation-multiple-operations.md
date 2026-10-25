@@ -1,4 +1,5 @@
 # Rapport : Tables de simulation (Multiple Operations)
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -21,3 +22,9 @@ Aucune (carte sans effet visible).
 - Résultats calculés à la demande: pas de forme persistée, donc recalcul automatique par construction (test de non-régression).
 - Hors carte (suite possible): UI Données > Table de données, rendu de la grille de résultats.
 - Limite connue: dépendances inter-feuilles de la formule non recalculées pendant la substitution.
+
+## Preuves
+- Tests : ok (16 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":16,"scope":"related"},"tsc":{"ok":true}} -->
