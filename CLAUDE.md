@@ -205,6 +205,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `engine/pivot.ts` (`pivot(table, spec)`, `defaultSpec`) + `pivotCalc.ts` (champ calculé `Qte*Prix`, noms de colonnes sans espace): pur, sortie = grille de chaînes; dialogue `ui/dialogs/pivot.ts` (palette `data.pivot`) crée la feuille « Croisé » (`importSheet`). Agrégations SUM/COUNT/AVG, totaux recalculés, vides ignorés.
 - `io/diff.ts`: `diffCells`, `merge3` (conflit seulement si les deux côtés changent la même cellule différemment; `merged` garde nos valeurs), `diffDocs` (feuilles par id, sinon par nom). Dialogue `ui/dialogs/diff.ts` (palette `file.compare`), lecture seule; pas d'UI de fusion. Styles `ui/dialogs/dataDialogs.css`, e2e `e2e/feat-pivot-diff.spec.ts`.
 
+## Decisions (formats personnalisés)
+
+- `ui/numfmtCustom.ts` (`formatCustom`, `checkCustom`): code à 1-4 sections dans `CellStyle.format` préfixé `custom:` (pas de changement de schéma). Dialogue Format > Personnalisé… (`ui/dialogs/customFormat.ts`). Lettres non quotées (dates) refusées. Détail: `docs/formats-personnalises.md`.
+
 ## Decisions (formules portables)
 
 - Stockage canonique (`,` arguments, `.` décimale); affichage et saisie selon `navigator.language` (`engine/locale.ts` `toLocale`/`fromLocale`, `ui/formula/syntax.ts`). Chaînes littérales non traduites (TEXT inclus). Détail: `docs/formules-portables.md`.

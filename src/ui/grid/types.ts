@@ -30,6 +30,8 @@ export interface GridOptions {
   renderCell?(key: string): HTMLElement | null;
   /** Hook: tooltip text when the displayed value differs from the stored one (marks the cell `dkg-gap`), else undefined. */
   gap?(key: string): string | undefined;
+  /** Hook: true when the cell has a custom number format (`custom:`), so a numeric text with a unit aligns right. */
+  numeric?(key: string): boolean;
   /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
   onCellCreated?(key: string, el: HTMLElement): void;
   /** Freeze drag handles in the corner (Sheets); called with the dropped freeze. No handles when omitted. */

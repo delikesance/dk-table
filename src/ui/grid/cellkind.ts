@@ -35,11 +35,12 @@ const HINTS: Record<string, string> = {
  * Set the `dkg-num` / `dkg-err` classes and the error tooltip on a cell element for display text `text`;
  * `dkg-ml` marks multi-line text (Alt+Enter) so only those cells wrap with pre-wrap.
  */
-export function markKind(el: HTMLElement, text: string, gap?: string, raw?: RawKind): void {
+export function markKind(el: HTMLElement, text: string, gap?: string, raw?: RawKind, numeric?: boolean): void {
   el.classList.toggle("dkg-kf", raw === "formula"); // surlignage formules / constantes (voir kinds.ts)
   el.classList.toggle("dkg-kc", raw === "number");
   el.classList.toggle("dkg-ml", text.includes("\n"));
-  const kind = cellKind(text);
+  let kind = cellKind(text);
+  if (numeric && kind === "text" && /\d/.test(text)) kind = "num"; // format personnalisé : nombre + unité, aligné à droite
   el.classList.toggle("dkg-num", kind === "num");
   el.classList.toggle("dkg-err", kind === "err");
   el.classList.toggle("dkg-long", raw === "long"); // identifiant > 15 chiffres gardé en texte exact
