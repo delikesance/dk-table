@@ -39,6 +39,13 @@ describe("fnCompletion: list", () => {
   });
 });
 
+describe("fnCompletion: @ search", () => {
+  it("stays silent while an @name search is being typed (documents)", () => {
+    expect(at("=@bob s|")).toBeNull();
+    expect(at("=@bob + SU|")).not.toBeNull();
+  });
+});
+
 describe("fnCompletion: hint", () => {
   it("gives the innermost open call and the argument index under the caret", () => {
     expect(at("=SUMIF(|")).toMatchObject({ kind: "hint", arg: 0 });
