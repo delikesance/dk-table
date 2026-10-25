@@ -27,7 +27,7 @@ jobs:
       - name: npm test
         run: npm test
 
-  # Rust en parallèle des tests JS : le crate Tauri a besoin de webkit2gtk .
+  # Rust en parallèle des tests JS : le crate Tauri a besoin de webkit2gtk.
   cargo:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
