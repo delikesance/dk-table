@@ -1,4 +1,5 @@
 # Rapport : Dialogue d'outils d'analyse et sortie en feuille
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -22,3 +23,9 @@ Visible : oui
 - Valeurs lues dans les cellules brutes (`activeDoc().cells`) : nombres saisis = valeurs ; formules et texte ignorés pour le calcul.
 - Résultats figés (pas de lien avec la source), arrondis à 6 décimales.
 - Hors carte : entrée de menu « Données » non ajoutée (palette seule) ; pas d'option de sortie vers une plage existante (nouvelle feuille seulement) ; pas de moyenne mobile ni de tests t/F/χ² dans ce dialogue.
+
+## Preuves
+- Tests : ok (233 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/dialogue-d-outils-d-analyse-et-sortie-en-feuille/erreur-plage-clair.png, docs/screenshots/dialogue-d-outils-d-analyse-et-sortie-en-feuille/erreur-plage-sombre.png, docs/screenshots/dialogue-d-outils-d-analyse-et-sortie-en-feuille/resultat-correlation-clair.png, docs/screenshots/dialogue-d-outils-d-analyse-et-sortie-en-feuille/resultat-correlation-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":233,"scope":"related"},"tsc":{"ok":true}} -->
