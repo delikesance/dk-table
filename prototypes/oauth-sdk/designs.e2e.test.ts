@@ -63,7 +63,7 @@ describe("designs de bout en bout", () => {
       expect(files.map((f) => f.name)).toEqual(["x.html"]);
       const r = await fetch(base + "/designs/x.html");
       expect(r.status).toBe(200);
-      expect(r.headers.get("content-security-policy")).toBe("sandbox");
+      expect(r.headers.get("content-security-policy") ?? "").toContain("sandbox allow-scripts");
       expect(await r.text()).toContain("Maquette X");
       release();
       await done;

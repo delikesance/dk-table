@@ -125,6 +125,8 @@ export interface SectorCtx {
   dir: string;
   signal: AbortSignal;
   env?: Record<string, string>;
+  /** Consigne ajoutee au prompt de cette execution (ex. cartes de la tournee). */
+  task?: string;
 }
 
 /** Secteur executable par la boucle. */
@@ -158,7 +160,7 @@ function makeSector(d: SectorDef): Sector {
       for (let i = 0; i < MAX_PASSES && !ctx.signal.aborted && !ctx.budget.exhausted(); i++) {
         const granted = ctx.budget.reserve(cap * d.share);
         if (granted <= 0) break;
-        const r = await runSector({ ...d, prompt: promptFor(d) }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
+        const r = await runSector({ ...d, prompt: promptFor(d) + (ctx.task ? `\n\n${ctx.task}` : "") }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
         ctx.budget.settle(granted, r.costUsd);
         cost += r.costUsd;
         if (r.ok) break;

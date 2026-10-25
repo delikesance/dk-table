@@ -15,7 +15,9 @@ export interface RunOpts { budgetEur: number; onEvent: (e: BoucleEvent) => void;
 /** Événement de progression envoyé au panneau. */
 export interface BoucleEvent {
   /** `file`: fichier de design ecrit/mis a jour (`message` = nom, secteur design). */
-  type: "start" | "end" | "info" | "error" | "done" | "summary" | "file";
+  type: "start" | "end" | "info" | "error" | "done" | "summary" | "file" | "card";
+  /** `card`: carte dont le rapport a change; `done`: toutes les cartes sont terminees; `round`: tournee. */
+  cardId?: string; complete?: boolean; round?: number;
   /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
   phase?: string; ok?: boolean;
   /** Evenement `file`: etat du fichier de design et horodatage (ms). */
@@ -26,7 +28,7 @@ export interface BoucleEvent {
 
 /** Dépendances injectées. */
 export interface Deps {
-  runPipeline: (o: RunOpts) => Promise<void>;
+  runPipeline: (o: RunOpts) => Promise<void | { complete: boolean }>;
   parseBudgetEur: (v: unknown) => number;
   /** Page du panneau (fonction: relue a chaque requete). */
   panelHtml: string | (() => string);
@@ -34,6 +36,10 @@ export interface Deps {
   assetsDir?: string;
   /** Cartes du moodboard (absent: GET /moodboard => 404 + liste vide). */
   moodboard?: () => Promise<MoodCard[]>;
+  /** Rapport d'une carte (JSON, null: 404); /reports/<id>. */
+  report?: (id: string) => Promise<unknown | null>;
+  /** Capture PNG sous docs/screenshots (null: 404); /shots/<chemin>. */
+  shot?: (rel: string) => Promise<Buffer | null>;
   /** Page du moodboard (absente: 404). */
   moodboardHtml?: string | (() => string | undefined);
   /** Designs du secteur design (absent: /designs => 404). `steps` = evenements du secteur design. */
@@ -46,7 +52,17 @@ export interface Deps {
 const ASSETS: Record<string, [string, string]> = {
   "GET /panel.css": ["panel.css", "text/css; charset=utf-8"],
   "GET /panel.js": ["panel.js", "text/javascript; charset=utf-8"],
+  "GET /moodboard.css": ["moodboard.css", "text/css; charset=utf-8"],
+  "GET /moodboard.js": ["moodboard.js", "text/javascript; charset=utf-8"],
+  "GET /design.css": ["design.css", "text/css; charset=utf-8"],
+  "GET /design.js": ["design.js", "text/javascript; charset=utf-8"],
 };
+
+/** Canevas du design: scripts et animations en ligne permis, aucun reseau ni sortie du cadre. */
+const DESIGN_CSP =
+  "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; " +
+  "img-src data: blob:; font-src data:; media-src data: blob:";
+const SHOT = /^docs\/screenshots\/[\w./-]+\.png$/;
 
 const LOOPBACK_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
@@ -103,9 +119,11 @@ export function createServer(deps: Deps): Server {
     const mine = (ctl = new AbortController());
     history.length = 0;
     send(res, 200, { ok: true });
+    let complete: boolean | undefined;
     deps.runPipeline({ budgetEur, onEvent: emit, signal: mine.signal })
+      .then((r) => { complete = r?.complete; })
       .catch((err) => emit({ type: "error", message: String(err?.message ?? err) }))
-      .finally(() => { ctl = null; emit({ type: "done", message: mine.signal.aborted ? "arrêté" : "terminé" }); });
+      .finally(() => { ctl = null; emit({ type: "done", message: mine.signal.aborted ? "arrêté" : "terminé", complete }); });
   };
 
   return httpServer((req, res) => {
@@ -138,9 +156,17 @@ export function createServer(deps: Deps): Server {
       try { name = decodeURIComponent(route.slice("GET /designs/".length)); } catch { /* nom invalide */ }
       deps.designs.read(name).then(
         (html) => html === null ? send(res, 404, { error: "introuvable" })
-          : void res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": "sandbox" }).end(html),
+          : void res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": DESIGN_CSP }).end(html),
         () => send(res, 500, { error: "lecture impossible" }),
       );
+    } else if (route.startsWith("GET /reports/") && deps.report) {
+      deps.report(route.slice("GET /reports/".length)).then(
+        (r) => r === null ? send(res, 404, { error: "introuvable" }) : send(res, 200, r), () => send(res, 500, { error: "rapport indisponible" }));
+    } else if (route.startsWith("GET /shots/") && deps.shot) {
+      let rel = "";
+      try { rel = decodeURIComponent(route.slice("GET /shots/".length)); } catch { /* chemin invalide */ }
+      if (!SHOT.test(rel) || rel.includes("..")) return notFound(req, res);
+      deps.shot(rel).then((b) => b ? void res.writeHead(200, { "content-type": "image/png", "x-content-type-options": "nosniff" }).end(b) : notFound(req, res), () => notFound(req, res));
     } else if (route === "POST /go") {
       void go(req, res);
     } else if (route === "POST /stop") {

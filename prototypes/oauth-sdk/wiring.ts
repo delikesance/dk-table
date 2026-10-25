@@ -15,7 +15,9 @@ import { parseBudgetEur, type Budget } from "./budget";
 import { withStates } from "./designs";
 import { createDesignStore } from "./designStore";
 import type { Run } from "./git";
-import { buildMoodboard, pickBudget } from "./moodboard";
+import { buildBoard, cardDetail } from "./cards";
+import { createFiles, type Order } from "./files";
+import { pickBudget } from "./moodboard";
 import { createPipeline } from "./pipeline";
 import { buildRecap } from "./recap";
 import type { QueryFn } from "./research";
@@ -39,9 +41,17 @@ export function buildBoucleServer(o: WiringOpts): Server {
   let activeDesignDir: string | null = null;
   const store = createDesignStore({ cwd: o.cwd, run: o.run, activeDir: () => activeDesignDir });
   const designSteps: BoucleEvent[] = [];
+  // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
+  let activeDir: string | null = null;
+  const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir });
+  const boardOf = (order: Order) => buildBoard({
+    readFile: async (p) => (await files.read(p, order)) ?? Promise.reject(new Error("absent")),
+    exists: (p) => files.exists(p, order),
+    query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
+  });
   const pipeline = createPipeline({
-    query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap,
-    onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; },
+    query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, board: () => boardOf("merged"),
+    onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; }, onDir: (d) => { activeDir = d; },
   });
   return createServer({
     runPipeline: (r) => {
@@ -53,10 +63,14 @@ export function buildBoucleServer(o: WiringOpts): Server {
     parseBudgetEur,
     panelHtml: () => page("panel.html") ?? "<p>panel.html introuvable</p>",
     assetsDir: here,
-    moodboard: () => buildMoodboard({
-      readFile: (p) => readFile(join(o.cwd, p), "utf-8"),
-      query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
-    }),
+    moodboard: () => boardOf("live"),
+    report: (id) => cardDetail(id, (p) => files.read(p), (p) => files.exists(p)),
+    shot: async (rel) => {
+      for (const base of [activeDir, o.cwd]) {
+        if (base) try { return await readFile(join(base, rel)); } catch { /* couche suivante */ }
+      }
+      return null; // fusionne = present dans l'arbre principal (sur developpement)
+    },
     moodboardHtml: () => page("moodboard.html"),
   });
 }
