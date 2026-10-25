@@ -3,6 +3,7 @@
  * Routes: GET / (panneau), GET /moodboard(.html), POST /go, POST /stop, GET /events (SSE avec rejeu).
  * Le pipeline réel est injecté (`deps.runPipeline`); écoute sur 127.0.0.1 seulement.
  */
+import type { DesignFile } from "./designs";
 import type { MoodCard } from "./moodboard";
 import { createServer as httpServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
@@ -11,7 +12,8 @@ export interface RunOpts { budgetEur: number; onEvent: (e: BoucleEvent) => void;
 
 /** Événement de progression envoyé au panneau. */
 export interface BoucleEvent {
-  type: "start" | "end" | "info" | "error" | "done" | "summary";
+  /** `file`: fichier de design ecrit/mis a jour (`message` = nom, secteur design). */
+  type: "start" | "end" | "info" | "error" | "done" | "summary" | "file";
   /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
   phase?: string; ok?: boolean;
   sector?: string; axis?: string; costUsd?: number; elapsedS?: number;
@@ -27,6 +29,10 @@ export interface Deps {
   moodboard?: () => Promise<MoodCard[]>;
   /** Page du moodboard (absente: 404). */
   moodboardHtml?: string | (() => string | undefined);
+  /** Designs du secteur design (absent: /designs => 404). `steps` = evenements du secteur design. */
+  designs?: { list: () => Promise<DesignFile[]>; read: (name: string) => Promise<string | null>; steps: () => BoucleEvent[] };
+  /** Page de suivi du design (relue a chaque requete; absente: 404). */
+  designHtml?: string | (() => string | undefined);
 }
 
 const LOOPBACK_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
@@ -91,6 +97,21 @@ export function createServer(deps: Deps): Server {
     } else if (route === "GET /moodboard") {
       if (!deps.moodboard) return send(res, 404, []);
       deps.moodboard().then((cards) => send(res, 200, cards), () => send(res, 500, { error: "moodboard indisponible" }));
+    } else if (route === "GET /design.html") {
+      const page = typeof deps.designHtml === "function" ? deps.designHtml() : deps.designHtml;
+      if (page === undefined) return send(res, 404, { error: "introuvable" });
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(page);
+    } else if (route === "GET /designs" && deps.designs) {
+      const d = deps.designs;
+      d.list().then((files) => send(res, 200, { files, steps: d.steps() }), () => send(res, 500, { error: "designs indisponibles" }));
+    } else if (route.startsWith("GET /designs/") && deps.designs) {
+      let name = "";
+      try { name = decodeURIComponent(route.slice("GET /designs/".length)); } catch { /* nom invalide */ }
+      deps.designs.read(name).then(
+        (html) => html === null ? send(res, 404, { error: "introuvable" })
+          : void res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": "sandbox" }).end(html),
+        () => send(res, 500, { error: "lecture impossible" }),
+      );
     } else if (route === "POST /go") {
       void go(req, res);
     } else if (route === "POST /stop") {
