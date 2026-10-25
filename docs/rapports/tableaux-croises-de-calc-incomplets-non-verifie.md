@@ -1,20 +1,22 @@
-# Rapport : Tableau croisé dynamique
+# Rapport : Tableaux croises de Calc incomplets (non verifie)
 Statut : termine
 Visible : oui
 
 ## Fait
-- `src/engine/pivot.ts` + `pivotCalc.ts` : lignes, colonnes optionnelles, SUM/COUNT/AVG, champ calculé, totaux.
-- `src/ui/dialogs/pivot.ts` : dialogue (palette « Tableau croisé… »), disposition par défaut, crée la feuille « Croisé ».
-- Tests écrits d'abord : `pivot.test.ts`, `ui/dialogs/pivot.test.ts`; e2e `e2e/feat-pivot-diff.spec.ts`.
+- `src/engine/pivot.ts` `defaultSpec` : lignes = 1re colonne texte dont les valeurs se repetent (sinon 1re texte); valeur = 1re colonne numerique hors identifiant (id, n°, num, code, ref, annee, year); agregation SUM. Doc comment mis a jour.
+- Tests ecrits d'abord (rouge constate) : `src/engine/pivot.test.ts` (2 cas ajoutes).
+- Base existante inchangee : `pivot.ts`, `pivotCalc.ts` (champ calcule), dialogue `ui/dialogs/pivot.ts`.
 
 ## Non fait
-- Plusieurs champs de valeur, filtres, entrée dans la barre de menus, actualisation après édition des données.
+- Pas de graphique croise.
+- Pas de nouveau champ calcule (deja present).
+- Pas de changement de mise en page du dialogue (seulement la preselection).
 
 ## Preuves
-- Tests : ok (1924 tests)
-- Captures : docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/dialogue-clair.png, dialogue-sombre.png, resultat-clair.png, resultat-sombre.png
+- Tests : ok hors 1 echec pre-existant (pipeline.parallel.test.ts, chronometrage) : 2111 passes, 1 echec, 3 ignores (2115). Echec reproduit seul (217 > 203.7); ce fichier n'importe pas `engine/pivot`. `npx tsc --noEmit` ok. e2e `e2e/feat-pivot-defaut.spec.ts` : 2 ok.
+- Captures : docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/disposition-defaut-clair.png, disposition-defaut-sombre.png (dialogue initial : Lignes=Region, Valeur=Montant malgre colonnes Ref et Id). Anciennes : dialogue-*.png, resultat-*.png.
 
 ## Decisions
-- Défaut : 1re colonne non numérique en lignes, 1re numérique en valeur, SUM, sans colonnes.
-- Champ calculé : noms de colonnes sans espace, + - * / et parenthèses; ligne invalide ignorée.
-- Palette seulement (pas de menu) pour ne pas heurter les autres workers.
+- Carte non verifiee (ask.libreoffice.org) : une seule amelioration, disposition par defaut claire.
+- Colonne unique par ligne (identifiant) evitee en lignes : sinon le TCD ferait une ligne par enregistrement.
+- Pas de colonnes par defaut.

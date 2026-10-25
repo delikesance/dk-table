@@ -113,15 +113,14 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
       let held: BoucleEvent | undefined;
-      const isDesign = sector.name === "design";
-      const ddir = join(dir, DESIGN_DIR);
+      const isDesign = sector.name === "design", ddir = join(dir, DESIGN_DIR);
       const steps: BoucleEvent[] = [];
       const send = (e: BoucleEvent) => onEvent(agent ? { ...e, agent } : e); // chaque evenement d'un agent porte sa carte
       const emit = (e: BoucleEvent) => {
         if (isDesign) steps.push(e);
         if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else send(e);
       };
-      let stopWatch: (() => void) | undefined;
+      let stopWatch: (() => void) & { flush?: () => Promise<void> } | undefined;
       if (isDesign) {
         deps.onSectorDir?.(ddir);
         stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name, state: f.state, ts: f.mtimeMs }));
@@ -132,13 +131,14 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         : undefined;
       try {
         await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task, attempt, models, slots: sector.name === "implementation" ? parallel : 1 });
+        await stopWatch?.flush?.(); // le fichier ecrit juste avant la fin compte aussi (frise du designer)
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
           await writeDesignRecap({ ddir, steps, build: deps.buildRecap, write, list: deps.listDesigns ?? listDesigns, read: deps.readDesign ?? readDesign });
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir);
-        ok = m.merged; conflict = !!m.conflict;
+        ok = m.merged; conflict = !!m.conflict; if (!ok && !isDesign) await flow.release(branch, dir); // le design non fusionne reste affiche par la toile
         send({
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
