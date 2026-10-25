@@ -1,4 +1,5 @@
 # Rapport : Moteur de sous-totaux et total général par groupes (3 niveaux)
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -21,3 +22,9 @@ Aucune (moteur pur, sans effet visible).
 - Total général = agrégat direct de toutes les lignes (exact pour AVERAGE, MIN, MAX).
 - COUNT compte les nombres (comme Excel COUNT), pas les cellules non vides.
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
