@@ -43,6 +43,8 @@
   .ax-new { color: var(--new); } .ax-missing { color: var(--missing); }
   .ax-neglected { color: var(--neglected); } .ax-poor { color: var(--poor); }
   .empty { color: var(--mut); font-style: italic; }
+  .loaderr { margin: 12px 16px 0; padding: 8px 12px; border: 1px solid var(--poor); border-radius: 4px; }
+  .loaderr button { font: inherit; margin-left: 8px; cursor: pointer; }
 </style>
 <link rel="stylesheet" href="/panel.css">
 </head>
@@ -110,14 +112,26 @@
     }
   }
 
-  /** Recharge les cartes depuis GET /moodboard. */
+  /** Message d'echec avec bouton Reessayer (un seul, retire au prochain succes). */
+  function showError() {
+    if ($("loaderr")) return;
+    const box = el("div", "loaderr", "Impossible de charger les cartes. ");
+    box.id = "loaderr"; box.setAttribute("role", "alert");
+    const b = el("button", null, "Réessayer");
+    b.addEventListener("click", load);
+    box.append(b);
+    $("board").before(box);
+  }
+
+  /** Recharge les cartes depuis GET /moodboard; en cas d'echec, garde l'etat et propose de reessayer. */
   async function load() {
     try {
       const r = await fetch("/moodboard");
-      if (!r.ok) return;
+      if (!r.ok) throw new Error(String(r.status));
       cards = await r.json();
+      $("loaderr")?.remove();
       render();
-    } catch { /* serveur indisponible: on garde l'etat precedent */ }
+    } catch { showError(); }
   }
 
   load();

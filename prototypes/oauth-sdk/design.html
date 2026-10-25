@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Designer en direct</title>
 <style>
-:root{--bg:#f2f2f2;--panel:#fff;--ink:#0a0a8a;--mute:#555;--line:#c8c8d8;--acc:#0000f2;--bad:#b3400a}
+:root{color-scheme:light dark;--bg:#f2f2f2;--panel:#fff;--ink:#0a0a8a;--mute:#555;--line:#c8c8d8;--acc:#0000f2;--bad:#b3400a}
 @media (prefers-color-scheme: dark){:root{--bg:#19192f;--panel:#22223f;--ink:#f2f2f2;--mute:#b0b0cc;--line:#3a3a66;--acc:#8c8cff;--bad:#ff9a5c}}
 *{box-sizing:border-box}
 body{margin:0;height:100vh;display:grid;grid-template-columns:320px 1fr;grid-template-rows:auto minmax(0,1fr);font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
@@ -26,8 +26,14 @@ main{display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px}
 .thumb{position:relative;width:140px;height:92px;flex:none;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink);padding:0;cursor:pointer;overflow:hidden;text-align:left}
 .thumb iframe{width:560px;height:368px;border:0;transform:scale(.25);transform-origin:0 0;pointer-events:none}
 .thumb span{position:absolute;left:0;right:0;bottom:0;padding:1px 4px;background:var(--panel);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.thumb.sel{outline:2px solid var(--acc);outline-offset:1px}
-.thumb.sel span::before{content:"\25B6 "}
+.thumb.sel{outline:1px solid var(--acc);outline-offset:1px}
+.badge-sel{position:absolute;top:4px;right:4px;padding:0 6px;border:1px solid var(--acc);border-radius:3px;background:var(--panel);color:var(--ink);font-size:12px}
+.hist{display:flex;align-items:center;gap:8px}
+.hist label{font-weight:600;font-size:15px}
+#history{flex:1;min-width:0;font:15px system-ui,sans-serif;padding:6px 8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px}
+.ico{display:inline-block;width:1.4em;font-weight:700}
+.summary-card{margin:4px 0 0;padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+.summary-card::before{content:"\201C "}.summary-card::after{content:" \201D"}
 </style>
 <link rel="stylesheet" href="/panel.css">
 </head>
@@ -35,7 +41,7 @@ main{display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px}
 <nav class="topnav" aria-label="Pages"><b>dk-table</b><a href="/">Boucle</a><a href="/moodboard.html">Moodboard</a><a href="/design.html" aria-current="page">Design</a></nav>
 <aside><h1>Étapes du designer</h1><ol id="timeline"></ol></aside>
 <main>
-  <select id="history" aria-label="Historique des designs"></select>
+  <div class="hist"><label for="history">Historique</label><select id="history"></select></div>
   <div id="viewer"></div>
   <div id="thumbs" role="list"></div>
 </main>
@@ -57,20 +63,39 @@ function byName(n) { return data.files.filter(function (f) { return f.name === n
 
 /** Un élément de timeline pour une étape. */
 function stepItem(s) {
-  var li = el("li", "step" + (s.type === "error" || (s.type === "end" && s.ok === false) ? " fail" : ""));
-  var f = s.type === "file" ? byName(s.message) : null;
-  var label = s.type === "start" ? "Début" : s.type === "file" ? "Fichier " + (s.message || "")
-    : s.type === "end" ? (s.ok === false ? "Fin : échec" : "Fin : ok")
-    : s.type === "error" ? "Erreur " + (s.message || "") : (s.message || s.type);
-  li.appendChild(el("div", "", label));
+  var fail = s.type === "error" || (s.type === "end" && s.ok === false);
+  var li = el("li", "step" + (fail ? " fail" : ""));
+  var f = s.type === "file" ? byName(s.message) : null, m = s.message || "";
+  var kind = describe(s, m);
+  var head = el("div", "", "");
+  head.appendChild(el("span", "ico", kind.ico));
+  head.appendChild(document.createTextNode(kind.label));
   if (s.type === "file") {
     var st = f ? f.state : "ecrit";
-    li.lastChild.appendChild(el("span", "badge" + (st === "mis-a-jour" ? " upd" : ""), STATES[st] || st));
+    head.appendChild(el("span", "badge" + (st === "mis-a-jour" ? " upd" : ""), STATES[st] || st));
   }
-  if (f) li.appendChild(el("div", "when", fmt(f.mtimeMs)));
-  if (s.costUsd != null) li.appendChild(el("div", "when", "Coût " + s.costUsd.toFixed(2) + " $"));
+  li.appendChild(head);
+  if (kind.quote) li.appendChild(el("p", "summary-card", kind.quote));
+  var ts = s.ts != null ? s.ts : f ? f.mtimeMs : null;
+  if (ts != null) li.appendChild(el("div", "when", fmt(ts)));
   return li;
 }
+
+/** Libellé lisible + icône (texte, jamais la couleur seule) selon le type d'événement. */
+function describe(s, m) {
+  if (s.type === "start") return { ico: "▶", label: "Démarrage du design" };
+  if (s.type === "file") return { ico: "▤", label: "Fichier écrit : " + m };
+  if (s.type === "error") return { ico: "✕", label: "Erreur : " + m };
+  if (s.type === "end") {
+    if (s.ok === false) return { ico: "✕", label: "Échec" + (s.costUsd != null ? " · " + usd(s.costUsd) : "") };
+    return { ico: "✓", label: "Terminé" + (s.costUsd != null ? " · " + usd(s.costUsd) : "") };
+  }
+  if (/^resume\s*:/i.test(m)) return { ico: "❝", label: "Résumé", quote: m.replace(/^resume\s*:\s*/i, "") };
+  if (/non fusionn/i.test(m)) return { ico: "✕", label: "Non fusionné" };
+  if (/fusionn/i.test(m)) return { ico: "⑂", label: "Fusionné dans developpement" };
+  return { ico: "•", label: m || s.type };
+}
+function usd(n) { return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $"; }
 
 /** Nom du design affiché: le choix, sinon le plus récent. */
 function current() {
@@ -113,6 +138,7 @@ function render() {
     if (f.name === cur) b.setAttribute("aria-current", "true");
     b.appendChild(frame(f.name));
     b.lastChild.setAttribute("tabindex", "-1");
+    if (f.name === cur) b.appendChild(el("span", "badge-sel", "Affiché"));
     b.appendChild(el("span", "", f.name + (f.state === "mis-a-jour" ? " (mis à jour)" : "")));
     b.onclick = function () { picked = f.name; render(); };
     th.appendChild(b);

@@ -39,8 +39,8 @@ describe("design.html", () => {
     expect(document.querySelectorAll("#timeline .step").length).toBe(3);
     const t = document.getElementById("timeline")!.textContent!;
     expect(t).toContain("écrit");
-    expect(t).toContain("échec");
-    expect(t).toContain("0.50");
+    expect(t).toContain("Échec");
+    expect(t).toContain("0,50 $");
     expect(document.querySelector("#timeline .badge")!.textContent).toBe("écrit");
   });
   it("iframe sandbox sans script sur le dernier design", async () => {
@@ -73,5 +73,33 @@ describe("design.html", () => {
   it("etat vide", async () => {
     await load({ files: [], steps: [] });
     expect(document.querySelectorAll("#viewer .empty").length).toBe(1);
+  });
+  it("historique: etiquette visible et select aux jetons de la page", () => {
+    expect(html).toMatch(/<label[^>]*for="history"[^>]*>Historique<\/label>/);
+    expect(html).toMatch(/#history\{[^}]*background:var\(--panel\)[^}]*color:var\(--ink\)/);
+    expect(html).toContain("color-scheme");
+  });
+  it("etapes: libelles lisibles, icones, carte de resume, horodatage", async () => {
+    await load({ files: DATA.files, steps: [
+      { type: "start", sector: "design", ts: 1000 },
+      { type: "file", sector: "design", message: "a.html", ts: 1000 },
+      { type: "info", sector: "design", message: "wt/design-x fusionne dans developpement", ts: 1500 },
+      { type: "info", sector: "design", message: "resume: Terminé : recherche, design.", ts: 1600 },
+      { type: "end", sector: "design", costUsd: 0.02, ts: 1700 },
+      { type: "end", sector: "design", ok: false, ts: 1800 },
+    ] });
+    const t = document.getElementById("timeline")!.textContent!;
+    for (const x of ["Démarrage du design", "Fichier écrit : a.html", "Fusionné dans developpement", "Terminé · 0,02 $", "Échec"]) expect(t).toContain(x);
+    expect(t).not.toContain("resume:");
+    expect(t).not.toContain("wt/design-x");
+    expect(document.querySelector("#timeline .summary-card")!.textContent).toBe("Terminé : recherche, design.");
+    expect(document.querySelectorAll("#timeline .step .ico").length).toBe(6);
+    expect(document.querySelectorAll("#timeline .step .when").length).toBeGreaterThanOrEqual(6);
+  });
+  it("miniature choisie: contour 1px + pastille Affiché, pas de bordure epaisse", async () => {
+    expect(html).toContain(".thumb.sel{outline:1px");
+    await load(DATA);
+    expect(document.querySelector("#thumbs .thumb.sel .badge-sel")!.textContent).toBe("Affiché");
+    expect(document.querySelectorAll("#thumbs .badge-sel").length).toBe(1);
   });
 });
