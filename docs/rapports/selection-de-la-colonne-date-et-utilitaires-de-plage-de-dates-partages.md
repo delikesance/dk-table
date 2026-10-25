@@ -1,4 +1,5 @@
 # Rapport : Sélection de la colonne date et utilitaires de plage de dates partagés
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -20,3 +21,9 @@ Visible : non
 - Emplacement : `src/engine/dateRange.ts` (logique pure; `src/lib/` n'existe pas dans le dépôt, la convention est `src/engine/`).
 - Parsing : ISO `AAAA-MM-JJ` et `JJ/MM/AAAA`, date calendaire valide obligatoire (même règle que `engine/series-date.ts`).
 - Colonne date : au moins une valeur date valide et plus de la moitié des valeurs non vides sont des dates.
+
+## Preuves
+- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
