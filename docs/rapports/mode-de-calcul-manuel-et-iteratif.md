@@ -1,4 +1,5 @@
 # Rapport : Mode de calcul manuel et itératif
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -50,7 +51,7 @@ Visible : oui
 - Suite complète `npx vitest run` : 2466 tests verts ; 4 échecs dans `prototypes/oauth-sdk/orphans.test.ts` (balayage de worktrees git, sans lien avec le calcul), non vérifiés contre master.
 
 ## Preuves
-- Tests : ok (924 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
-- Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":924,"scope":"related"},"tsc":{"ok":true}} -->
+- Captures : docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
