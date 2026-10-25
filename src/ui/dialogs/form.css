@@ -1,0 +1,8 @@
+/* Saisie par formulaire : un bloc par champ (libellé, zone, « Obligatoire », erreur). Jetons --c-* de src/styles. */
+.dk-form { width: min(420px, 90vw); max-height: 70vh; overflow-y: auto; }
+.dk-form__field { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; margin-bottom: 10px; }
+.dk-form__field label[data-label] { grid-column: 1 / -1; font: 500 0.8rem "DM Mono", monospace; color: var(--c-text-2); }
+.dk-form .dk-form__field input[data-field] { grid-column: 1; height: 28px; padding: 0 8px; border: 1px solid var(--c-line); border-radius: var(--r-sm); background: var(--c-surface); color: var(--c-text); font: inherit; }
+.dk-form__req { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--c-text-2); white-space: nowrap; }
+.dk-form__field .dk-dialog__error { grid-column: 1 / -1; margin: 0; }
+.dk-form__status { min-height: 1.2em; font: 500 0.8rem "DM Mono", monospace; color: var(--c-accent); }
