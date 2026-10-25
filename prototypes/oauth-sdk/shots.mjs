@@ -37,7 +37,8 @@ for (const [name, events, scheme] of [["en-cours", RUNNING, "light"], ["en-cours
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 }, colorScheme: scheme });
   await page.route("**/*", (r) => {
     const p = new URL(r.request().url()).pathname;
-    const f = { "/": "panel.html", "/panel.css": "panel.css", "/panel.js": "panel.js" }[p];
+    if (p.startsWith("/fonts/")) return process.env.NO_FONTS ? r.fulfill({ status: 404 }) : r.fulfill({ body: readFileSync(join(dir, p)), contentType: "font/woff2" });
+    const f = { "/": "panel.html", "/panel.css": "panel.css", "/panel.js": "panel.js", "/fonts.css": "fonts.css" }[p];
     return f ? r.fulfill({ body: readFileSync(join(dir, f)), contentType: f.endsWith("css") ? "text/css" : f.endsWith("js") ? "text/javascript" : "text/html" }) : r.fulfill({ status: 404 });
   });
   await page.addInitScript((evs) => {
