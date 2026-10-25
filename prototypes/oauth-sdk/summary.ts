@@ -32,8 +32,25 @@ export interface SummaryDeps {
 /** Plafond d'un resume (USD). */
 export const SUMMARY_CAP_USD = 0.05;
 
-/** Resume sans LLM: phases terminees puis en cours. */
+/** Montants en dollars, format fr (virgule). */
+const usd = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
+
+/** Phrase de chiffres, toujours calculee ici (jamais par le LLM): depense, plafond, reste. */
+export function figures(s: PhaseState): string {
+  return `Dépensé ${usd(s.spentUsd)} sur ${usd(s.spentUsd + s.remainingUsd)} (reste ${usd(s.remainingUsd)}).`;
+}
+
+/** Vrai si toutes les phases sont reussies (boucle terminee). */
+const finished = (s: PhaseState) => s.phases.length > 0 && s.phases.every((p) => p.status === "ok");
+
+/** Resume sans LLM: phases terminees puis en cours, suivi des chiffres. */
 export function fallbackSummary(s: PhaseState): string {
+  return `${statusLine(s)} ${figures(s)}`;
+}
+
+/** Partie qualitative du repli. */
+function statusLine(s: PhaseState): string {
+  if (finished(s)) return `Boucle terminée : ${s.phases.map((p) => p.name).join(", ")}.`;
   const names = (st: Status) => s.phases.filter((p) => p.status === st).map((p) => p.name).join(", ");
   const done = names("ok"), failed = names("failed"), run = names("running");
   const parts = [done && `Terminé : ${done}.`, failed && `Échec : ${failed}.`, run && `En cours : ${run}.`].filter(Boolean);
@@ -49,9 +66,11 @@ export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<
   let cost = 0;
   let text = "";
   try {
+    const { spentUsd: _s, remainingUsd: _r, ...rest } = s;
     const prompt =
       "Resume en francais, en 1 a 2 phrases COURTES, ce que font les agents et ou en est la boucle. " +
-      `Pas de markdown.\nEtat: ${JSON.stringify(s)}`;
+      "N'ecris jamais de montant ni de budget (ils sont ajoutes a part). Si terminee=true, dis que la boucle est terminee, " +
+      `sans parler de phase en cours. Pas de markdown.\nEtat: ${JSON.stringify({ ...rest, terminee: finished(s) })}`;
     const stream = deps.query({
       prompt,
       options: {
@@ -68,5 +87,5 @@ export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<
     text = "";
   }
   deps.budget?.settle(granted, cost);
-  return text || fallbackSummary(s);
+  return text ? `${text} ${figures(s)}` : fallbackSummary(s);
 }

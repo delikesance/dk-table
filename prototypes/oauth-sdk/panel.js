@@ -43,6 +43,23 @@
     current = e.sector;
   }
 
+  /** `done` ferme toute phase/carte restee en cours: arret => echec, sinon selon les cartes de la phase. */
+  function closeAll(stopped) {
+    PHASES.forEach(function (p) {
+      var o = phases[p[0]];
+      var mine = order.filter(function (k) { return cards[k].phase === p[0]; }).map(function (k) { return cards[k]; });
+      if (o.state === "running") setState(o, stopped || mine.some(function (c) { return c.state === "fail"; }) ? "fail" : "ok", {});
+      mine.forEach(function (c) { if (c.state === "running") setState(c, stopped ? "fail" : "ok", {}); });
+    });
+  }
+
+  /** Ligne de statut finale unique : etat, depense, plafond. */
+  function finalStatus(e) {
+    var stopped = /arr/i.test(e.message || "");
+    closeAll(stopped);
+    $("status").textContent = (stopped ? "Arrêté" : "Terminé") + " · " + fmt(spentUsd) + " $ dépensés sur " + fmt(cap() * RATE) + " $";
+  }
+
   /** Titre de la phase courante, grand. */
   function drawNow() {
     var p = phases[current]; if (!p) return;
@@ -111,7 +128,7 @@
     if (!started) { started = true; var idle = $("idle"); if (idle) idle.remove(); }
     if (e.type === "summary") drawSummary(e); else track(e);
     if (e.type === "error") $("status").textContent = "Erreur : " + (e.message || "");
-    if (e.type === "done") { running(false); $("status").textContent = "Terminé : " + (e.message || ""); }
+    if (e.type === "done") { running(false); finalStatus(e); }
     redraw(); logLine(e);
   }
 
