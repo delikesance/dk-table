@@ -20,9 +20,11 @@ Aucune (fonctionnalité interne, `Visible : non`).
 
 - Module placé dans `src/engine/stats/` (à côté de `descriptive.ts`) et non dans `src/stats/` : le dossier existant est le bon emplacement.
 - Pas de module `utils.ts` séparé : le calcul des paires tient dans `correlation.ts`, sous la limite de 200 lignes.
+- Design `docs/design/2026-10-25-200330.html` ignoré : il traite de l'analyse what-if (valeur cible, scénarios, espion) et ne mentionne pas la corrélation. Carte purement moteur, pas de design à suivre.
+- Critères d'acceptation vérifiés par `correlation.test.ts` : r dans [-1, 1], y = 2x donne 1, matrice N×N symétrique, paires non numériques ignorées sans NaN, variance nulle donne une erreur (pearson) ou `null` (matrice).
 
 ## Preuves
-- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
