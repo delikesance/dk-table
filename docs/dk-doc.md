@@ -8,6 +8,10 @@ Un dk doc est un document de texte rangé dans le même `.dktable` que les feuil
 - **Le texte Markdown est le document** (comme Obsidian). Éditeur = CodeMirror 6 (`doc/editor.ts`) chargé à la première ouverture (`import("../doc/editor")`) ; plus de ProseMirror. Historique propre à chaque document (`@codemirror/commands`) ; `app.undo/redo` s'adressent à l'éditeur quand un document est ouvert.
 - **Références en lecture seule** : un document lit le moteur, il n'entre jamais dans le graphe de dépendances. Le texte stocké désigne la feuille par son `id`, l'éditeur montre son nom (`doc/md/names.ts`).
 
+## Style du document
+
+Le contenu d'un document ne suit pas la charte Hermes : page A4 blanche (21 cm, marges 2,5 cm), Times New Roman 12 pt, interligne 1,5, titres noirs en gras (18 / 14 / 12 pt), tableaux à bordures noires, puces de valeur soulignées en pointillé. L'export HTML / PDF reprend le même style (`@page A4`, `exportHtml.ts`). Seuls le cadre de l'application et ses barres gardent la charte. Test : `doc/exportStyle.test.ts`.
+
 ## Format
 
 ```json
