@@ -17,8 +17,9 @@ Visible : non
 - Parsing : ISO `AAAA-MM-JJ` et `JJ/MM/AAAA`, date calendaire valide obligatoire (même règle que `engine/series-date.ts`, qui garde son parseur privé).
 - Colonne date : au moins une valeur date valide et plus de la moitié des valeurs non vides sont des dates.
 - Pas de capture: `Visible : non`, aucune UI ajoutée.
+
 ## Preuves
-- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
