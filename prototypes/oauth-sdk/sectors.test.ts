@@ -57,6 +57,10 @@ describe("design d'abord", () => {
     expect(get("design").prompt).toContain("HTML autonome");
     expect(get("design").prompt).toContain("sombre");
     expect(get("design").prompt).not.toMatch(/^\/design/);
+    expect(get("design").prompt).toContain("toile libre");
+    expect(get("design").prompt).toMatch(/animations?/);
+    expect(get("design").prompt).toContain("design-canvas");
+    expect(get("design").prompt).toContain('data-theme');
     expect(promptFor(get("implementation"))).toContain(currentDesignPath());
     expect(get("implementation").prompt).toContain("docs/recherche/fonctionnalites.md");
     expect(get("implementation").prompt).toContain("TODO.md");

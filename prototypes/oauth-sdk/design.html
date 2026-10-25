@@ -3,135 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Designer en direct</title>
-<style>
-:root{--bg:#f2f2f2;--panel:#fff;--ink:#0a0a8a;--mute:#555;--line:#c8c8d8;--acc:#0000f2;--bad:#b3400a}
-@media (prefers-color-scheme: dark){:root{--bg:#19192f;--panel:#22223f;--ink:#f2f2f2;--mute:#b0b0cc;--line:#3a3a66;--acc:#8c8cff;--bad:#ff9a5c}}
-*{box-sizing:border-box}
-body{margin:0;height:100vh;display:grid;grid-template-columns:320px 1fr;grid-template-rows:auto minmax(0,1fr);font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-aside{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px}
-h1{font-size:15px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em}
-ol{list-style:none;margin:0;padding:0}
-.step{border-left:2px solid var(--line);padding:4px 0 10px 10px;margin-left:4px}
-.step .when{color:var(--mute);font-size:12px}
-.step.fail{border-left-color:var(--line);color:var(--bad)}
-.badge{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--acc);border-radius:3px;font-size:12px}
-.badge.upd{border-style:dashed}
-.fail .badge{border-color:var(--bad);color:var(--bad)}
-main{display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px}
-#viewer{flex:1;min-height:0;display:flex}
-#viewer iframe{flex:1;border:1px solid var(--line);background:#fff}
-.empty{margin:auto;color:var(--mute)}
-#thumbs{display:flex;gap:8px;overflow-x:auto}
-.thumb{position:relative;width:140px;height:92px;flex:none;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink);padding:0;cursor:pointer;overflow:hidden;text-align:left}
-.thumb iframe{width:560px;height:368px;border:0;transform:scale(.25);transform-origin:0 0;pointer-events:none}
-.thumb span{position:absolute;left:0;right:0;bottom:0;padding:1px 4px;background:var(--panel);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.thumb.sel{outline:2px solid var(--acc);outline-offset:1px}
-.thumb.sel span::before{content:"\25B6 "}
-</style>
+<title>Design</title>
 <link rel="stylesheet" href="/panel.css">
+<link rel="stylesheet" href="/design-view.css">
 </head>
-<body>
+<body class="dz">
 <nav class="topnav" aria-label="Pages"><b>dk-table</b><a href="/">Boucle</a><a href="/moodboard.html">Moodboard</a><a href="/design.html" aria-current="page">Design</a></nav>
 <aside><h1>Étapes du designer</h1><ol id="timeline"></ol></aside>
 <main>
-  <select id="history" aria-label="Historique des designs"></select>
+  <div class="bar" role="toolbar" aria-label="Toile">
+    <select id="history" aria-label="Design affiché"></select>
+    <select id="history2" aria-label="Design comparé" hidden></select>
+    <span class="grp" role="group" aria-label="Largeur">
+      <button type="button" data-vp="390">Mobile</button><button type="button" data-vp="820">Tablette</button>
+      <button type="button" data-vp="1200">Bureau</button><button type="button" data-vp="1600">Large</button>
+      <button type="button" data-vp="0" aria-pressed="true">Libre</button>
+    </span>
+    <select id="zoom" aria-label="Zoom"><option value="fit">Ajusté</option><option value="1">100 %</option><option value="0.75">75 %</option><option value="0.5">50 %</option></select>
+    <span class="grp" role="group" aria-label="Thème du design">
+      <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button>
+    </span>
+    <button type="button" id="pause" aria-pressed="false">Pause</button>
+    <button type="button" id="reload">Relancer</button>
+    <button type="button" id="compare" aria-pressed="false">Comparer</button>
+  </div>
   <div id="viewer"></div>
+  <details id="errors-box"><summary>Erreurs du design <b id="err-count">0</b></summary><ul id="errors"></ul></details>
   <div id="thumbs" role="list"></div>
 </main>
-<script>
-/** Vue en direct du designer: timeline des étapes + rendu des designs. */
-var STATES = { "ecrit": "écrit", "mis-a-jour": "mis à jour" };
-var data = { files: [], steps: [] };
-var picked = null; // nom choisi par l'utilisateur; null = suivre le dernier
-
-/** Crée un élément avec classe et texte (textContent: pas d'injection). */
-function el(tag, cls, text) {
-  var e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text != null) e.textContent = text;
-  return e;
-}
-function fmt(ms) { return new Date(ms).toLocaleString("fr-FR"); }
-function byName(n) { return data.files.filter(function (f) { return f.name === n; })[0]; }
-
-/** Un élément de timeline pour une étape. */
-function stepItem(s) {
-  var li = el("li", "step" + (s.type === "error" || (s.type === "end" && s.ok === false) ? " fail" : ""));
-  var f = s.type === "file" ? byName(s.message) : null;
-  var label = s.type === "start" ? "Début" : s.type === "file" ? "Fichier " + (s.message || "")
-    : s.type === "end" ? (s.ok === false ? "Fin : échec" : "Fin : ok")
-    : s.type === "error" ? "Erreur " + (s.message || "") : (s.message || s.type);
-  li.appendChild(el("div", "", label));
-  if (s.type === "file") {
-    var st = f ? f.state : "ecrit";
-    li.lastChild.appendChild(el("span", "badge" + (st === "mis-a-jour" ? " upd" : ""), STATES[st] || st));
-  }
-  if (f) li.appendChild(el("div", "when", fmt(f.mtimeMs)));
-  if (s.costUsd != null) li.appendChild(el("div", "when", "Coût " + s.costUsd.toFixed(2) + " $"));
-  return li;
-}
-
-/** Nom du design affiché: le choix, sinon le plus récent. */
-function current() {
-  if (picked && byName(picked)) return picked;
-  var last = data.files.filter(function (f) { return f.kind !== "recap"; }).sort(function (a, b) { return b.mtimeMs - a.mtimeMs; })[0];
-  return last ? last.name : null;
-}
-function frame(name) {
-  var f = document.createElement("iframe");
-  f.setAttribute("sandbox", ""); // aucun script, aucun accès
-  f.setAttribute("src", "/designs/" + encodeURIComponent(name));
-  f.setAttribute("title", name);
-  return f;
-}
-
-/** Historique: tous les designs stockés (récap signalé), le plus récent d'abord; choisir ouvre le design. */
-function history(cur) {
-  var sel = document.getElementById("history");
-  sel.textContent = "";
-  data.files.slice().sort(function (a, b) { return b.mtimeMs - a.mtimeMs; }).forEach(function (f) {
-    var o = el("option", "", fmt(f.mtimeMs) + " — " + f.name + (f.kind === "recap" ? " [récap]" : ""));
-    o.value = f.name; o.selected = f.name === cur; sel.appendChild(o);
-  });
-  sel.onchange = function () { picked = sel.value; render(); };
-}
-
-/** Redessine timeline, visionneuse et miniatures. */
-function render() {
-  var tl = document.getElementById("timeline"), vw = document.getElementById("viewer"), th = document.getElementById("thumbs");
-  tl.textContent = ""; vw.textContent = ""; th.textContent = "";
-  data.steps.forEach(function (s) { tl.appendChild(stepItem(s)); });
-  var cur = current();
-  history(cur);
-  if (!cur) { vw.appendChild(el("p", "empty", "Aucun design pour l'instant.")); return; }
-  vw.appendChild(frame(cur));
-  data.files.slice().sort(function (a, b) { return a.mtimeMs - b.mtimeMs; }).forEach(function (f) {
-    var b = el("button", "thumb" + (f.name === cur ? " sel" : ""));
-    b.type = "button";
-    b.setAttribute("role", "listitem");
-    if (f.name === cur) b.setAttribute("aria-current", "true");
-    b.appendChild(frame(f.name));
-    b.lastChild.setAttribute("tabindex", "-1");
-    b.appendChild(el("span", "", f.name + (f.state === "mis-a-jour" ? " (mis à jour)" : "")));
-    b.onclick = function () { picked = f.name; render(); };
-    th.appendChild(b);
-  });
-}
-
-/** Recharge /designs puis redessine. */
-function refresh() {
-  return fetch("/designs").then(function (r) { return r.json(); }).then(function (d) {
-    data = { files: d.files || [], steps: d.steps || [] };
-    render();
-  }).catch(function () {});
-}
-refresh();
-setInterval(refresh, 5000);
-try {
-  var es = new EventSource("/events");
-  es.onmessage = refresh;
-} catch (e) {}
-</script>
+<script src="/design-view.js"></script>
 </body>
 </html>

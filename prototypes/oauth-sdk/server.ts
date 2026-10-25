@@ -4,6 +4,7 @@
  * Le pipeline réel est injecté (`deps.runPipeline`); écoute sur 127.0.0.1 seulement.
  */
 import type { DesignFile } from "./designs";
+import { injectRuntime } from "./designRuntime";
 import type { MoodCard } from "./moodboard";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -156,7 +157,7 @@ export function createServer(deps: Deps): Server {
       try { name = decodeURIComponent(route.slice("GET /designs/".length)); } catch { /* nom invalide */ }
       deps.designs.read(name).then(
         (html) => html === null ? send(res, 404, { error: "introuvable" })
-          : void res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": DESIGN_CSP }).end(html),
+          : void res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-security-policy": DESIGN_CSP }).end(injectRuntime(html)),
         () => send(res, 500, { error: "lecture impossible" }),
       );
     } else if (route.startsWith("GET /reports/") && deps.report) {
