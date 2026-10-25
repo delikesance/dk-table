@@ -13,7 +13,7 @@ body { margin: 0; font: 16px/1.5 var(--font-ui); background: var(--bg); color: v
 .topnav { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s4);
   background: var(--nav); color: var(--nav-fg); }
 .topnav b { margin-right: var(--s4); font: 800 1.3rem var(--f-disp); letter-spacing: .04em; text-transform: uppercase; }
-.topnav a { color: var(--nav-fg); text-decoration: none; font-weight: 600; padding: var(--s1) var(--s3); border-radius: var(--r-lg); }
+.topnav a { color: var(--nav-fg); text-decoration: none; font: 500 .95rem var(--f-disp); letter-spacing: .04em; text-transform: uppercase; padding: var(--s1) var(--s3); border-radius: var(--r-lg); }
 .topnav a:hover { text-decoration: underline; }
 .topnav a[aria-current="page"] { background: var(--nav-on); color: var(--nav-on-fg); }
 .topnav :focus-visible { outline-color: var(--nav-fg); }

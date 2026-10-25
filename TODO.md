@@ -246,6 +246,7 @@ Classement par gravité (P0 = pire)
 - [x] Boucle, cartes et rapports: état par carte (idée/piste/en cours/preuves/terminée/bloquée), `docs/rapports/<id>.md` validé (tests ok + captures), boucle jusqu'à toutes les cartes terminées (`complete`), moodboard en colonnes avec tiroir de rapport en direct (SSE `card`)
 - [x] Boucle, toile design libre (`docs/design-canvas.md`): scripts et animations permis dans l'iframe isolée, runtime (thème, pause, erreurs), largeurs/zoom/comparaison, skill `.claude/skills/design-canvas`
 - [ ] Boucle: préchauffage de processus (`startup()` alpha) non retenu; à reconsidérer si l'API se stabilise
+- [x] Boucle, comparaison app vs panneau (clair/sombre): barre du haut alignée sur la barre de menus, captures `docs/screenshots/boucle-theme-app/`
 
 - [x] Défilement et sélection propres à chaque feuille : `appGrid.buildGrid` mémorise scrollTop/scrollLeft + sélection de la feuille quittée (WeakMap par entrée, non enregistrés dans le fichier) et les restaure au retour; une feuille neuve démarre en A1 en haut. Tests `appScroll.test.ts` + `e2e/sheet-scroll.spec.ts`. Onglets doc/macro non concernés (éditeurs recréés à l'ouverture)
 

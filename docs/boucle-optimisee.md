@@ -89,3 +89,7 @@ puis `shots.board.mjs`.
 - `panel.css` n'a plus que des alias (`--bg: var(--c-bg)`, `--acc: var(--c-accent)`…), les feuilles de page n'ont aucune couleur en dur
   (`theme.test.ts`, seul `#fff` reste : fond du design affiché). Polices, rayons, états (succès, erreur, dépendances) viennent aussi des tokens.
 - Changer un token dans l'app change donc la Boucle. Captures avant/après : `docs/screenshots/boucle-theme/`.
+
+## Comparaison avec l'application
+
+Captures côte à côte (app à gauche, Boucle à droite, 1200x800) : `docs/screenshots/boucle-theme-app/app-vs-boucle-{clair,sombre}.png`. Tokens identiques (servis tels quels); la barre du haut reprend la barre de menus de l'app (Sofia Sans Extra Condensed, capitales). Un panneau lavande (#8c8cff) = ancien CSS d'avant #37 : relancer `boucle.ts` depuis `developpement` à jour.
