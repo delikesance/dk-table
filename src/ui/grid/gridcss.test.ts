@@ -17,8 +17,8 @@ describe("grid.css", () => {
     expect(r).toMatch(/background:\s*var\(--c-error-soft\)/);
     expect(r).toMatch(/font-weight:\s*var\(--fw-semibold\)/);
   });
-  it("active cell has an accent notch", () => {
-    const r = rule(".dkg-active::after");
+  it("fill handle (bottom-right corner of the selection) has an accent notch", () => {
+    const r = rule(".dkg-h::after");
     expect(r).toMatch(/width:\s*var\(--notch\)/);
     expect(r).toMatch(/background:\s*var\(--c-accent\)/);
   });
