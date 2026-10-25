@@ -3,6 +3,7 @@
  *
  * Quoi : 1-2 phrases (agents en cours, avancement), plafond 0.05 USD, 1 tour, sans outil;
  *        cout regle dans le budget partage.
+ * Defaut : deterministe (aucun processus Claude lance, aucun cout); `llm: true` pour un resume Haiku.
  * Pourquoi : ne jamais bloquer la boucle: au moindre echec (query, jeton, budget, reponse vide)
  *        on renvoie un resume deterministe sans LLM.
  * Usage : `await summarizePhase(state, { query, budget, env })` -> chaine.
@@ -27,6 +28,8 @@ export interface SummaryDeps {
   query: QueryFn;
   budget?: Budget;
   env?: Record<string, string>;
+  /** Opt-in: resume redige par un LLM (defaut: texte deterministe, 0 spawn, 0 cout). */
+  llm?: boolean;
 }
 
 /** Plafond d'un resume (USD). */
@@ -59,7 +62,7 @@ function statusLine(s: PhaseState): string {
 
 /** Resume de la phase; ne leve jamais. */
 export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<string> {
-  if (deps.env && !deps.env.CLAUDE_CODE_OAUTH_TOKEN) return fallbackSummary(s);
+  if (!deps.llm || (deps.env && !deps.env.CLAUDE_CODE_OAUTH_TOKEN)) return fallbackSummary(s);
   if (deps.budget?.exhausted()) return fallbackSummary(s);
   const granted = deps.budget ? deps.budget.reserve(SUMMARY_CAP_USD) : SUMMARY_CAP_USD;
   if (granted <= 0) return fallbackSummary(s);

@@ -1,26 +1,28 @@
 /** Panneau Boucle : modele des phases/agents/budget alimente par le flux SSE /events. */
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var RATE = 1.08; // EUR -> USD (estimation d'affichage)
+  var RATE = 1.08; // EUR -> USD (les couts arrivent en dollars, tout s'affiche en euros)
   var PHASES = [["research", "Recherche"], ["design", "Design"], ["implementation", "Implémentation"], ["correction", "Correction"]];
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
-  var cards = {}, phases = {}, order = [], summaries = 0, current = null, started = false, spentUsd = 0;
+  var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé" };
+  var agents = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
 
   PHASES.forEach(function (p) { phases[p[0]] = { label: p[1], state: "pending", cost: null, elapsed: null, t0: 0 }; });
-  AXES.forEach(function (a) { add("r:" + a[0], a[1], "research"); });
-  PHASES.slice(1).forEach(function (p) { add(p[0], p[1], p[0]); });
+  AXES.forEach(function (a) { agents[a[0]] = { label: a[1], state: "pending", elapsed: null, t0: 0 }; });
 
-  /** Declare une carte d'agent rattachee a une phase. */
-  function add(key, label, phase) { cards[key] = { label: label, phase: phase, state: "pending", elapsed: null, t0: 0 }; order.push(key); }
-  /** Montant en euros ou dollars, format fr (virgule). */
+  /** Montant au format fr (virgule), `min` decimales minimum. */
   function fmt(n, min) { return n.toLocaleString("fr-FR", { minimumFractionDigits: min == null ? 2 : min, maximumFractionDigits: 2 }); }
   function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; }
-  function dur(s) { return s == null ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
+  /** Duree lisible; rien sous 1 s (evite "0 s" au demarrage). */
+  function dur(s) { return s == null || s < 1 ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function cap() { return Number($("budgetEur").value) || 0; }
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+  function clock(ts) { var d = new Date(ts); return two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds()); }
+  function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
 
-  /** Pose l'etat d'une carte/phase en gardant duree et cout. */
+  /** Pose l'etat d'une phase/agent en gardant duree et cout. */
   function setState(o, st, e) {
     if (st === "running" && o.state !== "running") o.t0 = Date.now();
     else if (st !== "running" && o.state === "running") o.elapsed = e.elapsedS != null ? e.elapsedS : secs(o.t0);
@@ -29,35 +31,35 @@
     o.state = st;
   }
 
-  /** Applique un evenement au modele (phases, cartes, budget). */
+  /** Applique un evenement au modele (phases, agents, budget). */
   function track(e) {
     var st = e.type === "start" ? "running" : e.type === "end" ? (e.ok === false ? "fail" : "ok") : e.type === "error" ? "fail" : null;
     if (e.totalUsd != null) spentUsd = e.totalUsd;
     if (!st) return;
     var ph = phases[e.sector];
-    if (e.axis && cards["r:" + e.axis]) setState(cards["r:" + e.axis], st, e);
-    else if (!e.axis && cards[e.sector]) setState(cards[e.sector], st, e);
+    if (e.axis && agents[e.axis]) setState(agents[e.axis], st, e);
     if (!ph) { if (e.type === "error") PHASES.forEach(function (p) { if (phases[p[0]].state === "running") setState(phases[p[0]], "fail", e); }); return; }
     if (!e.axis) setState(ph, st, e);
     else if (ph.state === "pending") setState(ph, "running", {});
     current = e.sector;
   }
 
-  /** `done` ferme toute phase/carte restee en cours: arret => echec, sinon selon les cartes de la phase. */
+  /** `done` ferme toute phase/agent reste en cours: arret => echec, sinon selon les agents de la phase. */
   function closeAll(stopped) {
+    var any = Object.keys(agents).some(function (k) { return agents[k].state === "fail"; });
     PHASES.forEach(function (p) {
       var o = phases[p[0]];
-      var mine = order.filter(function (k) { return cards[k].phase === p[0]; }).map(function (k) { return cards[k]; });
-      if (o.state === "running") setState(o, stopped || mine.some(function (c) { return c.state === "fail"; }) ? "fail" : "ok", {});
-      mine.forEach(function (c) { if (c.state === "running") setState(c, stopped ? "fail" : "ok", {}); });
+      if (o.state === "running") setState(o, stopped || (p[0] === "research" && any) ? "fail" : "ok", {});
     });
+    Object.keys(agents).forEach(function (k) { if (agents[k].state === "running") setState(agents[k], stopped ? "fail" : "ok", {}); });
   }
 
-  /** Ligne de statut finale unique : etat, depense, plafond. */
+  /** Ligne de statut finale unique : etat, depense, plafond (en euros). */
   function finalStatus(e) {
     var stopped = /arr/i.test(e.message || "");
     closeAll(stopped);
-    $("status").textContent = (stopped ? "Arrêté" : "Terminé") + " · " + fmt(spentUsd) + " $ dépensés sur " + fmt(cap() * RATE) + " $";
+    var end = stopped ? "Arrêté" : e.complete === true ? "Terminé, toutes les cartes" : e.complete === false ? "Terminé, cartes restantes" : "Terminé";
+    $("status").textContent = end + " · " + fmt(spentUsd / RATE) + " € sur " + fmt(cap(), 0) + " €";
   }
 
   /** Titre de la phase courante, grand. */
@@ -68,34 +70,35 @@
     $("now").textContent = "Phase " + i + "/4 · " + p.label + " · " + ST[p.state][1];
   }
 
-  /** Etapes numerotees : libelle, etat, duree et cout. */
+  /** Une ligne d'etat: icone, libelle, etat, duree (+ cout pour une phase). */
+  function line(o, tag, cls, label) {
+    var n = el(tag, cls + " " + o.state), t = dur(live(o));
+    n.appendChild(el("span", "ico", ST[o.state][0]));
+    n.appendChild(el(label ? "b" : "span", null, o.label));
+    n.appendChild(el("small", null, ST[o.state][1] + (t ? " · " + t : "") + (o.cost != null ? " · " + fmt(o.cost / RATE) + " €" : "")));
+    return n;
+  }
+
+  /** Frise des phases; les agents de la recherche sont imbriques sous leur phase. */
   function drawSteps() {
-    $("phasebar").replaceChildren.apply($("phasebar"), PHASES.map(function (p, i) {
-      var o = phases[p[0]], li = el("li", "step " + o.state);
-      var live = o.state === "running" ? secs(o.t0) : o.elapsed;
-      li.appendChild(el("b", null, (i + 1) + ". " + o.label));
-      li.appendChild(el("small", null, ST[o.state][0] + " " + ST[o.state][1] +
-        (live ? " · " + dur(live) : "") + (o.cost != null ? " · " + fmt(o.cost) + " $" : "")));
+    $("phasebar").replaceChildren.apply($("phasebar"), PHASES.map(function (p) {
+      var li = line(phases[p[0]], "li", "step", true), head = el("div");
+      while (li.firstChild) head.appendChild(li.firstChild);
+      li.appendChild(head);
+      if (p[0] === "research") {
+        var ul = el("ul", "agents");
+        AXES.forEach(function (a) { ul.appendChild(line(agents[a[0]], "li", "agent")); });
+        li.appendChild(ul);
+      }
       return li;
     }));
   }
 
-  /** Cartes des agents : libelle, icone, etat texte, duree. */
-  function drawAgents() {
-    $("agents").replaceChildren.apply($("agents"), order.map(function (k) {
-      var o = cards[k], c = el("div", "card " + o.state), b = el("b");
-      b.appendChild(el("span", "ico", ST[o.state][0])); b.appendChild(document.createTextNode(" " + o.label));
-      var live = o.state === "running" ? secs(o.t0) : o.elapsed;
-      c.appendChild(b); c.appendChild(el("div", "meta", ST[o.state][1] + (live ? " · " + dur(live) : "")));
-      return c;
-    }));
-  }
-
-  /** Jauge et montants : depense / plafond, en euros puis en dollars. */
+  /** Jauge et montant unique : depense sur plafond, en euros. */
   function drawBudget() {
-    var c = cap(), capUsd = c * RATE, spentEur = spentUsd / RATE, pct = capUsd ? Math.min(100, spentUsd / capUsd * 100) : 0;
-    $("estimate").textContent = "≈ " + fmt(capUsd) + " $ de plafond";
-    $("amounts").textContent = "Dépensé " + fmt(spentEur) + " € sur " + fmt(c, 0) + " € (≈ " + fmt(spentUsd) + " $ sur " + fmt(capUsd) + " $)";
+    var c = cap(), capUsd = c * RATE, pct = capUsd ? Math.min(100, spentUsd / capUsd * 100) : 0;
+    $("amounts").textContent = fmt(spentUsd / RATE) + " € sur " + fmt(c, 0) + " €";
+    $("amounts").title = "≈ " + fmt(spentUsd) + " $ sur " + fmt(capUsd) + " $";
     $("gauge").firstChild.style.width = pct + "%";
     $("gauge").setAttribute("aria-valuenow", String(Math.round(pct)));
     $("gauge").classList.toggle("warn", pct > 85);
@@ -112,38 +115,51 @@
     $("phase-label").textContent = known ? "Résumé · " + known[1] : e.phase ? "Résumé · " + e.phase : "Résumé";
   }
 
-  /** Ligne du journal; defilement automatique vers le bas. */
+  /** Ligne du journal: heure, type, lieu et message; defile seulement si on lit deja le bas. */
   function logLine(e) {
     var where = [e.sector, e.axis].filter(Boolean).join(" / ");
-    var li = el("li", e.type, [e.type, where, e.message, e.costUsd != null && fmt(e.costUsd) + " $",
-      e.elapsedS != null && dur(e.elapsedS)].filter(Boolean).join(" · "));
-    var log = $("log"); log.appendChild(li); log.scrollTop = log.scrollHeight;
+    var li = el("li", e.type), log = $("log"), bottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 24;
+    li.appendChild(el("time", null, clock(e.ts || Date.now())));
+    li.appendChild(el("span", "tag", TAGS[e.type] || e.type));
+    li.appendChild(el("span", null, [where, e.message, e.costUsd != null && fmt(e.costUsd / RATE) + " €",
+      e.elapsedS != null && dur(e.elapsedS)].filter(Boolean).join(" · ")));
+    li.hidden = $("onlyErr").checked && e.type !== "error";
+    log.appendChild(li); if (bottom) log.scrollTop = log.scrollHeight;
   }
 
-  function running(on) { $("go").disabled = on; $("stop").disabled = !on; if (on) $("feed").open = true; }
-  function redraw() { drawNow(); drawSteps(); drawAgents(); drawBudget(); }
+  /** Bouton unique Go/Stop: le libelle et l'etat suivent l'execution. */
+  function running(on) { var b = $("run"); b.textContent = on ? "Stop" : "Go"; b.dataset.state = on ? "running" : "idle"; }
+  function alertMsg(msg) { $("alert").hidden = !msg; $("alert").textContent = msg || ""; }
+  function redraw() { drawNow(); drawSteps(); drawBudget(); }
 
   /** Point d'entree : applique un evenement SSE a toute l'interface. */
   function show(e) {
     if (!started) { started = true; var idle = $("idle"); if (idle) idle.remove(); }
     if (e.type === "summary") drawSummary(e); else track(e);
-    if (e.type === "error") $("status").textContent = "Erreur : " + (e.message || "");
+    if (e.type === "error") { alertMsg(e.message || "erreur inconnue"); $("status").textContent = "En cours, avec erreur"; }
     if (e.type === "done") { running(false); finalStatus(e); }
     redraw(); logLine(e);
   }
 
-  $("go").onclick = function () {
+  $("run").onclick = function () {
+    if ($("run").dataset.state === "running") { fetch("/stop", { method: "POST" }); return; }
+    alertMsg("");
     fetch("/go", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ budgetEur: cap() }) })
       .then(function (r) {
         if (r.ok) { $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); return; }
-        return r.json().then(function (j) { $("status").textContent = "Refusé : " + (j.error || r.status); });
+        return r.json().then(function (j) { alertMsg("Refusé : " + (j.error || r.status)); });
       });
   };
-  $("stop").onclick = function () { fetch("/stop", { method: "POST" }); };
   $("budgetEur").oninput = drawBudget;
-  setInterval(function () { if ($("stop").disabled === false) { drawSteps(); drawAgents(); } }, 1000);
+  $("onlyErr").onchange = function () {
+    var only = $("onlyErr").checked;
+    Array.prototype.forEach.call($("log").children, function (li) { li.hidden = only && !li.classList.contains("error"); });
+  };
+  setInterval(function () { if ($("run").dataset.state === "running") drawSteps(); }, 1000);
 
   redraw();
   var es = new EventSource("/events");
+  es.onopen = function () { $("conn").hidden = true; };
+  es.onerror = function () { $("conn").hidden = false; };
   es.onmessage = function (m) { var e = JSON.parse(m.data); if (e.type !== "done") running(true); show(e); };
 })();

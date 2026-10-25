@@ -7,8 +7,9 @@
  *        (branches, commits et fusions sont faits par la boucle, pas par l'agent).
  * Usage : `runSector(SECTORS[0], { query, maxBudgetUsd, env, log })` -> `{ costUsd, ok, text }`.
  */
+import { agentOptions, MODEL_BY_KIND, type Kind } from "./agentOptions";
 import type { Budget } from "./budget";
-import { MODEL_BY_KIND, type Kind, type QueryFn } from "./research";
+import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 
 /** Definition d'un secteur (prompt et outils). */
@@ -20,20 +21,7 @@ export interface SectorDef {
   maxTurns: number;
   /** Part du plafond total reservee a ce secteur. */
   share: number;
-  /** Outils disponibles. */
-  tools: string[];
-  /** Pre-autorises (tout le reste est refuse en dontAsk). */
-  allowedTools: string[];
-  /** Interdits explicitement, en plus. */
-  disallowedTools: string[];
 }
-
-const EDIT = ["Read", "Grep", "Glob", "Edit", "Write", "Bash"];
-const RUN = ["Bash(npm test:*)", "Bash(npx tsc:*)", "Bash(npx vitest:*)"];
-/** Git est interdit aux agents (la boucle gere branches et fusions). */
-const NO_GIT = ["push", "checkout", "switch", "merge", "branch", "reset", "rebase", "commit"].map(
-  (c) => `Bash(git ${c}:*)`,
-);
 
 const RULES =
   "Lis CLAUDE.md d'abord et respecte-le: TDD (ecris un test qui echoue AVANT tout code, " +
@@ -61,25 +49,28 @@ export function promptFor(s: SectorDef): string { return s.prompt.split(DESIGN).
 /** Definitions des trois secteurs, dans l'ordre d'execution (design d'abord). */
 export const SECTOR_DEFS: SectorDef[] = [
   {
-    id: "design", kind: "think", maxTurns: 40, share: 0.15, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "design", kind: "think", maxTurns: 40, share: 0.15,
     prompt:
       "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
-      `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : page HTML autonome (CSS et JS en ligne, aucune ressource externe) ` +
-      "avec, pour chaque idee, une maquette visuelle (ecrans et etats, theme clair ET sombre, tokens de " +
-      "src/styles/, outil professionnel sans texte decoratif) puis une section interfaces/contrats " +
+      `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : toile libre, page HTML autonome ` +
+      "(CSS et JS en ligne; scripts, animations, canvas/SVG et interactions permis; aucune requete ni ressource externe: la CSP les bloque). " +
+      "La page parente peut poser `data-theme=\"dark\"` ou `\"light\"` sur <html>: prevois les themes clair ET sombre (data-theme ET prefers-color-scheme). " +
+      "Conventions et gabarit: skill `design-canvas` (.claude/skills/design-canvas). " +
+      "Pour chaque idee: une maquette visuelle (ecrans et etats, tokens de " +
+      "src/styles/, outil professionnel sans texte decoratif), animee quand le mouvement explique le comportement, puis une section interfaces/contrats " +
       "(fonctions, types, evenements, fichiers touches). Ne modifie aucun autre fichier. " +
       "Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
   },
   {
-    id: "implementation", kind: "think", maxTurns: 60, share: 0.4, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "implementation", kind: "think", maxTurns: 60, share: 0.4,
     prompt:
       `Secteur implementation. Lis d'abord le design ${DESIGN} et construis dessus. S'il est absent, dis-le ` +
       "et replie-toi sur docs/recherche/fonctionnalites.md et TODO.md : choisis 1 a 3 " +
       "fonctionnalites non cochees, prioritaires et petites, et implemente-les. " + RULES,
   },
   {
-    id: "correction", kind: "think", maxTurns: 40, share: 0.2, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "correction", kind: "think", maxTurns: 40, share: 0.2,
     prompt:
       "Secteur correction. Lance `npm test` puis `npx tsc --noEmit`. Pour chaque echec ou erreur de " +
       "type, ecris un test qui reproduit le bug, puis corrige le code (jamais en affaiblissant un " +
@@ -114,11 +105,9 @@ export async function runSector(
   let text = "";
   const stream = o.query({
     prompt: s.prompt,
-    options: {
-      model: MODEL_BY_KIND[s.kind], maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd,
-      tools: s.tools, allowedTools: s.allowedTools, disallowedTools: s.disallowedTools,
-      permissionMode: "dontAsk", settingSources: ["project"], env: o.env, abortController: o.abort, cwd: o.cwd,
-    },
+    options: agentOptions("edit", {
+      model: MODEL_BY_KIND[s.kind], maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd, env: o.env, abort: o.abort, cwd: o.cwd,
+    }),
   });
   for await (const m of stream) {
     if (m.type !== "result") continue;
@@ -139,6 +128,8 @@ export interface SectorCtx {
   dir: string;
   signal: AbortSignal;
   env?: Record<string, string>;
+  /** Consigne ajoutee au prompt de cette execution (ex. cartes de la tournee). */
+  task?: string;
 }
 
 /** Secteur executable par la boucle. */
@@ -172,7 +163,7 @@ function makeSector(d: SectorDef): Sector {
       for (let i = 0; i < MAX_PASSES && !ctx.signal.aborted && !ctx.budget.exhausted(); i++) {
         const granted = ctx.budget.reserve(cap * d.share);
         if (granted <= 0) break;
-        const r = await runSector({ ...d, prompt: promptFor(d) }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
+        const r = await runSector({ ...d, prompt: promptFor(d) + (ctx.task ? `\n\n${ctx.task}` : "") }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
         ctx.budget.settle(granted, r.costUsd);
         cost += r.costUsd;
         if (r.ok) break;

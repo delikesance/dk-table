@@ -33,9 +33,11 @@ describe("designs", () => {
     const { base } = await boot({ designs });
     const r = await fetch(base + "/designs/d.html");
     expect(r.status).toBe(200);
-    expect(r.headers.get("content-security-policy")).toBe("sandbox");
+    expect(r.headers.get("content-security-policy") ?? "").toContain("sandbox allow-scripts");
     expect(r.headers.get("content-type")).toContain("text/html");
-    expect(await r.text()).toBe("<h1>d</h1>");
+    const body = await r.text();
+    expect(body).toContain("<h1>d</h1>");
+    expect(body).toContain("data-dk-runtime");
     expect((await fetch(base + "/designs/x.html")).status).toBe(404);
     expect((await fetch(base + "/designs/..%2Fx.html")).status).toBe(404);
   });

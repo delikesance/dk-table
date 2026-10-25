@@ -12,8 +12,12 @@ import { basename, dirname, join } from "node:path";
 import { createBudget, type Budget } from "./budget";
 import { listDesigns, readDesign, watchDesigns } from "./designs";
 import { createGitFlow, type Run } from "./git";
-import { runResearch, type QueryFn } from "./research";
-import { SECTORS, currentDesignPath, recapPath, toController, type Sector } from "./sectors";
+import { allDone, type BoardCard } from "./cards";
+import type { QueryFn } from "./research";
+import { researchSector } from "./researchSector";
+import { pickBatch, reportRules } from "./reportRules";
+import { watchReports as defaultWatchReports } from "./reportWatch";
+import { SECTORS, currentDesignPath, recapPath, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
 import { summarizePhase, type Status } from "./summary";
 
@@ -33,17 +37,26 @@ export interface PipelineDeps {
   writeFile?: (path: string, text: string) => void;
   /** Budget du run en cours (null une fois fini): partage avec le moodboard. */
   onBudget?: (b: Budget | null) => void;
+  /** Worktree du secteur en cours (null une fois fini): pour lire les rapports en direct. */
+  onDir?: (dir: string | null) => void;
   /** Dossier docs/design du secteur design en cours (null une fois fini): pour servir les designs en direct. */
   onSectorDir?: (designDir: string | null) => void;
   /** Recap HTML des designs (recap.ts `buildRecap`); absent: pas de recap.html. */
   buildRecap?: (designs: { name: string; html: string; mtimeMs: number }[], steps: BoucleEvent[]) => string;
+  /** Opt-in: resumes de fin de phase rediges par Haiku (defaut: texte deterministe, aucun processus Claude). */
+  llmSummaries?: boolean;
+  /** Etat des cartes une fois fusionne (absent: un seul passage implementation + correction, sans boucle). */
+  board?: () => Promise<BoardCard[]>;
+  /** Surveillance des rapports d'un worktree (defaut: reportWatch.ts; injectable pour les tests). */
+  watchReports?: typeof defaultWatchReports;
   /** Suivi des designs (defauts: designs.ts; injectables pour les tests). */
   watchDesigns?: typeof watchDesigns;
   listDesigns?: typeof listDesigns;
   readDesign?: typeof readDesign;
 }
 
-const DOC = join("docs", "recherche", "fonctionnalites.md");
+/** Tournees max (garde-fou en plus du budget et de la detection d'absence de progres). */
+const MAX_ROUNDS = 12;
 const DESIGN_DIR = join("docs", "design");
 
 /** Ecriture disque par defaut. */
@@ -53,33 +66,15 @@ function diskWrite(path: string, text: string): void {
 }
 
 /** Construit `runPipeline` lie a ses dependances. */
-export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void> {
+export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean } | undefined> {
   const write = deps.writeFile ?? diskWrite;
-  const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<void> => {
+  const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
     const flow = createGitFlow(deps.run, deps.cwd);
     await flow.ensureDev();
 
-    /** Secteur recherche: 4 axes en parallele, synthese ecrite dans le worktree. */
-    const research: Sector = {
-      name: "research" as Sector["name"],
-      async run(ctx) {
-        const t0 = Date.now();
-        ctx.emit({ type: "start", sector: "research" });
-        const out = await runResearch({
-          query: ctx.query, budget: ctx.budget, env: ctx.env, cwd: ctx.dir, abort: toController(ctx.signal),
-          emit: ctx.emit,
-          log: (message) => ctx.emit({ type: "info", sector: "research", message }),
-        });
-        write(join(ctx.dir, DOC), out.markdown);
-        ctx.emit({
-          type: "end", sector: "research", costUsd: out.totalCostUsd, elapsedS: Math.round((Date.now() - t0) / 1000),
-          totalUsd: ctx.budget.spent(), remainingUsd: ctx.budget.remaining(),
-        });
-      },
-    };
-
+    const research = researchSector(write);
     const all = [research, ...SECTORS];
     const status: Record<string, Status> = Object.fromEntries(all.map((x) => [x.name, "pending"]));
     /** Resume de la phase (Haiku ou repli): emis au panneau et journalise. */
@@ -88,17 +83,15 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
         phase: LABEL[name] ?? name,
         phases: all.map((x) => ({ name: LABEL[x.name] ?? x.name, status: status[x.name] })),
         agents: [], spentUsd: budget.spent(), remainingUsd: budget.remaining(),
-      }, { query: deps.query, budget, env: deps.env });
+      }, { query: deps.query, budget, env: deps.env, llm: deps.llmSummaries });
       onEvent({ type: "summary", phase: name, message });
       onEvent({ type: "info", sector: name, message: `resume: ${message}` });
     };
 
-    for (const sector of all) {
-      if (signal.aborted || budget.exhausted()) {
-        onEvent({ type: "info", message: signal.aborted ? "arrete" : "budget epuise (90 %)" });
-        break;
-      }
+    /** Un secteur: worktree, execution (consigne `task` en plus), commit, fusion si vert. */
+    const runOne = async (sector: Sector, task?: string): Promise<boolean> => {
       const { branch, dir } = await flow.startSector(sector.name);
+      deps.onDir?.(dir);
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
       let held: BoucleEvent | undefined;
@@ -115,8 +108,11 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
         stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name, state: f.state, ts: f.mtimeMs }));
       }
       let ok = false;
+      const stopReports = sector.name === "implementation"
+        ? (deps.watchReports ?? defaultWatchReports)(join(dir, "docs", "rapports"), (id) => onEvent({ type: "card", sector: "implementation", cardId: id }))
+        : undefined;
       try {
-        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env });
+        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task });
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
           // recap du design de CE run (les precedents restent dans leurs propres fichiers); repli: tous les designs
@@ -136,14 +132,56 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
       } finally {
+        stopReports?.();
+        deps.onDir?.(null);
         if (isDesign) { stopWatch?.(); deps.onSectorDir?.(null); }
         status[sector.name] = ok ? "ok" : "failed";
         if (held) onEvent({ ...(held as BoucleEvent), ok });
         await summarize(sector.name);
       }
+      return ok;
+    };
+
+    /** Vrai (avec message) si la boucle doit s'arreter: abandon ou budget epuise. */
+    const stopped = (): boolean => {
+      if (!signal.aborted && !budget.exhausted()) return false;
+      onEvent({ type: "info", message: signal.aborted ? "arrete" : "budget epuise (90 %)" });
+      return true;
+    };
+
+    // recherche puis design, une fois
+    const [implementation, correction] = SECTORS.filter((x) => x.name !== "design");
+    for (const sector of [research, ...SECTORS.filter((x) => x.name === "design")]) {
+      if (stopped()) return deps.board ? { complete: false } : undefined;
+      await runOne(sector);
     }
+    if (!deps.board) {
+      for (const sector of [implementation, correction]) { if (stopped()) break; await runOne(sector); }
+      return undefined;
+    }
+
+    // tournees jusqu'a ce que toutes les cartes soient terminees (preuves validees et fusionnees)
+    let cards = await deps.board();
+    let round = 0, stagnant = 0;
+    while (!allDone(cards) && !stopped() && round < MAX_ROUNDS && stagnant < 2) {
+      round++;
+      const before = cards.filter((c) => c.state === "termine").length;
+      const batch = pickBatch(cards);
+      onEvent({ type: "info", round, message: `tournee ${round} : ${cards.length - before} carte(s) restante(s), lot ${batch.map((c) => c.id).join(", ")}` });
+      await runOne(implementation, reportRules(batch));
+      if (!stopped()) await runOne(correction, "Verifie aussi que chaque rapport de docs/rapports/ dit vrai : tests verts, captures presentes.");
+      cards = await deps.board();
+      stagnant = cards.filter((c) => c.state === "termine").length > before ? 0 : stagnant + 1;
+    }
+    const complete = allDone(cards);
+    const left = cards.filter((c) => c.state !== "termine").map((c) => `${c.id} (${c.state})`).join(", ");
+    onEvent({
+      type: "info", complete,
+      message: complete ? "boucle terminee : toutes les cartes sont terminees" : `non termine, sans progres ou budget : ${left}`,
+    });
+    return { complete };
   };
   return async (o) => {
-    try { await inner(o); } finally { deps.onBudget?.(null); }
+    try { return await inner(o); } finally { deps.onBudget?.(null); }
   };
 }

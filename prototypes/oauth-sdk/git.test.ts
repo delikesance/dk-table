@@ -133,3 +133,22 @@ describe("dependencies in the worktree", () => {
     expect(f.lines().some((x) => x === "npm test" || x.startsWith("git merge"))).toBe(false);
   });
 });
+
+describe("mergeIfGreen checks run in parallel", () => {
+  it("starts npm test and tsc before either finishes, and reports the first red one", async () => {
+    let active = 0, peak = 0;
+    const run: Run = async (cmd, args) => {
+      if (cmd === "npm" && args[0] === "test" || cmd === "npx") {
+        active++; peak = Math.max(peak, active);
+        await new Promise((r) => setTimeout(r, 20));
+        active--;
+        return { code: cmd === "npx" ? 2 : 0, out: "tsc red" };
+      }
+      return { code: 0, out: "developpement\n" };
+    };
+    const r = await createGitFlow(run, "/r").mergeIfGreen("wt/x-1", "/r/wt");
+    expect(peak).toBe(2);
+    expect(r.merged).toBe(false);
+    expect(r.reason).toContain("tsc");
+  });
+});
