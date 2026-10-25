@@ -1,4 +1,5 @@
 # Rapport : Moteur de consolidation sur plusieurs feuilles (somme, moyenne, etc. par étiquettes ou position)
+Statut : en-cours
 Visible : non
 
 Moteur pur (`src/engine/consolidate.ts`), sans branchement UI. L'entrée visible (Données > Consolider) relève de la carte « Boîte de dialogue Données > Consolider ».
@@ -25,3 +26,9 @@ Aucune (moteur sans effet visible).
 - Une cellule sans nombre contributeur renvoie `""` (pas `0`), pour distinguer « vide » de « zéro ».
 - Étiquette vide sur l'axe étiqueté : la ligne/colonne est ignorée (pas de clé de fusion possible).
 - Documentation : `docs/consolidation.md`.
+
+## Preuves
+- Tests : ok (8 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":8,"scope":"related"},"tsc":{"ok":true}} -->
