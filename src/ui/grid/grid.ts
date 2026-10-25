@@ -3,7 +3,7 @@
  * Rows are virtualized (see window.ts): only visible rows + overscan exist in the DOM, the full
  * height is simulated by CSS grid tracks; refresh() touches only given (rendered) cells.
  */
-import { keyOf, parseKey, rangeKeys, type Pos } from "./keys";
+import { keyOf, parseKey, rangeKeys, selectionLabel, type Pos } from "./keys";
 import { ROW_H, scrollToRow } from "./virtual";
 import { navigate, pageRows, type NavAction } from "./nav";
 import { FALLBACK_VIEWPORT_H, addHeaders, createRowWindow } from "./window";
@@ -20,6 +20,7 @@ import { addResizers, templateColumns } from "./colwidth";
 import type { Grid, GridOptions } from "./types";
 import { markKind } from "./cellkind";
 import { bindMouse } from "./mouse";
+import { bindFillHandle } from "./fillHandle";
 import { addFreezeHandles } from "./freezeHandle";
 import { clampFreeze, frozenPx } from "./freeze";
 
@@ -64,7 +65,6 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const cells = win.cells;
 
   const sigs = new Map<string, string>();
-
   /** Render one cell (hook element if provided, else text); skips the DOM write when unchanged. */
   function paint(key: string): void {
     const el = cells.get(key);
@@ -84,12 +84,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     row: Math.max(0, Math.min(rows - 1, p.row)),
   });
 
-  const selection = (): string => {
-    const a = keyOf(anchor.col, anchor.row), b = keyOf(active.col, active.row);
-    if (a === b) return a;
-    const k = rangeKeys(anchor, active);
-    return `${k[0]}:${k[k.length - 1]}`;
-  };
+  const selection = (): string => selectionLabel(anchor, active);
 
   /** Re-apply highlight classes on rendered cells/headers only. */
   const mark = (): void => { marked = markSelection(marked, { cells, rowHeads: win.heads, colHeads }, anchor, active); };
@@ -147,13 +142,16 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (refocus) root.focus();
   }
 
+  /** Write one cell through the host and repaint it. */
+  const put = (k: string, v: string): void => { opts.onEdit(k, v); paint(k); };
+
   /** Empty the filled cells of the selection (whole columns/rows: skip the empty ones). */
-  const clear = (): void => rangeKeys(anchor, active).filter((k) => opts.getRaw(k) !== "").forEach((k) => { opts.onEdit(k, ""); paint(k); });
+  const clear = (): void => rangeKeys(anchor, active).filter((k) => opts.getRaw(k) !== "").forEach((k) => put(k, ""));
 
   bindKeys(root, {
     busy: () => !!editor, nav, startEdit, sheet: (d) => opts.onSheetStep?.(d),
     clear,
-    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => { opts.onEdit(k, v); paint(k); }),
+    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => put(k, v)),
   });
 
   const unbindMouse = bindMouse(root, {
@@ -161,9 +159,18 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     set: (s, reveal) => { ({ anchor, active } = s); render(true, reveal); }, endEdit: () => endEdit(true), startEdit,
   });
 
+  const unbindFill = bindFillHandle(root, {
+    cols, rows, sel: () => ({ anchor, active }), getRaw: opts.getRaw, busy: () => !!editor,
+    apply: ({ plan, sel }) => {
+      Object.entries(plan).forEach(([k, v]) => put(k, v));
+      ({ anchor, active } = sel);
+      render();
+    },
+  });
+
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
-    put: (k, v) => { opts.onEdit(k, v); paint(k); },
+    put,
     clear, onCopy: opts.onCopy,
   });
 
@@ -184,6 +191,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     destroy() {
       ctl.close();
       unbindMouse();
+      unbindFill();
       editor = null;
       root.remove();
     },

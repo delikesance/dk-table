@@ -40,6 +40,15 @@ export function distinctValues(column: string[], max = 200): Distinct[] {
   return out.slice(0, max);
 }
 
+/** Normalise pour la recherche: minuscules, sans accents. */
+const fold = (s: string): string => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+/** Vrai si `value` contient `query` (casse et accents ignorés); requête vide = tout. */
+export function matchesSearch(value: string, query: string): boolean {
+  const q = fold(query.trim());
+  return q === "" || fold(value).includes(q);
+}
+
 /**
  * Masque de visibilité par ligne pour la colonne `col`.
  * `selected` null = pas de filtre (tout visible).
