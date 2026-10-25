@@ -40,7 +40,7 @@ describe("boucle jusqu'a completion", () => {
     ]);
     const r = await h.go();
     expect(impl(h.events)).toHaveLength(2);
-    expect(r).toEqual({ complete: true });
+    expect(r).toEqual({ complete: true, reason: "complete" });
     expect(h.events.some((e) => e.type === "info" && e.complete === true)).toBe(true);
   });
 
@@ -54,21 +54,50 @@ describe("boucle jusqu'a completion", () => {
 
   it("deja tout termine apres la recherche: aucune tournee, complete=true", async () => {
     const h = harness([[card("a", "termine")]]);
-    expect(await h.go()).toEqual({ complete: true });
+    expect(await h.go()).toMatchObject({ complete: true });
     expect(impl(h.events)).toHaveLength(0);
   });
 
-  it("sans progres sur 2 tournees de suite: s'arrete, complete=false, dit lesquelles manquent", async () => {
-    const h = harness([[card("a", "idee")], [card("a", "idee")], [card("a", "bloque")], [card("a", "bloque")]]);
+  it("aucune avancee pendant 3 tournees de suite: bloquee (reason=stuck), dit lesquelles manquent", async () => {
+    const h = harness([[card("a", "idee")]]);
     const r = await h.go();
-    expect(r).toEqual({ complete: false });
-    expect(impl(h.events).length).toBeLessThanOrEqual(3);
-    expect(h.events.some((e) => e.type === "info" && /a/.test(e.message ?? "") && /sans progr|non termin/i.test(e.message ?? ""))).toBe(true);
+    expect(r).toEqual({ complete: false, reason: "stuck" });
+    expect(impl(h.events)).toHaveLength(3);
+    expect(h.events.some((e) => e.type === "info" && e.reason === "stuck" && /bloquee/.test(e.message ?? "") && /a \(idee\)/.test(e.message ?? ""))).toBe(true);
   });
 
-  it("s'arrete quand le budget est epuise (complete=false)", async () => {
+  it("une avancee d'etat compte comme progres: idee -> en-cours -> preuves -> termine continue au-dela de 3 tournees", async () => {
+    const h = harness([[card("a", "idee")], [card("a", "en-cours")], [card("a", "preuves")], [card("a", "termine")]]);
+    expect(await h.go()).toEqual({ complete: true, reason: "complete" });
+    expect(impl(h.events)).toHaveLength(3);
+  });
+
+  it("s'arrete quand le budget est epuise (reason=budget) avec le nombre de cartes restantes", async () => {
     const h = harness([[card("a", "idee")]]);
-    expect(await h.go(0.2)).toEqual({ complete: false });
+    expect(await h.go(0.2)).toEqual({ complete: false, reason: "budget" });
+    expect(h.events.some((e) => e.type === "info" && e.reason === "budget" && /budget epuise/.test(e.message ?? ""))).toBe(true);
+  });
+
+  it("abandon demande: reason=abort", async () => {
+    const h = harness([[card("a", "idee")]]);
+    const ac = new AbortController(); ac.abort();
+    const p = createPipeline({ query: (() => (async function* () {})()) as QueryFn, run, cwd: "/repo", eurUsd: 1, writeFile: () => {}, board: async () => [card("a", "idee")], watchReports: () => () => {} });
+    const r = await p({ budgetEur: 50, onEvent: () => {}, signal: ac.signal });
+    expect(r?.complete).toBe(false);
+    void h;
+  });
+
+  it("jamais « Boucle terminee » dans un resume s'il reste des cartes; seulement quand tout est termine", async () => {
+    const stuck = harness([[card("a", "idee")]]);
+    await stuck.go();
+    const msgs = stuck.events.filter((e) => e.type === "summary").map((e) => e.message ?? "");
+    expect(msgs.length).toBeGreaterThan(0);
+    expect(msgs.some((m) => /Boucle terminée/.test(m))).toBe(false);
+    expect(msgs[msgs.length - 1]).toMatch(/Boucle arrêtée .*1 carte/);
+    const ok = harness([[card("a", "idee")], [card("a", "termine")]]);
+    await ok.go();
+    const last = ok.events.filter((e) => e.type === "summary").pop();
+    expect(last?.message).toMatch(/Boucle terminée/);
   });
 
   it("evenements `card` pousses quand un rapport change pendant l'implementation", async () => {

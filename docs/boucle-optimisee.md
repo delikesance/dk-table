@@ -101,3 +101,13 @@ Un checkout Windows (autocrlf) livre les fichiers en `\r\n`. `.gitattributes` fo
 ## Design absent de la toile (Windows)
 
 Cause : avec `shell: true` (cmd.exe), Node ne protège pas les arguments. `git commit -m "Boucle: design"` arrivait coupé, git échouait (pathspec), rien n'était commité, la fusion ne fusionnait rien et `worktree remove --force` supprimait le design. Correctifs : `shellArgs.ts` (guillemets sous Windows, utilisé par `boucle.ts`), `git.ts` refuse de fusionner (et garde le worktree) si le commit a échoué ou si la branche n'a aucun commit d'avance. La toile affiche déjà le design le plus récent. Captures : `docs/screenshots/boucle-design-canvas/`.
+
+## Cartes terminées durables
+
+`doneLedger.ts` : registre append-only `.boucle/termines.jsonl` (ignoré par git) qui garde un instantané de chaque carte terminée et de son rapport. `buildBoard` y inscrit toute carte `termine` et la réaffiche toujours dans « Terminées », même si l'idée disparaît de `fonctionnalites.md`, si `TODO.md` passe à `[x]`, si le rapport est supprimé ou après un redémarrage; `cardDetail` relit le rapport depuis le registre. Les captures restent dans le dépôt (`docs/screenshots/`). Tests : `doneLedger.test.ts`, `doneLedger.server.test.ts`. Captures : `docs/screenshots/boucle-termines/`.
+
+## Boucle persistante (arrêt et reprise)
+
+Cause de l'arrêt « sans progrès » avec 12 € de budget restant : le progrès ne comptait que les cartes passées en `termine`, le lot (3 cartes) était toujours le même et 2 tournées sans carte terminée arrêtaient tout, avec au plus 12 tournées (36 cartes pour 55). Sous Windows, les commits échouaient en plus (voir PR #40) : rien n'avançait.
+
+`rounds.ts` : lots de 6 cartes, progrès = toute avancée d'état (idée → en cours → preuves → terminée), rotation (une carte sans progrès après 3 essais passe derrière les autres, puis est reprise), arrêt seulement si budget épuisé, abandon, 3 tournées de suite sans aucune avancée, ou 40 tournées. La raison (`reason` : `complete`, `budget`, `stuck`, `abort`, `max-rounds`) part dans les événements `info`/`done` et le panneau l'affiche (« Budget épuisé », « Bloquée », « Tournées max, cartes restantes »). Le résumé n'écrit « Boucle terminée » que si plus aucune carte ne reste. Pas d'agents en parallèle : plusieurs worktrees fusionnent dans la même branche, risque de conflits (non fait). Captures : `docs/screenshots/boucle-arret/`.

@@ -19,6 +19,10 @@ export interface PhaseState {
   phase: string;
   phases: { name: string; status: Status }[];
   agents: { name: string; status: Status; costUsd?: number; note?: string }[];
+  /** Cartes pas encore terminees (indefini: pas de tableau de cartes). */
+  remaining?: number;
+  /** Raison d'arret de la boucle quand il reste des cartes. */
+  halt?: "budget" | "stuck" | "abort" | "max-rounds";
   spentUsd: number;
   remainingUsd: number;
   /** Taux EUR -> USD: tout s'affiche en euros (defaut 1,08, comme le budget). */
@@ -47,7 +51,9 @@ export function figures(s: PhaseState): string {
 }
 
 /** Vrai si toutes les phases sont reussies (boucle terminee). */
-const finished = (s: PhaseState) => s.phases.length > 0 && s.phases.every((p) => p.status === "ok");
+const finished = (s: PhaseState) => s.phases.length > 0 && s.phases.every((p) => p.status === "ok") && !s.remaining;
+
+const HALT = { budget: "budget épuisé", stuck: "aucune carte n'avance", abort: "arrêt demandé", "max-rounds": "tournées max" };
 
 /** Resume sans LLM: phases terminees puis en cours, suivi des chiffres. */
 export function fallbackSummary(s: PhaseState): string {
@@ -57,6 +63,8 @@ export function fallbackSummary(s: PhaseState): string {
 /** Partie qualitative du repli. */
 function statusLine(s: PhaseState): string {
   if (finished(s)) return `Boucle terminée : ${s.phases.map((p) => p.name).join(", ")}.`;
+  if (s.remaining && s.halt) return `Boucle arrêtée (${HALT[s.halt]}) : ${s.remaining} carte(s) restante(s).`;
+  if (s.remaining && s.phases.every((p) => p.status === "ok")) return `Tournée terminée, ${s.remaining} carte(s) restante(s) : la boucle continue.`;
   const names = (st: Status) => s.phases.filter((p) => p.status === st).map((p) => p.name).join(", ");
   const done = names("ok"), failed = names("failed"), run = names("running");
   const parts = [done && `Terminé : ${done}.`, failed && `Échec : ${failed}.`, run && `En cours : ${run}.`].filter(Boolean);
@@ -72,7 +80,7 @@ export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<
   let cost = 0;
   let text = "";
   try {
-    const { spentUsd: _s, remainingUsd: _r, eurUsd: _e, ...rest } = s;
+    const { spentUsd: _s, remainingUsd: _r, eurUsd: _e, ...rest } = s; // `remaining` reste dans l'etat: pas « terminee » s'il reste des cartes
     const prompt =
       "Resume en francais, en 1 a 2 phrases COURTES, ce que font les agents et ou en est la boucle. " +
       "N'ecris jamais de montant ni de budget (ils sont ajoutes a part). Si terminee=true, dis que la boucle est terminee, " +
