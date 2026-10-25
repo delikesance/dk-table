@@ -26,6 +26,7 @@
     if (c.state === "piste") tags.append(el("span", "tag", "piste"));
     if (c.state === "bloque") tags.append(el("span", "tag bad", "bloqué"));
     if (c.state === "preuves" && c.missing && c.missing.length) tags.append(el("span", "tag warn", "manque : " + c.missing.join(", ")));
+    if (c.anomalies && c.anomalies.length) tags.append(el("span", "tag warn anom", "⚠ " + c.anomalies[0]));
     b.append(tags, el("h3", null, c.title), el("p", null, c.summary || ""));
     b.addEventListener("click", () => select(c.id));
     return b;
@@ -40,9 +41,11 @@
     const bar = el("i"), fill = el("b");
     fill.style.width = (cards.length ? Math.round((100 * done) / cards.length) : 0) + "%";
     bar.append(fill); p.append(bar);
+    const bad = cards.filter((c) => c.anomalies && c.anomalies.length).length;
     $("counters").replaceChildren(...Object.entries(LABEL).map(([k, t]) => {
       const s = el("span", "count", t + " "); s.append(el("b", null, String(cards.filter((c) => COLS[c.state] === k).length))); return s;
-    }));
+    }), ...(bad ? [Object.assign(el("span", "count tag warn", "Anomalies "), { title: "Incohérences détectées par le réconciliateur" })] : []));
+    if (bad) $("counters").lastChild.append(el("b", null, String(bad)));
     $("filters").replaceChildren(...Object.entries(AXES).map(([a, t]) => {
       const b = el("button", "axis-chip", t); b.dataset.axis = a; b.type = "button";
       b.setAttribute("aria-pressed", String(filter === a));

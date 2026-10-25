@@ -8,7 +8,7 @@
  *   - developing : une tache TODO ouverte `- [ ]` correspond;
  *   - lead       : puce marquee piste/speculatif/hypothese/a confirmer, ou idee seulement citee
  *                  dans une ligne TODO qui n'est pas une tache;
- *   - found      : aucune ligne TODO ne correspond. Une tache deja faite `- [x]` retire la carte.
+ *   - found      : aucune ligne TODO ne correspond. Une tache deja faite `- [x]` donne `done` (la carte reste, rapport exige).
  * Resume : kind 'summary' (Haiku), 1 tour, sans outil, 0,01 USD max par carte, cartes groupees par
  *        requete, cache (titre+source) dans la Map, cout regle dans le budget partage; ne leve jamais.
  * Budget : jamais en dehors du plafond de l'utilisateur. Pendant un run, les resumes sont regles dans
@@ -24,7 +24,7 @@ import { MODEL_BY_KIND, type QueryFn } from "./research";
 export interface MoodCard {
   id: string;
   title: string;
-  status: "found" | "developing" | "lead";
+  status: "found" | "developing" | "lead" | "done";
   axis?: "new" | "missing" | "neglected" | "poor";
   summary: string;
   source: string;
@@ -82,11 +82,11 @@ export function parseResearch(md: string): { title: string; source: string; axis
   return out;
 }
 
-/** Statut d'une idee d'apres les lignes de TODO.md; `null` si deja realisee. */
-export function statusOf(title: string, source: string, todo: string[]): MoodCard["status"] | null {
+/** Statut d'une idee d'apres les lignes de TODO.md; `done` si cochee `[x]` (la carte reste: le reconciliateur exige son rapport). */
+export function statusOf(title: string, source: string, todo: string[]): MoodCard["status"] {
   const hits = todo.filter((l) => matches(title, l));
   if (hits.some((l) => /^\s*-\s*\[ \]/.test(l))) return "developing";
-  if (hits.some((l) => /^\s*-\s*\[[xX]\]/.test(l))) return null;
+  if (hits.some((l) => /^\s*-\s*\[[xX]\]/.test(l))) return "done";
   if (hits.length || LEAD_RE.test(norm(source))) return "lead";
   return "found";
 }
@@ -142,7 +142,6 @@ export async function buildMoodboard(d: MoodDeps): Promise<MoodCard[]> {
   const cards: MoodCard[] = [];
   for (const r of parseResearch(md)) {
     const status = statusOf(r.title, r.source, todo);
-    if (!status) continue;
     const id = norm(r.title).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     cards.push({ id, title: r.title, status, axis: r.axis, summary: "", source: r.source });
   }

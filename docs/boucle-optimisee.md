@@ -111,3 +111,17 @@ Cause : avec `shell: true` (cmd.exe), Node ne protège pas les arguments. `git c
 Cause de l'arrêt « sans progrès » avec 12 € de budget restant : le progrès ne comptait que les cartes passées en `termine`, le lot (3 cartes) était toujours le même et 2 tournées sans carte terminée arrêtaient tout, avec au plus 12 tournées (36 cartes pour 55). Sous Windows, les commits échouaient en plus (voir PR #40) : rien n'avançait.
 
 `rounds.ts` : lots de 6 cartes, progrès = toute avancée d'état (idée → en cours → preuves → terminée), rotation (une carte sans progrès après 3 essais passe derrière les autres, puis est reprise), arrêt seulement si budget épuisé, abandon, 3 tournées de suite sans aucune avancée, ou 40 tournées. La raison (`reason` : `complete`, `budget`, `stuck`, `abort`, `max-rounds`) part dans les événements `info`/`done` et le panneau l'affiche (« Budget épuisé », « Bloquée », « Tournées max, cartes restantes »). Le résumé n'écrit « Boucle terminée » que si plus aucune carte ne reste. Pas d'agents en parallèle : plusieurs worktrees fusionnent dans la même branche, risque de conflits (non fait). Captures : `docs/screenshots/boucle-arret/`.
+
+## Flux de suivi, modèles minimaux, push auto
+
+Maquette du flux : https://claude.ai/artifact/8eVb5xZRpYMELx3xQW9NVm.
+
+**Réconciliateur** (`reconcile.ts`, pur, sans worktree) : l'état d'une carte est recalculé à chaque lecture du tableau. `en-cours` seulement si un agent du lot actif la traite (plus de déduction depuis une case ouverte du TODO); un rapport `en-cours` sans agent est orphelin (retour à `idee` + anomalie); une idée cochée au TODO sans rapport passe en `preuves` (manque `rapport`) au lieu de disparaître; `termine` = rapport `termine` + preuves valides, sinon `preuves` avec la liste de ce qui manque; une carte du registre reste `termine`. Les anomalies (`BoardCard.anomalies`) s'affichent en pastille sur la carte, en compteur dans l'en-tête du moodboard et en ligne `anomalies (N)` dans le journal de tournée. Tests : `reconcile.test.ts`, `moodboard.view.test.ts`.
+
+**Validation par le code** : la correction (agent) ne tourne que si la fusion a été refusée (tests/tsc rouges) ou si une carte du lot est en `preuves`; sinon l'événement « correction ignorée : lot valide par le code » (aucun appel modèle). La tâche de correction cite les preuves manquantes exactes (`rounds.ts` `correctionTask`).
+
+**Routage des modèles** (`routing.ts`, `ROUTES`) : le plus petit modèle d'abord, escalade à chaque échec de la carte. research/design : sonnet → opus; implémentation/correction : haiku → sonnet → opus; résumé : haiku; trancheur : haiku → sonnet. Surcharge : `BOUCLE_MODELS='{"implementation":["sonnet"]}'`. Poids relatifs (haiku 1, sonnet 3, opus 15) : estimation du coût, pas une facture (`costUnits`).
+
+**Push automatique** (`git.ts` `pushDev`) : après chaque fusion validée, `git push origin developpement:developpement`. Jamais master/main (refus si la branche courante n'est pas `developpement`); si le distant a avancé : `git pull --no-rebase`, conflit = abandon propre (`merge --abort`) + message dans le journal (« push non effectué : … »). Désactiver : `BOUCLE_PUSH=0`. Tests avec un vrai dépôt distant nu : `git.push.test.ts`; flux complet avec faux agents : `pipeline.flow.test.ts`.
+
+**Limites** : pas d'agents en parallèle (risque de conflits de fusion); coût comparé en unités relatives et en nombre d'appels sur faux agents, pas en euros réels; non vérifié sous Windows.

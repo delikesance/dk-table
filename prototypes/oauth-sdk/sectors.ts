@@ -7,7 +7,8 @@
  *        (branches, commits et fusions sont faits par la boucle, pas par l'agent).
  * Usage : `runSector(SECTORS[0], { query, maxBudgetUsd, env, log })` -> `{ costUsd, ok, text }`.
  */
-import { agentOptions, MODEL_BY_KIND, type Kind } from "./agentOptions";
+import { agentOptions, type Kind } from "./agentOptions";
+import { modelFor, type Task } from "./routing";
 import type { Budget } from "./budget";
 import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
@@ -89,6 +90,8 @@ export interface RunSectorOpts {
   abort?: AbortController;
   /** Dossier de travail de l'agent (worktree du secteur). */
   cwd?: string;
+  /** Modele impose (route par tentative); defaut: premier de la table de routage. */
+  model?: string;
 }
 
 /** Execute un secteur: une requete, cout lu sur le message `result`. */
@@ -106,7 +109,7 @@ export async function runSector(
   const stream = o.query({
     prompt: s.prompt,
     options: agentOptions("edit", {
-      model: MODEL_BY_KIND[s.kind], maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd, env: o.env, abort: o.abort, cwd: o.cwd,
+      model: o.model ?? modelFor(s.id as Task, 0), maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd, env: o.env, abort: o.abort, cwd: o.cwd,
     }),
   });
   for await (const m of stream) {
@@ -130,6 +133,10 @@ export interface SectorCtx {
   env?: Record<string, string>;
   /** Consigne ajoutee au prompt de cette execution (ex. cartes de la tournee). */
   task?: string;
+  /** Tentative (echecs precedents de la carte): monte dans la chaine de modeles. */
+  attempt?: number;
+  /** Remplacements de la table de routage (BOUCLE_MODELS). */
+  models?: Partial<Record<Task, string[]>>;
 }
 
 /** Secteur executable par la boucle. */
@@ -163,7 +170,7 @@ function makeSector(d: SectorDef): Sector {
       for (let i = 0; i < MAX_PASSES && !ctx.signal.aborted && !ctx.budget.exhausted(); i++) {
         const granted = ctx.budget.reserve(cap * d.share);
         if (granted <= 0) break;
-        const r = await runSector({ ...d, prompt: promptFor(d) + (ctx.task ? `\n\n${ctx.task}` : "") }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
+        const r = await runSector({ ...d, prompt: promptFor(d) + (ctx.task ? `\n\n${ctx.task}` : "") }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir, model: modelFor(d.id as Task, (ctx.attempt ?? 0) + i, ctx.models) });
         ctx.budget.settle(granted, r.costUsd);
         cost += r.costUsd;
         if (r.ok) break;
