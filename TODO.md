@@ -282,3 +282,4 @@ Classement par gravité (P0 = pire)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`
 
 - [x] CI/CD rapide: `ci.yml` léger sur push hors main (tsc + vitest --changed), `ci-full.yml` (test, cargo, e2e 3 shards) vers/sur main, concurrency, Chrome du runner; `docs/ci.md`, `src/config/ci.test.ts`
+- [x] import-texte-d-abord-avec-rapport-de-conversions-risquees : import CSV texte d'abord, rapport par colonne accepter/refuser (`io/csvText.ts`, `ui/dialogs/importReport.ts`, `docs/import-texte.md`)

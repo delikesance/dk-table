@@ -7,6 +7,7 @@ import { initTheme } from "./ui/theme";
 import { showOnboarding } from "./ui/onboarding/onboarding";
 import { homeOnStartup } from "./ui/dialogs/settings";
 import { importCsv } from "./ui/fileops";
+import { openImportReport } from "./ui/dialogs/importReport";
 
 initTheme();
 
@@ -20,4 +21,9 @@ if (new URLSearchParams(location.search).get("onboarding") !== "0" && homeOnStar
     onImportCsv: () => void importCsv(app),
     onOpenRecent: (p) => app.hooks.command?.(`recent:${p}`),
   });
+}
+
+// Dev only (e2e, no Tauri dialog): `window.__dkImportCsv(nom, texte)` ouvre le rapport d'import CSV.
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__dkImportCsv = (name: string, text: string) => openImportReport(app, name, text);
 }
