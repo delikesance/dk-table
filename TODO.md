@@ -231,6 +231,7 @@ Classement par gravité (P0 = pire)
 - [ ] Recherche, axe 1 (idées nouvelles): graphe de dépendances inter-feuilles en un clic, historique par cellule, vue « fiche » d'une ligne
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données (fait, voir plus bas), tableaux nommés (Excel Tables), tableau croisé dynamique
 - [x] Carte `atteindre-formules-constantes`: palette + menu Affichage « Surligner formules / constantes » (`engine/audit-kinds.ts`, `ui/grid/kinds.ts`, classes `dkg-kf`/`dkg-kc`; `docs/formules-constantes.md`), e2e `e2e/feat-formules-constantes.spec.ts`
+- [x] Carte `atteindre-special-go-to-special`: Ctrl+G « Atteindre spécial » (vides, formules, constantes, types de résultat, lignes visibles; `engine/special.ts`, `ui/appSpecial.ts`, `ui/dialogs/goToSpecial.ts`; `docs/atteindre-special.md`, rapport `docs/rapports/atteindre-special-go-to-special.md`), e2e `e2e/feat-atteindre-special.spec.ts`
 - [x] Carte `formules-a-resultat-debordant-spill-et-fonctions-sheets`: spill minimal + SPLIT/UNIQUE/FILTER/SORT, `#SPILL!` (`docs/spill.md`, rapport `docs/rapports/`)
 - [x] Carte `fonctions-nommees`: fonction personnalisée (nom, paramètres, corps) dans `.dktable`, dialogue Données > Fonctions nommées… (`docs/fonctions-nommees.md`)
 - [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)

@@ -24,6 +24,7 @@ import { recalcAll } from "../engine/userfn";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
 import { historyField, loadHistory } from "./history/store";
+import { goSpecial } from "./appSpecial";
 import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
@@ -161,6 +162,7 @@ export function createApi(c: Ctx): App {
     deleteRows: () => structOp(c, "deleteRows"),
     insertCols: () => structOp(c, "insertCols"),
     deleteCols: () => structOp(c, "deleteCols"),
+    goSpecial: (o) => goSpecial(c, o),
     setFreeze(f) {
       c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;
       buildGrid(c); setTitle(c, true);

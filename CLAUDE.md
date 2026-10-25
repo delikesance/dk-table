@@ -186,6 +186,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Decisions (formules / constantes)
 
+- Atteindre spécial (Ctrl+G): `engine/special.ts` (pur), `ui/appSpecial.ts` (sélection + marque `dkg-special`), `ui/dialogs/goToSpecial.ts`. Détail: `docs/atteindre-special.md`.
+
 - Surlignage bascule (palette/Affichage `view.kinds`): `engine/audit-kinds.ts` `rawKind`, `ui/grid/kinds.ts` (classe `dk-kinds` sur `<html>`), `dkg-kf`/`dkg-kc` posées par `markKind`. Détail: `docs/formules-constantes.md`.
 
 ## Decisions (texte en colonnes)

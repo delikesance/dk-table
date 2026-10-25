@@ -1,0 +1,9 @@
+/* Atteindre spécial : cellules trouvées (classe `dkg-special`, posée par appSpecial.ts) et boîte de choix. */
+.dkg-special { background: var(--c-accent-soft); }
+.dk-special { display: grid; gap: 12px; min-width: 300px; }
+.dk-special fieldset { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; }
+.dk-special legend { font: var(--fs-sm) var(--font-ui); color: var(--c-text-soft); padding: 0; margin-bottom: 4px; }
+.dk-special label { display: flex; align-items: center; gap: 8px; }
+.dk-special__types { padding-left: 20px; }
+.dk-special__msg { margin: 0; min-height: 1.2em; color: var(--c-error); }
+.dk-special__go { justify-self: end; }
