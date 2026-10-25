@@ -74,7 +74,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     const kind = rawKind(opts.getRaw(key)), sig = `${kind}|` + (custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`);
     if (sigs.get(key) === sig) return;
     sigs.set(key, sig);
-    markKind(el, text, opts.gap?.(key), kind);
+    markKind(el, text, opts.gap?.(key), kind, opts.numeric?.(key));
     if (custom) el.replaceChildren(custom);
     else el.textContent = text;
   }
