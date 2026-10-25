@@ -80,3 +80,30 @@ describe("panneau: rendu", () => {
     expect((q("#go") as HTMLButtonElement).disabled).toBe(false);
   });
 });
+
+describe("panneau: fin de boucle", () => {
+  it("start/end x4 puis done: 4 etapes reussies, rien en cours, statut unique", () => {
+    const send = load();
+    for (const s of ["research", "implementation", "correction", "design"]) {
+      send({ type: "start", sector: s });
+      send({ type: "end", sector: s, costUsd: 0.1, totalUsd: 3.06, remainingUsd: 18.54 });
+    }
+    send({ type: "done", message: "terminé" });
+    expect(document.querySelectorAll("#phasebar .step.ok").length).toBe(4);
+    expect(document.body.textContent).not.toContain("en cours");
+    expect(q("#status")!.textContent).toBe("Terminé · 3,06 $ dépensés sur 21,60 $");
+  });
+  it("done ferme la phase restee en cours selon ses agents; arret => echec", () => {
+    let send = load();
+    send({ type: "start", sector: "correction" });
+    send({ type: "end", sector: "correction", ok: true });
+    send({ type: "start", sector: "correction", axis: "x" });
+    send({ type: "done", message: "terminé" });
+    expect(q("#phasebar .step.ok")).toBeTruthy();
+    send = load();
+    send({ type: "start", sector: "design" });
+    send({ type: "done", message: "arrêté" });
+    expect(q("#phasebar .step.fail")).toBeTruthy();
+    expect(q("#status")!.textContent).toMatch(/^Arrêté/);
+  });
+});
