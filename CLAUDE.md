@@ -50,8 +50,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## CI
 
-- `.github/workflows/ci.yml` (GitHub Actions, on push + PR): `npm ci`, `npm test`, `cargo test`, each guarded by file existence.
-- `.github/workflows/release.yml`: build Linux (deb + AppImage); à valider via workflow_dispatch. Tests de config: `src/config/packaging.test.ts`; tests de styles/contraste: `src/styles/styles.test.ts`.
+- `.github/workflows/ci.yml` (GitHub Actions, push sur `main` + PR vers `développement`): `npm ci`, `npm test`, `cargo test`, each guarded by file existence. Stratégie de branches et réglages GitHub: `docs/branches.md`.
+- `.github/workflows/release.yml`: sur push `main`, build Linux (deb + AppImage) + Windows (msi + nsis) puis release `v<version>`; à valider sur GitHub. Test: `src/config/branches.test.ts`. Tests de config: `src/config/packaging.test.ts`; tests de styles/contraste: `src/styles/styles.test.ts`.
 
 ## Commands
 
