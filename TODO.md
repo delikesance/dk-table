@@ -223,3 +223,8 @@ Classement par gravité (P0 = pire)
 - [x] Règle CLAUDE.md : captures d'écran (clair/sombre, `docs/screenshots/`) obligatoires dans toute PR de fonctionnalité visible
 - [x] Largeurs de colonnes enregistrées dans `.dktable` (`DocSheet.colWidths`, lettres → px, absent si aucune), restaurées à l'ouverture (anciens fichiers OK), annulables (glisser et ajustement = un pas), suivent l'insertion/suppression de colonnes. `io/colWidthsFormat.ts`, `Entry.widths`; tests unitaires + `e2e/feat-colwidth.spec.ts`
 - [x] Défilement et sélection propres à chaque feuille : `appGrid.buildGrid` mémorise scrollTop/scrollLeft + sélection de la feuille quittée (WeakMap par entrée, non enregistrés dans le fichier) et les restaure au retour; une feuille neuve démarre en A1 en haut. Tests `appScroll.test.ts` + `e2e/sheet-scroll.spec.ts`. Onglets doc/macro non concernés (éditeurs recréés à l'ouverture)
+
+## Boucle autonome (autoloop)
+
+- [x] Étape 1 : squelette `tools/autoloop/` (config, budget, journal, redact, agent injectable + fake, loop pur, main `--dry-run`), tests `tools/autoloop/__tests__/`, tsconfig inclut `tools`. Aucun appel réel au SDK.
+- [ ] Étape 2+ : `--live` (SDK réel, gh, worktrees), état `state.json`, audit/worker/reviewer réels

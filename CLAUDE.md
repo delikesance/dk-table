@@ -191,3 +191,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cycle handling (#CYCLE)
 - Linux packaging format
 - Whether pépites 1/2 are dropped or kept as stretch
+
+## autoloop
+
+- `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`; `--live` non branché). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
