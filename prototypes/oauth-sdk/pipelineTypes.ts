@@ -2,6 +2,7 @@
  * Dependances injectees du pipeline (extraites de pipeline.ts pour tenir sous 200 lignes).
  * Usage : `import type { PipelineDeps } from "./pipelineTypes"` (re-exporte par pipeline.ts).
  */
+import type { LockStat } from "./concurrency";
 import type { Budget } from "./budget";
 import type { BoardCard } from "./cards";
 import type { listDesigns, readDesign, watchDesigns } from "./designs";
@@ -15,6 +16,8 @@ import type { BoucleEvent } from "./server";
 export interface PipelineDeps {
   /** Etat persistant du run (.boucle/state.json): reprise apres crash (absent: aucune persistance). */
   state?: StateStore;
+  /** Mesure des verrous (attente, duree) pour le journal. */
+  onLock?: (s: LockStat) => void;
   /** Journal des problemes d'etat et des reprises (absent: silencieux). */
   warn?: (msg: string) => void;
   query: QueryFn;

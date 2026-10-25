@@ -4,7 +4,7 @@
  * The command runner is injected so tests need no real git.
  */
 import { stripAnsi } from "./cleanOutput";
-import { createMutex } from "./concurrency";
+import { createMutex, type LockStat } from "./concurrency";
 import { createChecks } from "./gitChecks";
 
 /** Runs a command; resolves with exit code and combined output. */
@@ -35,6 +35,8 @@ export interface PushResult { pushed: boolean; reason?: string }
 
 /** Options du flux git. */
 export interface GitOpts {
+  /** Mesure des verrous (nom, attente, duree): journal des attentes `lock`, `suiteLock`, `baseLock`. */
+  onLock?: (s: LockStat) => void;
   /** Pousser `developpement` apres chaque fusion validee (defaut: non; `BOUCLE_PUSH=0` le coupe dans boucle.ts). */
   push?: boolean;
 }
@@ -57,7 +59,7 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
   }
 
   /** Verrou de l'arbre principal: creation de worktrees, checkout, fusion et push passent un par un. */
-  const lock = createMutex();
+  const lock = createMutex({ name: "lock", onLock: opts.onLock });
   let seq = 0;
 
   async function startSector(sector: string, tag = "") {
@@ -95,7 +97,7 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return (await git(["checkout", DEV])).code === 0;
   }
 
-  const { checks, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV });
+  const { checks, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock });
 
   async function mergeIfGreen(branch: string, dir: string) {
     const failed = installFail.get(dir);

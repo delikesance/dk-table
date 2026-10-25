@@ -11,12 +11,26 @@
 /** Verrou asynchrone FIFO. */
 export interface Mutex { run<T>(fn: () => Promise<T>): Promise<T> }
 
+/** Mesure d'un passage dans un verrou nomme: attente avant d'entrer, temps passe dedans. */
+export interface LockStat { name: string; waitMs: number; holdMs: number }
+
+/** Options du verrou: nom et rappel de mesure (journal des temps d'attente), horloge injectable. */
+export interface MutexOpts { name?: string; onLock?: (s: LockStat) => void; now?: () => number }
+
 /** Cree un verrou: une erreur d'une section libere le verrou et ne remonte qu'a son appelant. */
-export function createMutex(): Mutex {
+export function createMutex(o: MutexOpts = {}): Mutex {
   let tail: Promise<unknown> = Promise.resolve();
+  const now = o.now ?? (() => performance.now());
   return {
     run<T>(fn: () => Promise<T>): Promise<T> {
-      const next = tail.then(fn, fn);
+      const asked = now();
+      const timed = async () => {
+        const start = now();
+        try { return await fn(); } finally {
+          try { o.onLock?.({ name: o.name ?? "verrou", waitMs: Math.round(start - asked), holdMs: Math.round(now() - start) }); } catch { /* la mesure ne casse jamais le verrou */ }
+        }
+      };
+      const next = tail.then(timed, timed);
       tail = next.catch(() => undefined);
       return next;
     },

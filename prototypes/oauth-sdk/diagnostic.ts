@@ -34,10 +34,16 @@ export function diagnose(es: LogEntry[]): string {
   const byModel = new Map<string, number>();
   for (const e of es) if (typeof e.costUsd === "number") byModel.set(String(e.model ?? "?"), (byModel.get(String(e.model ?? "?")) ?? 0) + e.costUsd);
   const total = [...byModel.values()].reduce((a, b) => a + b, 0);
+  const sum = (k: string) => es.filter((e) => e.msg === "resultat").reduce((n, e) => n + (typeof e[k] === "number" ? (e[k] as number) : 0), 0);
+  const locks = es.filter((e) => e.comp === "verrou");
+  const lockWait = new Map<string, number>();
+  for (const e of locks) lockWait.set(String(e.lock), (lockWait.get(String(e.lock)) ?? 0) + (typeof e.waitMs === "number" ? e.waitMs : 0));
   const bad = es.filter((e) => e.level === "warn" || e.level === "error");
   const back = es.filter((e) => e.msg === "transition" && e.from === "termine" && e.to !== "termine");
   const out = [`# Diagnostic du run ${run}`, "", `- Durée : ${dur} s · lignes : ${es.length} · erreurs : ${es.filter((e) => e.level === "error").length} · avertissements : ${es.filter((e) => e.level === "warn").length}`,
-    `- Coût (USD, estimé) : ${eur(total)}${[...byModel].map(([m, c]) => ` · ${m} ${eur(c)}`).join("")}`, ""];
+    `- Coût (USD, estimé) : ${eur(total)}${[...byModel].map(([m, c]) => ` · ${m} ${eur(c)}`).join("")}`,
+    `- Tokens : entrée ${sum("inTokens")} · sortie ${sum("outTokens")} · cache lu ${sum("cacheRead")} · cache créé ${sum("cacheCreation")} · contexte injecté ~${Math.ceil(sum("ctxChars") / 4)} (approx.)`,
+    `- Attente de verrous (s) :${lockWait.size ? [...lockWait].map(([n, ms]) => ` ${n} ${(ms / 1000).toFixed(1)}`).join(" ·") : " aucune mesure"}`, ""];
   if (!bad.length && !back.length) out.push("Aucune anomalie.");
   else {
     out.push(`## Anomalies (${bad.length})`);

@@ -6,6 +6,19 @@ import type { LogEntry } from "./logRead";
 let ms = 0;
 const E = (o: Partial<LogEntry>): LogEntry => ({ ts: "2026-01-01T00:00:00.000Z", ms: (ms += 1000), level: "info", comp: "x", run: "r1", msg: "m", ...o });
 
+describe("diagnose: mesures", () => {
+  it("totalise tokens, cache, contexte et attentes de verrous", () => {
+    const t = diagnose([
+      E({ msg: "debut" }),
+      E({ comp: "modele", msg: "resultat", model: "haiku", costUsd: 0.1, inTokens: 10, outTokens: 5, cacheRead: 100, cacheCreation: 7, ctxChars: 400 }),
+      E({ comp: "modele", msg: "resultat", model: "haiku", costUsd: 0.1, inTokens: 1, outTokens: 2, cacheRead: 3, cacheCreation: 4, ctxChars: 400 }),
+      E({ comp: "verrou", msg: "suiteLock", lock: "suiteLock", waitMs: 1500, holdMs: 10 }),
+    ]);
+    expect(t).toContain("entrée 11 · sortie 7 · cache lu 103 · cache créé 11 · contexte injecté ~200");
+    expect(t).toContain("suiteLock 1.5");
+  });
+});
+
 describe("diagnose", () => {
   it("run sain: resume sans anomalie", () => {
     const t = diagnose([E({ msg: "debut" }), E({ comp: "modele", msg: "appel", model: "haiku", costUsd: 0.1, turns: 3 })]);
