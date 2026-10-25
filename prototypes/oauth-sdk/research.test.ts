@@ -26,11 +26,11 @@ describe("MODEL_BY_KIND", () => {
   it("table explicite: code=haiku, think=sonnet, plan=opus, summary=haiku", () => {
     expect(MODEL_BY_KIND).toEqual({ code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" });
   });
-  it("chaque axe de recherche est de type think et lance le modele de sa table", async () => {
+  it("chaque axe de recherche demarre sur le premier modele de la table de routage (haiku), sonnet seulement en escalade", async () => {
     const { q, calls } = fake(0.1);
     await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1 });
     expect(AXES.every((a) => a.kind === "think")).toBe(true);
-    expect(calls.map((c) => c.options.model)).toEqual(Array(4).fill(MODEL_BY_KIND.think));
+    expect(calls.map((c) => c.options.model)).toEqual(Array(4).fill("haiku"));
   });
 });
 
@@ -53,16 +53,16 @@ describe("runResearch", () => {
 
   it("s'arrete a 90 % du plafond sans jamais depasser le plafond", async () => {
     const { q, calls } = fake(4.5, 5);
-    const out = await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 5 });
-    expect(out.totalCostUsd).toBe(18);
+    const out = await runResearch({ query: q, budget: createBudget(1, 1), maxRounds: 5 });
+    expect(out.totalCostUsd).toBe(1);
     expect(calls).toHaveLength(4);
   });
 
   it("repartit le reste du budget entre requetes simultanees (somme <= plafond)", async () => {
     const { q, calls } = fake(100, 5);
-    const out = await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 3 });
-    expect(calls[0].options.maxBudgetUsd).toBe(5);
-    expect(out.totalCostUsd).toBeLessThanOrEqual(20);
+    const out = await runResearch({ query: q, budget: createBudget(1, 1), maxRounds: 3 });
+    expect(calls[0].options.maxBudgetUsd).toBe(0.25);
+    expect(out.totalCostUsd).toBeLessThanOrEqual(1);
     expect(calls[0].options.permissionMode).toBe("dontAsk");
     expect(calls[0].options.allowedTools).toContain("WebSearch");
   });
@@ -74,10 +74,10 @@ describe("runResearch", () => {
     await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1, log: (l) => lines.push(l), now: () => (t += 1000) });
     const end = lines.filter((l) => l.includes("fin"));
     expect(end).toHaveLength(4);
-    expect(end[3]).toMatch(/\$1\.00/);
+    expect(end[3]).toMatch(/\$0\.30/); // plafond par axe 0,30 $
     expect(end[3]).toMatch(/\d+s/);
-    expect(end[3]).toMatch(/total \$4\.00/);
-    expect(end[3]).toMatch(/reste \$16\.00/);
+    expect(end[3]).toMatch(/total \$1\.20/);
+    expect(end[3]).toMatch(/reste \$18\.80/);
   });
 });
 
@@ -89,8 +89,8 @@ describe("evenements des axes (sans doublon avec le journal)", () => {
     await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1, emit: (e) => ev.push(e as never), now: () => (t += 1000) });
     const ends = ev.filter((e) => e.type === "end");
     expect(ends).toHaveLength(4);
-    expect(ends[0]).toMatchObject({ axis: expect.any(String), costUsd: 1, totalUsd: 1, remainingUsd: 19 });
-    expect(ends[3]).toMatchObject({ totalUsd: 4, remainingUsd: 16 });
+    expect(ends[0]).toMatchObject({ axis: expect.any(String), costUsd: 0.3, totalUsd: 0.3, remainingUsd: 19.7 });
+    expect(ends[3]).toMatchObject({ totalUsd: 1.2, remainingUsd: 18.8 });
     expect(typeof ends[0].elapsedS).toBe("number");
   });
 });

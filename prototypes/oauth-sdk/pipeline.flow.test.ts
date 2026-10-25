@@ -9,17 +9,20 @@ import type { BoucleEvent } from "./server";
 const card = (id: string, state: BoardCard["state"], missing: string[] = []) =>
   ({ id, title: id, source: "s", status: "found", summary: "", state, reportPath: "", missing, anomalies: [] }) as BoardCard;
 
-interface Opts { boards: BoardCard[][]; testsRed?: boolean; remote?: boolean; push?: boolean }
+interface Opts { boards: BoardCard[][]; testsRed?: boolean; /** Meme test rouge sur developpement (base). */ baseRed?: boolean; remote?: boolean; push?: boolean }
 function harness(o: Opts) {
   const calls: { model: string; prompt: string }[] = [];
   const gitCalls: string[] = [];
-  const run: Run = async (cmd, args) => {
+  const run: Run = async (cmd, args, cwd) => {
     const line = `${cmd} ${args.join(" ")}`;
     if (cmd === "git") gitCalls.push(line);
     if (cmd === "git" && args[0] === "rev-parse" && args[1] === "--abbrev-ref") return { code: 0, out: "developpement\n" };
     if (cmd === "git" && args[0] === "status") return { code: 0, out: " M f\n" };
     if (cmd === "git" && args[0] === "remote") return { code: o.remote === false ? 1 : 0, out: "" };
-    if (cmd === "npm" && args[0] === "test") return { code: o.testsRed ? 1 : 0, out: o.testsRed ? "FAIL x" : "" };
+    if (cmd === "npm" && args[0] === "test") {
+      const red = cwd?.includes("/base-") ? o.baseRed : o.testsRed;
+      return { code: red ? 1 : 0, out: red ? " FAIL  infra.test.ts > git lent" : "" };
+    }
     return { code: 0, out: "" };
   };
   const query: QueryFn = ({ prompt, options }) => {
@@ -57,6 +60,16 @@ describe("validation par code", () => {
     await h.go();
     expect(h.corr().length).toBeGreaterThan(0);
     expect(h.corr()[0].prompt).toContain("fusion a ete refusee");
+  });
+});
+
+describe("echec preexistant sur la base", () => {
+  it("test deja rouge sur developpement: la carte est fusionnee et l'anomalie est signalee dans le journal", async () => {
+    const h = harness({ boards: [[card("a", "idee")], [card("a", "termine")]], testsRed: true, baseRed: true });
+    await h.go();
+    expect(h.corr()).toHaveLength(0);
+    expect(h.events.some((e) => /anomalie/.test(e.message ?? "") && /infra\.test\.ts > git lent/.test(e.message ?? ""))).toBe(true);
+    expect(h.events.some((e) => /fusionne dans developpement/.test(e.message ?? ""))).toBe(true);
   });
 });
 

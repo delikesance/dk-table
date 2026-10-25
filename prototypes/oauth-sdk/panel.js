@@ -6,7 +6,7 @@
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
   var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé" };
-  var agents = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
+  var agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
 
   PHASES.forEach(function (p) { phases[p[0]] = { label: p[1], state: "pending", cost: null, elapsed: null, t0: 0 }; });
   AXES.forEach(function (a) { agents[a[0]] = { label: a[1], state: "pending", elapsed: null, t0: 0 }; });
@@ -33,6 +33,16 @@
     o.state = st;
   }
 
+  /** Agent d'implementation en parallele (une carte): suit son etat; la phase reste en cours tant qu'un agent travaille. */
+  function trackWorker(e, st, ph) {
+    var w = workers[e.agent] || (workers[e.agent] = { label: e.agent, state: "pending", elapsed: null, t0: 0 });
+    setState(w, st, e);
+    var all = Object.keys(workers).map(function (k) { return workers[k]; });
+    var busy = all.some(function (x) { return x.state === "running"; });
+    if (busy) { if (ph.state !== "running") setState(ph, "running", {}); }
+    else setState(ph, all.some(function (x) { return x.state === "fail"; }) ? "fail" : "ok", e);
+  }
+
   /** Applique un evenement au modele (phases, agents, budget). */
   function track(e) {
     var st = e.type === "start" ? "running" : e.type === "end" ? (e.ok === false ? "fail" : "ok") : e.type === "error" ? "fail" : null;
@@ -41,7 +51,8 @@
     var ph = phases[e.sector];
     if (e.axis && agents[e.axis]) setState(agents[e.axis], st, e);
     if (!ph) { if (e.type === "error") PHASES.forEach(function (p) { if (phases[p[0]].state === "running") setState(phases[p[0]], "fail", e); }); return; }
-    if (!e.axis) setState(ph, st, e);
+    if (e.agent && e.sector === "implementation" && !e.axis) trackWorker(e, st, ph);
+    else if (!e.axis) setState(ph, st, e);
     else if (ph.state === "pending") setState(ph, "running", {});
     current = e.sector;
   }
@@ -54,6 +65,7 @@
       if (o.state === "running") setState(o, stopped || (p[0] === "research" && any) ? "fail" : "ok", {});
     });
     Object.keys(agents).forEach(function (k) { if (agents[k].state === "running") setState(agents[k], stopped ? "fail" : "ok", {}); });
+    Object.keys(workers).forEach(function (k) { if (workers[k].state === "running") setState(workers[k], stopped ? "fail" : "ok", {}); });
   }
 
   /** Ligne de statut finale unique : etat, depense, plafond (en euros). */
@@ -88,6 +100,13 @@
       var li = line(phases[p[0]], "li", "step", true), head = el("div");
       while (li.firstChild) head.appendChild(li.firstChild);
       li.appendChild(head);
+      var ws = Object.keys(workers);
+      if (p[0] === "implementation" && ws.length) {
+        var par = el("ul", "agents par");
+        par.appendChild(el("li", "agent-head", ws.length + " agent" + (ws.length > 1 ? "s" : "") + " en parallèle"));
+        ws.forEach(function (k) { par.appendChild(line(workers[k], "li", "agent")); });
+        li.appendChild(par);
+      }
       if (p[0] === "research") {
         var ul = el("ul", "agents");
         AXES.forEach(function (a) { ul.appendChild(line(agents[a[0]], "li", "agent")); });
@@ -151,7 +170,7 @@
     alertMsg("");
     fetch("/go", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ budgetEur: cap() }) })
       .then(function (r) {
-        if (r.ok) { $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); return; }
+        if (r.ok) { workers = {}; $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); return; }
         return r.json().then(function (j) { alertMsg("Refusé : " + (j.error || r.status)); });
       });
   };

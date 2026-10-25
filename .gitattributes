@@ -4,3 +4,4 @@
 *.woff binary
 *.ico binary
 *.icns binary
+TODO.md merge=union

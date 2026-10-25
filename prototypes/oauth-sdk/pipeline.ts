@@ -8,17 +8,20 @@
  * Usage : `createPipeline({ query, run, cwd })` -> `(opts: RunOpts) => Promise<void>` (voir boucle.ts).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { createBudget, type Budget } from "./budget";
 import { listDesigns, readDesign, watchDesigns } from "./designs";
+import { writeDesignRecap } from "./designRecap";
 import { createGitFlow, type Run } from "./git";
 import type { BoardCard } from "./cards";
 import type { QueryFn } from "./research";
+import { researchGate } from "./researchGate";
 import { researchSector } from "./researchSector";
 import { parseOverride } from "./routing";
+import type { AgentResult } from "./parallel";
 import { runRounds, stopMessage, type StopReason } from "./rounds";
 import { watchReports as defaultWatchReports } from "./reportWatch";
-import { SECTORS, currentDesignPath, recapPath, type Sector } from "./sectors";
+import { SECTORS, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
 import { summarizePhase, type Status } from "./summary";
 
@@ -46,8 +49,14 @@ export interface PipelineDeps {
   buildRecap?: (designs: { name: string; html: string; mtimeMs: number }[], steps: BoucleEvent[]) => string;
   /** Opt-in: resumes de fin de phase rediges par Haiku (defaut: texte deterministe, aucun processus Claude). */
   llmSummaries?: boolean;
+  /** Agents d'implementation en parallele (defaut 1 = un seul agent pour tout le lot; boucle.ts: `BOUCLE_PARALLEL`, defaut 3). */
+  parallel?: number;
+  /** Worktrees des agents en cours (liste vide une fois finis): pour lire leurs rapports en direct. */
+  onDirs?: (dirs: string[]) => void;
   /** Pousser `developpement` apres chaque fusion validee (defaut: non; boucle.ts l'active, `BOUCLE_PUSH=0` le coupe). */
   push?: boolean;
+  /** Cartes non terminees avant la recherche (absent: la recherche tourne toujours). */
+  unfinished?: () => Promise<number>;
   /** Etat des cartes une fois fusionne (absent: un seul passage implementation + correction, sans boucle). */
   board?: (active?: string[]) => Promise<BoardCard[]>;
   /** Surveillance des rapports d'un worktree (defaut: reportWatch.ts; injectable pour les tests). */
@@ -69,11 +78,12 @@ function diskWrite(path: string, text: string): void {
 /** Construit `runPipeline` lie a ses dependances. */
 export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean; reason?: StopReason } | undefined> {
   const write = deps.writeFile ?? diskWrite;
+  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
   const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
-    const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
     const models = parseOverride(deps.env?.BOUCLE_MODELS);
+    const parallel = Math.max(1, Math.floor(deps.parallel ?? 1));
     await flow.ensureDev();
 
     const research = researchSector(write);
@@ -94,58 +104,56 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     };
 
     /** Un secteur: worktree, execution (consigne `task` en plus), commit, fusion si vert. */
-    const runOne = async (sector: Sector, task?: string, attempt = 0): Promise<boolean> => {
-      const { branch, dir } = await flow.startSector(sector.name);
-      deps.onDir?.(dir);
+    const live = new Set<string>(), inflight: Record<string, number> = {};
+    const setDir = (dir: string, on: boolean) => { if (on) live.add(dir); else live.delete(dir); deps.onDir?.(on ? dir : [...live].at(-1) ?? null); deps.onDirs?.([...live]); };
+    const runOne = async (sector: Sector, task?: string, attempt = 0, cards: { id: string }[] = []): Promise<AgentResult> => {
+      const agent = cards.map((c) => c.id).join(", ") || undefined;
+      const { branch, dir } = await flow.startSector(sector.name, cards.map((c) => c.id).join("-"));
+      setDir(dir, true); inflight[sector.name] = (inflight[sector.name] ?? 0) + 1;
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
       let held: BoucleEvent | undefined;
       const isDesign = sector.name === "design";
       const ddir = join(dir, DESIGN_DIR);
       const steps: BoucleEvent[] = [];
+      const send = (e: BoucleEvent) => onEvent(agent ? { ...e, agent } : e); // chaque evenement d'un agent porte sa carte
       const emit = (e: BoucleEvent) => {
         if (isDesign) steps.push(e);
-        if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else onEvent(e);
+        if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else send(e);
       };
       let stopWatch: (() => void) | undefined;
       if (isDesign) {
         deps.onSectorDir?.(ddir);
         stopWatch = (deps.watchDesigns ?? watchDesigns)(ddir, (f) => emit({ type: "file", sector: "design", message: f.name, state: f.state, ts: f.mtimeMs }));
       }
-      let ok = false;
+      let ok = false, conflict = false;
       const stopReports = sector.name === "implementation"
-        ? (deps.watchReports ?? defaultWatchReports)(join(dir, "docs", "rapports"), (id) => onEvent({ type: "card", sector: "implementation", cardId: id }))
+        ? (deps.watchReports ?? defaultWatchReports)(join(dir, "docs", "rapports"), (id) => send({ type: "card", sector: "implementation", cardId: id }))
         : undefined;
       try {
-        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task, attempt, models });
+        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task, attempt, models, slots: sector.name === "implementation" ? parallel : 1 });
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
-          // recap du design de CE run (les precedents restent dans leurs propres fichiers); repli: tous les designs
-          const all = (await (deps.listDesigns ?? listDesigns)(ddir)).filter((f) => f.kind === "design");
-          const mine = all.filter((f) => f.name === basename(currentDesignPath()));
-          const files = mine.length ? mine : all;
-          const read = deps.readDesign ?? readDesign;
-          const designs = [];
-          for (const f of files) designs.push({ name: f.name, html: (await read(ddir, f.name)) ?? "", mtimeMs: f.mtimeMs });
-          write(join(ddir, basename(recapPath(currentDesignPath()))), deps.buildRecap(designs, steps));
+          await writeDesignRecap({ ddir, steps, build: deps.buildRecap, write, list: deps.listDesigns ?? listDesigns, read: deps.readDesign ?? readDesign });
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir);
-        ok = m.merged;
-        onEvent({
+        ok = m.merged; conflict = !!m.conflict;
+        send({
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
-        if (m.merged && m.push) onEvent({ type: "info", sector: sector.name, message: m.push.pushed ? "developpement pousse sur origin" : `push non effectue : ${m.push.reason}` });
+        if (m.preexisting?.length) send({ type: "info", sector: sector.name, message: `anomalie : test(s) deja rouge(s) sur developpement, sans rapport avec la carte : ${m.preexisting.join("; ")}` });
+        if (m.merged && m.push) send({ type: "info", sector: sector.name, message: m.push.pushed ? "developpement pousse sur origin" : `push non effectue : ${m.push.reason}` });
       } finally {
         stopReports?.();
-        deps.onDir?.(null);
+        setDir(dir, false); inflight[sector.name]--;
         if (isDesign) { stopWatch?.(); if (ok) deps.onSectorDir?.(null); } // non fusionne: le worktree reste, la page Design l'affiche encore
         status[sector.name] = ok ? "ok" : "failed";
-        if (held) onEvent({ ...(held as BoucleEvent), ok });
-        await summarize(sector.name);
+        if (held) send({ ...(held as BoucleEvent), ok });
+        if (!inflight[sector.name]) await summarize(sector.name); // un seul resume quand le dernier agent du secteur a fini
       }
-      return ok;
+      return { merged: ok, conflict };
     };
 
     /** Vrai (avec message) si la boucle doit s'arreter: abandon ou budget epuise. */
@@ -155,9 +163,10 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       return true;
     };
 
-    // recherche puis design, une fois
+    // recherche (sautee s'il y a deja assez de cartes a traiter) puis design, une fois
     const [implementation, correction] = SECTORS.filter((x) => x.name !== "design");
-    for (const sector of [research, ...SECTORS.filter((x) => x.name === "design")]) {
+    const enough = await researchGate({ unfinished: deps.unfinished, env: deps.env, emit: onEvent, budget }); if (enough) status.research = "ok";
+    for (const sector of [...(enough ? [] : [research]), ...SECTORS.filter((x) => x.name === "design")]) {
       if (stopped()) {
         const early: StopReason = signal.aborted ? "abort" : "budget";
         onEvent({ type: "info", complete: false, reason: early, message: `${early === "abort" ? "arrete" : "budget epuise"} avant la fin des cartes` });
@@ -173,8 +182,8 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     // tournees (voir rounds.ts) puis dernier resume: « terminee » seulement si plus aucune carte
     const res = await runRounds({
       board: (active) => deps.board!(active),
-      impl: (task, attempt) => runOne(implementation, task, attempt),
-      corr: (task, attempt) => runOne(correction, task, attempt),
+      impl: (task, attempt, cards) => runOne(implementation, task, attempt, cards), parallel,
+      corr: async (task, attempt) => (await runOne(correction, task, attempt)).merged,
       emit: onEvent, progress: (n) => { remaining = n; },
       halt: () => (signal.aborted ? "abort" : budget.exhausted() ? "budget" : null),
     });
@@ -186,6 +195,6 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     return { complete, reason };
   };
   return async (o) => {
-    try { return await inner(o); } finally { deps.onBudget?.(null); }
+    try { return await inner(o); } finally { deps.onBudget?.(null); await flow.dispose().catch(() => {}); }
   };
 }

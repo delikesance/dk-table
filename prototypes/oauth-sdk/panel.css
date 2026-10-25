@@ -63,6 +63,7 @@ body { margin: 0; font: 16px/1.5 var(--font-ui); background: var(--bg); color: v
 @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
 .agents { list-style: none; margin: var(--s2) 0 0; padding: 0 0 0 var(--s4); display: grid; gap: var(--s1); }
 .agent { display: flex; align-items: baseline; gap: var(--s2); font-size: .95rem; padding: 2px 0; }
+.agent-head { color: var(--mut); font: 500 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .04em; }
 .agent.fail { color: var(--fail); font-weight: 600; }
 .agent.pending .ico { color: var(--mut); }
 .ico { display: inline-block; width: 1.2em; font-weight: 700; }

@@ -28,6 +28,9 @@ import { createServer, type BoucleEvent } from "./server";
 /** Dependances reelles (ou factices en test). */
 export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
 
+/** Agents en parallele: `BOUCLE_PARALLEL` (entier >= 1), defaut 3; 1 = un seul agent pour tout le lot. */
+export const parallelOf = (v?: string): number => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 8) : 3; };
+
 /** Lit un fichier du dossier du code; `undefined` s'il est absent (=> 404). */
 const here = dirname(fileURLToPath(import.meta.url));
 const page = (name: string): string | undefined => {
@@ -45,8 +48,8 @@ export function buildBoucleServer(o: WiringOpts): Server {
   const designSteps: BoucleEvent[] = [];
   const listMemo = memo(() => store.list(), 2000);
   // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
-  let activeDir: string | null = null;
-  const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir });
+  let activeDir: string | null = null, activeDirs: string[] = [];
+  const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir, activeDirs: () => activeDirs });
   // Cartes terminees: registre durable (jamais purge), hors depot (.boucle/ ignore par git).
   const ledger = createFileLedger(join(o.cwd, ".boucle", "termines.jsonl"));
   // Cartes du lot en cours de traitement (evenement de tournee): seules celles-ci peuvent etre « en cours ».
@@ -59,8 +62,9 @@ export function buildBoucleServer(o: WiringOpts): Server {
   });
   const pipeline = createPipeline({
     query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
+    unfinished: async () => (await boardOf("merged", new Set())).filter((c) => c.state !== "termine").length,
     board: (a) => { activeIds = new Set(a ?? []); return boardOf("merged", activeIds); },
-    onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; }, onDir: (d) => { activeDir = d; },
+    onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; }, onDir: (d) => { activeDir = d; }, onDirs: (d) => { activeDirs = d; }, parallel: parallelOf(o.env.BOUCLE_PARALLEL),
   });
   return createServer({
     runPipeline: (r) => {
