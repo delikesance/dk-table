@@ -21,6 +21,11 @@ for (const [theme, label] of [["light", "clair"], ["dark", "sombre"]] as const) 
     await expect(bar.locator('[data-stat="Somme"]')).toContainText("60");
     await expect(bar.locator('[data-stat="Moyenne"]')).toContainText("20");
     await expect(bar.locator('[data-stat="Nb"]')).toContainText("4");
+    await bar.locator(".dk-status__btn").click();
+    await bar.locator('input[data-stat-opt="Min"]').uncheck();
+    await expect(bar.locator('[data-stat="Min"]')).toHaveCount(0);
+    await bar.locator('input[data-stat-opt="Min"]').check();
+    await expect(bar.locator('[data-stat="Min"]')).toHaveCount(1);
     await page.screenshot({ path: `${DIR}/statistiques-${label}.png` });
   });
 }
