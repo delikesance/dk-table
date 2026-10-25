@@ -31,7 +31,7 @@ Visible : oui
 - Le design `docs/design/2026-10-25-200330.html` ne traite pas de ce sujet (pas de moyenne mobile ni de lissage); pas de construction dessus.
 
 ## Preuves
-- Tests : ok (925 tests, tests lies aux fichiers modifies)
+- Tests : ok (931 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
 - Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":925,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"count":931,"scope":"related"},"tsc":{"ok":true}} -->
