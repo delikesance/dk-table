@@ -2,6 +2,7 @@
 import { bindWorkbook, createSheet, setCell, type Sheet } from "../engine/sheet";
 import type { CellStyle, DocSheet } from "../io/types";
 import type { CfRule } from "../engine/cf/types";
+import type { ValRule } from "../engine/validation/types";
 import { widthsFromDoc } from "../io/colWidthsFormat";
 
 /** Visual/format style of one cell (persisted in .dktable; `format` = number-format code). */
@@ -18,6 +19,8 @@ export interface State {
   cf?: CfRule[];
   /** Custom column widths (absent in snapshots = none). */
   widths?: Record<number, number>;
+  /** Validation rules (absent in snapshots = none). */
+  validation?: ValRule[];
 }
 
 /** One sheet of the workbook. */
@@ -28,6 +31,8 @@ export interface Entry {
   styles: Record<string, CellStyle>;
   /** Conditional formatting rules by priority (persisted in .dktable, undoable). */
   cf: CfRule[];
+  /** Data-validation rules (persisted in .dktable, undoable). */
+  validation: ValRule[];
   /** Custom column widths in px by 0-based column (persisted in .dktable, undoable); the grid view shares this object. */
   widths: Record<number, number>;
   undo: State[];
@@ -65,7 +70,7 @@ export function buildSheet(cells: Snap, cols = 26, rows = 100): Sheet {
 export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
   return {
     id: doc?.id ?? uid(), name, styles: structuredClone(doc?.styles ?? {}), undo: [], redo: [],
-    cf: structuredClone(doc?.cf ?? []), widths: widthsFromDoc(doc?.colWidths),
+    cf: structuredClone(doc?.cf ?? []), validation: structuredClone(doc?.validation ?? []), widths: widthsFromDoc(doc?.colWidths),
     sheet: buildSheet(doc?.cells ?? {}, doc?.cols, doc?.rows),
     ...(doc?.freeze ? { freeze: { ...doc.freeze } } : {}),
   };
@@ -73,7 +78,7 @@ export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
 
 /** Deep copy of the entry's raw cells, styles and conditional formatting rules. */
 export function snapshot(e: Entry): State {
-  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles, cf: e.cf, widths: e.widths })) as State;
+  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles, cf: e.cf, widths: e.widths, validation: e.validation })) as State;
 }
 
 /** Record the current state before a change (clears redo). */
@@ -91,6 +96,7 @@ export function step(e: Entry, from: "undo" | "redo"): boolean {
   dst.push(snapshot(e));
   e.styles = snap.styles;
   e.cf = snap.cf ?? [];
+  e.validation = snap.validation ?? [];
   e.widths = snap.widths ?? {};
   e.sheet = buildSheet(snap.cells, e.sheet.cols, e.sheet.rows);
   return true;

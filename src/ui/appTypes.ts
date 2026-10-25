@@ -9,6 +9,7 @@ import type { MacroStore } from "../macros/store";
 import type { UserFn } from "../engine/userfnStore";
 import type { RunResult } from "../macros/lua";
 import type { CfRule } from "../engine/cf/types";
+import type { Invalid, ValRule } from "../engine/validation/types";
 import type { DocFormat } from "../doc/md/format";
 import type { DocEditor } from "../doc/editor";
 
@@ -49,7 +50,7 @@ export interface App {
   toggleSplit(): void;
   exportDoc(kind: "md" | "html" | "pdf"): Promise<void>;
   /** Add a sheet from imported cells and activate it. */
-  importSheet(name: string, sheet: Pick<DocSheet, "cols" | "rows" | "cells">): void;
+  importSheet(name: string, sheet: Pick<DocSheet, "cols" | "rows" | "cells"> & Partial<Pick<DocSheet, "validation">>): void;
   selection(): string;
   selectedKeys(): string[];
   select(key: string): void;
@@ -63,6 +64,14 @@ export interface App {
   cfRules(): CfRule[];
   /** Replace the active sheet's conditional formatting rules (one undo step, repaints). */
   setCfRules(rules: CfRule[]): void;
+  /** Data-validation rules of the active sheet (a copy). */
+  validationRules(): ValRule[];
+  /** Replace the active sheet's validation rules (one undo step, re-marks invalid cells). */
+  setValidationRules(rules: ValRule[]): void;
+  /** Cells of the active sheet that break a validation rule. */
+  invalidCells(): Invalid[];
+  /** Clear invalid cells (the given keys, all when omitted) as one undo step. */
+  fixInvalid(keys?: string[]): void;
   toggleSidebar(): void;
   /** Write a complete `=NAME()` in the active cell; no-op if the cell is not empty (never overwrites). */
   insertFunction(name: string): void;
