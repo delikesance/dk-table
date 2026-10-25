@@ -21,6 +21,7 @@ describe("reportRules", () => {
     const t = reportRules([card("a", "idee")]);
     expect(t).toMatch(/`## Non fait`[^\n]*seulement ce qui reste a faire DANS cette carte/);
     expect(t).toMatch(/hors de la carte[^\n]*`## Decisions`/);
+    expect(t).toMatch(/rien ne reste[^\n]*laisse `## Non fait` vide/);
   });
 });
 

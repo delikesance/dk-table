@@ -15,13 +15,15 @@ import { matches } from "./moodboard";
 const flat = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ");
 /** La ligne TODO parle de cette carte: mots du titre (moodboard) ou titre entier contenu (titres courts). */
 const same = (title: string, line: string) => matches(title, line) || flat(line).includes(flat(title).trim());
-const EMPTY = /^(aucun|aucune|rien|n\/a|neant|-)\.?$/i;
+/** Ligne « rien a faire » : `aucun`, `rien.`, `(aucun reste dans les criteres de la carte)`; pas `aucun test ecrit`. */
+const EMPTY = /^(aucun|aucune|rien|n\/a|neant|-)( (reste|restant|a faire))?( (dans|hors) (les )?criteres( de (la|cette) carte)?)?$/;
+const isEmpty = (t: string) => EMPTY.test(flat(t).replace(/[().!]/g, "").trim());
 
 /** Statut calcule par le code d'apres le contenu ecrit par l'agent. */
 export function statusFrom(md: string): "termine" | "en-cours" | "bloque" {
   const r = parseReport(md);
   if (r.blocked.length) return "bloque";
-  const open = r.todo.filter((t) => !EMPTY.test(t.trim()));
+  const open = r.todo.filter((t) => !isEmpty(t));
   return r.done.length && !open.length ? "termine" : "en-cours";
 }
 

@@ -48,6 +48,11 @@ describe("statusFrom", () => {
     expect(statusFrom("# Rapport : x\n\n## Fait\n\n## Non fait\n")).toBe("en-cours");
     expect(statusFrom(AGENT + "\n## Bloque\n- API absente\n")).toBe("bloque");
   });
+  it("Non fait « rien / aucun reste dans les criteres de la carte » = vide; « aucun test ecrit » = reste", () => {
+    for (const l of ["- Rien dans les critères de la carte.", "- (aucun reste dans les critères de la carte)", "- Aucun.", "- néant"])
+      expect(statusFrom(AGENT.replace("- aucun", l))).toBe("termine");
+    expect(statusFrom(AGENT.replace("- aucun", "- Aucun test écrit"))).toBe("en-cours");
+  });
 });
 
 describe("tickTodo", () => {
