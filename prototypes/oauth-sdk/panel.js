@@ -5,8 +5,8 @@
   var PHASES = [["research", "Recherche"], ["design", "Design"], ["implementation", "Implémentation"], ["correction", "Correction"]];
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
-  var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé" };
-  var agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
+  var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé", card: "carte" };
+  var cardRows = {}, agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
 
   PHASES.forEach(function (p) { phases[p[0]] = { label: p[1], state: "pending", cost: null, elapsed: null, t0: 0 }; });
   AXES.forEach(function (a) { agents[a[0]] = { label: a[1], state: "pending", elapsed: null, t0: 0 }; });
@@ -141,6 +141,11 @@
   function logLine(e) {
     var msg = clean(e.message);
     if (/^resume: /.test(msg)) return; // deja affiche par l'evenement « resume »
+    if (e.type === "card") { // rapports repetes: une ligne par carte (compteur) tant qu'aucune autre ligne n'est venue
+      msg = "rapport " + e.cardId + " mis à jour";
+      var row = cardRows[e.cardId];
+      if (row) { row.dataset.n = Number(row.dataset.n) + 1; row.lastChild.textContent = [e.sector, msg].filter(Boolean).join(" · ") + " ×" + row.dataset.n; row.firstChild.textContent = clock(e.ts || Date.now()); return; }
+    } else cardRows = {};
     var where = [e.sector, e.axis].filter(Boolean).join(" / ");
     var li = el("li", e.type), log = $("log"), bottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 24;
     li.appendChild(el("time", null, clock(e.ts || Date.now())));
@@ -148,6 +153,7 @@
     li.appendChild(el("span", null, [where, msg, e.costUsd != null && fmt(e.costUsd / RATE) + " €",
       e.elapsedS != null && dur(e.elapsedS)].filter(Boolean).join(" · ")));
     li.hidden = $("onlyErr").checked && e.type !== "error";
+    if (e.type === "card") { li.dataset.n = 1; cardRows[e.cardId] = li; }
     log.appendChild(li); if (bottom) log.scrollTop = log.scrollHeight;
   }
 

@@ -16,3 +16,17 @@ export function memo<T>(fn: () => Promise<T>, ttlMs: number, now: () => number =
     return p;
   };
 }
+
+/** Comme `memo`, mais un changement de `version()` (ex. compteur d'evenements) invalide aussitot, sans attendre le delai. */
+export function memoBy<T>(fn: () => Promise<T>, ttlMs: number, version: () => number, now: () => number = Date.now): () => Promise<T> {
+  let at = -Infinity, ver = NaN;
+  let cur: Promise<T> | undefined;
+  return () => {
+    if (cur && ver === version() && now() - at < ttlMs) return cur;
+    at = now(); ver = version();
+    const p = fn();
+    cur = p;
+    p.catch(() => { if (cur === p) cur = undefined; });
+    return p;
+  };
+}

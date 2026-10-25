@@ -10,6 +10,8 @@
  * Usage : `parseReport(md)`, `validateReport(r, exists)`, `cardState(r, piste, v)`, `reportTemplate(titre)`.
  */
 
+import { parseCaptures } from "./proofs";
+
 /** Etat d'une carte sur le board. */
 export type CardState = "idee" | "piste" | "en-cours" | "preuves" | "termine" | "bloque";
 
@@ -43,13 +45,13 @@ export function parseReport(md: string): Report {
   const proof = get("preuves");
   const field = (k: string) => proof.find((l) => norm(l).startsWith(k))?.replace(/^[^:]*:\s*/, "").trim() ?? "";
   const st = norm(/^Statut\s*:\s*(.+)$/im.exec(md)?.[1] ?? "").trim();
-  const caps = field("captures");
+  const caps = parseCaptures(field("captures"));
   return {
     title: /^#\s+Rapport\s*:\s*(.+)$/im.exec(md)?.[1].trim() ?? "",
     status: st === "termine" ? "termine" : st === "bloque" ? "bloque" : "en-cours",
-    visible: !/^Visible\s*:\s*non/im.test(md),
+    visible: !/^Visible\s*:\s*non/im.test(md) && !caps.exempt,
     done: get("fait"), todo: get("non fait"), tests: field("tests"),
-    screenshots: caps ? caps.split(/\s*,\s*/).filter(Boolean) : [],
+    screenshots: caps.paths,
     decisions: get("decisions"),
   };
 }
