@@ -6,6 +6,7 @@ import { checkCf } from "./cfFormat";
 import { checkDocs } from "./docsFormat";
 import { checkFunctions } from "./fnFormat";
 import { checkColWidths } from "./colWidthsFormat";
+import { checkHistory } from "./historyFormat";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export { DktParseError };
@@ -155,5 +156,6 @@ export function parse(text: string): DktDoc {
   if (data.macros !== undefined) doc.macros = checkMacros(data.macros);
   if (data.functions !== undefined) doc.functions = checkFunctions(data.functions);
   if (data.docs !== undefined) doc.docs = checkDocs(data.docs, ids);
+  if (data.history !== undefined) doc.history = checkHistory(data.history);
   return doc;
 }
