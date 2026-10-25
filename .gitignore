@@ -10,3 +10,4 @@ playwright-report
 tools/autoloop/state.json
 tools/autoloop/runs.jsonl
 tools/autoloop/STOP
+.boucle

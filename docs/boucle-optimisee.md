@@ -101,3 +101,7 @@ Un checkout Windows (autocrlf) livre les fichiers en `\r\n`. `.gitattributes` fo
 ## Design absent de la toile (Windows)
 
 Cause : avec `shell: true` (cmd.exe), Node ne protège pas les arguments. `git commit -m "Boucle: design"` arrivait coupé, git échouait (pathspec), rien n'était commité, la fusion ne fusionnait rien et `worktree remove --force` supprimait le design. Correctifs : `shellArgs.ts` (guillemets sous Windows, utilisé par `boucle.ts`), `git.ts` refuse de fusionner (et garde le worktree) si le commit a échoué ou si la branche n'a aucun commit d'avance. La toile affiche déjà le design le plus récent. Captures : `docs/screenshots/boucle-design-canvas/`.
+
+## Cartes terminées durables
+
+`doneLedger.ts` : registre append-only `.boucle/termines.jsonl` (ignoré par git) qui garde un instantané de chaque carte terminée et de son rapport. `buildBoard` y inscrit toute carte `termine` et la réaffiche toujours dans « Terminées », même si l'idée disparaît de `fonctionnalites.md`, si `TODO.md` passe à `[x]`, si le rapport est supprimé ou après un redémarrage; `cardDetail` relit le rapport depuis le registre. Les captures restent dans le dépôt (`docs/screenshots/`). Tests : `doneLedger.test.ts`, `doneLedger.server.test.ts`. Captures : `docs/screenshots/boucle-termines/`.
