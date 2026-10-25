@@ -8,6 +8,7 @@
   background: var(--c-bg); border: 1px solid var(--c-line-strong); border-radius: 3px; }
 
 /* Workbook weight, left side of the bar; tinted from `level` (leger: neutral, lourd/tres-lourd: warning). */
+.dk-calc-mode { margin-left: 12px; color: var(--c-accent); font-weight: 600; white-space: nowrap; }
 .dk-weight { margin-right: auto; color: var(--c-text); white-space: nowrap; }
 .dk-weight[data-level="lourd"] { color: var(--c-accent); font-weight: 600; }
 .dk-weight[data-level="tres-lourd"] { color: var(--c-error); font-weight: 600; }

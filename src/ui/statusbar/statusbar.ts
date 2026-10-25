@@ -1,9 +1,10 @@
 /**
- * Status bar, always visible: at left the workbook weight (weightBadge), at right the chosen figures
+ * Status bar, always visible: at left the workbook weight (weightBadge) and the calc mode when not automatic (calcBadge), at right the chosen figures
  * (Moyenne / Nb / Nb numérique / Min / Max / Somme) of a multi-cell selection.
  */
 import type { Value } from "../../engine/types";
 import { STAT_LABELS, statItems } from "./stats";
+import { createCalcBadge } from "./calcBadge";
 import { createWeightBadge } from "./weightBadge";
 
 export interface StatusBar { el: HTMLElement; update(cells: number, values: Value[]): void; weigh(raws: Iterable<string>): void }
@@ -25,6 +26,7 @@ export function createStatusBar(): StatusBar {
   el.className = "dk-status";
   el.setAttribute("role", "status");
   const weight = createWeightBadge();
+  const calc = createCalcBadge();
   let enabled = load();
   let last: [number, Value[]] = [0, []];
   let open = false;
@@ -42,7 +44,7 @@ export function createStatusBar(): StatusBar {
     btn.textContent = "Stats ▾";
     btn.title = "Choisir les statistiques affichées";
     btn.onclick = () => { open = !open; render(); };
-    const nodes: Node[] = [weight.el, ...spans, btn];
+    const nodes: Node[] = [weight.el, calc.el, ...spans, btn];
     if (open) {
       const menu = document.createElement("div");
       menu.className = "dk-status__menu";

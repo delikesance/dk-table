@@ -9,6 +9,7 @@ vi.mock("../io/files", () => ({
 import * as io from "../io/files";
 import { setupAutosave } from "./autosaveUi";
 import { setTitle, type Ctx } from "./appState";
+import { setPassword } from "./protection";
 
 const doc = { version: 1 as const, sheets: [] };
 
@@ -69,6 +70,18 @@ describe("autosave wiring", () => {
     done(); await vi.advanceTimersByTimeAsync(0);
     expect(io.saveDocument).toHaveBeenCalledTimes(2);
     expect(c.app.dirty).toBe(false);
+  });
+
+  it("autosave writes a protected document with the session password", async () => {
+    setPassword("secret");
+    try {
+      const c = mkCtx("a.dktable"); setupAutosave(c);
+      setTitle(c, true);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(io.saveDocument).toHaveBeenCalledWith(expect.anything(), "a.dktable", undefined, "secret");
+    } finally {
+      setPassword(undefined);
+    }
   });
 
   it("flushes immediately on beforeunload", async () => {
