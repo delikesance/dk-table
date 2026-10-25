@@ -228,3 +228,8 @@ Classement par gravité (P0 = pire)
 - [ ] Recherche, axe 2 (absent de dk-table): validation de données, tableaux nommés (Excel Tables), tableau croisé dynamique
 - [ ] Recherche, axe 3 (négligé ailleurs): fenêtre Espion, appareil photo (plage vivante), analyse rapide (Ctrl+Q)
 - [ ] Recherche, axe 4 (mal fait ailleurs): ne pas convertir automatiquement les données (zéros initiaux, gènes -> dates), annulation conservée après macro, performance sur grosses feuilles
+- Boucle autonome (`prototypes/oauth-sdk/`, panneau local `boucle.ts`), état honnête :
+  - [x] research : exécuté en réel une seule fois (2,20 $, version série); version parallèle + budget partagé testée avec requêtes factices seulement
+  - [x] implementation / correction / design : implémentés (`sectors.ts`, prompts + outils sans git) et testés avec requêtes factices, jamais lancés en réel
+  - [x] panneau (`server.ts`, `panel.html`, budget en euros, Go/Stop, SSE) et git (`git.ts` : `developpement`, worktree par secteur, fusion si `npm test` + tsc verts, jamais master/push) : testés avec factices, jamais lancés en réel
+  - [ ] Premier run réel complet de la boucle (l'utilisateur appuie sur Go); limites connues : worktrees sans `node_modules` (tests rouges tant qu'ils ne sont pas installés), `index.ts` = recherche seule en CLI

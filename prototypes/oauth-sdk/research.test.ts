@@ -1,5 +1,6 @@
 /** Tests du secteur recherche : synthese en 4 axes, axes paralleles, plafond de budget, journal (query factice, sans reseau). */
 import { describe, expect, it } from "vitest";
+import { createBudget } from "./budget";
 import { AXES, runResearch, type QueryFn } from "./research";
 
 /** Query factice : cout `cost` borne par `maxBudgetUsd`, delai `ms`, suit le nombre d'appels simultanes. */
@@ -24,7 +25,7 @@ function fake(cost: number, ms = 0) {
 describe("runResearch", () => {
   it("produit 4 titres d'axes avec au moins une puce chacun", async () => {
     const { q } = fake(0.5);
-    const out = await runResearch({ query: q, budgetUsd: 20, maxRounds: 1 });
+    const out = await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1 });
     expect((out.markdown.match(/^## .+$/gm) ?? [])).toHaveLength(4);
     for (const a of AXES) {
       const body = out.markdown.split(`## ${a.title}`)[1]?.split(/^## /m)[0] ?? "";
@@ -34,20 +35,20 @@ describe("runResearch", () => {
 
   it("lance les 4 axes en parallele", async () => {
     const { q, st } = fake(0.5, 20);
-    await runResearch({ query: q, budgetUsd: 20, maxRounds: 1 });
+    await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1 });
     expect(st.maxLive).toBe(4);
   });
 
   it("s'arrete a 90 % du plafond sans jamais depasser le plafond", async () => {
     const { q, calls } = fake(4.5, 5);
-    const out = await runResearch({ query: q, budgetUsd: 20, maxRounds: 5 });
+    const out = await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 5 });
     expect(out.totalCostUsd).toBe(18);
     expect(calls).toHaveLength(4);
   });
 
   it("repartit le reste du budget entre requetes simultanees (somme <= plafond)", async () => {
     const { q, calls } = fake(100, 5);
-    const out = await runResearch({ query: q, budgetUsd: 20, maxRounds: 3 });
+    const out = await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 3 });
     expect(calls[0].options.maxBudgetUsd).toBe(5);
     expect(out.totalCostUsd).toBeLessThanOrEqual(20);
     expect(calls[0].options.permissionMode).toBe("dontAsk");
@@ -58,7 +59,7 @@ describe("runResearch", () => {
     const { q } = fake(1);
     const lines: string[] = [];
     let t = 0;
-    await runResearch({ query: q, budgetUsd: 20, maxRounds: 1, log: (l) => lines.push(l), now: () => (t += 1000) });
+    await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1, log: (l) => lines.push(l), now: () => (t += 1000) });
     expect(lines.filter((l) => l.includes("debut"))).toHaveLength(4);
     const end = lines.filter((l) => l.includes("fin"));
     expect(end).toHaveLength(4);
