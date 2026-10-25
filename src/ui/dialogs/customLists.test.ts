@@ -44,4 +44,13 @@ describe("Listes personnalisées", () => {
     esc(document.querySelector('[data-id="customLists"]')!);
     expect(document.querySelector('[data-id="customLists"]')).toBeNull();
   });
+
+  it("supprime une liste via son bouton", () => {
+    const store = createCustomLists(null);
+    store.add(["Bas", "Haut"]); store.add(["Nord", "Sud"]);
+    openCustomLists(store);
+    document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="remove"][data-index="0"]')!.click();
+    expect(store.lists()).toEqual([["Nord", "Sud"]]);
+    expect(document.querySelector('[data-id="customLists"] [data-role="lists"]')!.textContent).not.toContain("Bas");
+  });
 });

@@ -1,5 +1,4 @@
 # Rapport : Listes personnalisées de tri et de recopie
-Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -14,15 +13,16 @@ Visible : oui
 - `src/engine/series.ts`: `extendSeries(..., lists)`; `src/ui/grid/seriesFill.ts` passe `customLists.lists()` (poignée de recopie).
 - `src/engine/sort.ts`: option `list` (les valeurs de la liste passent avant les autres, dans l'ordre de la liste; vides en bas; `desc` inverse dans la liste).
 - Tests: `src/engine/custom-lists.test.ts`, `src/engine/series-custom.test.ts`, `src/engine/sort-custom.test.ts`, `src/io/customLists.test.ts`. Tests liés (series, sort, ui/grid): 35 fichiers, 289 tests verts; `tsc --noEmit` sans erreur.
+- Suppression: `io/customLists.ts` `remove(i)` (persistée), bouton « Supprimer » par liste dans `ui/dialogs/customLists.ts`; tests `src/io/customLists.test.ts`, `src/ui/dialogs/customLists.test.ts`; e2e étendu (suppression).
 
 ## Non fait
-- Édition/suppression des listes (dialogue: ajout seul pour l'instant).
+- Modification d'une liste existante (contournement: la supprimer puis la ressaisir).
 - Tri: choix de la liste par l'utilisateur (la liste est détectée automatiquement); pas de tri par liste dans l'e2e (couvert par les tests unitaires).
-- Suppression d'une liste: non prévue dans l'API.
 
 ## Captures
 - `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png`, `liste-ajoutee-sombre.png` (liste enregistrée)
 - `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png`, `refus-doublon-sombre.png` (doublon refusé, raison affichée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png`, `liste-supprimee-sombre.png` (liste supprimée)
 
 ## Decisions
 - Dialogue `ui/dialogs/customLists.ts` ouvert depuis Paramètres (bouton « Listes personnalisées… »): saisie par ligne/virgule, erreur affichée si refus.
@@ -35,10 +35,4 @@ Visible : oui
 - Doublon refusé à casse près et au niveau de la séquence (même liste dans un autre ordre = liste différente, acceptée).
 - Design `docs/design/2026-10-25-204816.html` non suivi: il porte sur « Valeur cible et évaluation pas à pas » (Données > Valeur cible), sans rapport avec les listes. Décision prise sans sous-agent (sujet évident).
 - Chemins de la carte (`src/data/custom-lists.ts`, `src/ui/OptionsDialog.tsx`, `src/engine/autofill.ts`) n'existent pas: l'implémentation réelle est `engine/custom-lists.ts`, `io/customLists.ts`, `ui/dialogs/customLists.ts`, `engine/series-names.ts`.
-- Ce tour: aucun changement de code. Vérification des critères (mémorisation, recopie cyclique, tri par liste, refus vide/doublon) par les tests liés (7 fichiers, 57 tests) et `tsc --noEmit`.
-
-## Preuves
-- Tests : ok (non executes : documentation seule)
-- Typecheck : ok
-- Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
+- Suppression par position (bouton par liste), sans confirmation: la liste se ressaisit en quelques secondes.
