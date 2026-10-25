@@ -65,7 +65,7 @@ Itératif, convergence (sombre) :
 - Suite complète `npx vitest run` : 2466 tests verts ; 4 échecs dans `prototypes/oauth-sdk/orphans.test.ts` (balayage de worktrees git, sans lien avec le calcul), non vérifiés contre master.
 
 ## Preuves
-- Tests : ok (354 tests, tests lies aux fichiers modifies)
+- Tests : ok (924 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
 - Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":354,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"count":924,"scope":"related"},"tsc":{"ok":true}} -->
