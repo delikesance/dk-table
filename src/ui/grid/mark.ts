@@ -13,7 +13,7 @@ export interface MarkTargets {
  * (the selection may span unrendered rows). Returns the newly marked elements.
  */
 export function markSelection(prev: HTMLElement[], t: MarkTargets, anchor: Pos, active: Pos): HTMLElement[] {
-  prev.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on", "dkg-on-active", "dkg-e-t", "dkg-e-b", "dkg-e-l", "dkg-e-r"));
+  prev.forEach((e) => e.classList.remove("dkg-active", "dkg-range", "dkg-on", "dkg-on-active", "dkg-e-t", "dkg-e-b", "dkg-e-l", "dkg-e-r", "dkg-h"));
   const marked: HTMLElement[] = [];
   const add = (e: HTMLElement | undefined, cls: string) => {
     if (!e) return;
@@ -42,6 +42,7 @@ export function markSelection(prev: HTMLElement[], t: MarkTargets, anchor: Pos, 
     add(t.colHeads[c], "dkg-on");
     if (c === active.col) add(t.colHeads[c], "dkg-on-active");
   }
+  add(t.cells.get(keyOf(c1, r1)), "dkg-h"); // fill handle: bottom-right corner of the selection
   add(t.cells.get(keyOf(active.col, active.row)), "dkg-active");
   return marked;
 }
