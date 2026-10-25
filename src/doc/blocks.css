@@ -1,6 +1,7 @@
 /* dk doc: linked blocks (table / bars / trend) and their bar. */
-.dk-block { position: relative; margin: 52px 0 var(--s-4); border: 1px solid #000; cursor: default; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; }
-.dk-block__tag { position: absolute; top: -9px; right: 10px; padding: 0 6px; background: #fff; font-size: 9pt; font-style: italic; color: #000; }
+.dk-block { position: relative; margin: 0.4em 0 0.8em; display: flex; flex-direction: column; border: 1px solid #000; cursor: default; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; }
+.dk-block__tag { order: 2; padding: 2px 8px; border-top: 1px solid #000; font-size: 9pt; color: #444; text-align: right; }
+.dk-block > :not(.dk-block__bar):not(.dk-block__tag) { order: 1; }
 .dk-block--err { border-color: var(--c-error); }
 .dk-block--err .dk-block__tag { color: var(--c-error); }
 .dk-block__error { padding: var(--s-3) var(--s-4); color: var(--c-error); font: var(--fs-sm) var(--font-mono); }
