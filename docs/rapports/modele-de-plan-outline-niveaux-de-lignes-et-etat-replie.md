@@ -1,5 +1,5 @@
 # Rapport : Modèle de plan (outline) : niveaux de lignes et état replié
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait
@@ -9,9 +9,6 @@ Visible : non
 - 4e tournée : limite levée, `showLevel` avec niveaux mélangés ne masque plus une ligne peu profonde (test rouge d'abord).
 
 ## Non fait
-- Pas d'UI (gouttière, boutons de niveaux): carte « UI du plan repliable ».
-- Pas de câblage dans la feuille ni dans le `.dktable`: l'état sera rattaché à la feuille avec l'UI.
-- Pas de sous-totaux automatiques: carte « Moteur de sous-totaux ».
 
 ## Captures
 - Sans objet : aucun effet visible (modèle pur).
@@ -23,6 +20,9 @@ Visible : non
 - Groupe = lignes contiguës au-dessus du sous-total, de niveau strictement supérieur. Replier masque ce groupe.
 - Limite : un groupe sans ligne de sous-total en dessous (fin de feuille) ne peut pas être replié.
 - 4e tournée : état replié = plis `{row, depth}` (comme Excel : groupe de profondeur d = suite de lignes de niveau ≥ d au-dessus du sous-total). Repli manuel : d = niveau du sous-total + 1. `showLevel(n)` : plis de profondeur n+1, donc seules les lignes de niveau > n sont masquées.
+- Hors carte : Pas d'UI (gouttière, boutons de niveaux): carte « UI du plan repliable ».
+- Hors carte : Pas de câblage dans la feuille ni dans le `.dktable`: l'état sera rattaché à la feuille avec l'UI.
+- Hors carte : Pas de sous-totaux automatiques: carte « Moteur de sous-totaux ».
 
 ## Preuves
 - Tests : ok (9 tests, tests lies aux fichiers modifies)

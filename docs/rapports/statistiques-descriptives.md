@@ -1,5 +1,5 @@
 # Rapport : Statistiques descriptives
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait
@@ -10,7 +10,6 @@ Visible : non
 - Tournée du 2026-10-25 : critères revérifiés, aucun code à ajouter.
 
 ## Non fait
-- Pas de fonction de feuille ni de commande UI : relève de la carte « Dialogue d'outils d'analyse et sortie en feuille ».
 
 ## Captures
 Sans objet (pas d'effet visible).
@@ -21,6 +20,7 @@ Sans objet (pas d'effet visible).
 - Variance et écart-type réutilisent `variance()` de `fn-stats.ts` (n-1) ; une valeur seule -> `null` au lieu de `#DIV/0!`.
 - Chemins `src/commands/descriptiveStats.ts` et `tests/descriptive.test.ts` non créés : pas de dossier `src/commands/`, tests co-localisés (`*.test.ts`).
 - Mode absent (aucune répétition) -> `null`, pas d'erreur.
+- Hors carte : Pas de fonction de feuille ni de commande UI : relève de la carte « Dialogue d'outils d'analyse et sortie en feuille ».
 
 ## Preuves
 - Tests : ok (non executes : documentation seule)

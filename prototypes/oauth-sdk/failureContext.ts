@@ -35,7 +35,7 @@ export function retryPrompt(f: Failure, cardIds: string[], tries: number, max: n
   if (f.failed.length) lines.push("Tests en echec :", ...f.failed.map((t) => `- ${t}`));
   lines.push("Sortie des verifications (resume) :", f.reason);
   if (f.changed.length) lines.push("Fichiers modifies par la branche :", ...f.changed.map((p) => `- ${p}`));
-  lines.push("Corrige la cause (jamais en affaiblissant ni supprimant un test existant), relance les tests concernes puis `npx tsc --noEmit`, et mets a jour `## Fait` / `## Non fait` du rapport.");
+  lines.push("Corrige la cause (jamais en affaiblissant ni supprimant un test existant), relance les tests concernes puis `npx tsc --noEmit`, et mets a jour `## Fait` / `## Non fait` du rapport (`## Non fait` = reste de cette carte seulement; hors carte -> `## Decisions`).");
   const text = lines.join("\n");
   return text.length <= MAX_RETRY_CHARS ? text : text.slice(0, MAX_RETRY_CHARS - 20) + "\n[...tronque]";
 }

@@ -172,6 +172,7 @@ PARALLEL_DEFAULT=3
   Au bout de `MAX_TRIES` essais la carte est bloquée avec sa raison (`bloque`), aucun agent n'est relancé. Un worktree jamais fusionné est archivé en commit WIP avant retrait.
 - **Preuves et TODO.md écrits par le code** (`proveReport.ts`, `proveCards.ts`, `gitProofs.ts`) : l'agent ne fournit que `Fait`, `Non fait`, `Décisions`, `Visible`/captures;
   après une fusion verte, le code écrit `## Preuves`, `Statut` et coche `TODO.md` dans un commit `[boucle-proof]` (jamais reverifié, jamais une carte, visible dans `git log` et le journal).
+  `## Non fait` ne liste que le reste de la carte elle-même (`termine` exige qu'il soit vide); hors carte (autre carte, suite, limite) -> `## Decisions` (`reportRules.ts`, `failureContext.ts`), sinon la carte est relancée à vide (« rien à fusionner » = échec).
 - **Vérification rapide** (`testPlan.ts`, `gitChecks.ts`) : par carte, `tsc` + `vitest related` sur les fichiers modifiés (tests modifiés inclus); documentation seule : rien; doute : suite complète.
   `npm ci` seulement pour les secteurs qui exécutent du code. Pas de partage de `node_modules` (jonction fragile sous Windows, mesurer `npm ci` dans le journal des verrous).
 - **Une suite complète par lot** (`gitBatch.ts`, `finishLot.ts`) : sur le worktree de référence, puis push seulement si elle est verte et si `developpement` n'a pas bougé pendant la vérification.

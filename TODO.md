@@ -126,6 +126,8 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 
 ## Fait
 
+- [x] Boucle : consigne `## Non fait` = reste de la carte seulement, hors carte -> `## Decisions` (`reportRules.ts`, `failureContext.ts`); évite les relances à vide marquées « échec »
+- [x] Boucle : rapports déjà fusionnés repassés `termine` (statistiques-descriptives, modele-de-plan-outline…, moteur-de-sous-totaux…), lignes hors carte déplacées sous `## Decisions`; `core.longpaths` activé (worktrees non supprimés)
 - [x] Dépôt GitHub privé créé et master poussée
 - [x] CLAUDE.md commité (6e1e34d)
 - [x] Dockerfile / compose / CI écrits (non validés)

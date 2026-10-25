@@ -16,6 +16,12 @@ describe("reportRules", () => {
     expect(t).toMatch(/trancheur/);
     expect(t).toMatch(/jamais de question/i);
   });
+
+  it("Non fait = reste de CETTE carte seulement; hors carte -> Decisions (sinon la carte est relancee a vide)", () => {
+    const t = reportRules([card("a", "idee")]);
+    expect(t).toMatch(/`## Non fait`[^\n]*seulement ce qui reste a faire DANS cette carte/);
+    expect(t).toMatch(/hors de la carte[^\n]*`## Decisions`/);
+  });
 });
 
 describe("reportRules: qualification", () => {

@@ -18,6 +18,7 @@ describe("retryPrompt", () => {
     expect(t).toContain("- a.test.ts > x");
     expect(t).toContain("- src/a.ts");
     expect(t).toMatch(/jamais en affaiblissant/);
+    expect(t).toMatch(/`## Non fait`[^\n]*cette carte[^\n]*`## Decisions`/);
   });
   it("borne: une sortie enorme ne depasse pas la taille maximale", () => {
     const t = retryPrompt(failureOf({ reason: "x".repeat(50_000), failed: Array(100).fill("t") }, Array(100).fill("f.ts"), 1), ["a"], 2, 3);

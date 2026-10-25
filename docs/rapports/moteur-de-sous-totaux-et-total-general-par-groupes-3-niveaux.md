@@ -1,5 +1,5 @@
 # Rapport : Moteur de sous-totaux et total général par groupes (3 niveaux)
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait
@@ -10,7 +10,6 @@ Visible : non
 - `docs/sous-totaux.md` : usage et comportement.
 
 ## Non fait
-- Interface (Données > Sous-totaux), plan repliable, lignes masquées : hors de cette carte, à reprendre avec « Sous-totaux avec plan repliable ».
 
 ## Captures
 Aucune (moteur pur, sans effet visible).
@@ -25,6 +24,7 @@ Aucune (moteur pur, sans effet visible).
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
 - Clé vide : « Total (vide) » plutôt que « Total » nu (lisible, distinct du total général).
 - Plus de 3 niveaux : erreur explicite (`RangeError`) plutôt que troncature silencieuse.
+- Hors carte : Interface (Données > Sous-totaux), plan repliable, lignes masquées : hors de cette carte, à reprendre avec « Sous-totaux avec plan repliable ».
 
 ## Preuves
 - Tests : ok (11 tests, tests lies aux fichiers modifies)
