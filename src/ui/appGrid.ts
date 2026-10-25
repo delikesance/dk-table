@@ -12,7 +12,7 @@ import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
 import { firstKey, setTitle, type Ctx } from "./appState";
 
-/** Per-sheet grid view state (column widths, filters): survives rebuilds, not saved in files (freeze comes from the entry); `viewOf(entry)` gets/creates it. */
+/** Per-sheet grid view state (column widths, filters): survives rebuilds, widths and freeze come from the entry (saved in files), filters are not saved; `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
 export const viewOf = (e: object): GridView => {
   let v = views.get(e);
@@ -72,6 +72,7 @@ export function buildGrid(c: Ctx): void {
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
   const view = viewOf(c.cur);
   view.freeze = c.cur.freeze;
+  view.widths = c.cur.widths;
   refreshCf(c, false);
   c.grid = createGrid(c.gridHost, {
     cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, view,
@@ -86,6 +87,7 @@ export function buildGrid(c: Ctx): void {
       setCell(c.cur.sheet, k, raw);
     },
     onSelect: () => syncInfo(c),
+    onResizeStart: () => { pushUndo(c.cur); setTitle(c, true); syncInfo(c); },
     onFitColumn: (col) => { const sel = colsOfSelection(c.grid.getSelection()); fitColumns(c, sel.length > 1 && sel.includes(col) ? sel : [col]); },
     onSheetStep: (d) => stepSheet(c, d),
     onFreeze: (f) => c.app.setFreeze(f),

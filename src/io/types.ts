@@ -36,6 +36,8 @@ export interface DocSheet {
   styles?: Record<string, CellStyle>;
   /** Optional frozen panes: number of top rows / left columns kept visible (absent = none). */
   freeze?: { rows: number; cols: number };
+  /** Optional custom column widths in px by column letters (`{A: 140}`); absent = default width. */
+  colWidths?: Record<string, number>;
   /** Optional conditional formatting rules, by priority (absent = none). */
   cf?: CfRule[];
 }
