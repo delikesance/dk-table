@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../io/files", () => ({
   openDocument: vi.fn(async () => null), openPath: vi.fn(), saveDocument: vi.fn(async () => "/s.dktable"),
   saveAs: vi.fn(async () => "/as.dktable"), exportCsvFile: vi.fn(async () => null),
-  importCsvFile: vi.fn(async () => ({ path: "C:\\d\\data.csv", sheet: { cols: 26, rows: 100, cells: { A1: { raw: "9" } } } })),
+  readCsvFile: vi.fn(async () => ({ path: "C:\\d\\data.csv", text: "9" })),
 }));
 
 import * as files from "../io/files";

@@ -1,6 +1,8 @@
 /** File actions (open/save/CSV/FEC) wired to the app; errors and replacements are reported via toasts. */
-import { exportCsvFile, exportFecFile, importCsvFile, openDocument, openPath, saveAs, saveDocument } from "../io/files";
+import { exportCsvFile, exportFecFile, readCsvFile, openDocument, openPath, saveAs, saveDocument } from "../io/files";
 import { toFec } from "../io/fec";
+import { openImportReport } from "./dialogs/importReport";
+import { stampSave } from "./history/store";
 import { showToast } from "./toast/toast";
 import type { DktDoc } from "../io/types";
 import type { App } from "./appTypes";
@@ -65,7 +67,8 @@ export const openRecent = (app: App, path: string) => guard(async () => {
  * `finish` runs after a successful write (default: mark saved); shared by Ctrl+S and autosave.
  */
 export async function writeDoc(app: App, as = false, finish: () => void = () => app.markSaved()): Promise<void> {
-  const p = as ? await saveAs(app.toDoc()) : await saveDocument(app.toDoc(), app.path);
+  const doc = stampSave(app.toDoc());
+  const p = as ? await saveAs(doc) : await saveDocument(doc, app.path);
   if (!p) return;
   app.path = p;
   app.addRecent(p);
@@ -77,10 +80,10 @@ export const saveFile = (app: App, as = false) => guard(() => writeDoc(app, as))
 
 /** Import a CSV file as a new sheet. */
 export const importCsv = (app: App) => guard(async () => {
-  const r = await importCsvFile();
+  const r = await readCsvFile();
   if (!r) return;
   const name = r.path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, "") ?? "CSV";
-  app.importSheet(name, r.sheet);
+  openImportReport(app, name, r.text);
 });
 
 /** Export the active sheet as CSV. */

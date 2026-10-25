@@ -62,6 +62,12 @@ export async function importCsvFile(deps: IoDeps = defaultDeps): Promise<{ path:
   return { path, sheet: fromCsv(await deps.readTextFile(path)) };
 }
 
+/** Asks for a CSV file and returns its text (parsed later, see ui/dialogs/importReport); null on cancel. */
+export async function readCsvFile(deps: IoDeps = defaultDeps): Promise<{ path: string; text: string } | null> {
+  const path = await deps.open({ multiple: false, filters: CSV_FILTERS });
+  return path ? { path, text: await deps.readTextFile(path) } : null;
+}
+
 /** Asks for a destination and writes the sheet as CSV (adds `.csv`). Null on cancel. */
 export async function exportCsvFile(sheet: DocSheet, deps: IoDeps = defaultDeps): Promise<string | null> {
   const chosen = await deps.save({ filters: CSV_FILTERS });
