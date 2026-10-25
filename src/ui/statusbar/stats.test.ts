@@ -55,4 +55,11 @@ describe("createStatusBar", () => {
     expect(sb2.el.querySelector('[data-stat="Somme"]')).toBeNull();
     expect(sb2.el.querySelector('[data-stat="Max"]')).not.toBeNull();
   });
+  it("right-click on the bar opens the entries menu", () => {
+    const sb = createStatusBar();
+    sb.update(2, [4, 6]);
+    expect(sb.el.querySelector(".dk-status__menu")).toBeNull();
+    sb.el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+    expect(sb.el.querySelector(".dk-status__menu")).not.toBeNull();
+  });
 });
