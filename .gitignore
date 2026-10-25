@@ -6,3 +6,4 @@ src-tauri/gen
 .claude/worktrees
 test-results
 playwright-report
+.env
