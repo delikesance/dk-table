@@ -9,9 +9,10 @@ Visible : oui
 - Rien
 
 ## Preuves
-- Tests : ok (13 tests : 9 textsplit/dialogue + 4 e2e inclus plafonds, vitest src/ui 768 ok)
+- Tests : ok (15 tests : textsplit + dialogue, tsc --noEmit ok)
 - Captures : docs/screenshots/texte-en-colonnes/{dialogue,resultat}-{clair,sombre}.png
 
 ## Decisions
 - Format par colonne: général/texte seulement (texte = apostrophe)
+- Design 2026-10-25-162708.html sans rapport avec la carte (Espion) : ignoré
 - Seule la 1re colonne de la sélection est découpée; cellules de droite écrasées
