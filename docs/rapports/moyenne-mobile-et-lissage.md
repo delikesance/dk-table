@@ -1,4 +1,5 @@
 # Rapport : Moyenne mobile et lissage
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -29,3 +30,9 @@ Visible : oui
 - Moyenne mobile : les `fenêtre - 1` premières positions sont vides; une fenêtre contenant une case vide ou non numérique donne une case vide.
 - Lissage : s_1 = x_1; une case vide ou non numérique donne une case vide et ne met pas s à jour.
 - Le design `docs/design/2026-10-25-212335.html` (valeur cible, espion, remplissage instantané) ne traite pas de ce sujet; pas de construction dessus.
+
+## Preuves
+- Tests : ok (385 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/moyenne-mobile-et-lissage/resultat-clair.png, docs/screenshots/moyenne-mobile-et-lissage/resultat-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":385,"scope":"related"},"tsc":{"ok":true}} -->
