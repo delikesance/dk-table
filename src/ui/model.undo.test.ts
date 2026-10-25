@@ -1,5 +1,5 @@
 /**
- * Tests for model undo/redo: 100-step cap, grouped edit = one step, redo cleared by a
+ * Tests for model undo/redo: 1000-step cap, grouped edit = one step, redo cleared by a
  * new edit, style (incl. fill) undo/redo, switching sheets, isolation between sheets.
  */
 import { describe, it, expect } from "vitest";
@@ -12,13 +12,13 @@ const edit = (e: Entry, k: string, raw: string): void => { pushUndo(e); setCell(
 const style = (e: Entry, k: string, p: object): void => { pushUndo(e); e.styles[k] = { ...e.styles[k], ...p }; };
 
 describe("undo limit", () => {
-  it("keeps at most 100 steps, dropping the oldest", () => {
+  it("keeps at most 1000 steps, dropping the oldest", () => {
     const e = newEntry("S");
-    for (let i = 1; i <= 105; i++) edit(e, "A1", String(i));
-    expect(e.undo.length).toBe(100);
+    for (let i = 1; i <= 1005; i++) edit(e, "A1", String(i));
+    expect(e.undo.length).toBe(1000);
     let n = 0;
     while (step(e, "undo")) n++;
-    expect(n).toBe(100);
+    expect(n).toBe(1000);
     expect(getRaw(e.sheet, "A1")).toBe("5"); // oldest 5 steps lost
   });
 });

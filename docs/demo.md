@@ -72,7 +72,7 @@ Jeu d'exemple à saisir (feuille 1, colonne A = mois, B = ventes, C = coûts) :
 - Formats du menu : général, nombre, pourcentage, devise. Affichage seul, la valeur reste intacte.
 - Gras (Ctrl+B), italique (Ctrl+I), alignement, couleur de fond sur la ligne d'en-tête.
 - Les styles sont enregistrés dans le fichier `.dktable` et annulables.
-- Ctrl+Z annule, Ctrl+Y rétablit (100 pas par feuille).
+- Ctrl+Z annule, Ctrl+Y rétablit (1000 pas par feuille; une macro = un pas, historique conservé).
 
 ### 6. Palette de commandes (0:20)
 
