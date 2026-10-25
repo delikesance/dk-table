@@ -10,3 +10,6 @@ body { background: var(--c-bg); color: var(--c-text); font: var(--fs-md) var(--f
 .dk-app__doc[hidden], .dk-app__grid[hidden] { display: none; }
 .dk-app__main--split .dk-app__grid, .dk-app__main--split .dk-app__doc { flex: 1 1 50%; }
 .dk-app__main--split .dk-app__grid { border-right: 1px solid var(--c-line-strong); }
+/* Macro editor tab: the code editor takes the place of the grid. */
+.dk-app__macro { flex: 1; min-width: 0; display: flex; }
+.dk-app__macro[hidden] { display: none; }

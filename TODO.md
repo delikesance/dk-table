@@ -184,6 +184,7 @@ Classement par gravité (P0 = pire)
 - [x] M3 Éditeur CodeMirror + panneau Macros + commandes palette/Alt+F11, chargement paresseux
 - [x] M4 Macros persistées dans `.dktable` ; exécution = un pas d'annulation
 - [x] M5 Menu « Scripts » listant les macros (barre de menus, refonte Hermes) ; raccourcis par macro non faits
+- [x] M7 Édition des macros en onglet plein écran (liste + crayon), panneau sans éditeur
 - [ ] M6 Vérification dans la fenêtre Tauri (`npm run tauri dev`)
 
 ## Saisie des formules

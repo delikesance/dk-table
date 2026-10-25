@@ -114,7 +114,8 @@ export function refreshTabs(c: Ctx): void {
   c.tabs.setSheets([
     ...c.entries.map(({ id, name }) => ({ id, name })),
     ...c.docs.list().map(({ id, name }) => ({ id, name, kind: "doc" as const })),
+    ...c.macroTabs.flatMap((id) => { const m = c.app.macros.get(id); return m ? [{ id, name: m.name, kind: "macro" as const }] : []; }),
   ]);
-  c.tabs.setActive(c.curDoc ?? c.cur.id);
+  c.tabs.setActive(c.curMacro ?? c.curDoc ?? c.cur.id);
   c.docEd?.refresh();
 }

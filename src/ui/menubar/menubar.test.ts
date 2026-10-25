@@ -88,7 +88,7 @@ describe("contenu des menus", () => {
   it("Scripts : éditeur (Alt+F11) puis une entrée par macro", () => {
     const d = deps([{ id: "a", name: "arrondir_soldes" }, { id: "b", name: "exporter_rapport" }]);
     const s = items(buildMenuSpec(fakeApp(), d), "Scripts");
-    expect(s.map((e) => e.label)).toEqual(["Éditeur de macros", "arrondir_soldes", "exporter_rapport"]);
+    expect(s.map((e) => e.label)).toEqual(["Macros", "arrondir_soldes", "exporter_rapport"]);
     expect(s[0].hint).toBe("Alt+F11");
     s[0].run!(); s[2].run!();
     expect(d.openMacros).toHaveBeenCalled();
