@@ -40,11 +40,11 @@ describe("GET /shots/<chemin>", () => {
 });
 
 describe("assets des pages", () => {
-  it("moodboard.css/js et design.css/js en liste blanche", async () => {
+  it("moodboard-view.css/js et design-view.css/js en liste blanche", async () => {
     const d = mkdtempSync(join(tmpdir(), "as-"));
-    for (const f of ["moodboard.css", "moodboard.js", "design.css", "design.js"]) writeFileSync(join(d, f), f);
+    for (const f of ["moodboard-view.css", "moodboard-view.js", "design-view.css", "design-view.js"]) writeFileSync(join(d, f), f);
     const base = await boot({ assetsDir: d });
-    for (const f of ["moodboard.css", "moodboard.js", "design.css", "design.js"]) expect(await (await fetch(`${base}/${f}`)).text()).toBe(f);
+    for (const f of ["moodboard-view.css", "moodboard-view.js", "design-view.css", "design-view.js"]) expect(await (await fetch(`${base}/${f}`)).text()).toBe(f);
     rmSync(d, { recursive: true, force: true });
   });
 });

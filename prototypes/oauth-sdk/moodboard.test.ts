@@ -118,14 +118,14 @@ describe("budget du moodboard", () => {
     expect(shared.spent()).toBeLessThanOrEqual(1);
   });
 
-  it("champs de la vue = MoodCard (statuts et axes connus de moodboard.html)", async () => {
-    const html = readFileSync(new URL("./moodboard.html", import.meta.url), "utf-8");
+  it("champs de la vue = MoodCard (axes connus de moodboard-view.js, champs lus par la vue)", async () => {
+    const js = readFileSync(new URL("./moodboard-view.js", import.meta.url), "utf-8");
     const cards = await buildMoodboard({ llm: true, readFile, query: (() => (async function* () {})()) as QueryFn });
     for (const c of cards) {
-      expect(html).toContain(`${c.status}:`);
-      if (c.axis) expect(html).toContain(`${c.axis}:`);
+      if (c.axis) expect(js).toContain(`${c.axis}:`);
       expect(Object.keys(c).sort()).toEqual(["axis", "id", "source", "status", "summary", "title"]);
     }
-    for (const f of ["c.status", "c.axis", "c.summary", "c.source", "c.title"]) expect(html).toContain(f);
+    for (const f of ["c.state", "c.axis", "c.summary", "c.title", "c.missing"]) expect(js).toContain(f);
+    for (const st of ["idee", "piste", "en-cours", "bloque", "preuves", "termine"]) expect(js).toContain(st);
   });
 });
