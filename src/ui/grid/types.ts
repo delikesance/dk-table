@@ -28,6 +28,8 @@ export interface GridOptions {
   onSelect?(sel: string): void;
   /** Hook: return an element to render instead of text (e.g. mini-charts), or null. */
   renderCell?(key: string): HTMLElement | null;
+  /** Hook: tooltip text when the displayed value differs from the stored one (marks the cell `dkg-gap`), else undefined. */
+  gap?(key: string): string | undefined;
   /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
   onCellCreated?(key: string, el: HTMLElement): void;
   /** Freeze drag handles in the corner (Sheets); called with the dropped freeze. No handles when omitted. */

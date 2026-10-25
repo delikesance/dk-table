@@ -71,10 +71,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     if (!el) return;
     const custom = opts.renderCell?.(key) ?? null;
     const text = custom ? "" : opts.getDisplay(key);
-    const sig = custom ? `h:${custom.outerHTML}` : `t:${text}`;
+    const sig = custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`;
     if (sigs.get(key) === sig) return;
     sigs.set(key, sig);
-    markKind(el, text);
+    markKind(el, text, opts.gap?.(key));
     if (custom) el.replaceChildren(custom);
     else el.textContent = text;
   }

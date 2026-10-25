@@ -116,6 +116,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Fonctions tableur vague 2, formatage conditionnel, macros Lua: voir `docs/decisions-tableur.md`.
 
+## Decisions (décimal exact)
+
+- `engine/decimal.ts` (`setDecimalMode`, `fix` = 15 chiffres significatifs après + - * / ^ %, `displayGap`), option par classeur (`DktDoc.decimal?`, Paramètres), cellule `dkg-gap` si affiché ≠ stocké. Détail: `docs/decimal-exact.md`.
+
 ## Decisions (poignée de recopie)
 
 - Cran carré = coin bas-droit de la sélection (`dkg-h`, posé par `ui/grid/mark.ts`). `ui/grid/fillHandle.ts`: glisser (aperçu `dkg-fp` + valeur finale `dkg-fill-tip`, cellule lue par `elementsFromPoint` pour traverser la barre flottante), relâcher écrit en un pas d'annulation, Ctrl lu au relâchement, double-clic = `autoFillEnd` (colonne voisine gauche puis droite). Axe dominant, cible dans la plage = rien.
