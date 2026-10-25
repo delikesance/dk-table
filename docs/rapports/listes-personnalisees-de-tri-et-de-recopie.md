@@ -43,7 +43,7 @@ Visible : oui
 - Modification: même dialogue (pas de nouvelle fenêtre); « Enregistrer la modification » remplace la liste à sa position, un refus garde le mode modification.
 
 ## Preuves
-- Tests : ok (349 tests, tests lies aux fichiers modifies)
+- Tests : ok (358 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
-- Captures : docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png, liste-ajoutee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png, refus-doublon-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png, liste-supprimee-sombre.png (absente)
-<!-- boucle-proof {"tests":{"ok":true,"count":349,"scope":"related"},"tsc":{"ok":true}} -->
+- Captures : docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png, liste-ajoutee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png, refus-doublon-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png, liste-supprimee-sombre.png (absente), docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png, liste-modifiee-sombre.png (absente)
+<!-- boucle-proof {"tests":{"ok":true,"count":358,"scope":"related"},"tsc":{"ok":true}} -->
