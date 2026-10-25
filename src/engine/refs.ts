@@ -6,6 +6,7 @@
  * by "(" (function such as LOG10) or "!" (sheet prefix) is not a ref.
  */
 import { parseKey, makeKey } from "./address";
+import { OPEN_RANGE_SRC } from "./openrange";
 
 /** One ref, optionally `$`-prefixed on column and/or row. */
 const REF = /^(\$?)([A-Za-z]{1,3})(\$?)([1-9]\d*)$/;
@@ -20,6 +21,25 @@ function shiftRef(ref: string, dCol: number, dRow: number): string | null {
   const letters = m[1] ? m[2] : makeKey(col, 1).slice(0, -1);
   const cased = m[2] === m[2].toLowerCase() ? letters.toLowerCase() : letters;
   return m[1] + cased + m[3] + row;
+}
+
+/** Open range at the sticky position (`B2:B`, `A:C`, `2:5`), `$` allowed. */
+const OPEN = new RegExp("(?:" + OPEN_RANGE_SRC + ")", "y");
+/** Endpoint of an open range: optional column letters, optional row digits, `$` before either. */
+const END = /^(\$?)([A-Za-z]{1,3})?(\$?)(\d+)?$/;
+
+/** Shift one endpoint of an open range (cell, column or row); null when it leaves the sheet. */
+function shiftEnd(end: string, dCol: number, dRow: number): string | null {
+  const m = END.exec(end)!;
+  if (m[2] && m[4]) return shiftRef(end, dCol, dRow);
+  if (m[2]) {
+    const col = m[1] ? parseKey(m[2] + "1")!.col : parseKey(m[2] + "1")!.col + dCol;
+    if (col < 1) return null;
+    const letters = m[1] ? m[2] : makeKey(col, 1).slice(0, -1);
+    return m[1] + (m[2] === m[2].toLowerCase() ? letters.toLowerCase() : letters);
+  }
+  const row = m[1] || m[3] ? Number(m[4]) : Number(m[4]) + dRow;
+  return row < 1 ? null : (m[1] || m[3]) + row;
 }
 
 /** Index of the first non-space character at or after `i`. */
@@ -55,6 +75,16 @@ export function shiftFormula(raw: string, dCol: number, dRow: number): string {
       out += raw.slice(i, e);
       i = e;
       continue;
+    }
+    if (/[A-Za-z0-9$]/.test(c)) {
+      OPEN.lastIndex = i;
+      const o = OPEN.exec(raw);
+      if (o) {
+        const [a, b] = o[0].split(":").map((e) => shiftEnd(e, dCol, dRow));
+        out += a !== null && b !== null ? a + ":" + b : "#REF!";
+        i += o[0].length;
+        continue;
+      }
     }
     word.lastIndex = i;
     const m = /[A-Za-z0-9_.$]/.test(c) ? word.exec(raw) : null;
