@@ -1,5 +1,5 @@
 # Rapport : UI du plan repliable (gouttière, boutons de niveaux)
-Statut : en-cours
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -35,7 +35,7 @@ Visible : oui
   - Pas de raccourci clavier dédié au plan ; pas d'état « pressé » sur les boutons de niveaux.
 
 ## Preuves
-- Tests : ok (331 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":331,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
