@@ -20,7 +20,7 @@ export interface BoucleEvent {
   /** `file`: fichier de design ecrit/mis a jour (`message` = nom, secteur design). */
   type: "start" | "end" | "info" | "error" | "done" | "summary" | "file" | "card";
   /** `card`: carte dont le rapport a change; `done`: toutes les cartes sont terminees; `round`: tournee. */
-  cardId?: string; complete?: boolean; round?: number;
+  cardId?: string; complete?: boolean; reason?: string; round?: number;
   /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
   phase?: string; ok?: boolean;
   /** Evenement `file`: etat du fichier de design et horodatage (ms). */
@@ -31,7 +31,7 @@ export interface BoucleEvent {
 
 /** Dépendances injectées. */
 export interface Deps {
-  runPipeline: (o: RunOpts) => Promise<void | { complete: boolean }>;
+  runPipeline: (o: RunOpts) => Promise<void | { complete: boolean; reason?: string }>;
   parseBudgetEur: (v: unknown) => number;
   /** Page du panneau (fonction: relue a chaque requete). */
   panelHtml: string | (() => string);
@@ -112,11 +112,11 @@ export function createServer(deps: Deps): Server {
     const mine = (ctl = new AbortController());
     history.length = 0;
     send(res, 200, { ok: true });
-    let complete: boolean | undefined;
+    let complete: boolean | undefined, reason: string | undefined;
     deps.runPipeline({ budgetEur, onEvent: emit, signal: mine.signal })
-      .then((r) => { complete = r?.complete; })
+      .then((r) => { complete = r?.complete; reason = r?.reason; })
       .catch((err) => emit({ type: "error", message: String(err?.message ?? err) }))
-      .finally(() => { ctl = null; emit({ type: "done", message: mine.signal.aborted ? "arrêté" : "terminé", complete }); });
+      .finally(() => { ctl = null; emit({ type: "done", message: mine.signal.aborted ? "arrêté" : "terminé", complete, reason }); });
   };
 
   return httpServer((req, res) => {

@@ -176,6 +176,14 @@ describe("panneau: fin de boucle", () => {
     send({ type: "done", message: "terminé", complete: false });
     expect(q("#status")!.textContent).toMatch(/^Terminé, cartes restantes/);
   });
+  it("done avec `reason`: budget epuise et bloquee se distinguent de « terminee », jamais « Terminé » s'il reste des cartes", () => {
+    for (const [reason, re] of [["budget", /^Budget épuisé, cartes restantes/], ["stuck", /^Bloquée, cartes restantes/], ["max-rounds", /^Tournées max, cartes restantes/]] as const) {
+      const send = load();
+      send({ type: "done", message: "terminé", complete: false, reason });
+      expect(q("#status")!.textContent).toMatch(re);
+      expect(q("#status")!.textContent).not.toMatch(/^Terminé/);
+    }
+  });
   it("tournees: le message d'info « tournee N » est journalise", () => {
     const send = load();
     send({ type: "info", round: 2, message: "tournee 2 : 3 carte(s) restante(s)" });

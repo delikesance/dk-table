@@ -15,7 +15,8 @@ import { createGitFlow, type Run } from "./git";
 import { allDone, type BoardCard } from "./cards";
 import type { QueryFn } from "./research";
 import { researchSector } from "./researchSector";
-import { pickBatch, reportRules } from "./reportRules";
+import { reportRules } from "./reportRules";
+import { createPlanner, stopMessage, type StopReason } from "./rounds";
 import { watchReports as defaultWatchReports } from "./reportWatch";
 import { SECTORS, currentDesignPath, recapPath, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
@@ -55,8 +56,6 @@ export interface PipelineDeps {
   readDesign?: typeof readDesign;
 }
 
-/** Tournees max (garde-fou en plus du budget et de la detection d'absence de progres). */
-const MAX_ROUNDS = 12;
 const DESIGN_DIR = join("docs", "design");
 
 /** Ecriture disque par defaut. */
@@ -66,9 +65,9 @@ function diskWrite(path: string, text: string): void {
 }
 
 /** Construit `runPipeline` lie a ses dependances. */
-export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean } | undefined> {
+export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean; reason?: StopReason } | undefined> {
   const write = deps.writeFile ?? diskWrite;
-  const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean } | undefined> => {
+  const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
     const flow = createGitFlow(deps.run, deps.cwd);
@@ -77,12 +76,15 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     const research = researchSector(write);
     const all = [research, ...SECTORS];
     const status: Record<string, Status> = Object.fromEntries(all.map((x) => [x.name, "pending"]));
+    /** Cartes restantes apres la derniere lecture du tableau (indefini avant: pas de boucle de cartes). */
+    let remaining: number | undefined;
+    let halt: StopReason | "" = "";
     /** Resume de la phase (Haiku ou repli): emis au panneau et journalise. */
     const summarize = async (name: string) => {
       const message = await summarizePhase({
         phase: LABEL[name] ?? name,
         phases: all.map((x) => ({ name: LABEL[x.name] ?? x.name, status: status[x.name] })),
-        agents: [], spentUsd: budget.spent(), remainingUsd: budget.left(), eurUsd: budget.eurUsd,
+        agents: [], remaining, halt: halt && halt !== "complete" ? halt : undefined, spentUsd: budget.spent(), remainingUsd: budget.left(), eurUsd: budget.eurUsd,
       }, { query: deps.query, budget, env: deps.env, llm: deps.llmSummaries });
       onEvent({ type: "summary", phase: name, message });
       onEvent({ type: "info", sector: name, message: `resume: ${message}` });
@@ -152,7 +154,11 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     // recherche puis design, une fois
     const [implementation, correction] = SECTORS.filter((x) => x.name !== "design");
     for (const sector of [research, ...SECTORS.filter((x) => x.name === "design")]) {
-      if (stopped()) return deps.board ? { complete: false } : undefined;
+      if (stopped()) {
+        const early: StopReason = signal.aborted ? "abort" : "budget";
+        onEvent({ type: "info", complete: false, reason: early, message: `${early === "abort" ? "arrete" : "budget epuise"} avant la fin des cartes` });
+        return deps.board ? { complete: false, reason: early } : undefined;
+      }
       await runOne(sector);
     }
     if (!deps.board) {
@@ -160,26 +166,33 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       return undefined;
     }
 
-    // tournees jusqu'a ce que toutes les cartes soient terminees (preuves validees et fusionnees)
+    // tournees jusqu'a ce que toutes les cartes soient terminees; arret seulement: budget epuise,
+    // abandon, aucune avancee pendant `patience` tournees, ou garde-fou de tournees
+    const planner = createPlanner();
     let cards = await deps.board();
-    let round = 0, stagnant = 0;
-    while (!allDone(cards) && !stopped() && round < MAX_ROUNDS && stagnant < 2) {
+    remaining = cards.filter((c) => c.state !== "termine").length;
+    planner.observe(cards);
+    let round = 0;
+    let reason: StopReason = "complete";
+    while (!allDone(cards)) {
+      if (signal.aborted) { reason = "abort"; break; }
+      if (budget.exhausted()) { reason = "budget"; break; }
+      if (planner.stuck()) { reason = "stuck"; break; }
+      if (round >= planner.maxRounds) { reason = "max-rounds"; break; }
       round++;
-      const before = cards.filter((c) => c.state === "termine").length;
-      const batch = pickBatch(cards);
-      onEvent({ type: "info", round, message: `tournee ${round} : ${cards.length - before} carte(s) restante(s), lot ${batch.map((c) => c.id).join(", ")}` });
+      const batch = planner.nextBatch(cards);
+      onEvent({ type: "info", round, message: `tournee ${round} : ${remaining} carte(s) restante(s), lot ${batch.map((c) => c.id).join(", ")}` });
       await runOne(implementation, reportRules(batch));
       if (!stopped()) await runOne(correction, "Verifie aussi que chaque rapport de docs/rapports/ dit vrai : tests verts, captures presentes.");
       cards = await deps.board();
-      stagnant = cards.filter((c) => c.state === "termine").length > before ? 0 : stagnant + 1;
+      remaining = cards.filter((c) => c.state !== "termine").length;
+      planner.observe(cards);
     }
     const complete = allDone(cards);
-    const left = cards.filter((c) => c.state !== "termine").map((c) => `${c.id} (${c.state})`).join(", ");
-    onEvent({
-      type: "info", complete,
-      message: complete ? "boucle terminee : toutes les cartes sont terminees" : `non termine, sans progres ou budget : ${left}`,
-    });
-    return { complete };
+    remaining = cards.filter((c) => c.state !== "termine").length; halt = reason;
+    await summarize("correction"); // dernier resume: « terminee » seulement si plus aucune carte
+    onEvent({ type: "info", complete, reason, message: stopMessage(reason, cards.filter((c) => c.state !== "termine")) });
+    return { complete, reason };
   };
   return async (o) => {
     try { return await inner(o); } finally { deps.onBudget?.(null); }

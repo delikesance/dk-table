@@ -60,7 +60,8 @@
   function finalStatus(e) {
     var stopped = /arr/i.test(e.message || "");
     closeAll(stopped);
-    var end = stopped ? "Arrêté" : e.complete === true ? "Terminé, toutes les cartes" : e.complete === false ? "Terminé, cartes restantes" : "Terminé";
+    var why = { budget: "Budget épuisé", stuck: "Bloquée", "max-rounds": "Tournées max" }[e.reason];
+    var end = stopped ? "Arrêté" : e.complete === false && why ? why + ", cartes restantes" : e.complete === true ? "Terminé, toutes les cartes" : e.complete === false ? "Terminé, cartes restantes" : "Terminé";
     $("status").textContent = end + " · " + fmt(spentUsd / RATE) + " € sur " + fmt(cap(), 0) + " €";
   }
 
