@@ -138,6 +138,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Decisions (spill et fonctions nommées)
 
 - Spill minimal: `engine/fn-spill.ts` (SPLIT/UNIQUE/FILTER/SORT, matrices), `spill.ts` (déversement, `State.spills`, `#SPILL!` si zone bloquée), `evaluator.ts` `spillResult` (en sous-expression: 1re valeur), `recalc.ts` `compute`. Détail: `docs/spill.md`.
+- Transformations rejouables: `engine/query.ts` + `queryLua.ts` + `ui/appLive.ts` + `ui/dialogs/query.ts`, voir `docs/query.md`.
 - Fonctions nommées: `engine/userfnStore.ts` (registre global, substitution d'AST), `userfn.ts` (`recalcAll`), `io/fnFormat.ts` (`DktDoc.functions?`), `ui/dialogs/namedFns.ts`, `ui/appFns.ts`, menu Données. Détail: `docs/fonctions-nommees.md`.
 
 ## Decisions (plages ouvertes)
