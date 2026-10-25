@@ -60,6 +60,19 @@ describe("watchDesigns", () => {
   });
 });
 
+describe("watchDesigns.flush", () => {
+  it("releve tout de suite un fichier ecrit juste avant la fin (sans attendre l'anti-rebond)", async () => {
+    const d = tmp(); const sub = join(d, "docs", "design");
+    mkdirSync(sub, { recursive: true });
+    const got: DesignFile[] = [];
+    const stop = watchDesigns(sub, (f) => got.push(f));
+    writeFileSync(join(sub, "d.html"), "1");
+    await stop.flush();
+    expect(got.map((f) => f.name)).toEqual(["d.html"]);
+    stop();
+  });
+});
+
 describe("withStates", () => {
   it("reporte l'etat mis-a-jour des evenements file sur la liste (le fichier seul dit toujours ecrit)", () => {
     const f = (name: string): DesignFile => ({ name, bytes: 1, mtimeMs: 1, state: "ecrit", kind: "design" });
