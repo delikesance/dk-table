@@ -113,3 +113,32 @@ describe("dataTable: mode de calcul manuel", () => {
     expect(getValue(s, "D1")).toBe(51);
   });
 });
+
+describe("dataTable: erreurs sans modifier la feuille", () => {
+  it("refuse une formule à syntaxe invalide, sans rien écrire", () => {
+    const s = sheet();
+    setCell(s, "D2", "=C1*(");
+    const r = dataTable1(s, { formula: "D2", input: "C1", values: ["1"] });
+    expect(r).toMatchObject({ ok: false, reason: "bad-formula" });
+    expect(getRaw(s, "C1")).toBe("5");
+    expect(getRaw(s, "D2")).toBe("=C1*(");
+  });
+
+  it("refuse une entrée invalide sans modifier la feuille", () => {
+    const s = sheet();
+    const r = dataTable2(s, { formula: "C3", rowInput: "C1", colInput: "ZZZZ9", rowValues: ["1"], colValues: ["2"] });
+    expect(r).toMatchObject({ ok: false, reason: "bad-input" });
+    expect(getRaw(s, "C1")).toBe("5");
+    expect(getRaw(s, "C2")).toBe("7");
+  });
+});
+
+describe("dataTable: recalcul à chaque appel", () => {
+  it("suit un changement de valeurs d'entrée et de formule", () => {
+    const s = sheet();
+    expect(dataTable1(s, { formula: "D1", input: "C1", values: ["1"] })).toEqual({ ok: true, results: [11] });
+    expect(dataTable1(s, { formula: "D1", input: "C1", values: ["4"] })).toEqual({ ok: true, results: [41] });
+    setCell(s, "E1", "=C1+100");
+    expect(dataTable1(s, { formula: "E1", input: "C1", values: ["1"] })).toEqual({ ok: true, results: [101] });
+  });
+});
