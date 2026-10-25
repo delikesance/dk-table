@@ -8,10 +8,16 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 /** Fichier de design; `state` = 'ecrit' (1re vue) ou 'mis-a-jour'. */
-export interface DesignFile { name: string; bytes: number; mtimeMs: number; state: "ecrit" | "mis-a-jour" }
+export interface DesignFile {
+  name: string; bytes: number; mtimeMs: number; state: "ecrit" | "mis-a-jour";
+  /** `recap` = recap-<date>-<HHmmss>.html (export Canva), `design` = maquette. */
+  kind: "design" | "recap";
+}
 
 const NAME = /^[\w.-]+\.html$/;
-const RECAP = "recap.html";
+
+/** Nature d'un fichier selon son nom (recap.html et recap-*.html = recap). */
+export const kindOf = (name: string): DesignFile["kind"] => (/^recap[-.]/.test(name) ? "recap" : "design");
 
 /** Etat reel des fichiers: le dernier evenement `file` du nom l'emporte (le disque seul dit « ecrit »). */
 export function withStates(
@@ -24,18 +30,18 @@ export function withStates(
 }
 
 /** Nom de fichier sur: pas de separateur ni de `..`. */
-const safe = (n: string): boolean => NAME.test(n) && !n.includes("..");
+export const safe = (n: string): boolean => NAME.test(n) && !n.includes("..");
 
-/** docs/design/*.html (hors recap.html), le plus recent d'abord; [] si le dossier n'existe pas. */
+/** docs/design/*.html (maquettes et recaps, voir `kind`), le plus recent d'abord; [] si le dossier n'existe pas. */
 export async function listDesigns(dir: string): Promise<DesignFile[]> {
   let names: string[];
   try { names = await readdir(dir); } catch { return []; }
   const out: DesignFile[] = [];
   for (const name of names) {
-    if (!safe(name) || name === RECAP) continue;
+    if (!safe(name)) continue;
     try {
       const s = await stat(join(dir, name));
-      if (s.isFile()) out.push({ name, bytes: s.size, mtimeMs: s.mtimeMs, state: "ecrit" });
+      if (s.isFile()) out.push({ name, bytes: s.size, mtimeMs: s.mtimeMs, state: "ecrit", kind: kindOf(name) });
     } catch { /* disparu entre-temps */ }
   }
   return out.sort((a, b) => b.mtimeMs - a.mtimeMs);
@@ -58,6 +64,7 @@ export function watchDesigns(dir: string, onChange: (f: DesignFile) => void): ()
   const scan = async (): Promise<void> => {
     for (const f of (await listDesigns(dir)).reverse()) {
       if (stopped) return;
+      if (f.kind !== "design") continue;
       const prev = seen.get(f.name);
       if (prev === f.mtimeMs) continue;
       seen.set(f.name, f.mtimeMs);
