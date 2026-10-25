@@ -44,11 +44,11 @@ describe("EXP_SMOOTH", () => {
   it("alpha = 1 : la série elle-même", () => {
     expect(run("=EXP_SMOOTH(A1:A3;1)", ["4", "8", "2"], 3)).toEqual(["4", "8", "2"]);
   });
-  it("alpha hors de ]0;1] -> #NUM!", () => {
+  it("alpha hors de ]0;1] -> #VALUE!", () => {
     const v = ["1", "2"];
-    expect(run("=EXP_SMOOTH(A1:A2;0)", v, 1)).toEqual(["#NUM!"]);
-    expect(run("=EXP_SMOOTH(A1:A2;-0.2)", v, 1)).toEqual(["#NUM!"]);
-    expect(run("=EXP_SMOOTH(A1:A2;1.01)", v, 1)).toEqual(["#NUM!"]);
+    expect(run("=EXP_SMOOTH(A1:A2;0)", v, 1)).toEqual(["#VALUE!"]);
+    expect(run("=EXP_SMOOTH(A1:A2;-0.2)", v, 1)).toEqual(["#VALUE!"]);
+    expect(run("=EXP_SMOOTH(A1:A2;1.01)", v, 1)).toEqual(["#VALUE!"]);
   });
   it("cellule vide : case vide, s n'est pas mis à jour", () => {
     expect(run("=EXP_SMOOTH(A1:A4;0.5)", ["10", undefined, "30", "40"], 4)).toEqual(["10", "", "20", "30"]);
