@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 19:01:39 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-180012.html</h2><div class="frame">
+<h1>Trois pistes à réaliser</h1>
+<div class="mono" style="color:var(--mut)">Absentes du code et de TODO.md (hors lignes « Recherche, axes 2 et 3 » qui les citent seulement). Grille : <code>.dkg-cell</code>, sidebar existante, <code>showToast</code> existant.</div>
+
+<!-- ============ IDEE 1 ============ -->
+<section class="idea" id="i1">
+<h2>1. Validation de données, contrôlée aussi au collage</h2>
+<div class="row">
+ <div class="state"><h3>État 1 : liste déroulante</h3>
+  <div class="grid" style="margin-bottom:96px">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Statut</div><div class="t">Montant</div><div class="t">Date</div>
+   <div class="h">2</div><div class="t sel" id="v-sel">Payé</div><div>120,00</div><div>03/10</div>
+   <div class="h">3</div><div class="t">Ouvert</div><div>85,50</div><div>05/10</div>
+   <div class="pop" style="left:32px;top:84px;width:140px"><ul id="v-list"><li class="on">Payé</li><li>Ouvert</li><li>Annulé</li></ul></div>
+  </div>
+  <p class="n">Cellule avec règle « liste » : flèche à droite, ↑↓ Entrée. Valeur hors liste refusée à la saisie.</p></div>
+ <div class="state"><h3>État 2 : saisie refusée</h3>
+  <div class="grid" style="margin-bottom:56px">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Statut</div><div class="t">Montant</div><div class="t">Date</div>
+   <div class="h">2</div><div class="t">Payé</div><div class="sel bad" id="v-bad">-5</div><div>03/10</div>
+   <div class="pop err" style="left:32px;top:84px;width:180px">Montant : nombre ≥ 0 attendu</div>
+  </div><p class="n">Édition conservée ouverte, message sous la cellule, Échap annule.</p></div>
+ <div class="state"><h3>État 3 : collage invalide (animé)</h3>
+  <div class="grid" id="v-paste">
+   <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">2</div><div class="t">Payé</div><div data-v>120,00</div><div>03/10</div>
+   <div class="h">3</div><div class="t tri" data-v>?</div><div data-v>abc</div><div>05/10</div>
+   <div class="h">4</div><div class="t tri" data-v>Perdu</div><div data-v>-5</div><div>06/10</div>
+  </div>
+  <div class="ctl"><button class="btn" id="v-go">Coller</button><button class="btn ghost" id="v-reset">Réinitialiser</button></div>
+  <p class="n" id="v-msg">Le collage s'applique; les cellules invalides sont marquées (coin) et listées.</p></div>
+ <div class="state"><h3>Panneau « Valeurs invalides »</h3>
+  <div class="panel"><span>Invalides</span><span id="v-count">0</span>
+  <table><tr><th>Cellule</th><th>Valeur</th><th>Règle</th></tr>
+  <tbody id="v-rows"><tr><td colspan="3" style="color:var(--mut)">Aucune</td></tr></tbody></table></div>
+  <p class="n">Clic sur une ligne : sélectionne la cellule. Menu Données &gt; Validation / Valeurs invalides.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Rule = { range: string; kind: "list"|"number"|"date"|"length"|"formula";
+  list?: string[]|string /* plage */; op?: "between"|"gte"|"lte"|"eq"; a?: string; b?: string;
+  onInvalid: "reject"|"warn"; message?: string }
+engine/validation.ts    validate(rule, raw:string, getValue): { ok:true } | { ok:false; msg:string }   (pur)
+                        rulesFor(rules, key): Rule|undefined; findInvalid(sheet, rules): string[]
+io/validationFormat.ts  DocSheet.validation?: Rule[]  (sérialisation .dktable, absent = aucune règle)
+ui/grid/dropdown.ts     attachDropdown(cell, rule) : liste déroulante clavier (↑↓ Entrée Échap)
+ui/grid/editor.ts       commit appelle validate; reject garde l'éditeur ouvert + message
+ui/appPaste.ts          après collage/recopie/import : findInvalid -> marque (data-invalid) + toast + panneau
+ui/dialogs/validation.ts  dialogue de règle (menu Données); ui/dialogs/invalid.ts  panneau
+événement : app.emit("validation:invalid", { keys: string[] })
+Un pas d'annulation par collage (inchangé). Les valeurs invalides collées sont conservées et marquées, jamais perdues.
+tests d'abord : validation.test.ts (list/number/date/formula), validationFormat.test.ts (aller-retour), appPaste.test.ts, e2e feat-validation.spec.ts
+fichiers prévus ≤200 lignes : validation.ts (~120), validationFormat.ts (~50), dropdown.ts (~90), invalid.ts (~80), validation dialogue (~120)</pre>
+</section>
+
+<!-- ============ IDEE 2 ============ -->
+<section class="idea" id="i2">
+<h2>2. Fenêtre Espion</h2>
+<div class="row">
+ <div class="state"><h3>Feuille « Saisie » active (animé)</h3>
+  <div class="grid"><div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Prix</div><div id="w-b1">100</div><div class="t">Qté</div>
+   <div class="h">2</div><div class="t">TVA</div><div>0,2</div><div id="w-c2">3</div></div>
+  <div class="ctl"><button class="btn" id="w-inc">B1 + 10</button><button class="btn ghost" id="w-rst">Réinitialiser</button></div>
+  <p class="n">On édite ici; le total est sur une autre feuille.</p></div>
+ <div class="state"><h3>Panneau Espion (flottant, toujours visible)</h3>
+  <div class="panel"><span>Espion</span><span>3</span>
+  <table><tr><th>Feuille</th><th>Cell.</th><th>Valeur</th><th>Formule</th></tr>
+   <tr><td>Saisie</td><td>B1</td><td class="r" id="w-v1">100</td><td>100</td></tr>
+   <tr><td>Synthèse</td><td>B9</td><td class="r" id="w-v2">360,00</td><td>=SUM(Saisie!B1:B3)*1,2</td></tr>
+   <tr><td>Synthèse</td><td>C9</td><td class="r dn">#DIV/0!</td><td>=B9/Saisie!C2</td></tr></table></div>
+  <p class="n">Valeur modifiée : flash 1,2 s. Clic = va à la cellule. Erreurs en couleur d'erreur.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Watch = { sheetId: string; key: string }
+engine/watch.ts   watchValues(doc, watches): { watch, display:string, raw:string, error:boolean }[]  (pur)
+                  changed(prev, next): Watch[]  (pour le flash)
+io/watchFormat.ts DktDoc.watches?: Watch[]  (.dktable, absent = vide)
+ui/watch/panel.ts  mountWatch(app): panneau flottant déplaçable; + / - ; clic -> app.goto(sheetId,key)
+ui/watch/watch.css
+événements : app.on("recalc") -> rafraîchit; app.emit("watch:add", Watch)
+entrées : menu Affichage > Espion, menu contextuel cellule « Espionner », palette view.watch
+tests d'abord : watch.test.ts (valeur, erreur, changed), watchFormat.test.ts, panel.test.ts (jsdom), e2e feat-espion.spec.ts
+fichiers prévus ≤200 lignes : watch.ts (~60), watchFormat.ts (~40), panel.ts (~150), watch.css (~60)</pre>
+</section>
+
+<!-- ============ IDEE 3 ============ -->
+<section class="idea" id="i3">
+<h2>3. Plages tronquées détectées</h2>
+<div class="row">
+ <div class="state"><h3>Détection (animé)</h3>
+  <div class="grid"><div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div>
+   <div class="h">1</div><div class="t">Janv.</div><div>100</div><div></div>
+   <div class="h">2</div><div class="t">Févr.</div><div>120</div><div></div>
+   <div class="h">3</div><div class="t">Mars</div><div>90</div><div class="t" id="t-f">=SUM(B1:B3)</div>
+   <div class="h">4</div><div class="t">Avril</div><div id="t-new" class="warnc">140</div><div></div></div>
+  <div class="ctl"><button class="btn" id="t-add">Ajouter Avril</button><button class="btn ghost" id="t-rst">Réinitialiser</button></div>
+  <p class="n" id="t-msg">SUM(B1:B3) couvre 3 valeurs; rien dessous.</p></div>
+ <div class="state"><h3>Alerte et correction en un clic</h3>
+  <div class="panel"><span>Plages tronquées</span><span>1</span>
+  <div style="padding:8px 10px">
+   <div class="tab"><span class="mono">C3 =SUM(B1:B3)</span><span class="mono" style="color:var(--warn)">B4 non incluse</span></div>
+   <div class="tab"><span class="mono">=SUM(B1:B4)</span><span><button class="btn">Étendre</button> <button class="btn ghost">Ignorer</button></span></div>
+   <div class="tab"><span class="mono">ou =SUM(B1:B)</span><span class="mono" style="color:var(--mut)">plage ouverte</span></div>
+  </div></div>
+  <p class="n">Marqueur ambre sur C3 + entrée dans la barre d'état. Cas : ligne adjacente de même nature, nombres stockés en texte.</p></div>
+</div>
+<h3 style="margin-top:16px">Interfaces et contrats</h3>
+<pre>type Truncation = { formulaKey: string; range: string; extra: string[] /* cellules */; reason: "adjacent"|"text-number"; fix: string /* nouvelle formule */ }
+engine/truncated.ts  findTruncated(sheet): Truncation[]   (pur; SUM/AVERAGE/MIN/MAX/COUNT, réutilise engine/openrange.ts rectOf)
+                     applyFix(sheet, t) -> setCell(formulaKey, t.fix)
+ui/statusbar/statusbar.ts  indicateur « n alertes » ; clic ouvre ui/audit/truncated.ts (liste, Étendre / Ignorer)
+ui/audit/ignored.ts  ignorés persistés dans DktDoc.auditIgnored?: string[] (clé formule+plage)
+événement : app.on("recalc") -> findTruncated (debounce 250 ms, feuille active seulement)
+tests d'abord : truncated.test.ts (ligne ajoutée dessous, nombres-texte, plage ouverte non signalée), audit/truncated.test.ts, e2e feat-tronquees.spec.ts
+fichiers prévus ≤200 lignes : truncated.ts (~110), audit/truncated.ts (~120), ignored.ts (~40)</pre>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td>25/10/2026 19:00:12</td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 18:59:58</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 18:59:58</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 19:01:30</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 19:01:33</td><td>mis à jour</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.57 $</td></tr></table></section>
+</body></html>
