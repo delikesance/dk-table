@@ -26,7 +26,7 @@ const TRANCHEUR = {
   description: "A appeler au moindre doute ou a la place de toute question a l'utilisateur : tranche et renvoie une decision unique.",
   prompt:
     "Tu es l'agent de questionnement et de raisonnement. On te soumet une question ou un doute. " +
-    "Lis le code et CLAUDE.md si utile, pese les options (simplicite, regles du projet, TDD, pas de surcharge), " +
+    "Lis le code si utile, pese les options (simplicite, regles du projet, TDD, pas de surcharge), " +
     "puis rends UNE decision claire en 3 lignes maximum : choix, raison, consequence. Ne pose jamais de question en retour.",
   model: modelFor("trancheur", 0),
   tools: ["Read", "Grep", "Glob", "WebSearch", "WebFetch"],

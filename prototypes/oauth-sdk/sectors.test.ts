@@ -24,10 +24,14 @@ describe("definitions", () => {
     for (const s of SECTORS) expect(typeof s.run).toBe("function");
   });
 
-  it("prompts TDD/CLAUDE.md, git interdit, dontAsk", () => {
-    for (const s of SECTOR_DEFS) {
-      expect(s.prompt).toMatch(/CLAUDE\.md/);
+  it("prompts TDD, git et TODO.md interdits, CLAUDE.md jamais relu (deja charge par le SDK)", () => {
+    for (const s of SECTOR_DEFS) expect(s.prompt).not.toMatch(/Lis (d'abord )?CLAUDE\.md/);
+    for (const s of SECTOR_DEFS.filter((x) => x.id !== "design")) {
+      expect(s.prompt).toMatch(/TDD/);
+      expect(s.prompt).toMatch(/Ne touche ni a git/);
+      expect(s.prompt).not.toMatch(/mets TODO\.md a jour/);
     }
+    expect(SECTOR_DEFS.find((x) => x.id === "implementation")!.prompt).toContain("n'en choisis aucune autre");
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
     expect(get("implementation").prompt).toMatch(/docs\/recherche\/fonctionnalites\.md/);
     expect(get("correction").prompt).toContain("npx tsc");
