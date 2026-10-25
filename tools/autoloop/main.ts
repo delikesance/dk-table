@@ -1,14 +1,18 @@
 /**
- * Point d'entrée de la boucle autonome (étape 1: squelette).
+ * Point d'entrée de la boucle autonome.
  * Usage: `npx tsx tools/autoloop/main.ts [--dry-run] [--live] [--env-file .env]`.
- * Défaut `--dry-run`: agents factices, aucun appel réel, aucun `gh` en écriture.
- * `--live` n'est pas encore branché (étapes suivantes). Les secrets ne sont jamais affichés.
+ * Défaut `--dry-run`: agents et GitHub factices, aucun appel réel, aucune écriture `gh`.
+ * `--live`: un cycle réel (SDK + gh, création d'issues), voir live.ts; ne pas lancer sans accord.
+ * Les secrets ne sont jamais affichés.
  */
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { FakeAgentRunner, type AgentRunner } from "./agent";
 import { Budget } from "./budget";
 import { DEFAULT_CONFIG, type Role } from "./config";
+import { runCycle, trackedRunner } from "./cycle";
+import { FakeGhClient, type GhClient } from "./github";
 import { Journal } from "./journal";
+import { runLive } from "./live";
 import { nextAction, type Action, type LoopState } from "./loop";
 import { redact } from "./redact";
 
@@ -45,17 +49,22 @@ export interface DryDeps {
   log: (line: string) => void;
   append: (line: string) => void;
   runner?: AgentRunner;
+  gh?: GhClient;
 }
 
-/** Rôle d'agent utilisé par chaque action. */
+/** Rôle d'agent utilisé par chaque action (hors audit, géré par `runCycle`). */
 const ACTION_ROLE: Partial<Record<Action["kind"], Role>> = {
-  audit: "audit", "fix-bug": "worker", feature: "worker", research: "researcher", "handle-prs": "reviewer",
+  "fix-bug": "worker", feature: "worker", research: "researcher", "handle-prs": "reviewer",
 };
 
-/** Boucle simulée: état fictif, agents factices; renvoie les actions et la raison d'arrêt. */
+/** Finding fictif renvoyé par l'audit factice par défaut. */
+const SAMPLE = { file: "src/sample.ts", symptom: "sim", severity: "low", repro: "sim", confidence: 1 };
+
+/** Boucle simulée: état fictif, agents et GitHub factices (aucune création); renvoie actions et raison d'arrêt. */
 export async function runDry(d: DryDeps): Promise<{ reason: string; actions: string[] }> {
   const cfg = DEFAULT_CONFIG;
-  const runner = d.runner ?? new FakeAgentRunner();
+  const runner = d.runner ?? new FakeAgentRunner([{ output: { findings: [SAMPLE] } }]);
+  const gh = d.gh ?? new FakeGhClient();
   const budget = new Budget(cfg);
   const journal = new Journal(d.append);
   const st: LoopState = {
@@ -75,18 +84,14 @@ export async function runDry(d: DryDeps): Promise<{ reason: string; actions: str
     d.log(`[dry-run] ${act.kind}`);
     st.iteration++;
     const role = ACTION_ROLE[act.kind];
-    if (role) {
-      const r = await runner.run({ role, prompt: `[dry-run] ${act.kind}` });
-      budget.record(r);
-      journal.append({
-        ts: new Date().toISOString(), cycle: st.iteration, role, model: r.model, inputTokens: r.inputTokens,
-        outputTokens: r.outputTokens, cacheRead: r.cacheRead, costUsd: r.costUsd, turns: r.turns,
-        durationMs: r.durationMs, result: r.ok ? "ok" : "error",
-      });
-    }
-    // Simulation: l'audit trouve un bug, le fix ouvre une PR, la PR est traitée.
-    if (act.kind === "audit") { st.lastAuditSha = st.masterSha; st.bugQueue = 1; st.idleCycles = 0; }
-    else if (act.kind === "fix-bug") { st.bugQueue--; st.openPrs++; }
+    if (role) await trackedRunner(runner, budget, journal, st.iteration).run({ role, prompt: `[dry-run] ${act.kind}` });
+    if (act.kind === "audit") {
+      const r = await runCycle({ runner, gh, cfg, budget, journal, cycle: st.iteration, live: false, checks: async () => [] });
+      d.log(`[dry-run] audit: ${r.findings} findings, ${r.wouldCreate.length} issues (non créées)`);
+      st.lastAuditSha = st.masterSha;
+      st.bugQueue = r.wouldCreate.length;
+      st.idleCycles = 0;
+    } else if (act.kind === "fix-bug") { st.bugQueue--; st.openPrs++; }
     else if (act.kind === "handle-prs") st.openPrs = 0;
     else if (act.kind === "idle") st.idleCycles++;
   }
@@ -96,17 +101,14 @@ export async function runDry(d: DryDeps): Promise<{ reason: string; actions: str
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const env = { ...process.env, ...(args.envFile ? loadEnvFile(args.envFile) : {}) };
+  const log = (l: string): void => console.log(redact(l, env));
+  const append = (l: string): void => appendFileSync("tools/autoloop/runs.jsonl", l);
   if (!args.dryRun) {
-    console.error("--live non implémenté (étape 1: dry-run uniquement)");
-    process.exit(1);
+    await runLive(env, append, log);
+    return;
   }
-  const stopPath = "tools/autoloop/STOP";
-  const r = await runDry({
-    stopFile: () => existsSync(stopPath),
-    log: (l) => console.log(redact(l, env)),
-    append: (l) => appendFileSync("tools/autoloop/runs.jsonl", l),
-  });
-  console.log(`terminé: ${r.reason} (${r.actions.length} actions)`);
+  const r = await runDry({ stopFile: () => existsSync("tools/autoloop/STOP"), log, append });
+  log(`terminé: ${r.reason} (${r.actions.length} actions)`);
 }
 
 if (process.argv[1]?.replace(/\\/g, "/").endsWith("autoloop/main.ts")) void main();
