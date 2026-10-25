@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 16:24:17 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-152237.html</h2><div class="frame">
+<h1>Trois idées non réalisées</h1>
+<p class="lead">Sources : docs/recherche/fonctionnalites.md (axes 1 et 4), TODO « Recherche ». Choix : le moteur a déjà le graphe, tout est local et déterministe, rien n'embarque d'IA. 1) Carte des dépendances. 2) Audit de modèle. 3) Import texte d'abord.</p>
+
+<!-- ============ IDÉE 1 ============ -->
+<section class="idea" id="i1">
+<h2>1 · Carte des dépendances</h2>
+<p class="lead">Panneau « Qui utilise cette cellule ? » : précédents (bleu) et dépendants (orange), entre feuilles et blocs dk doc. Clic = navigation. Un recalcul se propage en vague le long des liens.</p>
+<div class="states">
+  <div class="win"><div class="cap">État A · cellule C2 sélectionnée, panneau ouvert (Affichage > Dépendances, Ctrl+Maj+D)</div>
+    <div class="bar" id="f1">C2 = B2*(1+Taux!B1)</div>
+    <div class="main"><div class="grid" id="g1" style="grid-template-columns:28px repeat(4,1fr)"></div>
+    <div class="side" id="s1"></div></div>
+    <div class="row"><button id="b1" class="pri">Modifier B2 : propager</button><span class="tag" id="t1">B2 = 100</span></div>
+  </div>
+  <div class="win"><div class="cap">État B · chaîne profonde et inter-feuilles, profondeur 2</div>
+    <div class="main"><div class="side" style="width:auto;flex:1;border:0" id="s2"></div></div>
+    <div class="row"><span class="tag">Profondeur</span><button data-d="1">1</button><button data-d="2" class="pri">2</button><button data-d="9">Tout</button><span class="tag" id="t2"></span></div>
+  </div>
+</div>
+<div class="states" style="margin-top:12px">
+  <div class="win"><div class="cap">État C · aucun lien</div><div class="side" style="width:auto;flex:1;border:0"><b>Précédents</b><div class="it"><i>Aucun : valeur saisie</i></div><b>Dépendants</b><div class="it"><i>Aucun : cellule non utilisée</i></div></div></div>
+  <div class="win"><div class="cap">État D · cycle</div><div class="side" style="width:auto;flex:1;border:0"><b>Cycle</b><div class="it" style="color:var(--err)"><span>A1 → B1 → C1 → A1</span><i>#CYCLE!</i></div><div class="row"><button>Aller à A1</button></div></div></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<div class="contract">engine/deps.ts (pur, ≤200 l.)
+  type Ref = { sheet: string; key: string }             // "Taux", "B1"
+  type DepKind = "cell" | "doc"                          // doc = puce/bloc dk doc
+  type DepNode = Ref & { kind: DepKind; depth: number; via?: Ref; label?: string }
+  type DepMap = { target: Ref; precedents: DepNode[]; dependents: DepNode[]; cycle?: Ref[] }
+  dependencyMap(book: Book, target: Ref, depth = 1): DepMap
+    // précédents = refs de la formule (plages dépliées en 1 nœud "B2:B9", pas de n cellules)
+    // dépendants = parcours du graphe inverse (state.ts xprec) + docs (doc/calcSrc.ts)
+ui/deps/panel.ts   mountDepsPanel(host, app): { update(sel: Ref): void; dispose(): void }
+ui/deps/arrows.ts  drawArrows(layer: SVGElement, map: DepMap, rectOf: (r: Ref) => DOMRect | null)
+ui/deps/wave.ts    playWave(nodes: DepNode[], paint: (r: Ref, on: boolean) => void, step = 120)
+                   // délai = depth * step; no-op si prefers-reduced-motion (surbrillance immédiate)
+Événements : App.on("select") -> update ; App.on("touch", {keys}) -> playWave(dépendants)
+             "deps:goto" {sheet, key} -> app.activateSheet + grid.select (document: appDocs.open)
+Grille : classes dkg-prec / dkg-dep (mark.ts), couche SVG dkg-arrows (sous les cellules, hors scroll figé)
+Accès : menu Affichage > Dépendances, palette view.deps, Ctrl+Maj+D ; pas de bouton de barre d'outils
+Persistance : état ouvert/fermé et profondeur en mémoire (pas de format .dktable)
+Limites : pas d'écriture ; réf. inter-feuilles non réécrites au renommage (déjà connu)
+Tests d'abord : engine/deps.test.ts (chaîne, plage, inter-feuilles, cycle, doc) ; ui/deps/panel.test.ts ; e2e/feat-deps.spec.ts + captures clair/sombre
+Fichiers : engine/deps.ts, ui/deps/{panel,arrows,wave,deps.css}.ts, ui/menubar/spec.ts, ui/commands.ts</div>
+</section>
+
+<!-- ============ IDÉE 2 ============ -->
+<section class="idea" id="i2">
+<h2>2 · Audit de modèle</h2>
+<p class="lead">Panneau local qui signale constantes codées en dur, formules incohérentes dans une colonne, plages qui ratent les nouvelles lignes, fonctions volatiles, cycles. Chaque ligne mène à la cellule.</p>
+<div class="states">
+  <div class="win"><div class="cap">État A · audit lancé, 4 constats</div>
+    <div class="main"><div class="grid" id="g2" style="grid-template-columns:28px repeat(3,1fr)"></div>
+    <div class="side" style="width:230px" id="s3"></div></div>
+  </div>
+  <div class="win"><div class="cap">État B · constat « incohérente » : motif attendu vs trouvé</div>
+    <div class="list">
+      <div class="cmp"><div class="hd">Attendu (C2:C5)</div><div class="hd">C6</div><div>=B2*Taux!B1</div><div style="color:var(--err)">=B6*0.2</div></div>
+      <div class="row"><button class="pri">Aller à C6</button><button>Ignorer ce constat</button><span class="tag">règle : incohérence</span></div>
+    </div>
+  </div>
+</div>
+<div class="states" style="margin-top:12px">
+  <div class="win"><div class="cap">État C · aucun constat</div><div class="list"><div class="f"><span class="tag k">OK</span><span class="m">Aucun problème sur 5 règles, 128 formules</span></div></div></div>
+  <div class="win"><div class="cap">État D · feuille &gt; 1000 formules : audit par lots</div><div class="list"><div class="f"><span class="m">Analyse en cours</span><code id="p2">0 %</code></div><div class="tl"><i id="pb2" style="width:0"></i></div><div class="row"><button>Annuler</button></div></div></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<div class="contract">engine/audit/types.ts
+  type Rule = "hardcoded" | "inconsistent" | "range-miss" | "volatile" | "cycle"
+  type Finding = { id: string; rule: Rule; sheet: string; key: string; message: string; detail?: { expected?: string; found?: string } }
+  type AuditRule = (book: Book, sheet: string) => Finding[]     // pures, une par fichier
+engine/audit/{hardcoded,inconsistent,rangeMiss,volatile,cycle}.ts   // 1 règle = 1 fichier
+  hardcoded     : littéral numérique dans une formule hors 0, 1, 2, 100 et hors références
+  inconsistent  : formule d'une colonne ≠ motif R1C1 de ses voisines (compare via shiftFormula)
+  range-miss    : SUM(B2:B5) alors que B6 non vide et contigu, ou plage fermée au lieu de B2:B
+  volatile      : RAND, RANDBETWEEN, NOW, TODAY (liste fixe)
+engine/audit/run.ts  runAudit(book, opts?: { rules?: Rule[]; ignore?: Set<string>; onProgress?(p: number): void }): Promise<Finding[]>
+                     // lots de 200 formules, rend la main entre lots (setTimeout 0), annulable (AbortSignal)
+ui/audit/panel.ts    mountAuditPanel(host, app): { run(): void; dispose(): void }
+Événements : "audit:done" {findings}, "audit:goto" {sheet, key}
+Ignorés : Set d'ids stable (règle + cellule + hash formule) dans DktDoc.auditIgnore?: string[] (optionnel, v1 rétrocompatible, io/auditFormat.ts)
+Accès : menu Outils > Audit du modèle…, palette tools.audit ; marque warn (soulignement orange) sur les cellules via dkg-warn
+Zéro IA, zéro réseau ; seuil constantes configurable dans Paramètres
+Tests d'abord : un test par règle (cas positif, négatif, faux positif connu), run.test.ts (lots, annulation), io/auditFormat.test.ts, e2e/feat-audit.spec.ts
+Fichiers : engine/audit/*, ui/audit/{panel,audit.css}.ts, io/auditFormat.ts, ui/menubar/spec.ts</div>
+</section>
+
+<!-- ============ IDÉE 3 ============ -->
+<section class="idea" id="i3">
+<h2>3 · Import texte d'abord</h2>
+<p class="lead">Tout reste en texte par défaut. Un rapport liste ce que l'auto-détection aurait converti (zéros de tête, SEPT2, IBAN, dates ambiguës). Accepter ou refuser par colonne, aperçu avant/après.</p>
+<div class="states">
+  <div class="win"><div class="cap">État A · rapport d'import CSV, 3 colonnes à risque</div>
+    <div class="list" id="r3"></div>
+    <div class="row"><button class="pri" id="ok3">Importer</button><button>Annuler</button><span class="tag" id="t3"></span></div>
+  </div>
+  <div class="win"><div class="cap">État B · aperçu de la colonne « Code » (clair/sombre via thème)</div>
+    <div class="cmp" id="c3"></div>
+    <div class="row"><span class="tag e">Sans l'import texte d'abord : 007 → 7, SEPT2 → 02/09</span></div>
+  </div>
+</div>
+<div class="states" style="margin-top:12px">
+  <div class="win"><div class="cap">État C · aucune conversion risquée</div><div class="list"><div class="f"><span class="tag k">OK</span><span class="m">Import direct, nombres et dates certains détectés</span></div></div></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<div class="contract">io/csvRisk.ts (pur, ≤200 l.)
+  type Conversion = "number" | "date" | "text"
+  type ColumnReport = { col: number; header: string; kind: "leading-zero" | "gene-date" | "iban" | "long-digits" | "ambiguous-date";
+                        samples: { raw: string; asNumber?: number; asDate?: string }[]; count: number; choice: Conversion }
+  analyzeCsv(rows: string[][], opts?: { header?: boolean }): ColumnReport[]   // choice par défaut = "text" si à risque, sinon détection
+  applyChoices(rows: string[][], reports: ColumnReport[]): Cell[][]            // "text" -> préfixe ' (engine/recalc.ts)
+io/csv.ts : parseCsv inchangé ; importCsv(text, { choices? }) utilise applyChoices
+ui/dialogs/importReport.ts  openImportReport(reports): Promise<ColumnReport[] | null>   // null = annulé, via openDialog
+Événements : "import:report" {columns}, "import:done" {sheet, converted: number, kept: number}
+Pas de dialogue si analyzeCsv ne renvoie rien (État C) ; réglage Paramètres « rapport d'import » (défaut activé)
+Accès : Fichier > Importer CSV (flux existant), FEC non concerné
+Tests d'abord : io/csvRisk.test.ts (007, SEPT2, MARCH1, IBAN FR76…, 12 chiffres, 01/02/2024 ambigu), ui/dialogs/importReport.test.ts, e2e/feat-import-report.spec.ts
+Fichiers : io/csvRisk.ts, io/csv.ts, ui/dialogs/importReport.{ts,css}, ui/menubar/deps.ts, ui/dialogs/settings.ts</div>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td></td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 16:24:10</td><td>écrit</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.61 $</td></tr></table></section>
+</body></html>
