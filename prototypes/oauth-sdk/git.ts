@@ -3,10 +3,9 @@
  * merge only when checks are green. Never pushes, never touches master/main.
  * The command runner is injected so tests need no real git.
  */
-import { failureDigest, stripAnsi } from "./cleanOutput";
+import { stripAnsi } from "./cleanOutput";
 import { createMutex } from "./concurrency";
-import { relatedFailures } from "./mergeGuard";
-import { failedFiles, failedTests, onlyOnBranch } from "./testFailures";
+import { createChecks } from "./gitChecks";
 
 /** Runs a command; resolves with exit code and combined output. */
 export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code: number; out: string }>;
@@ -96,40 +95,7 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return (await git(["checkout", DEV])).code === 0;
   }
 
-  /** Worktree de reference (developpement detache), cree a la demande: sert a savoir si un test rouge l'est deja sur la base. */
-  const baseLock = createMutex();
-  let baseDir: string | null = null;
-  async function baseFailures(files: string[]): Promise<string[] | null> {
-    return baseLock.run(async () => {
-      if (!baseDir) {
-        const dir = await lock.run(async () => {
-          const d = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/base-${Date.now()}`;
-          return (await git(["worktree", "add", "--detach", d, DEV])).code === 0 ? d : null;
-        });
-        if (!dir) return null;
-        if ((await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir)).code !== 0) { await git(["worktree", "remove", "--force", dir]); return null; }
-        baseDir = dir;
-      } else await git(["checkout", "--detach", DEV], baseDir);
-      const r = await run("npm", ["test", "--", ...files], baseDir);
-      return r.code === 0 ? [] : failedTests(r.out);
-    });
-  }
-
-  const suiteLock = createMutex(); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
-  /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
-  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[] }> {
-    const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
-    if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
-    if (t.code === 0) return { reason: null };
-    const mine = failedTests(t.out);
-    const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
-    if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}` };
-    const added = onlyOnBranch(mine, base);
-    if (added.length) return { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` };
-    const changed = (await git(["diff", "--name-only", `${DEV}...HEAD`], dir)).out.split(/\r?\n/).filter(Boolean);
-    const linked = relatedFailures(mine, changed);
-    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}` } : { reason: null, preexisting: mine };
-  }
+  const { checks, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV });
 
   async function mergeIfGreen(branch: string, dir: string) {
     const failed = installFail.get(dir);
@@ -201,10 +167,7 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     });
   }
 
-  async function dispose() {
-    const d = baseDir; baseDir = null;
-    if (d) await git(["worktree", "remove", "--force", d]);
-  }
+  const dispose = disposeChecks;
 
   return { ensureDev, startSector, commit, mergeIfGreen, pushDev, release, dispose };
 }
