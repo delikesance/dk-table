@@ -2,8 +2,9 @@
 import type { Sheet, Value } from "./types";
 import { isErr } from "./types";
 import { expandRange, inBounds, normKey } from "./address";
-import { getState, rewire, spillHeads } from "./recalc";
+import { getState, rewire, spillHeads, recalcOne } from "./recalc";
 import { recalcBook } from "./workbook";
+import { calcMode } from "./calc-mode";
 import { displayValue } from "./values";
 import "./wire";
 
@@ -19,7 +20,8 @@ export function createSheet(): Sheet {
 /**
  * Set a cell's raw input ("" clears it; "=..." is a formula) and
  * automatically recalculate it and all its dependents (also on other sheets of its
- * workbook, see `bindWorkbook`). Out-of-bounds keys are ignored.
+ * workbook, see `bindWorkbook`); in manual mode (`calc-mode.ts`) only the cell itself.
+ * Out-of-bounds keys are ignored.
  */
 export function setCell(sheet: Sheet, key: string, raw: string): void {
   key = normKey(key);
@@ -27,9 +29,12 @@ export function setCell(sheet: Sheet, key: string, raw: string): void {
   if (raw === "") delete sheet.cells[key];
   else sheet.cells[key] = { raw };
   rewire(sheet, key);
-  recalcBook(sheet, key);
+  // Manual mode: only the edited cell is computed; dependents wait for F9 (`recalcWorkbook`).
+  const manual = calcMode().manual;
+  const run = manual ? recalcOne : recalcBook;
+  run(sheet, key);
   // A cell typed inside (or removed from) a spill zone blocks (or frees) the formula that owns it.
-  for (const head of spillHeads(sheet, key)) recalcBook(sheet, head);
+  for (const head of spillHeads(sheet, key)) run(sheet, head);
 }
 
 /** Raw user input of a cell ("" if empty). */

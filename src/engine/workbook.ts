@@ -7,7 +7,7 @@ import { err, type Sheet, type Value } from "./types";
 import { containsKey } from "./openrange";
 import { attachBook, bookOf, sheetName, type NamedSheet } from "./book";
 import { getState, type XDep } from "./state";
-import { recalc } from "./recalc";
+import { recalc, recalcSheet } from "./recalc";
 
 export type { NamedSheet };
 
@@ -47,6 +47,17 @@ function propagate(src: Sheet, changed: Set<string>, run: Run): void {
 export function recalcBook(sheet: Sheet, key: string): void {
   const affected = recalc(sheet, key);
   propagate(sheet, affected, { path: [[sheet, key]], marked: new Map() });
+}
+
+/**
+ * Full recalculation (F9 when `all`, else "Calculer la feuille"): every formula of the sheet(s),
+ * then the cross-sheet formulas are re-propagated from their sources.
+ */
+export function recalcWorkbook(sheet: Sheet, all: boolean): void {
+  const book = bookOf(sheet);
+  const sheets = all && book ? book.list().map((e) => e.sheet) : [sheet];
+  for (const s of sheets) recalcSheet(s);
+  for (const s of sheets) for (const key of [...getState(s).xprec.keys()]) recalcBook(s, key);
 }
 
 /**
