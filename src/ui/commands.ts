@@ -14,6 +14,7 @@ import { openCfDialog } from "./cf/panel";
 import { openPivot } from "./dialogs/pivot";
 import { openCompare } from "./dialogs/diff";
 import { openMerge } from "./dialogs/merge";
+import { openDepMap } from "./dialogs/depmap";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -109,6 +110,7 @@ export function installCommands(app: App): void {
   run("format.underline", "Souligné", () => app.style({ underline: !app.activeStyle().underline }), "Ctrl+U");
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
   run("data.pivot", "Tableau croisé…", () => openPivot(app), undefined, ["pivot", "croisé", "dynamique", "agrégation", "somme"]);
+  run("data.depmap", "Qui utilise cette cellule ?", () => openDepMap(app), undefined, ["dépendances", "précédents", "dépendants", "références", "carte", "liens"]);
   run("file.compare", "Comparer avec un fichier…", () => openCompare(app), undefined, ["diff", "différences", "fusion", "version"]);
   run("file.merge", "Fusionner avec d'autres versions…", () => openMerge(app), undefined, ["fusion", "merge", "conflit", "version", "diff"]);
   run("format.cf", "Formatage conditionnel…", () => openCfDialog(app), undefined, ["conditionnel", "règle", "échelle", "barres", "doublons", "surligner"]);
