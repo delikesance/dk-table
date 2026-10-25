@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - No file may exceed 200 lines (code, CSS, docs, tests); split into modules before crossing it.
 - Everything is documented: every module/function/component gets a short doc comment, and each implementation is documented (what/why, usage) in the same change.
 - After every implementation, update `CLAUDE.md` when needed (commands, architecture, structure, decisions) and update `TODO.md` (see To-do list).
+- Réponses : phrases les plus courtes possibles, zéro blabla, un minimum d'erreurs d'inattention (relire avant d'envoyer).
 
 ## Captures d'écran pour les nouvelles fonctionnalités
 
@@ -28,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Parallel workflow
 
+- Ordre : 1) recherche (quoi construire, comparaison); 2) design (UX/UI + contrat données/API, écrit avant tout code : maquette ou courte spec sous `docs/`, interfaces fixées); 3) implémentation par workers en parallèle, chacun en TDD, appuyés sur ce design (contrats fixés = ni collisions ni reprise); 4) correction/tests; 5) intégration.
 - Before launching a task, split it into small independent mini-tasks (disjoint files where possible).
 - One worker per mini-task, each in its own git worktree on branch `wt/<mini-task-name>`, run in parallel.
 - TDD per mini-task: write its failing test first; every worker brief includes the test command (`npm test`, plus `cargo test` for Rust).
