@@ -11,11 +11,11 @@ Visible : oui
 - Tests d'abord : `statusbar/stats.test.ts`; e2e `e2e/feat-selstats.spec.ts`.
 
 ## Non fait
-- Rien (hors périmètre : `prototypes/oauth-sdk/pipeline.parallel.test.ts` échoue, test de timing sans lien)
+- Rien
 
 ## Preuves
-- Tests : ok (2102 tests verts, 1 échec de timing hors périmètre; tsc ok; e2e feat-selstats ok)
-- Captures : docs/screenshots/statistiques-de-selection-dans-la-barre-d-etat/statistiques-clair.png, statistiques-sombre.png
+- Tests : ok (2246 tests; tsc ok; e2e feat-selstats ok)
+- Captures : docs/screenshots/statistiques-de-selection-dans-la-barre-d-etat/selection-clair.png, selection-sombre.png
 
 ## Decisions
 - TODO coché à tort, fonctionnalité absente, donc implémentée.
