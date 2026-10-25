@@ -7,6 +7,7 @@ import type { StatusBar } from "./statusbar/statusbar";
 import type { Sidebar, RecentFile } from "./sidebar/sidebar";
 import { linkBook, type Entry } from "./model";
 import type { App } from "./appTypes";
+import { runLive } from "./appLive";
 import type { MacroUi } from "./macros/wire";
 import type { CfStyle } from "../engine/cf/types";
 import type { DocStore } from "../doc/store";
@@ -97,6 +98,6 @@ export function renderTitle(c: Ctx): void {
 /** Set the dirty flag and update the title; a modification also schedules an autosave. */
 export function setTitle(c: Ctx, dirty: boolean): void {
   c.app.dirty = dirty;
-  if (dirty) { c.version = (c.version ?? 0) + 1; c.autosave?.touch(); }
+  if (dirty) { c.version = (c.version ?? 0) + 1; c.autosave?.touch(); runLive(c); }
   renderTitle(c);
 }
