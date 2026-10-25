@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>dk-table : Espion et Historique par cellule</title>
+<style>
+:root{color-scheme:light;--bg:#f2f2f2;--surface:#fafafa;--header:#e2e2f6;--hover:#e8e8f6;--text:#0000f2;--text2:#4a4ac8;--text3:#5c5cb8;
+--line:rgba(0,0,242,.14);--line2:rgba(0,0,242,.28);--accent:#0000f2;--solid:#0000f2;--on-solid:#f2f2f2;--soft:rgba(0,0,242,.06);
+--up:#0000f2;--down:#c2410c;--err:#c2410c;--flash:rgba(0,0,242,.22);--add:rgba(0,0,242,.1);--del:rgba(194,65,12,.12)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#19192f;--surface:#141426;--header:#24244a;--hover:#26264a;--text:#f2f2f2;--text2:#b4b4c4;--text3:#9494a2;
+--line:rgba(148,148,162,.18);--line2:rgba(148,148,162,.32);--accent:#8c8cff;--solid:#0000f2;--on-solid:#f2f2f2;--soft:rgba(140,140,255,.1);
+--up:#8c8cff;--down:#ff9a5c;--err:#ff9a5c;--flash:rgba(140,140,255,.3);--add:rgba(140,140,255,.14);--del:rgba(255,154,92,.16)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#19192f;--surface:#141426;--header:#24244a;--hover:#26264a;--text:#f2f2f2;--text2:#b4b4c4;--text3:#9494a2;
+--line:rgba(148,148,162,.18);--line2:rgba(148,148,162,.32);--accent:#8c8cff;--solid:#0000f2;--on-solid:#f2f2f2;--soft:rgba(140,140,255,.1);
+--up:#8c8cff;--down:#ff9a5c;--err:#ff9a5c;--flash:rgba(140,140,255,.3);--add:rgba(140,140,255,.14);--del:rgba(255,154,92,.16)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Inter Tight",system-ui,sans-serif}
+.mono{font-family:"DM Mono",ui-monospace,Consolas,monospace}
+h1,h2,h3{font-family:"Sofia Sans Extra Condensed","Arial Narrow",system-ui,sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:0;font-weight:700}
+h1{font-size:28px}h2{font-size:22px;margin-bottom:12px}h3{font-size:15px;margin:16px 0 6px}
+main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+section.idea{border-top:2px solid var(--text);margin-top:32px;padding-top:16px}
+p{margin:6px 0;color:var(--text2);max-width:80ch}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.card{background:var(--surface);border:1px solid var(--line2);border-radius:4px;overflow:hidden}
+.cap{font:12px "DM Mono",monospace;color:var(--text3);margin:4px 0 8px}
+.bar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--header);border-bottom:1px solid var(--line)}
+button{font:inherit;color:var(--text);background:transparent;border:1px solid var(--line2);border-radius:3px;padding:3px 10px;cursor:pointer}
+button:hover{background:var(--hover)}button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.on{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
+/* grille */
+table.g{border-collapse:collapse;width:100%;font-family:"DM Mono",monospace;font-size:13px}
+.g th{background:var(--header);font-weight:500;color:var(--text2);border:1px solid var(--line);padding:2px 8px;text-align:center}
+.g td{border:1px solid var(--line);padding:3px 8px;text-align:right;height:26px;cursor:cell;background:var(--surface)}
+.g td.t{text-align:left;font-family:"Inter Tight",system-ui,sans-serif}
+.g td.sel{outline:2px solid var(--accent);outline-offset:-2px;background:var(--soft)}
+.g td.w::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent)}
+.g td.fl{animation:fl .9s ease-out}
+@keyframes fl{from{background:var(--flash)}to{background:var(--surface)}}
+.fbar{display:flex;gap:8px;padding:5px 8px;border-bottom:1px solid var(--line);font-family:"DM Mono",monospace;font-size:13px}
+.fbar b{color:var(--text3);font-weight:500;min-width:34px}
+/* panneaux */
+.panel{width:360px;background:var(--surface);border:1px solid var(--line2);border-radius:4px}
+.panel .hd{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--header);border-bottom:1px solid var(--line)}
+.panel .hd h3{margin:0}
+.wl{width:100%;border-collapse:collapse;font-size:13px}
+.wl th{font:500 11px "DM Mono",monospace;color:var(--text3);text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+.wl td{padding:4px 8px;border-bottom:1px solid var(--line);font-family:"DM Mono",monospace}
+.wl tr{cursor:pointer}.wl tr:hover{background:var(--hover)}
+.wl td.v{text-align:right}.wl td.d.up{color:var(--up)}.wl td.d.down{color:var(--down)}.wl td.err{color:var(--err)}
+.wl tr.fl td{animation:fl .9s ease-out}
+.empty{padding:18px;color:var(--text3);font-size:13px}
+/* historique */
+.tl{list-style:none;margin:0;padding:6px 0;position:relative}
+.tl li{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;padding:6px 10px;cursor:pointer;position:relative}
+.tl li::before{content:"";position:absolute;left:18px;top:0;bottom:0;border-left:1px solid var(--line2)}
+.tl li i{width:9px;height:9px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);margin:5px 0 0 5px;position:relative;z-index:1}
+.tl li.cur i{background:var(--accent)}
+.tl li:hover,.tl li.sel{background:var(--hover)}
+.tl li small{grid-column:2/4;color:var(--text3);font:11px "DM Mono",monospace}
+.tl li.new{animation:slide .5s ease-out}
+@keyframes slide{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+.diff{padding:8px 10px;border-top:1px solid var(--line);font:13px "DM Mono",monospace}
+.diff div{padding:2px 6px;border-radius:2px;margin:2px 0;word-break:break-all}
+.diff .a{background:var(--add)}.diff .r{background:var(--del);text-decoration:line-through}
+.diff .act{display:flex;gap:6px;margin-top:8px;background:none}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.state{border:1px dashed var(--line2);border-radius:4px;padding:8px}
+.state b{font:700 12px "Sofia Sans Extra Condensed",sans-serif;text-transform:uppercase;letter-spacing:.06em}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:10px;overflow:auto;font:12px/1.5 "DM Mono",monospace;color:var(--text);margin:6px 0}
+ul.c{margin:4px 0;padding-left:18px;color:var(--text2)}
+code{font-family:"DM Mono",monospace;color:var(--text)}
+kbd{font:11px "DM Mono",monospace;border:1px solid var(--line2);border-radius:3px;padding:0 4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:760px){.panel{width:100%}}
+</style>
+</head>
+<body>
+<main>
+<h1>Espion et Historique par cellule</h1>
+<p>Deux pistes issues de la recherche (TODO, axes 1 et 3), non realisees : fenetre Espion, historique par cellule. Maquettes interactives : cliquer une cellule, la modifier (champ ci-dessous), tester les etats.</p>
+
+<!-- ============ IDEE 1 : ESPION ============ -->
+<section class="idea" id="espion">
+<h2>1. Fenetre Espion</h2>
+<p>Panneau flottant qui suit des cellules (toutes feuilles) pendant l'edition ailleurs. Une ligne = feuille, cellule, formule, valeur, variation. Clic sur une ligne = saut a la cellule. Le mouvement montre quelle ligne a recalcule (flash) et le sens de variation.</p>
+<div class="row">
+  <div style="flex:1;min-width:360px">
+    <div class="cap">Ecran principal : feuille Ventes (clic = selection, double-clic ou champ = modifier)</div>
+    <div class="card">
+      <div class="bar"><button id="wToggle" class="on" aria-pressed="true">Espion</button><button id="wAdd">Espionner la selection</button><button id="wCycle">Simuler un changement</button></div>
+      <div class="fbar"><b id="wRef">B2</b><span id="wFx">1200</span></div>
+      <table class="g" id="grid"></table>
+    </div>
+  </div>
+  <div class="panel" id="watch" role="region" aria-label="Fenetre Espion">
+    <div class="hd"><h3>Espion</h3><span class="mono" id="wCount"></span></div>
+    <table class="wl"><thead><tr><th>Cellule</th><th>Formule</th><th style="text-align:right">Valeur</th><th style="text-align:right">Delta</th></tr></thead><tbody id="wBody"></tbody></table>
+    <div class="empty" id="wEmpty" hidden>Aucune cellule suivie.</div>
+  </div>
+</div>
+<h3>Etats</h3>
+<div class="states">
+  <div class="state"><b>Vide</b><p>Ligne unique « Aucune cellule suivie. » + commande « Espionner la selection ».</p></div>
+  <div class="state"><b>Recalcul</b><p>Ligne concernee : flash 0,9 s (<code>--flash</code>), delta colore (bleu hausse, orange baisse).</p></div>
+  <div class="state"><b>Erreur</b><p>Valeur en orange (<code>#DIV/0!</code>, <code>#REF!</code>) ; delta vide.</p></div>
+  <div class="state"><b>Cible supprimee</b><p>Ligne grisee, <code>#REF!</code>, bouton retirer au survol.</p></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre>// src/ui/watch/model.ts (pur, &lt;=120 lignes)
+export interface WatchItem { id: string; sheetId: string; key: string /* "B2" */; }
+export interface WatchRow extends WatchItem { sheetName: string; raw: string; display: string;
+  value: number | string | null; delta: number | null; error: boolean; dead: boolean; }
+export interface WatchModel {
+  list(): WatchItem[];
+  add(sheetId: string, key: string): WatchItem;       // dedoublonne (sheetId+key)
+  remove(id: string): void;
+  rows(getValue: (s: string, k: string) =&gt; Cell): WatchRow[]; // delta = valeur - derniere valeur numerique connue
+  onChange(fn: () =&gt; void): () =&gt; void;
+}
+// src/ui/watch/panel.ts : mountWatchPanel(host: HTMLElement, app: App): { show(); hide(); toggle(); dispose() }
+// Evenements : app.on("recalc", ids) -&gt; rows() uniquement pour les cles touchees ; clic ligne -&gt; app.goTo(sheetId, key)
+// Persistance : DktDoc.watch?: WatchItem[] (src/io/watchFormat.ts, absent = [])
+// Commandes : palette "view.watch" (Affichage &gt; Fenetre Espion, <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>W</kbd>), "cell.watch" (menu contextuel cellule)
+// Marqueur grille : classe dkg-w (point 6 px, --c-accent) posee par ui/grid/mark.ts</pre>
+<ul class="c"><li>Fichiers touches : <code>ui/watch/{model,panel,watch.css}.ts</code>, <code>io/watchFormat.ts</code>, <code>ui/menubar/spec.ts</code>, <code>ui/contextmenu</code>, <code>ui/grid/mark.ts</code>, <code>io/format.ts</code> (champ optionnel).</li>
+<li>Tests d'abord : <code>model.test.ts</code> (add/dedup/remove, delta, #REF! apres suppression de feuille), <code>watchFormat.test.ts</code> (aller-retour), e2e <code>e2e/feat-watch.spec.ts</code>.</li>
+<li>Accessibilite : <code>role=region</code>, lignes focalisables, Entree = saut, Suppr = retirer.</li></ul>
+</section>
+
+<!-- ============ IDEE 2 : HISTORIQUE ============ -->
+<section class="idea" id="histo">
+<h2>2. Historique par cellule</h2>
+<p>Journal des valeurs successives d'une cellule : liste chronologique, diff brut/formule, restauration en un clic (un pas d'annulation). Ouvre depuis le menu contextuel ou <kbd>Alt</kbd>+<kbd>H</kbd>. Chaque edition ajoute un point en haut avec glissement.</p>
+<div class="row">
+  <div style="flex:1;min-width:360px">
+    <div class="cap">Cellule C2 (marge). Modifier via le champ pour creer une version.</div>
+    <div class="card">
+      <div class="bar"><input id="hIn" class="mono" value="=B2*0,3" aria-label="Nouvelle formule C2" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--line2);border-radius:3px;padding:3px 8px"><button id="hSet">Valider</button></div>
+      <div class="fbar"><b>C2</b><span id="hCur"></span></div>
+    </div>
+  </div>
+  <div class="panel" id="hist" role="region" aria-label="Historique de C2">
+    <div class="hd"><h3>Historique C2</h3><span class="mono" id="hCount"></span></div>
+    <ul class="tl" id="hList"></ul>
+    <div class="diff" id="hDiff" hidden></div>
+  </div>
+</div>
+<h3>Etats</h3>
+<div class="states">
+  <div class="state"><b>Aucune version</b><p>Cellule jamais modifiee : « Aucun historique ».</p></div>
+  <div class="state"><b>Version selectionnee</b><p>Diff ligne a ligne : ajout (bleu), retrait (orange barre), action « Restaurer ».</p></div>
+  <div class="state"><b>Restauree</b><p>Nouvelle entree « restauration » en tete ; l'ancienne reste (journal append-only).</p></div>
+  <div class="state"><b>Limite</b><p>50 versions par cellule ; la plus ancienne sort. Mention « 50 max » dans l'en-tete a saturation.</p></div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre>// src/engine/history.ts (pur, &lt;=120 lignes)
+export interface CellVersion { at: number /* ms */; raw: string; display: string; source: "edit"|"paste"|"fill"|"macro"|"restore"; }
+export interface CellHistory {
+  record(sheetId: string, key: string, v: CellVersion): void;  // ignore si raw identique a la derniere
+  list(sheetId: string, key: string): CellVersion[];            // plus recent d'abord, max 50
+  restore(sheetId: string, key: string, index: number): CellVersion; // ajoute une entree "restore"
+  clear(sheetId?: string): void;
+}
+export function createHistory(max?: number): CellHistory;
+// src/ui/history/panel.ts : openCellHistory(app: App, sheetId: string, key: string): { close() }
+// src/ui/history/diff.ts : diffRaw(a: string, b: string): { type: "same"|"add"|"del"; text: string }[]  (par jeton)
+// Branchement : model.ts appelle history.record dans la meme transaction que le snapshot undo ; restore = app.setCell (1 pas d'annulation).
+// Persistance : DktDoc.history?: Record&lt;"sheetId!key", CellVersion[]&gt; (src/io/historyFormat.ts) ; option Parametres « Conserver l'historique dans le fichier » (defaut : non, memoire seule).
+// Commandes : "cell.history" (menu contextuel + Affichage), <kbd>Alt</kbd>+<kbd>H</kbd>.</pre>
+<ul class="c"><li>Fichiers touches : <code>engine/history.ts</code>, <code>ui/history/{panel,diff,history.css}.ts</code>, <code>io/historyFormat.ts</code>, <code>ui/model.ts</code>, <code>ui/dialogs/settings.ts</code>, <code>ui/contextmenu</code>.</li>
+<li>Tests d'abord : <code>history.test.ts</code> (dedoublonnage, plafond 50, restore), <code>diff.test.ts</code>, <code>model.test.ts</code> (undo apres restore = un pas), e2e <code>e2e/feat-history.spec.ts</code>.</li>
+<li>Limite connue : edits groupes (coller 100 cellules) enregistres cellule par cellule, source <code>paste</code>.</li></ul>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* ---- donnees ---- */
+var data={B2:1200,B3:950,B4:1430,B5:880,C2:"=B2*0,3"};
+var cols=["A","B","C","D"],rows=[2,3,4,5,6];
+var labels={A2:"Janvier",A3:"Fevrier",A4:"Mars",A5:"Avril",A6:"Total"};
+var sel="B2",watched=["B6","C2"],last={};
+function num(k){var v=data[k];return typeof v==="number"?v:0}
+function val(k){
+  if(k==="B6")return num("B2")+num("B3")+num("B4")+num("B5");
+  if(k==="C2")return Math.round(num("B2")*0.3);
+  if(k==="D2"){return num("B3")===0?"#DIV/0!":Math.round(num("B2")/num("B3")*100)/100}
+  return data[k]===undefined?"":data[k];
+}
+function fx(k){
+  if(k==="B6")return "=SOMME(B2:B5)";
+  if(k==="C2")return "=B2*0,3";
+  if(k==="D2")return "=B2/B3";
+  return String(data[k]===undefined?"":data[k]);
+}
+function fmt(v){return typeof v==="number"?v.toLocaleString("fr-FR"):String(v)}
+/* ---- grille ---- */
+var grid=document.getElementById("grid");
+function drawGrid(flash){
+  var h="<tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>";
+  rows.forEach(function(r){
+    h+="<tr><th>"+r+"</th>";
+    cols.forEach(function(c){
+      var k=c+r,v=(c==="A")?labels[k]:val(k);
+      if(r===6&&c==="B")v=val("B6");
+      var cls=(c==="A"?"t ":"")+(k===sel?"sel ":"")+(watched.indexOf(k)>=0?"w ":"")+(flash&&flash.indexOf(k)>=0?"fl":"");
+      h+='<td data-k="'+k+'" class="'+cls+'" tabindex="0">'+(v===undefined?"":fmt(v))+"</td>";
+    });h+="</tr>";
+  });
+  grid.innerHTML=h;
+  document.getElementById("wRef").textContent=sel;
+  document.getElementById("wFx").textContent=fx(sel);
+}
+grid.addEventListener("click",function(e){var t=e.target.closest("td");if(!t)return;sel=t.dataset.k;drawGrid()});
+grid.addEventListener("dblclick",function(e){
+  var t=e.target.closest("td");if(!t||!(t.dataset.k in data))return;
+  var n=prompt?null:null; /* pas de pop-up dans le cadre : edition par increment */
+  data[t.dataset.k]=num(t.dataset.k)+100;change([t.dataset.k]);
+});
+grid.addEventListener("keydown",function(e){
+  var t=e.target.closest("td");if(!t||!(t.dataset.k in data))return;
+  if(e.key==="Enter"){data[t.dataset.k]=num(t.dataset.k)+100;change([t.dataset.k])}
+  if(e.key==="Backspace"){data[t.dataset.k]=Math.max(0,num(t.dataset.k)-100);change([t.dataset.k])}
+});
+/* ---- espion ---- */
+function prev(k){return last[k]}
+function drawWatch(flash){
+  var b=document.getElementById("wBody"),h="";
+  watched.forEach(function(k){
+    var v=val(k),isErr=typeof v==="string"&&v.charAt(0)==="#";
+    var p=last[k],d=(typeof v==="number"&&typeof p==="number")?v-p:null;
+    var cls=flash&&flash.indexOf(k)>=0&&d!==0?"fl":"";
+    h+='<tr class="'+cls+'" data-k="'+k+'" tabindex="0"><td>Ventes!'+k+"</td><td>"+fx(k)+'</td><td class="v '+(isErr?"err":"")+'">'+fmt(v)+'</td><td class="v d '+(d>0?"up":d<0?"down":"")+'">'+(d===null||d===0?"":(d>0?"▲ +":"▼ ")+fmt(d))+"</td></tr>";
+  });
+  b.innerHTML=h;
+  document.getElementById("wEmpty").hidden=watched.length>0;
+  document.getElementById("wCount").textContent=watched.length+" suivie"+(watched.length>1?"s":"");
+  watched.forEach(function(k){last[k]=val(k)});
+}
+document.getElementById("wBody").addEventListener("click",function(e){var r=e.target.closest("tr");if(r){sel=r.dataset.k;drawGrid()}});
+document.getElementById("wAdd").onclick=function(){if(watched.indexOf(sel)<0)watched.push(sel);drawGrid();drawWatch()};
+document.getElementById("wToggle").onclick=function(){
+  var w=document.getElementById("watch"),on=w.hidden=!w.hidden;
+  this.classList.toggle("on",!on);this.setAttribute("aria-pressed",String(!on));
+};
+document.getElementById("wCycle").onclick=function(){
+  data.B3=data.B3===0?950:0;change(["B3"]);
+};
+function change(keys){
+  var fl=keys.concat(["B6","C2","D2"]);
+  drawGrid(fl);drawWatch(fl);
+}
+/* ---- historique ---- */
+var hv=[{at:"09:02",raw:"=B2*0,2",src:"edit"},{at:"09:14",raw:"=B2*0,25",src:"edit"},{at:"10:31",raw:"=B2*0,3",src:"edit"}];
+var hsel=-1;
+function hList(){
+  var ul=document.getElementById("hList"),h="";
+  hv.slice().reverse().forEach(function(v,i){
+    h+='<li tabindex="0" data-i="'+i+'" class="'+(i===0?"cur ":"")+(i===hsel?"sel ":"")+(i===0&&hList.fresh?"new":"")+'"><i></i><span class="mono">'+v.raw+'</span><span class="mono">'+v.at+"</span><small>"+v.src+"</small></li>";
+  });
+  ul.innerHTML=h;hList.fresh=false;
+  document.getElementById("hCount").textContent=hv.length+" / 50";
+  document.getElementById("hCur").textContent=hv[hv.length-1].raw;
+  document.getElementById("hDiff").hidden=hsel<0;
+}
+function tokens(s){return s.match(/[A-Z]+\d+|\d+(,\d+)?|[^\sA-Z\d]|[A-Z]+/g)||[]}
+function showDiff(i){
+  var cur=hv[hv.length-1].raw,old=hv[hv.length-1-i].raw;
+  var d=document.getElementById("hDiff");
+  d.hidden=false;
+  d.innerHTML=old===cur?'<div>Version courante.</div>':'<div class="r">'+old+'</div><div class="a">'+cur+'</div><div class="act"><button id="hRest">Restaurer cette version</button></div>';
+  var r=document.getElementById("hRest");
+  if(r)r.onclick=function(){push(old,"restore")};
+}
+function push(raw,src){
+  if(hv[hv.length-1].raw===raw)return;
+  var n=new Date(),p=function(x){return(x<10?"0":"")+x};
+  hv.push({at:p(n.getHours())+":"+p(n.getMinutes()),raw:raw,src:src});
+  if(hv.length>50)hv.shift();
+  hsel=-1;hList.fresh=!reduce;hList();
+  document.getElementById("hIn").value=raw;
+}
+document.getElementById("hList").addEventListener("click",function(e){
+  var li=e.target.closest("li");if(!li)return;hsel=+li.dataset.i;hList();showDiff(hsel);
+});
+document.getElementById("hList").addEventListener("keydown",function(e){
+  if(e.key==="Enter"&&e.target.dataset.i){hsel=+e.target.dataset.i;hList();showDiff(hsel)}
+});
+document.getElementById("hSet").onclick=function(){push(document.getElementById("hIn").value.trim(),"edit")};
+drawGrid();drawWatch();hList();
+})();
+</script>
+</body>
+</html>
