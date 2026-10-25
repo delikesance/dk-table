@@ -24,6 +24,17 @@ describe("auditModel", () => {
     const d = doc({ A1: "1", A2: "2", A3: "3", A4: "4", B1: "=SUM(A1:A3)", B9: "=SUM(A1:A4)" });
     expect(kinds(d, "range")).toEqual(["B1"]);
   });
+  it("range finding carries a one-click fix extending the range", () => {
+    const f = auditModel(doc({ A1: "1", A2: "2", A3: "3", A4: "4", B1: "=SUM(A1:A3)" })).find((x) => x.kind === "range")!;
+    expect(f.fix).toEqual({ label: "Étendre à A4", edits: [{ sheetId: "s1", key: "B1", raw: "=SUM(A1:A4)" }] });
+  });
+  it("flags numbers stored as text inside a range, fix converts them", () => {
+    const d = doc({ A1: "1", A2: "'20", A3: "3", B1: "=SUM(A1:A3)" });
+    const f = auditModel(d).filter((x) => x.kind === "range");
+    expect(f.map((x) => x.key)).toEqual(["B1"]);
+    expect(f[0].message).toContain("A2");
+    expect(f[0].fix!.edits).toEqual([{ sheetId: "s1", key: "A2", raw: "20" }]);
+  });
   it("flags volatile functions", () => {
     const d = doc({ A1: "=NOW()", A2: "=OFFSET(B1,1,0)", A3: "=SUM(B1:B2)" });
     expect(kinds(d, "volatile")).toEqual(["A1", "A2"]);

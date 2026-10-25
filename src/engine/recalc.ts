@@ -7,16 +7,18 @@ import { collectRefs, parseFormula } from "./parser";
 import { evaluate, spillResult } from "./evaluator";
 import { applySpill, releaseSpill, spillOwners } from "./spill";
 import { isDecimal } from "./values";
+import { isLongNumber } from "./longnum";
 
 export { getState, type State };
 
 /**
  * Parse a non-formula raw string: decimal text -> number (0x/0b/0o stay text),
- * a leading apostrophe forces text (apostrophe dropped), else text.
+ * a leading apostrophe forces text (apostrophe dropped), >15 significant digits stay exact text (see longnum.ts), else text.
  */
 function literal(raw: string): Value {
   if (raw.startsWith("'")) return raw.slice(1);
   const t = raw.trim();
+  if (isLongNumber(t)) return t;
   if (isDecimal(t) && Number.isFinite(Number(t))) return Number(t);
   return raw;
 }
