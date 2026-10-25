@@ -13,10 +13,18 @@ export interface SplitOpts {
   other?: string;
   /** Traite les délimiteurs consécutifs comme un seul. */
   merge?: boolean;
+  /** Largeur fixe : positions de coupe croissantes (ex. [2, 4]); remplace les délimiteurs si non vide. */
+  widths?: number[];
+  /** Format par colonne produite (absent = général); "text" force le texte (préfixe `'`). */
+  formats?: ("general" | "text")[];
 }
 
 /** Découpe une ligne en parties (au moins une). */
 export function splitLine(text: string, o: SplitOpts): string[] {
+  if (o.widths?.length) {
+    const cuts = [0, ...o.widths, text.length];
+    return cuts.slice(0, -1).map((c, i) => text.slice(c, cuts[i + 1]));
+  }
   const seps = [...o.delims, ...(o.other ? [o.other] : [])].filter((s) => s !== "");
   if (!seps.length) return [text];
   const out: string[] = [];
@@ -46,7 +54,7 @@ export function splitColumn(src: Record<string, string>, o: SplitOpts): { cells:
     if (!p || raw === "") continue;
     const parts = splitLine(raw, o);
     cols = Math.max(cols, parts.length);
-    parts.forEach((v, i) => { cells[colToLetters(p.col + i) + p.row] = v; });
+    parts.forEach((v, i) => { cells[colToLetters(p.col + i) + p.row] = o.formats?.[i] === "text" && v !== "" ? "'" + v : v; });
   }
   return { cells, cols };
 }

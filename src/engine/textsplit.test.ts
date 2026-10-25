@@ -29,3 +29,13 @@ describe("splitColumn", () => {
     expect(splitColumn({ Z1: "a,b" }, { delims: [","] }).cells).toEqual({ Z1: "a", AA1: "b" });
   });
 });
+
+describe("largeur fixe et format par colonne", () => {
+  it("largeur fixe : positions de coupe", () => {
+    expect(splitLine("abcdef", { delims: [], widths: [2, 4] })).toEqual(["ab", "cd", "ef"]);
+  });
+  it("format texte : apostrophe en préfixe (force le texte)", () => {
+    const r = splitColumn({ A1: "007,5" }, { delims: [","], formats: ["text", "general"] });
+    expect(r.cells).toEqual({ A1: "'007", B1: "5" });
+  });
+});

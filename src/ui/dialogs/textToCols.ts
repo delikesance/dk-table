@@ -33,12 +33,20 @@ export function openTextToColumns(app: App): void {
   body.innerHTML = CHOICES.map(([n, l]) => `<label class="dk-dialog__check"><input type="checkbox" name="${n}"${n === "comma" ? " checked" : ""}> ${l}</label>`).join("") +
     '<label class="dk-dialog__check"><input type="checkbox" name="merge"> Fusionner les délimiteurs consécutifs</label>' +
     '<label class="dk-dialog__check">Autre : <input type="text" name="other" size="4" maxlength="8"></label>' +
+    '<label class="dk-dialog__check">Largeur fixe (positions, ex. 2,5) : <input type="text" name="widths" size="8"></label>' +
+    '<label class="dk-dialog__check">Colonnes en texte (numéros, ex. 1,3) : <input type="text" name="texts" size="8"></label>' +
     '<button type="button" class="dk-dialog__btn" data-action="apply">Appliquer</button>';
   const box = openDialog("text-to-columns", "Texte en colonnes", body);
   const on = (n: string): boolean => body.querySelector<HTMLInputElement>(`input[name="${n}"]`)!.checked;
   body.querySelector('[data-action="apply"]')!.addEventListener("click", () => {
     const other = body.querySelector<HTMLInputElement>('input[name="other"]')!.value;
-    applyTextToColumns(app, { delims: CHOICES.filter(([n]) => on(n)).map(([, , c]) => c), other, merge: on("merge") });
+    const nums = (n: string): number[] => (body.querySelector<HTMLInputElement>(`input[name="${n}"]`)!.value.match(/\d+/g) ?? []).map(Number);
+    const formats = [] as ("general" | "text")[];
+    for (const c of nums("texts")) formats[c - 1] = "text";
+    applyTextToColumns(app, {
+      delims: CHOICES.filter(([n]) => on(n)).map(([, , c]) => c), other, merge: on("merge"),
+      widths: nums("widths"), formats: Array.from(formats, (f) => f ?? "general"),
+    });
     box.querySelector<HTMLElement>('[data-action="close"]')!.click();
   });
 }

@@ -16,6 +16,7 @@ for (const theme of ["clair", "sombre"] as const) {
     const d = page.locator('.dk-dialog[data-id="text-to-columns"]');
     await d.locator('input[name="comma"]').uncheck();
     await d.locator('input[name="semi"]').check();
+    await d.locator('input[name="texts"]').fill("2");
     await page.screenshot({ path: `docs/screenshots/texte-en-colonnes/dialogue-${theme}.png` });
     await d.locator('[data-action="apply"]').click();
     expect(await cellText(page, "B2")).toBe("30");
