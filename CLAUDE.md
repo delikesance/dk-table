@@ -107,6 +107,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Clavier: `ui/grid/nav.ts` (calculs: Ctrl+flèches = bords de blocs comme Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A = plage utilisée, Ctrl+Espace / Maj+Espace), `ui/grid/refcycle.ts` (F4 dans l'éditeur et la barre de formule), option grille `onSheetStep` (Ctrl+PgPréc/PgSuiv via `appGrid.stepSheet`). L'éditeur de cellule est un `<textarea class="dkg-editor">` (Alt+Entrée = saut de ligne, `.dkg-ml` = pre-wrap, hauteur fixe); Ctrl+Entrée remplit la sélection en un pas d'undo avec décalage des références depuis la cellule active.
 - Références inter-feuilles: `Feuille2!A1`, `'Feuille 1'!A1:B3` (`''` échappe; noms avec espace à citer). Nœuds `xref`/`xrange`, `engine/book.ts` (registre nom -> feuille), `engine/state.ts` (état dérivé + `xprec`), `engine/workbook.ts` (`bindWorkbook`, `recalcBook`: propagation DFS entre feuilles, cycle -> #CYCLE!). UI: `relink(c)` (appState) après mount/ajout/import/chargement/undo/redo/renommage/suppression. Limite: renommer/supprimer une feuille ne réécrit pas les formules (-> #REF!).
 
+## Decisions (poignée de recopie)
+
+- Cran carré = coin bas-droit de la sélection (`dkg-h`, posé par `ui/grid/mark.ts`). `ui/grid/fillHandle.ts`: glisser (aperçu `dkg-fp` + valeur finale `dkg-fill-tip`, cellule lue par `elementsFromPoint` pour traverser la barre flottante), relâcher écrit en un pas d'annulation, Ctrl lu au relâchement, double-clic = `autoFillEnd` (colonne voisine gauche puis droite). Axe dominant, cible dans la plage = rien.
+- Calculs purs: `ui/grid/seriesFill.ts` (`seriesPlan`, `autoFillEnd`), moteur `engine/series.ts` (`extendSeries(src, n, ctrl, dir)`; `series-names.ts` mois/jours FR, `series-date.ts` dates texte ISO / JJ/MM/AAAA). Ordre: nombres (pas constant sinon moindres carrés), dates, noms, texte+nombre final, sinon motif répété. Source vide ou formule: motif répété (formules décalées par `shiftFormula`). Détail: `docs/serie-fill.md`.
+- Limites: les styles ne sont pas recopiés; pas de défilement auto; numéros de série (format date) = suite de nombres (jours).
+
 ## Decisions (formatage conditionnel)
 
 - Modèle `engine/cf/types.ts` (`CfRule` = `{id, range}` + type, inspiré de `CfRule` d'IronCalc), évaluation pure `engine/cf/compute.ts` (`computeCf(rules, env)` -> `Map<clé, CfStyle>`; `env.ts` = `sheetEnv(sheet)`), prédicats `match.ts`, échelles/barres `scale.ts`, insert/suppr. lignes-colonnes `structure.ts` (`shiftRules`).

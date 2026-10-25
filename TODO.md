@@ -107,7 +107,7 @@ Audit 2026-10-24 : les cases « Câblage UI », engine-matrix-na, style-textcolo
 - [x] cross-sheet : références `Feuille2!A1` et `'Nom avec espace'!A1:B3`, recalcul entre feuilles
 - [x] keys-nav : Ctrl+flèches façon Excel, Début, Ctrl+Début/Fin, PgPréc/PgSuiv, Ctrl+A, Ctrl+Espace, Maj+Espace, Ctrl+PgPréc/PgSuiv (feuilles), Ctrl+Entrée, Alt+Entrée, F4
 - [x] Littéraux d'erreur dans les formules (`=#REF!`, `#N/A`)
-- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; séries auto ; validation de données ; XLSX
+- [ ] Suites : barre de formule multi-ligne ; PgPréc/PgSuiv qui défile d'une page ; Ctrl+A « région courante » ; réécrire les formules au renommage de feuille et lors des insertions (réf. inter-feuilles) ; couper-coller qui met à jour les références ; couleur/épaisseur de bordure ; hauteur de ligne / redimensionnement des lignes ; validation de données ; XLSX
 - [ ] Vérification à la main dans Tauri (volets figés sticky, bordures en clair/sombre)
 
 ## Later (non planifié)
@@ -192,6 +192,8 @@ Classement par gravité (P0 = pire)
 ## Contrôles de la grille façon Google Sheets
 - [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
 - [x] G1b Rendu de la sélection retravaillé ; ajustement des colonnes au contenu (clic droit, palette, double-clic sur la bordure).
+- [x] G3 Poignée de recopie (cran du coin bas-droit de la sélection) : glisser vers le bas / haut / droite / gauche prolonge les séries (nombres, dates texte, mois/jours FR, « Item 1 », motifs, formules décalées), aperçu pendant le glisser, Ctrl = série ↔ recopie, double-clic = jusqu'à la fin des données voisines (`engine/series*.ts`, `ui/grid/{seriesFill,fillHandle}.ts`, `docs/serie-fill.md`). Tests : `series.test.ts`, `seriesFill.test.ts`, `fillHandle.test.ts`, e2e `feat-fillhandle.spec.ts`.
+- [ ] G3b Recopie : copier aussi les styles/formats de la source, défilement automatique pendant le glisser, jours ouvrés via menu, séries de dates sur numéros de série formatés en date (mois/années), réduire la zone en glissant vers l'intérieur.
 - [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
 
 ## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
