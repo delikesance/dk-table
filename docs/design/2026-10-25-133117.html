@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dk-table : fenêtre Espion et analyse rapide</title>
+<style>
+/* Jetons Hermes (src/styles/tokens.css, theme-dark.css). Clair par défaut; sombre via data-theme OU prefers-color-scheme. */
+:root { --bg:#f2f2f2; --surface:#fafafa; --header:#e2e2f6; --text:#0000f2; --text2:#4a4ac8; --line:rgba(0,0,242,.14); --line2:rgba(0,0,242,.28);
+  --acc:#0000f2; --acc-soft:rgba(0,0,242,.06); --acc-soft2:rgba(0,0,242,.14); --on-solid:#f2f2f2; --chrome:#0000f2; --chrome-text:#f2f2f2;
+  --err:#a8380a; --err-soft:rgba(194,65,12,.08); --ok:#13703c; --float:0 0 0 1px rgba(0,0,242,.28),0 8px 24px rgba(0,0,60,.18); color-scheme:light; }
+:root[data-theme="dark"] { --bg:#19192f; --surface:#141426; --header:#24244a; --text:#f2f2f2; --text2:#b4b4c4; --line:rgba(148,148,162,.18); --line2:rgba(148,148,162,.32);
+  --acc:#8c8cff; --acc-soft:rgba(0,0,242,.16); --acc-soft2:rgba(0,0,242,.32); --on-solid:#f2f2f2; --chrome:#19192f; --chrome-text:#f2f2f2;
+  --err:#ff9a6b; --err-soft:rgba(255,154,107,.12); --ok:#5bd08a; --float:0 0 0 1px rgba(148,148,162,.28),0 8px 24px rgba(0,0,0,.5); color-scheme:dark; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#19192f; --surface:#141426; --header:#24244a; --text:#f2f2f2; --text2:#b4b4c4;
+  --line:rgba(148,148,162,.18); --line2:rgba(148,148,162,.32); --acc:#8c8cff; --acc-soft:rgba(0,0,242,.16); --acc-soft2:rgba(0,0,242,.32); --on-solid:#f2f2f2;
+  --chrome:#19192f; --chrome-text:#f2f2f2; --err:#ff9a6b; --err-soft:rgba(255,154,107,.12); --ok:#5bd08a; --float:0 0 0 1px rgba(148,148,162,.28),0 8px 24px rgba(0,0,0,.5); color-scheme:dark; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:24px; font:15px/1.45 "Inter Tight",system-ui,sans-serif; background:var(--bg); color:var(--text); }
+h1 { font:800 2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h2 { font:800 1.35rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 12px; }
+h3 { font:600 .8rem "DM Mono",ui-monospace,monospace; text-transform:uppercase; letter-spacing:.04em; color:var(--text2); margin:16px 0 6px; }
+.mono { font-family:"DM Mono",ui-monospace,monospace; }
+section.idea { border:1px solid var(--line2); border-radius:4px; padding:16px; margin:20px 0; background:var(--surface); }
+.sub { color:var(--text2); margin:0 0 12px; }
+.row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+figure { margin:0; flex:1 1 360px; min-width:0; }
+figcaption { font:500 .78rem "DM Mono",ui-monospace,monospace; color:var(--text2); margin-top:6px; }
+.app { border:1px solid var(--line2); border-radius:4px; overflow:hidden; background:var(--bg); position:relative; font:.82rem "DM Mono",ui-monospace,monospace; }
+.bar { background:var(--chrome); color:var(--chrome-text); padding:5px 8px; display:flex; gap:10px; align-items:center; font:700 .8rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; }
+.bar .fx { font:.78rem "DM Mono",monospace; text-transform:none; opacity:.9; margin-left:auto; }
+.tabs { display:flex; gap:2px; background:var(--bg); border-top:1px solid var(--line); padding:3px 6px; font:700 .75rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; }
+.tabs b { padding:2px 8px; border-radius:2px; font-weight:700; } .tabs b.on { background:var(--acc); color:var(--on-solid); }
+:root[data-theme="dark"] .tabs b.on { background:#0000f2; }
+table.g { border-collapse:collapse; width:100%; table-layout:fixed; }
+.g th { background:var(--header); font-weight:500; color:var(--text2); padding:2px 6px; border:1px solid var(--line); }
+.g td { background:var(--surface); padding:3px 6px; border:1px solid var(--line); text-align:right; height:24px; position:relative; }
+.g td.l { text-align:left; } .g th.r { width:30px; }
+.g td.sel { background:var(--acc-soft); } .g td.cur { outline:2px solid var(--acc); outline-offset:-2px; }
+.g td.flash { animation:fl 1.4s ease-out; }
+@keyframes fl { 0% { background:var(--acc); color:var(--on-solid); } 100% { background:var(--surface); } }
+/* Fenêtre Espion */
+.win { background:var(--surface); box-shadow:var(--float); border-radius:4px; font:.78rem "DM Mono",monospace; }
+.win header { display:flex; align-items:center; gap:8px; padding:5px 8px; border-bottom:1px solid var(--line2); font:700 .8rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; }
+.win header .x { margin-left:auto; color:var(--text2); }
+.win table { width:100%; border-collapse:collapse; } .win th { text-align:left; color:var(--text2); font-weight:500; padding:3px 8px; border-bottom:1px solid var(--line); }
+.win td { padding:4px 8px; border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
+.win tr:hover td, .win tr.act td { background:var(--acc-soft); } .win td.v { text-align:right; font-weight:700; }
+.win td.err { color:var(--err); background:var(--err-soft); }
+.d { font-size:.7rem; margin-left:6px; } .d.up { color:var(--ok); } .d.dn { color:var(--err); }
+.win .empty { padding:14px 10px; color:var(--text2); } .win footer { padding:4px 8px; color:var(--text2); border-top:1px solid var(--line); }
+.btn { font:600 .75rem "DM Mono",monospace; border:1px solid var(--line2); border-radius:2px; background:var(--surface); color:var(--text); padding:3px 8px; cursor:pointer; }
+.btn.solid { background:#0000f2; color:#f2f2f2; border-color:#0000f2; } .btn:focus-visible { outline:2px solid var(--acc); outline-offset:1px; }
+kbd { font:600 .72rem "DM Mono",monospace; border:1px solid var(--line2); border-radius:2px; padding:0 4px; }
+.ghost { position:absolute; pointer-events:none; }
+/* Analyse rapide */
+.qa-badge { position:absolute; width:22px; height:22px; background:#0000f2; color:#f2f2f2; border-radius:2px; display:grid; place-items:center; font-weight:700; font-size:.75rem; transition:opacity .2s, transform .2s; }
+.qa-badge.hide { opacity:0; transform:scale(.8); }
+.qa { position:absolute; width:250px; background:var(--surface); box-shadow:var(--float); border-radius:4px; font:.78rem "DM Mono",monospace; transition:opacity .2s, transform .2s; transform-origin:top left; }
+.qa.hide { opacity:0; transform:scale(.96); pointer-events:none; }
+.qa nav { display:flex; border-bottom:1px solid var(--line2); } .qa nav b { padding:5px 9px; font:700 .8rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; color:var(--text2); }
+.qa nav b.on { color:var(--text); box-shadow:inset 0 -2px 0 var(--acc); }
+.qa ul { list-style:none; margin:0; padding:4px; display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.qa li { border:1px solid var(--line); border-radius:2px; padding:5px 6px; display:flex; flex-direction:column; gap:3px; }
+.qa li.act { border-color:var(--acc); background:var(--acc-soft); } .qa li svg { height:22px; width:100%; }
+.qa p { margin:0; padding:4px 8px; color:var(--text2); border-top:1px solid var(--line); }
+.pv { color:var(--acc); } .pv-bar { fill:var(--acc); opacity:.45; } .pv-up { color:var(--ok); } .pv-dn { color:var(--err); }
+.contract { font:500 .84rem/1.5 "DM Mono",monospace; white-space:pre-wrap; background:var(--bg); border:1px solid var(--line); border-radius:2px; padding:10px 12px; margin:0; overflow:auto; }
+@media (prefers-reduced-motion: reduce) { .g td.flash { animation:none; } .qa, .qa-badge { transition:none; } }
+</style>
+</head>
+<body>
+<h1>Espion et analyse rapide</h1>
+<p class="sub">Deux idées absentes de dk-table (TODO, recherche axe 3). Écrans clair/sombre via le sélecteur de thème de la page Design.</p>
+
+<!-- ============ IDÉE 1 : ESPION ============ -->
+<section class="idea" id="spy">
+<h2>1. Fenêtre Espion</h2>
+<p class="sub">Panneau flottant qui suit des cellules choisies, toutes feuilles confondues, avec leur valeur recalculée en direct. On modifie une feuille, on lit le résultat sur une autre sans changer d'onglet.</p>
+<div class="row">
+  <figure>
+    <div class="app" id="spyApp" style="min-height:300px">
+      <div class="bar"><span>Fichier Édition Affichage</span><span class="fx" id="fx">fx =SOMME(Données!B2:B4)</span></div>
+      <table class="g" id="spyGrid"></table>
+      <div class="tabs"><b id="tabD" class="on">Données</b><b id="tabS">Synthèse</b></div>
+      <div class="win ghost" id="spyWin" style="right:8px;bottom:36px;width:330px">
+        <header>Espion <span class="mono" id="spyN" style="text-transform:none;font-weight:400;color:var(--text2)">3 cellules</span><span class="x">Échap</span></header>
+        <table><thead><tr><th>Cellule</th><th style="text-align:right">Valeur</th><th>Formule</th></tr></thead><tbody id="spyRows"></tbody></table>
+        <footer>Alt+Maj+W ouvre. Clic sur une ligne = aller à la cellule.</footer>
+      </div>
+    </div>
+    <figcaption>Animé : A2 change dans Données, Synthèse!B1 et B2 se recalculent, l'écart s'affiche (flash 1,4 s puis ▲/▼).</figcaption>
+    <p><button class="btn solid" id="spyPlay">Rejouer</button></p>
+  </figure>
+  <figure>
+    <h3>États</h3>
+    <div class="win"><header>Espion <span class="x">Échap</span></header><div class="empty">Aucune cellule suivie. Sélectionnez une cellule puis Alt+Maj+W, ou « Ajouter la sélection ».</div></div>
+    <figcaption>Vide</figcaption>
+    <div class="win" style="margin-top:12px"><header>Espion</header><table><tbody>
+      <tr><td>Synthèse!B1</td><td class="v err">#DIV/0!</td><td>=B2/Données!B5</td></tr>
+      <tr><td>Données!B7</td><td class="v">1 240,00</td><td>=SOMME(B2:B6)</td></tr>
+      <tr class="act"><td>Prévis!C3</td><td class="v">12,5 %<span class="d dn">▼ 0,8</span></td><td>=C2/C1-1</td></tr></tbody></table></div>
+    <figcaption>Erreur (orange, jamais seule : texte du code), variation baissière, ligne active</figcaption>
+    <div class="win" style="margin-top:12px"><header>Espion</header><table><tbody>
+      <tr><td>Ancien!A1</td><td class="v err">#REF!</td><td>cellule supprimée</td></tr></tbody></table><footer><button class="btn">Retirer</button></footer></div>
+    <figcaption>Cellule supprimée ou feuille retirée : ligne conservée en #REF!, retrait manuel</figcaption>
+  </figure>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">Types (src/ui/spy/types.ts)
+  WatchItem  = { id: string; sheetId: string; key: string /* "B2" */ }
+  WatchRow   = { item: WatchItem; label: string /* "Synthèse!B1" */; display: string;
+                 raw: string; error: string | null; delta: number | null }
+Fonctions pures (src/ui/spy/spy.ts)
+  addWatch(items, sheetId, key): WatchItem[]        // dédoublonne, max 50
+  removeWatch(items, id): WatchItem[]
+  rowsOf(items, read: (sheetId,key)=>{display,raw,value}, prev: Map<string,number>): WatchRow[]
+  shiftWatch(items, op: StructOp): WatchItem[]       // suit insertion/suppression (structure.ts), supprimée -> #REF!
+Câblage
+  App.watch(): readonly WatchItem[]   App.addWatch(sel?) / App.removeWatch(id) / App.openSpy()
+  Rafraîchi par appGrid.touch (même point que refreshCf), une seule passe par recalcul
+  Persisté : DocSheet-niveau classeur `watch?: {sheet: string; key: string}[]` (io/watchFormat.ts, absent si vide, ancien format OK)
+  Non annulable (comme volets figés). Clic ligne -> app.goto(sheetId,key)
+Événements : "spy:open" | "spy:change" ({rows}) ; raccourci Alt+Maj+W ; menu Affichage > Fenêtre Espion ; palette view.spy
+Fichiers : src/ui/spy/{spy.ts,panel.ts,spy.css}, src/io/watchFormat.ts, appSpy.ts, menubar/spec.ts (une entrée)
+Tests à écrire d'abord (npm test)
+  spy.test.ts : addWatch dédoublonne et plafonne à 50; rowsOf calcule delta; erreur -> error "#DIV/0!"; shiftWatch après insertion de ligne -> clé décalée; suppression -> #REF!
+  watchFormat.test.ts : aller-retour, fichier sans `watch` accepté
+  e2e/feat-spy.spec.ts : ajouter B2, éditer, valeur du panneau change sur l'autre feuille; captures clair/sombre</pre>
+</section>
+
+<!-- ============ IDÉE 2 : ANALYSE RAPIDE ============ -->
+<section class="idea" id="qa">
+<h2>2. Analyse rapide (Ctrl+Q)</h2>
+<p class="sub">Sur une sélection de données, un badge en bas à droite ouvre un menu : totaux, graphiques en cellule, formats. Survol = aperçu dans la grille, clic = application en un pas d'annulation. Réutilise SOMME, SPARKLINE, BAR, TREND et le formatage conditionnel existants.</p>
+<div class="row">
+  <figure>
+    <div class="app" id="qaApp" style="min-height:300px">
+      <div class="bar"><span>Fichier Édition Affichage</span><span class="fx">fx =SPARKLINE(B2:D2)</span></div>
+      <table class="g" id="qaGrid"></table>
+      <div class="qa-badge hide" id="qaBadge" title="Analyse rapide (Ctrl+Q)">⚡</div>
+      <div class="qa hide" id="qaMenu">
+        <nav><b class="on">Totaux</b><b>Graphiques</b><b>Formats</b></nav>
+        <ul id="qaItems"></ul>
+        <p id="qaHint">Aperçu : survolez. Entrée applique.</p>
+      </div>
+    </div>
+    <figcaption>Animé : sélection B2:D4, badge, menu, survol « Tendance » (aperçu en E), application.</figcaption>
+    <p><button class="btn solid" id="qaPlay">Rejouer</button></p>
+  </figure>
+  <figure>
+    <h3>États</h3>
+    <div class="qa" style="position:static;width:auto"><nav><b>Totaux</b><b class="on">Graphiques</b><b>Formats</b></nav>
+      <ul><li class="act"><span>Mini-courbes</span><svg viewBox="0 0 60 22" class="pv"><polyline fill="none" stroke="currentColor" stroke-width="1.75" points="2,18 20,10 38,14 58,4"/></svg></li>
+      <li><span>Mini-barres</span><svg viewBox="0 0 60 22"><rect class="pv-bar" x="4" y="10" width="10" height="12"/><rect class="pv-bar" x="20" y="4" width="10" height="18"/><rect class="pv-bar" x="36" y="14" width="10" height="8"/></svg></li>
+      <li><span>Tendance</span><span class="pv-up mono">▲ +12 %</span></li>
+      <li><span>Baisse</span><span class="pv-dn mono">▼ -8 %</span></li></ul><p>Remplace la colonne vide à droite.</p></div>
+    <figcaption>Onglet Graphiques, élément actif</figcaption>
+    <div class="qa" style="position:static;width:auto;margin-top:12px"><nav><b>Totaux</b><b>Graphiques</b><b>Formats</b></nav>
+      <p style="border:0">Sélection trop petite : sélectionnez au moins 2 valeurs numériques.</p></div>
+    <figcaption>Données non numériques ou une seule cellule : badge absent, Ctrl+Q affiche ce message</figcaption>
+  </figure>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">Types (src/ui/quick/types.ts)
+  QuickTab   = "totals" | "charts" | "formats"
+  QuickItem  = { id: string; tab: QuickTab; label: string; apply: Edit[]; preview: Edit[] }
+  Edit       = { key: string; raw: string } | { cf: CfRule }       // même forme que app.batch / setCfRules
+Fonctions pures (src/ui/quick/plan.ts)
+  analyzeSelection(range: string, read: CellReader): { numericCols: number[]; numericRows: number[]; n: number } | null
+      // null si < 2 valeurs numériques
+  quickItems(a: Analysis, range: string, free: FreeCells): QuickItem[]
+      // totals : SOMME/MOYENNE/NB/MIN/MAX sous (colonnes) ou à droite (lignes), cellules libres seulement
+      // charts : SPARKLINE | BAR | TREND(plage de la ligne) dans la colonne libre à droite
+      // formats: règles CF existantes (échelle de couleurs, barres, supérieur à la moyenne)
+Câblage
+  App.quickAnalysis(): QuickItem[]   App.applyQuick(id)  (un app.batch = un pas d'annulation)
+  Aperçu : calque DOM éphémère (.dkg-qp), ne touche ni le moteur ni l'historique
+  Badge : ui/quick/badge.ts, placé par floating.ts (placeFloating) au coin bas-droit de la plage, masqué si < 2 valeurs
+Événements : "quick:open" | "quick:preview" ({id}) | "quick:apply" ({id}) ; Ctrl+Q ouvre, flèches naviguent, Entrée applique, Échap ferme
+Fichiers : src/ui/quick/{plan.ts,panel.ts,badge.ts,quick.css}, appQuick.ts, commands.ts (raccourci), menubar/spec.ts (Édition > Analyse rapide)
+Réutilise : ui/autosum.ts (logique de totaux), engine/live/adapter.ts, engine/cf/types.ts
+Tests à écrire d'abord (npm test)
+  plan.test.ts : analyzeSelection renvoie null sous 2 nombres; quickItems ne propose pas de cellule déjà occupée; totals pose SOMME sous chaque colonne; charts cible la colonne libre
+  appQuick.test.ts : applyQuick = un seul pas d'annulation; preview n'écrit rien dans le moteur
+  e2e/feat-quick.spec.ts : sélection, Ctrl+Q, survol (aperçu), Entrée; captures clair/sombre</pre>
+</section>
+
+<script>
+/* Données de démonstration. Tout est local, aucun réseau. */
+var COLS = ["A","B","C","D","E"];
+function esc(s){ return String(s); }
+function grid(el, rows, opts){
+  opts = opts || {};
+  var h = "<tr><th class='r'></th>" + COLS.map(function(c){ return "<th>"+c+"</th>"; }).join("") + "</tr>";
+  rows.forEach(function(r, i){
+    h += "<tr><th class='r'>"+(i+1)+"</th>" + r.map(function(v, j){
+      var k = COLS[j]+(i+1), cls = (j===0?"l ":"") + ((opts.sel && opts.sel(i,j))?"sel ":"") + ((opts.cur && opts.cur(i,j))?"cur ":"");
+      return "<td id='"+opts.p+k+"' class='"+cls+"'>"+esc(v)+"</td>";
+    }).join("") + "</tr>";
+  });
+  el.innerHTML = h;
+}
+var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+var timers = [];
+function later(fn, ms){ timers.push(setTimeout(function(){ if(!document.hidden) fn(); else fn(); }, reduce ? 0 : ms)); }
+function clear(){ timers.forEach(clearTimeout); timers = []; }
+
+/* ---- Espion ---- */
+var D = [["Poste","Montant"],["Loyer",800],["Énergie",140],["Autres",300],["",""],["Total",""],["",""]];
+var base = {a2:800};
+function fmt(n){ return n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function spyRender(a2, prev){
+  var total = a2 + 140 + 300, part = a2 / total * 100;
+  var cur = [["Données!B2", a2, "=800"], ["Synthèse!B1", total, "=SOMME(Données!B2:B4)"], ["Synthèse!B2", part, "=Données!B2/B1"]];
+  document.getElementById("spyRows").innerHTML = cur.map(function(r, i){
+    var d = prev ? r[1] - prev[i] : 0, t = i===2 ? fmt(r[1])+" %" : fmt(r[1]);
+    var tag = d ? "<span class='d "+(d>0?"up":"dn")+"'>"+(d>0?"▲ ":"▼ ")+fmt(Math.abs(d))+"</span>" : "";
+    return "<tr><td>"+r[0]+"</td><td class='v'>"+t+tag+"</td><td>"+r[2]+"</td></tr>";
+  }).join("");
+  document.getElementById("B2").textContent = fmt(a2); document.getElementById("B5").textContent = fmt(total);
+  return cur.map(function(r){ return r[1]; });
+}
+function spyInit(){
+  clear();
+  var rows = D.map(function(r){ return r.concat(["","",""]).slice(0,5); });
+  grid(document.getElementById("spyGrid"), rows, {p:"", cur:function(i,j){ return i===1 && j===1; }});
+  var vals = spyRender(800, null);
+  document.getElementById("tabD").className = "on"; document.getElementById("tabS").className = "";
+  document.getElementById("fx").textContent = "fx 800";
+  later(function(){
+    var cell = document.getElementById("B2"); cell.textContent = "Édition…"; document.getElementById("fx").textContent = "fx 1100";
+  }, 900);
+  later(function(){
+    var cell = document.getElementById("B2"); cell.className = "l cur flash"; cell.style.textAlign = "right";
+    var next = spyRender(1100, vals); spyFlash();
+  }, 1700);
+}
+function spyFlash(){ var rows = document.querySelectorAll("#spyRows tr"); rows.forEach(function(r){ r.classList.add("act"); }); later(function(){ rows.forEach(function(r){ r.classList.remove("act"); }); }, 1400); }
+document.getElementById("spyPlay").addEventListener("click", spyInit);
+
+/* ---- Analyse rapide ---- */
+var Q = [["Région","T1","T2","T3","Évol."],["Nord",120,140,160,""],["Sud",90,85,70,""],["Est",60,75,95,""],["","","","",""]];
+var sel = function(i,j){ return i>=1 && i<=3 && j>=1 && j<=3; };
+function spark(vals, up){ var mx = Math.max.apply(null,vals), mn = Math.min.apply(null,vals), w = 56;
+  var pts = vals.map(function(v,i){ return (2+i*w/(vals.length-1)).toFixed(0)+","+(20-(v-mn)/(mx-mn||1)*16).toFixed(0); }).join(" ");
+  return "<svg viewBox='0 0 60 22' width='60' height='18' class='"+(up?"pv-up":"pv-dn")+"'><polyline fill='none' stroke='currentColor' stroke-width='1.75' points='"+pts+"'/></svg>"; }
+var ITEMS = [["Somme","Σ colonnes"],["Moyenne","x̄ colonnes"],["Tendance","col. E"],["Barres","col. E"]];
+function qaInit(){
+  clear();
+  grid(document.getElementById("qaGrid"), Q, {p:"q", sel:sel, cur:function(i,j){ return i===1&&j===1; }});
+  var badge = document.getElementById("qaBadge"), menu = document.getElementById("qaMenu"), ul = document.getElementById("qaItems");
+  badge.className = "qa-badge hide"; menu.className = "qa hide";
+  ul.innerHTML = ITEMS.map(function(it){ return "<li><b>"+it[0]+"</b><span style='color:var(--text2)'>"+it[1]+"</span></li>"; }).join("");
+  var host = document.getElementById("qaApp"), anchor = document.getElementById("qD4");
+  function place(el, dx, dy){ var h = host.getBoundingClientRect(), a = anchor.getBoundingClientRect(); el.style.left = (a.right - h.left + dx)+"px"; el.style.top = (a.bottom - h.top + dy)+"px"; }
+  later(function(){ place(badge, -24, 2); badge.className = "qa-badge"; }, 700);
+  later(function(){ place(menu, -250, 28); menu.className = "qa"; badge.className = "qa-badge hide"; }, 1600);
+  later(function(){ var li = ul.children[2]; li.className = "act"; document.getElementById("qaHint").textContent = "Aperçu : Tendance dans la colonne E.";
+    var rows = [[120,140,160],[90,85,70],[60,75,95]]; rows.forEach(function(r,i){ var c = document.getElementById("qE"+(i+2)); c.style.opacity = .6; c.innerHTML = spark(r, r[2]>=r[0]); }); }, 2600);
+  later(function(){ menu.className = "qa hide"; for(var i=2;i<=4;i++){ var c = document.getElementById("qE"+i); c.style.opacity = 1; c.classList.add("flash"); } }, 4000);
+}
+document.getElementById("qaPlay").addEventListener("click", qaInit);
+spyInit(); qaInit();
+</script>
+</body>
+</html>
