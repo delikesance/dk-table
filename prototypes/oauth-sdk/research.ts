@@ -2,8 +2,8 @@
  * Secteur recherche (v1) : compare Excel, Google Sheets, LibreOffice Calc et Airtable
  * pour proposer des fonctionnalites a dk-table, en 4 axes.
  *
- * Quoi : une requete par axe (puis d'autres tours tant que le budget le permet),
- *        cout cumule via `total_cost_usd`, arret a 90 % du plafond.
+ * Quoi : une requete par axe, les 4 en parallele (puis d'autres tours tant que le budget
+ *        le permet), cout cumule via `total_cost_usd`, arret a 90 % du plafond.
  * Pourquoi : `query` est injectee (test sans reseau ni cout); le plafond est aussi
  *        transmis au SDK (`maxBudgetUsd` = reste du budget).
  * Usage : `runResearch({ query, budgetUsd: 20 })` -> `{ markdown, items, totalCostUsd }`.
@@ -59,6 +59,10 @@ export interface ResearchOpts {
   maxRounds?: number;
   /** Env transmis au SDK (token OAuth, sans cle API). */
   env?: Record<string, string>;
+  /** Journal d'avancement, une ligne par evenement (defaut: muet). */
+  log?: (line: string) => void;
+  /** Horloge en ms (defaut: Date.now). */
+  now?: () => number;
 }
 
 /** Resultat : markdown des 4 sections, puces par axe, cout total. */
@@ -73,33 +77,44 @@ export function parseItems(text: string): string[] {
   return text.split(/\r?\n/).filter((l) => /^\s*[-*] /.test(l)).map((l) => l.replace(/^\s*[*-] /, "- ").trimEnd());
 }
 
-/** Boucle de recherche : un axe par requete, tours supplementaires si le budget reste. */
+/** Boucle de recherche : par tour, les 4 axes en parallele; le reste du budget est reparti entre eux. */
 export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
   const rounds = o.maxRounds ?? 2;
+  const log = o.log ?? (() => {});
+  const now = o.now ?? Date.now;
   const items: Record<string, string[]> = Object.fromEntries(AXES.map((a) => [a.id, []]));
   let total = 0;
-  const stop = () => total >= 0.9 * o.budgetUsd;
-  outer: for (let r = 0; r < rounds; r++) {
-    for (const a of AXES) {
-      if (stop()) break outer;
-      const known = items[a.id].length ? `\nDeja trouve (ne pas repeter):\n${items[a.id].join("\n")}` : "";
-      const prompt =
-        `${BASE}${a.ask} Reponds en francais, uniquement par des puces "- **Nom** : description, ` +
-        `source (URL), valeur pour dk-table", 5 a 8 puces.${known}`;
-      const stream = o.query({
-        prompt,
-        options: {
-          model: a.model, maxTurns: 15, maxBudgetUsd: o.budgetUsd - total,
-          tools: ALLOWED_TOOLS, allowedTools: ALLOWED_TOOLS,
-          permissionMode: "dontAsk", settingSources: [], env: o.env,
-        },
-      });
-      for await (const m of stream) {
-        if (m.type !== "result") continue;
-        total += m.total_cost_usd ?? 0;
-        if (m.subtype === "success") items[a.id].push(...parseItems(m.result ?? ""));
-      }
+  const money = (n: number) => `$${n.toFixed(2)}`;
+
+  /** Une requete d'axe, plafonnee a `share` USD; ajoute son cout reel au total. */
+  async function one(a: Axis, share: number): Promise<void> {
+    const known = items[a.id].length ? `\nDeja trouve (ne pas repeter):\n${items[a.id].join("\n")}` : "";
+    const prompt =
+      `${BASE}${a.ask} Reponds en francais, uniquement par des puces "- **Nom** : description, ` +
+      `source (URL), valeur pour dk-table", 5 a 8 puces.${known}`;
+    const t0 = now();
+    log(`[${a.id}] debut (plafond ${money(share)})`);
+    let cost = 0;
+    const stream = o.query({
+      prompt,
+      options: {
+        model: a.model, maxTurns: 15, maxBudgetUsd: share,
+        tools: ALLOWED_TOOLS, allowedTools: ALLOWED_TOOLS,
+        permissionMode: "dontAsk", settingSources: [], env: o.env,
+      },
+    });
+    for await (const m of stream) {
+      if (m.type !== "result") continue;
+      cost += m.total_cost_usd ?? 0;
+      if (m.subtype === "success") items[a.id].push(...parseItems(m.result ?? ""));
     }
+    total += cost;
+    log(`[${a.id}] fin ${money(cost)} ${Math.round((now() - t0) / 1000)}s | total ${money(total)} reste ${money(o.budgetUsd - total)}`);
+  }
+
+  for (let r = 0; r < rounds && total < 0.9 * o.budgetUsd; r++) {
+    const share = (o.budgetUsd - total) / AXES.length; // somme des plafonds <= reste
+    await Promise.all(AXES.map((a) => one(a, share)));
   }
   const markdown =
     "# Recherche de fonctionnalites\n\n" +

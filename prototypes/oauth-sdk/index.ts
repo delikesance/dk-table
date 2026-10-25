@@ -28,7 +28,11 @@ for (const [k, v] of Object.entries(process.env)) {
 
 const budgetUsd = Number(process.argv[2] ?? 20);
 
-runResearch({ query: query as unknown as QueryFn, budgetUsd, env })
+runResearch({
+  query: query as unknown as QueryFn, budgetUsd, env,
+  log: (l) => process.stderr.write(`${l}
+`),
+})
   .then((out) => {
     mkdirSync("docs/recherche", { recursive: true });
     writeFileSync("docs/recherche/fonctionnalites.md", out.markdown);
