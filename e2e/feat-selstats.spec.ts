@@ -26,6 +26,6 @@ for (const [theme, label] of [["light", "clair"], ["dark", "sombre"]] as const) 
     await expect(bar.locator('[data-stat="Min"]')).toHaveCount(0);
     await bar.locator('input[data-stat-opt="Min"]').check();
     await expect(bar.locator('[data-stat="Min"]')).toHaveCount(1);
-    await page.screenshot({ path: `${DIR}/statistiques-${label}.png` });
+    await page.screenshot({ path: `${DIR}/selection-${label}.png` });
   });
 }
