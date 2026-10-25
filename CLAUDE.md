@@ -29,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Parallel workflow
 
+- Ordre : 1) recherche (quoi construire, comparaison); 2) design (UX/UI + contrat données/API, écrit avant tout code : maquette ou courte spec sous `docs/`, interfaces fixées); 3) implémentation par workers en parallèle, chacun en TDD, appuyés sur ce design (contrats fixés = ni collisions ni reprise); 4) correction/tests; 5) intégration.
 - Before launching a task, split it into small independent mini-tasks (disjoint files where possible).
 - One worker per mini-task, each in its own git worktree on branch `wt/<mini-task-name>`, run in parallel.
 - TDD per mini-task: write its failing test first; every worker brief includes the test command (`npm test`, plus `cargo test` for Rust).
