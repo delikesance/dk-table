@@ -14,7 +14,8 @@ import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
-import { addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
+import { exportDoc } from "./appDocExport";
+import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
 const stylesOf = (styles: Entry["styles"]): DocSheet["styles"] =>
@@ -55,7 +56,7 @@ export function createApi(c: Ctx): App {
     switchSheet(id) {
       const e = c.entries.find((x) => x.id === id);
       if (!e) return;
-      const wasDoc = leaveDoc(c);
+      const wasDoc = c.split ? false : leaveDoc(c); // split view keeps the document next to the sheet
       if (e === c.cur) { if (wasDoc) refreshTabs(c); return; }
       c.cur = e; refreshTabs(c); buildGrid(c);
     },
@@ -134,6 +135,10 @@ export function createApi(c: Ctx): App {
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
     addDoc: () => addDoc(c),
+    exportDoc: (kind) => exportDoc(c, kind),
+    docFormat: (name) => docFormat(c, name),
+    docInsert: (kind) => docInsert(c, kind),
+    toggleSplit: () => toggleSplit(c),
     openDoc: (id) => openDocView(c, id),
     removeDoc: (id) => removeDoc(c, id),
     activeDocId: () => c.curDoc,

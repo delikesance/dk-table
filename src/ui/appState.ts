@@ -10,6 +10,7 @@ import type { MacroUi } from "./macros/wire";
 import type { CfStyle } from "../engine/cf/types";
 import type { DocStore } from "../doc/store";
 import type { DocEditor } from "../doc/editor";
+import type { CopyInfo } from "../doc/refs";
 
 /** Everything the app modules share; widgets/app are filled in during mount. */
 export interface Ctx {
@@ -20,8 +21,16 @@ export interface Ctx {
   docs: DocStore;
   /** Id of the open document, or undefined when the grid is shown. */
   curDoc?: string;
+  /** Document to come back to (Alt+←) after following a reference into a sheet. */
+  backDoc?: string;
   /** Editor of the open document. */
   docEd?: DocEditor;
+  /** Sheet and document side by side (Ctrl+\\). */
+  split?: boolean;
+  /** Rebuild the menu bar (set by mount; called when a document opens or closes). */
+  rebuildMenus?(): void;
+  /** Last range copied in the grid (documents paste it as a live reference). */
+  lastCopy?: CopyInfo;
   entries: Entry[];
   /** Active sheet entry. */
   cur: Entry;

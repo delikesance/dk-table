@@ -60,7 +60,7 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
     // whole rows/columns (header click): the bar would cover the headers, like Sheets it stays hidden
     const multi = sel.includes(":") && !isWholeLines(sel, c.cur.sheet.cols, c.cur.sheet.rows);
     const editing = !!c.gridHost.querySelector(".dkg .dkg-editor");
-    const rect = multi && !editing ? selectionRect(c.gridHost) : null;
+    const rect = multi && !editing && !c.gridHost.hidden ? selectionRect(c.gridHost) : null;
     if (!rect) { pickers.forEach((p) => { p.hidden = true; }); fb.hide(); return; }
     const st = c.app.activeStyle();
     fb.setPressed("bold", !!st.bold); fb.setPressed("italic", !!st.italic);
@@ -73,4 +73,5 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
   // Edit start/end do not go through syncInfo: re-evaluate after the grid handled the event.
   for (const ev of ["keydown", "dblclick", "focusout"]) c.gridHost.addEventListener(ev, () => queueMicrotask(refresh));
   c.gridHost.addEventListener("scroll", refresh, true);
+  c.gridHost.addEventListener("dk-visibility", refresh); // the grid was hidden / shown (document view)
 }

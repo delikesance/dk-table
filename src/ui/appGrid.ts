@@ -61,6 +61,7 @@ export function touch(c: Ctx): void {
   c.grid.refresh();
   refreshCf(c);
   syncInfo(c);
+  c.docEd?.refresh();
 }
 
 /** Rebuild the grid for the current sheet. */
@@ -88,6 +89,7 @@ export function buildGrid(c: Ctx): void {
     onFitColumn: (col) => { const sel = colsOfSelection(c.grid.getSelection()); fitColumns(c, sel.length > 1 && sel.includes(col) ? sel : [col]); },
     onSheetStep: (d) => stepSheet(c, d),
     onFreeze: (f) => c.app.setFreeze(f),
+    onCopy: (ref, text) => { c.lastCopy = ref ? { text, sheet: c.cur.id, ref } : undefined; },
     renderCell: (k) => liveCell(c.cur.sheet, k),
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k, el) => {
@@ -114,4 +116,5 @@ export function refreshTabs(c: Ctx): void {
     ...c.docs.list().map(({ id, name }) => ({ id, name, kind: "doc" as const })),
   ]);
   c.tabs.setActive(c.curDoc ?? c.cur.id);
+  c.docEd?.refresh();
 }
