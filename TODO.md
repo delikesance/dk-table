@@ -254,6 +254,7 @@ Classement par gravité (P0 = pire)
 - [x] Boucle: agents d'implémentation en parallèle sur cartes indépendantes (`BOUCLE_PARALLEL`, défaut 3): worktree par carte, fusion sérialisée, repli en série sur conflit, budget réparti, panneau (`parallel.ts`, `independent.ts`)
 - [x] Boucle: cartes « Terminées » durables (registre `.boucle/termines.jsonl`, survit nouvelle tournée, redémarrage, nouveau Go)
 - [x] Boucle: design absent de la toile sous Windows (arguments git non protégés sous cmd.exe, commit perdu): `shellArgs.ts`, fusion refusée sans commit
+- [x] Boucle: tests e2e de bout en bout (`docs/boucle-e2e.md`, `e2e/boucle*`): vrai serveur + vrai git + faux agents + Playwright sur les 3 pages; bugs corrigés: panneau (conflit réessayé en échec, run précédent additionné, Stop muet), coupure SSE (ids + `Last-Event-ID`), worktrees non fusionnés jamais retirés (`release`), frise du designer sans fichier écrit (`flush`). Reste: doublons de cartes (même titre dans deux axes, idée retitrée) = fil design de la Boucle
 - [x] Boucle: réconciliateur d'états (`reconcile.ts`): faux « en cours » supprimés, orphelines et finies-sans-rapport visibles (anomalies dans le moodboard et le journal), `docs/boucle-optimisee.md`
 - [x] Boucle: correction déclenchée par le code seulement (fusion refusée ou preuves manquantes), routage des modèles haiku-first avec escalade (`routing.ts`, `BOUCLE_MODELS`)
 - [x] Boucle: push automatique de `developpement` après fusion validée (`pushDev`, jamais master, `BOUCLE_PUSH=0` pour couper)
