@@ -25,12 +25,18 @@ export type QueryFn = (a: {
   options: Record<string, unknown>;
 }) => AsyncIterable<ResultMsg>;
 
-/** Un axe de recherche : titre de section, consigne, modele. */
+/** Type de tache d'une requete : code (edition pure), think (recherche, choix, diagnostic, design), plan (orchestration). */
+export type Kind = "code" | "think" | "plan";
+
+/** Modele par type de tache (seul endroit ou les modeles sont nommes). `plan` n'est utilise par aucune requete aujourd'hui. */
+export const MODEL_BY_KIND: Record<Kind, string> = { code: "haiku", think: "sonnet", plan: "opus" };
+
+/** Un axe de recherche : titre de section, consigne, type de tache. */
 export interface Axis {
   id: string;
   title: string;
   ask: string;
-  model: string;
+  kind: Kind;
 }
 
 const BASE =
@@ -40,13 +46,13 @@ const BASE =
 
 /** Les 4 axes de la synthese (ordre = ordre des sections). */
 export const AXES: Axis[] = [
-  { id: "nouveau", title: "Idees nouvelles", model: "sonnet",
+  { id: "nouveau", title: "Idees nouvelles", kind: "think",
     ask: "Propose des fonctionnalites originales que ces tableurs n'ont pas (ou mal)." },
-  { id: "absent", title: "Absent de dk-table, present ailleurs", model: "sonnet",
+  { id: "absent", title: "Absent de dk-table, present ailleurs", kind: "think",
     ask: "Liste les fonctionnalites presentes dans au moins un de ces tableurs et absentes de dk-table." },
-  { id: "neglige", title: "Negligees ou sous-utilisees ailleurs", model: "sonnet",
+  { id: "neglige", title: "Negligees ou sous-utilisees ailleurs", kind: "think",
     ask: "Liste les fonctionnalites existantes mais negligees ou peu utilisees dans ces tableurs." },
-  { id: "mal", title: "Mal implementees ailleurs", model: "sonnet",
+  { id: "mal", title: "Mal implementees ailleurs", kind: "think",
     ask: "Liste les fonctionnalites mal implementees que les utilisateurs de ces tableurs detestent." },
 ];
 
@@ -104,7 +110,7 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
     const stream = o.query({
       prompt,
       options: {
-        model: a.model, maxTurns: 15, maxBudgetUsd: share,
+        model: MODEL_BY_KIND[a.kind], maxTurns: 15, maxBudgetUsd: share,
         tools: ALLOWED_TOOLS, allowedTools: ALLOWED_TOOLS,
         permissionMode: "dontAsk", settingSources: [], env: o.env,
         cwd: o.cwd, abortController: o.abort,

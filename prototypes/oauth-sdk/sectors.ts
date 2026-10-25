@@ -8,13 +8,14 @@
  * Usage : `runSector(SECTORS[0], { query, maxBudgetUsd, env, log })` -> `{ costUsd, ok, text }`.
  */
 import type { Budget } from "./budget";
-import type { QueryFn } from "./research";
+import { MODEL_BY_KIND, type Kind, type QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 
 /** Definition d'un secteur (prompt et outils). */
 export interface SectorDef {
   id: "implementation" | "correction" | "design";
-  model: string;
+  /** Une seule requete melange choix et edition: think (sonnet), pas code (haiku). */
+  kind: Kind;
   prompt: string;
   maxTurns: number;
   /** Part du plafond total reservee a ce secteur. */
@@ -42,20 +43,20 @@ const RULES =
 /** Definitions des trois secteurs, dans l'ordre d'execution. */
 export const SECTOR_DEFS: SectorDef[] = [
   {
-    id: "implementation", model: "sonnet", maxTurns: 60, share: 0.4, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "implementation", kind: "think", maxTurns: 60, share: 0.4, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
     prompt:
       "Secteur implementation. Lis docs/recherche/fonctionnalites.md et TODO.md, choisis 1 a 3 " +
       "fonctionnalites non cochees, prioritaires et petites, et implemente-les. " + RULES,
   },
   {
-    id: "correction", model: "sonnet", maxTurns: 40, share: 0.2, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "correction", kind: "think", maxTurns: 40, share: 0.2, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
     prompt:
       "Secteur correction. Lance `npm test` puis `npx tsc --noEmit`. Pour chaque echec ou erreur de " +
       "type, ecris un test qui reproduit le bug, puis corrige le code (jamais en affaiblissant un " +
       "test existant). Repete jusqu'a ce que tout soit vert. " + RULES,
   },
   {
-    id: "design", model: "sonnet", maxTurns: 40, share: 0.15, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
+    id: "design", kind: "think", maxTurns: 40, share: 0.15, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
     prompt:
       "Secteur design/UX. Relis la charte (section Design de CLAUDE.md, src/styles/) et corrige " +
       "1 a 3 ecarts visibles de l'interface (contraste, alignement, theme sombre, accessibilite), " +
@@ -91,7 +92,7 @@ export async function runSector(
   const stream = o.query({
     prompt: s.prompt,
     options: {
-      model: s.model, maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd,
+      model: MODEL_BY_KIND[s.kind], maxTurns: s.maxTurns, maxBudgetUsd: o.maxBudgetUsd,
       tools: s.tools, allowedTools: s.allowedTools, disallowedTools: s.disallowedTools,
       permissionMode: "dontAsk", settingSources: ["project"], env: o.env, abortController: o.abort, cwd: o.cwd,
     },

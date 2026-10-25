@@ -1,7 +1,7 @@
 /** Tests du secteur recherche : synthese en 4 axes, axes paralleles, plafond de budget, journal (query factice, sans reseau). */
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import { AXES, runResearch, type QueryFn } from "./research";
+import { AXES, MODEL_BY_KIND, runResearch, type QueryFn } from "./research";
 
 /** Query factice : cout `cost` borne par `maxBudgetUsd`, delai `ms`, suit le nombre d'appels simultanes. */
 function fake(cost: number, ms = 0) {
@@ -21,6 +21,18 @@ function fake(cost: number, ms = 0) {
   };
   return { q, calls, st };
 }
+
+describe("MODEL_BY_KIND", () => {
+  it("table explicite: code=haiku, think=sonnet, plan=opus", () => {
+    expect(MODEL_BY_KIND).toEqual({ code: "haiku", think: "sonnet", plan: "opus" });
+  });
+  it("chaque axe de recherche est de type think et lance le modele de sa table", async () => {
+    const { q, calls } = fake(0.1);
+    await runResearch({ query: q, budget: createBudget(20, 1), maxRounds: 1 });
+    expect(AXES.every((a) => a.kind === "think")).toBe(true);
+    expect(calls.map((c) => c.options.model)).toEqual(Array(4).fill(MODEL_BY_KIND.think));
+  });
+});
 
 describe("runResearch", () => {
   it("produit 4 titres d'axes avec au moins une puce chacun", async () => {
