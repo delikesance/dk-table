@@ -20,6 +20,11 @@ export const viewOf = (e: object): GridView => {
   return v;
 };
 
+/** Scroll offsets and selection of a sheet as last left; `shown` maps a live grid to its sheet's saved slot. */
+interface SheetPos { top: number; left: number; sel?: string }
+const saved = new WeakMap<object, SheetPos>();
+const shown = new WeakMap<object, object>();
+
 /** Sync formula bar, sidebar info and toolbar state with the active cell. */
 export function syncInfo(c: Ctx): void {
   const key = firstKey(c);
@@ -66,7 +71,9 @@ export function touch(c: Ctx): void {
 
 /** Rebuild the grid for the current sheet. */
 export function buildGrid(c: Ctx): void {
-  const prevSel = c.grid?.getSelection();
+  const old = c.gridHost.querySelector<HTMLElement>(".dkg");
+  const prev = c.grid && shown.get(c.grid);
+  if (prev && old) saved.set(prev, { top: old.scrollTop, left: old.scrollLeft, sel: c.grid.getSelection() });
   c.grid?.destroy();
   c.gridHost.replaceChildren();
   c.cur.sheet.rows = Math.max(c.cur.sheet.rows, MAX_ROWS);
@@ -100,7 +107,11 @@ export function buildGrid(c: Ctx): void {
     },
   });
   c.gridHost.querySelector(".dkg")?.addEventListener("contextmenu", (e) => c.app.hooks.context?.(e as MouseEvent));
-  if (prevSel) c.grid.select(prevSel);
+  shown.set(c.grid, c.cur);
+  const pos = saved.get(c.cur);
+  const root = c.gridHost.querySelector<HTMLElement>(".dkg");
+  if (pos?.sel) c.grid.select(pos.sel); // reveals the cursor, so the saved scroll is applied after
+  if (pos && root) { root.scrollTop = pos.top; root.scrollLeft = pos.left; root.dispatchEvent(new Event("scroll")); }
   c.grid.focus();
   syncInfo(c);
 }
