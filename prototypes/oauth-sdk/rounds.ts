@@ -9,6 +9,7 @@
  * Usage : `const p = createPlanner(); p.observe(cards); p.nextBatch(cards); p.observe(cards); p.stuck()`.
  */
 import { allDone, type BoardCard } from "./cards";
+import { runBatch, type AgentResult } from "./parallel";
 import { reportRules } from "./reportRules";
 import type { BoucleEvent } from "./server";
 
@@ -79,7 +80,10 @@ export function stopMessage(reason: StopReason, left: Pick<BoardCard, "id" | "st
 export interface RoundsCtx {
   /** Tableau reconcilie; `active` = ids des cartes en cours de traitement (aucune apres une tournee). */
   board: (active?: string[]) => Promise<BoardCard[]>;
-  impl: (task: string, attempt: number) => Promise<boolean>;
+  /** Un agent d'implementation sur ces cartes (son worktree, sa fusion). */
+  impl: (task: string, attempt: number, cards: BoardCard[]) => Promise<AgentResult>;
+  /** Agents d'implementation simultanes au plus (defaut 1: un seul agent pour tout le lot). */
+  parallel?: number;
   corr: (task: string, attempt: number) => Promise<boolean>;
   emit: (e: BoucleEvent) => void;
   /** Raison d'arret immediate (abandon, budget), sinon null. */
@@ -100,6 +104,7 @@ function correctionTask(merged: boolean, bad: Pick<BoardCard, "id" | "missing">[
  */
 export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reason: StopReason; cards: BoardCard[] }> {
   const planner = createPlanner();
+  const avoid = new Set<string>(); // cartes dont la fusion a deja fait un conflit: jamais en parallele
   const left = (cs: BoardCard[]) => cs.filter((x) => x.state !== "termine");
   let cards = await c.board();
   c.progress(left(cards).length);
@@ -113,7 +118,10 @@ export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reas
     round++;
     const batch = planner.nextBatch(cards), ids = batch.map((b) => b.id), attempt = planner.attempt(ids);
     c.emit({ type: "info", round, cards: ids, message: `tournee ${round} : ${left(cards).length} carte(s) restante(s), lot ${ids.join(", ")}` });
-    const merged = await c.impl(reportRules(batch), attempt);
+    const merged = await runBatch(batch, {
+      n: c.parallel ?? 1, avoid, stop: () => !!c.halt(), emit: c.emit, attempt: planner.attempt, rules: reportRules,
+      run: (cards, task, a) => c.impl(task, a, cards),
+    });
     cards = await c.board();
     const bad = cards.filter((x) => ids.includes(x.id) && x.state === "preuves");
     if (!c.halt() && (!merged || bad.length)) {

@@ -20,7 +20,7 @@ export interface BoucleEvent {
   /** `file`: fichier de design ecrit/mis a jour (`message` = nom, secteur design). */
   type: "start" | "end" | "info" | "error" | "done" | "summary" | "file" | "card";
   /** `card`: carte dont le rapport a change; `done`: toutes les cartes sont terminees; `round`: tournee. */
-  cardId?: string; complete?: boolean; reason?: string; round?: number; cards?: string[];
+  cardId?: string; /** Agent en parallele (carte(s) qu'il traite) qui a emis l'evenement. */ agent?: string; complete?: boolean; reason?: string; round?: number; cards?: string[];
   /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
   phase?: string; ok?: boolean;
   /** Evenement `file`: etat du fichier de design et horodatage (ms). */

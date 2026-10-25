@@ -137,6 +137,8 @@ export interface SectorCtx {
   attempt?: number;
   /** Remplacements de la table de routage (BOUCLE_MODELS). */
   models?: Partial<Record<Task, string[]>>;
+  /** Agents de ce secteur qui tournent en meme temps: la part de budget du secteur est divisee entre eux. */
+  slots?: number;
 }
 
 /** Secteur executable par la boucle. */
@@ -168,7 +170,7 @@ function makeSector(d: SectorDef): Sector {
       ctx.emit({ type: "start", sector: d.id });
       const abort = toController(ctx.signal);
       for (let i = 0; i < MAX_PASSES && !ctx.signal.aborted && !ctx.budget.exhausted(); i++) {
-        const granted = ctx.budget.reserve(cap * d.share);
+        const granted = ctx.budget.reserve((cap * d.share) / Math.max(1, ctx.slots ?? 1));
         if (granted <= 0) break;
         const r = await runSector({ ...d, prompt: promptFor(d) + (ctx.task ? `\n\n${ctx.task}` : "") }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir, model: modelFor(d.id as Task, (ctx.attempt ?? 0) + i, ctx.models) });
         ctx.budget.settle(granted, r.costUsd);
