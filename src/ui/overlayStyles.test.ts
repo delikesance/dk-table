@@ -54,6 +54,51 @@ describe("popover de filtre", () => {
   });
 });
 
+describe("popover de filtre: recherche", () => {
+  const open = (): void => {
+    document.body.innerHTML = "";
+    const a = document.createElement("button");
+    document.body.append(a);
+    const values = [{ value: "Paris", count: 2 }, { value: "Lyon", count: 1 }, { value: "Élodie", count: 1 }];
+    openFilterPopover({ anchor: a, values, selected: null, onApply: (s) => { (window as any).applied = s; } });
+  };
+  const type = (q: string): void => {
+    const s = document.querySelector<HTMLInputElement>(".dkg-pop__search")!;
+    s.value = q;
+    s.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const visible = (): string[] =>
+    [...document.querySelectorAll<HTMLInputElement>("input[data-v]")].filter((i) => !i.closest("label")!.hidden).map((i) => i.dataset.v!);
+  it("champ de recherche focalisé à l'ouverture", () => {
+    open();
+    expect(document.activeElement).toBe(document.querySelector(".dkg-pop__search"));
+  });
+  it("filtre la liste (accents/casse ignorés)", () => {
+    open();
+    type("elo");
+    expect(visible()).toEqual(["Élodie"]);
+    type("");
+    expect(visible().length).toBe(3);
+  });
+  it("Tout sélectionner ne touche que les résultats visibles; OK applique", () => {
+    open();
+    const all = document.querySelector<HTMLInputElement>("input[data-all]")!;
+    all.checked = false;
+    all.dispatchEvent(new Event("change", { bubbles: true }));
+    type("par");
+    all.checked = true;
+    all.dispatchEvent(new Event("change", { bubbles: true }));
+    const on = [...document.querySelectorAll<HTMLInputElement>("input[data-v]")].filter((i) => i.checked).map((i) => i.dataset.v);
+    expect(on).toEqual(["Paris"]);
+    document.querySelector<HTMLInputElement>(".dkg-pop__search")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect((window as any).applied).toEqual(["Paris"]);
+    expect(document.querySelector(".dkg-pop")).toBeNull();
+  });
+  it("style en jetons", () => {
+    expect(rule(css("./grid/filterPopover.css"), ".dkg-pop__search")).toContain("var(--c-line-strong)");
+  });
+});
+
 describe("menu contextuel", () => {
   const c = css("./contextmenu/contextmenu.css");
   it("survol doux, séparateur marqué, danger rouge", () => {
