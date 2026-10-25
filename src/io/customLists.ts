@@ -1,7 +1,8 @@
 /**
  * Listes personnalisées persistées (localStorage par défaut, store injectable comme `io/recents.ts`).
  * `lists()` renvoie une copie; `add(items)` valide via `engine/custom-lists.ts` et n'écrit rien en cas de refus;
- * `remove(i)` supprime la liste à la position `i`.
+ * `remove(i)` supprime la liste à la position `i`; `replace(i, raw)` la remplace (même validation, la liste
+ * elle-même n'est pas comparée à ses anciennes valeurs).
  */
 import { validateList, type ListCheck } from "../engine/custom-lists";
 import type { KeyValueStore } from "./recents";
@@ -32,6 +33,15 @@ export function createCustomLists(store: KeyValueStore | null) {
       const r = validateList(raw, items);
       if (!r.ok) return r;
       items = [...items, r.list];
+      save();
+      return r;
+    },
+    /** Remplace la liste n° `i` après validation (contre les autres listes); rien n'est écrit en cas de refus. */
+    replace(i: number, raw: string[]): ListCheck {
+      if (!Number.isInteger(i) || i < 0 || i >= items.length) return { ok: false, reason: "Liste introuvable." };
+      const r = validateList(raw, items.filter((_, k) => k !== i));
+      if (!r.ok) return r;
+      items = items.map((l, k) => (k === i ? r.list : l));
       save();
       return r;
     },

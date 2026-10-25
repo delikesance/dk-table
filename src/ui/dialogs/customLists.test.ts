@@ -53,4 +53,33 @@ describe("Listes personnalisées", () => {
     expect(store.lists()).toEqual([["Nord", "Sud"]]);
     expect(document.querySelector('[data-id="customLists"] [data-role="lists"]')!.textContent).not.toContain("Bas");
   });
+
+  it("modifie une liste: Modifier recharge la saisie, Enregistrer remplace la liste", () => {
+    const store = createCustomLists(null);
+    store.add(["Bas", "Haut"]); store.add(["Nord", "Sud"]);
+    openCustomLists(store);
+    document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="edit"][data-index="0"]')!.click();
+    const box = document.querySelector<HTMLTextAreaElement>('[data-id="customLists"] textarea[name="items"]')!;
+    const btn = document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="add"]')!;
+    expect(box.value).toBe("Bas\nHaut");
+    expect(btn.textContent).toBe("Enregistrer la modification");
+    box.value = "Bas\nMoyen\nHaut";
+    btn.click();
+    expect(store.lists()).toEqual([["Bas", "Moyen", "Haut"], ["Nord", "Sud"]]);
+    expect(btn.textContent).toBe("Ajouter la liste");
+    expect(box.value).toBe("");
+  });
+
+  it("une modification refusée reste en mode modification avec la raison affichée", () => {
+    const store = createCustomLists(null);
+    store.add(["Bas", "Haut"]); store.add(["Nord", "Sud"]);
+    openCustomLists(store);
+    document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="edit"][data-index="0"]')!.click();
+    const box = document.querySelector<HTMLTextAreaElement>('[data-id="customLists"] textarea[name="items"]')!;
+    box.value = "Nord, Sud";
+    document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="add"]')!.click();
+    expect(store.lists()[0]).toEqual(["Bas", "Haut"]);
+    expect(document.querySelector('[data-id="customLists"] [role="alert"]')!.textContent).toContain("existe");
+    expect(document.querySelector<HTMLButtonElement>('[data-id="customLists"] button[data-action="add"]')!.textContent).toBe("Enregistrer la modification");
+  });
 });

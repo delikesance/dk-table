@@ -2,7 +2,8 @@
  * Listes personnalisées (Paramètres > Listes personnalisées…): ajout d'une suite de textes (ex. Bas, Moyen, Haut)
  * utilisée par le tri et la poignée de recopie. Saisie: un élément par ligne, ou séparé par virgule / point-virgule.
  * Un refus (vide, doublon, liste déjà existante) est affiché sous le formulaire; rien n'est enregistré.
- * Chaque liste a un bouton « Supprimer ».
+ * Chaque liste a un bouton « Modifier » (recharge la saisie; « Enregistrer la modification » remplace la liste)
+ * et un bouton « Supprimer ».
  */
 import { openDialog } from "./dialog";
 import { parseListText } from "../../engine/custom-lists";
@@ -18,6 +19,10 @@ export function openCustomLists(store: CustomLists = appLists): void {
     '<textarea name="items" rows="4" aria-label="Éléments de la liste" placeholder="Bas&#10;Moyen&#10;Haut"></textarea>' +
     '<p role="alert" class="dk-dialog__error"></p>' +
     '<button type="button" class="dk-dialog__btn" data-action="add">Ajouter la liste</button>';
+  const ADD = "Ajouter la liste", SAVE = "Enregistrer la modification";
+  const btn = body.querySelector<HTMLButtonElement>('[data-action="add"]')!;
+  /** Position de la liste en cours de modification (null = ajout). */
+  let editing: number | null = null;
   const area = body.querySelector<HTMLTextAreaElement>('textarea[name="items"]')!;
   const err = body.querySelector<HTMLElement>('[role="alert"]')!;
   const shown = body.querySelector<HTMLElement>('[data-role="lists"]')!;
@@ -34,15 +39,32 @@ export function openCustomLists(store: CustomLists = appLists): void {
       del.textContent = "Supprimer";
       del.setAttribute("aria-label", `Supprimer ${l.join(", ")}`);
       del.addEventListener("click", () => { store.remove(i); render(); });
-      p.append(l.join(", "), " ", del);
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "dk-dialog__btn";
+      edit.dataset.action = "edit";
+      edit.dataset.index = String(i);
+      edit.textContent = "Modifier";
+      edit.setAttribute("aria-label", `Modifier ${l.join(", ")}`);
+      edit.addEventListener("click", () => {
+        editing = i;
+        area.value = l.join("\n");
+        btn.textContent = SAVE;
+        err.textContent = "";
+        area.focus();
+      });
+      p.append(l.join(", "), " ", edit, " ", del);
       return p;
     }));
   };
-  body.querySelector<HTMLButtonElement>('[data-action="add"]')!.addEventListener("click", () => {
-    const r = store.add(parseListText(area.value));
+  btn.addEventListener("click", () => {
+    const items = parseListText(area.value);
+    const r = editing === null ? store.add(items) : store.replace(editing, items);
     if (!r.ok) { err.textContent = r.reason; return; }
     err.textContent = "";
     area.value = "";
+    editing = null;
+    btn.textContent = ADD;
     render();
   });
   render();

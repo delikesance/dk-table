@@ -36,5 +36,16 @@ for (const theme of ["clair", "sombre"] as const) {
       await expect(page.locator(`${dialog} [data-role="lists"]`)).not.toContainText("Bas");
       await page.screenshot({ path: `${SHOTS}/liste-supprimee-${suffix}.png` });
     });
+
+    test("modifie une liste existante", async ({ page }) => {
+      const area = page.locator(`${dialog} textarea[name="items"]`);
+      await area.fill("Bas\nHaut");
+      await page.locator(`${dialog} button[data-action="add"]`).click();
+      await page.locator(`${dialog} button[data-action="edit"][data-index="0"]`).click();
+      await area.fill("Bas\nMoyen\nHaut");
+      await page.locator(`${dialog} button[data-action="add"]`).click();
+      await expect(page.locator(`${dialog} [data-role="lists"]`)).toContainText("Bas, Moyen, Haut");
+      await page.screenshot({ path: `${SHOTS}/liste-modifiee-${suffix}.png` });
+    });
   });
 }

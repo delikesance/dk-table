@@ -16,14 +16,16 @@ Visible : oui
 - Tests: `src/engine/custom-lists.test.ts`, `src/engine/series-custom.test.ts`, `src/engine/sort-custom.test.ts`, `src/io/customLists.test.ts`. Tests liés (series, sort, ui/grid): 35 fichiers, 289 tests verts; `tsc --noEmit` sans erreur.
 - Suppression: `io/customLists.ts` `remove(i)` (persistée), bouton « Supprimer » par liste dans `ui/dialogs/customLists.ts`; tests `src/io/customLists.test.ts`, `src/ui/dialogs/customLists.test.ts`; e2e étendu (suppression).
 
+- Modification d'une liste: `io/customLists.ts` `replace(i, raw)` (même validation; la liste elle-même n'est pas comparée à son ancienne valeur); dialogue: bouton « Modifier » par liste recharge la saisie, le bouton devient « Enregistrer la modification ». Tests: `src/io/customLists.test.ts`, `src/ui/dialogs/customLists.test.ts`; e2e « modifie une liste existante ».
+
 ## Non fait
-- Modification d'une liste existante (contournement: la supprimer puis la ressaisir).
 - Tri: choix de la liste par l'utilisateur (la liste est détectée automatiquement); pas de tri par liste dans l'e2e (couvert par les tests unitaires).
 
 ## Captures
 - `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-ajoutee-clair.png`, `liste-ajoutee-sombre.png` (liste enregistrée)
 - `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/refus-doublon-clair.png`, `refus-doublon-sombre.png` (doublon refusé, raison affichée)
 - `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-supprimee-clair.png`, `liste-supprimee-sombre.png` (liste supprimée)
+- `docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/liste-modifiee-clair.png`, `liste-modifiee-sombre.png` (liste modifiée)
 
 ## Decisions
 - Dialogue `ui/dialogs/customLists.ts` ouvert depuis Paramètres (bouton « Listes personnalisées… »): saisie par ligne/virgule, erreur affichée si refus.
@@ -37,6 +39,8 @@ Visible : oui
 - Design `docs/design/2026-10-25-204816.html` non suivi: il porte sur « Valeur cible et évaluation pas à pas » (Données > Valeur cible), sans rapport avec les listes. Décision prise sans sous-agent (sujet évident).
 - Chemins de la carte (`src/data/custom-lists.ts`, `src/ui/OptionsDialog.tsx`, `src/engine/autofill.ts`) n'existent pas: l'implémentation réelle est `engine/custom-lists.ts`, `io/customLists.ts`, `ui/dialogs/customLists.ts`, `engine/series-names.ts`.
 - Suppression par position (bouton par liste), sans confirmation: la liste se ressaisit en quelques secondes.
+- Design `docs/design/2026-10-25-212335.html` non suivi: il porte sur Valeur cible, fenêtre Espion et Remplissage instantané, sans lien avec les listes.
+- Modification: même dialogue (pas de nouvelle fenêtre); « Enregistrer la modification » remplace la liste à sa position, un refus garde le mode modification.
 
 ## Preuves
 - Tests : ok (349 tests, tests lies aux fichiers modifies)
