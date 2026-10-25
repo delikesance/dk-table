@@ -4,196 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Boucle</title>
-<style>
-  :root { --bg:#f2f2f2; --card:#fff; --fg:#1a1a2e; --mut:#555568; --line:#d8d8e4;
-    --pending:#6b6b80; --running:#0000f2; --ok:#1a7f37; --fail:#c0392b; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#a0a0bc; --line:#38385c;
-      --pending:#8a8aa6; --running:#8c8cff; --ok:#4cc26a; --fail:#ff7b6b; }
-  }
-  * { box-sizing: border-box; }
-  body { font: 15px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg);
-    max-width: 880px; margin: 1.5rem auto; padding: 0 1rem; }
-  section { background: var(--card); border: 1px solid var(--line); border-radius: 4px;
-    padding: .8rem 1rem; margin-bottom: .8rem; }
-  h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); margin: 0 0 .5rem; }
-  #history p { margin: .25rem 0; } #gauge.warn i { background: var(--fail); }
-  #latest { font-size: 1.35rem; font-weight: 600; line-height: 1.3; margin: 0; }
-  #phase-label { font-size: .75rem; text-transform: uppercase; color: var(--running); font-weight: 700; }
-  #history { margin-top: .5rem; font-size: .8rem; color: var(--mut); }   #phasebar { display: flex; gap: 4px; }
-  .seg { flex: 1; padding: .35rem .5rem; border-radius: 3px; font-size: .8rem; font-weight: 600;
-    border-bottom: 4px solid var(--pending); color: var(--mut); }
-  .seg.running { border-color: var(--running); color: var(--running); }
-  .seg.ok { border-color: var(--ok); color: var(--ok); }
-  .seg.fail { border-color: var(--fail); color: var(--fail); }
-  #agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .6rem; }
-  .card { border: 1px solid var(--line); border-left: 5px solid var(--pending); border-radius: 3px; padding: .5rem .6rem; }
-  .card.running { border-left-color: var(--running); }
-  .card.running .ico { animation: pulse 1.2s ease-in-out infinite; }
-  .card.ok { border-left-color: var(--ok); } .card.fail { border-left-color: var(--fail); }
-  .card b { display: block; } .meta { font-size: .8rem; color: var(--mut); font-variant-numeric: tabular-nums; }
-  .ico { display: inline-block; width: 1.1em; font-weight: 700; color: var(--pending); }
-  .running .ico { color: var(--running); } .ok .ico { color: var(--ok); } .fail .ico { color: var(--fail); }   .chips { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .35rem; }
-  .chip { font-size: .72rem; border: 1px solid var(--pending); border-radius: 10px; padding: 0 .45rem; }
-  .chip.pending { border-color: var(--pending); } .chip.running { border-color: var(--running); } .chip.ok { border-color: var(--ok); } .chip.fail { border-color: var(--fail); }
-  @keyframes pulse { 50% { opacity: .25; } }
-  #gauge { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
-  #gauge i { display: block; height: 100%; width: 0; background: var(--running); transition: width .3s; }
-  .bar { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: .6rem; }
-  #amounts { font-variant-numeric: tabular-nums; margin-bottom: .4rem; }   input, button { font: inherit; padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 3px;
-    background: var(--card); color: var(--fg); }
-  input { width: 7rem; } button { cursor: pointer; } button:disabled { opacity: .5; cursor: default; }   #go { background: var(--running); border-color: var(--running); color: #fff; }
-  #status { font-weight: 600; margin-left: auto; }
-  #journal ul { list-style: none; padding: 0; margin: 0; max-height: 14rem; overflow: auto;
-    font: 12px/1.5 ui-monospace, monospace; }
-  #journal li { border-bottom: 1px solid var(--line); padding: .15rem 0; }
-  #journal li.error { color: var(--fail); }
-  summary { cursor: pointer; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
-</style>
+<link rel="stylesheet" href="/panel.css">
 </head>
-<body><a href="/moodboard.html" style="float:right;margin:8px">Moodboard</a><a href="/design.html" style="float:right;margin:8px">Design</a>
-<section id="summary">
-  <h2>Résumé</h2>
-  <div id="phase-label"></div>
-  <p id="latest">En attente de démarrage.</p>
-  <details id="history"><summary>Historique</summary><div id="hist"></div></details>
-</section>
-<section><h2>Phases</h2><div id="phasebar"></div></section>
-<section><h2>Agents</h2><div id="agents"><span class="meta">Aucun agent actif.</span></div></section>
-<section id="budget">
-  <h2>Budget</h2>
-  <div id="amounts">Dépensé - · Reste -</div>
-  <div id="gauge"><i></i></div>
-  <div class="bar">
-    <label for="budgetEur">Budget (€)</label>
-    <input id="budgetEur" type="number" min="0" step="0.5" value="5">
-    <button id="go">Go</button>
-    <button id="stop" disabled>Stop</button>
-    <span id="status">En attente.</span>
-  </div>
-</section>
-<section id="journal">
-  <details><summary>Journal brut</summary><ul id="log"></ul></details>
-</section>
-<script>
-  const $ = (id) => document.getElementById(id);
-  const usd = (n) => (typeof n === "number" ? n.toFixed(2) + " $" : "-");
-  const PHASES = [["research", "Recherche"], ["design", "Design"],
-    ["implementation", "Implémentation"], ["correction", "Correction"]];
-  const STATE = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
-  const agents = new Map(); // secteur -> { state, cost, elapsed, axes: Map(axe -> {state}) }
-  let phase = null, failedPhase = false, summaries = 0;
-
-  /** État d'un événement : start => running, end => ok (sauf ok === false), error => fail. */
-  function stateOf(e) {
-    if (e.type === "start") return "running";
-    if (e.type === "end") return e.ok === false ? "fail" : "ok";
-    if (e.type === "error") return "fail";
-    return null;
-  }
-
-  /** Met à jour le modèle des agents/axes à partir d'un événement. */
-  function track(e) {
-    const st = stateOf(e);
-    if (!e.sector || !st) return;
-    const a = agents.get(e.sector) || { state: "pending", axes: new Map() };
-    agents.set(e.sector, a);
-    if (e.axis) a.axes.set(e.axis, st);
-    else a.state = st;
-    if (e.costUsd != null) a.cost = (a.cost || 0) + e.costUsd;
-    if (e.elapsedS != null) a.elapsed = e.elapsedS;
-    if (e.axis && !phase) phase = "research";
-  }
-
-  /** Dessine la barre des 4 phases (passées = réussi, courante = en cours). */
-  function drawPhases() {
-    const cur = PHASES.findIndex((p) => p[0] === phase);
-    $("phasebar").replaceChildren(...PHASES.map(([k, label], i) => {
-      const s = document.createElement("div");
-      const st = i < cur ? "ok" : i === cur ? (failedPhase ? "fail" : "running") : "pending";
-      s.className = "seg " + st;
-      s.textContent = STATE[st][0] + " " + label;
-      return s;
-    }));
-  }
-
-  /** Dessine une carte par agent, avec ses axes en pastilles. */
-  function drawAgents() {
-    if (!agents.size) return;
-    $("agents").replaceChildren(...[...agents].map(([name, a]) => {
-      const c = document.createElement("div");
-      c.className = "card " + a.state;
-      const meta = [STATE[a.state][1], a.cost != null && usd(a.cost), a.elapsed != null && a.elapsed.toFixed(1) + " s"];
-      c.innerHTML = '<b><span class="ico"></span> <span class="n"></span></b><div class="meta"></div><div class="chips"></div>';
-      c.querySelector(".ico").textContent = STATE[a.state][0];
-      c.querySelector(".n").textContent = name;
-      c.querySelector(".meta").textContent = meta.filter(Boolean).join(" · ");
-      c.querySelector(".chips").replaceChildren(...[...a.axes].map(([ax, st]) => {
-        const ch = document.createElement("span");
-        ch.className = "chip " + st;
-        ch.textContent = STATE[st][0] + " " + ax;
-        return ch;
-      }));
-      return c;
-    }));
-  }
-
-  /** Jauge et montants du budget. */
-  function drawBudget(e) {
-    if (e.totalUsd == null) return;
-    const rest = e.remainingUsd, sum = e.totalUsd + (rest || 0);
-    $("amounts").textContent = "Dépensé " + usd(e.totalUsd) + " · Reste " + usd(rest) + " · Budget " + $("budgetEur").value + " €";
-    $("gauge").firstChild.style.width = (sum ? Math.min(100, (e.totalUsd / sum) * 100) : 0) + "%";
-    $("gauge").classList.toggle("warn", sum > 0 && e.totalUsd / sum > 0.85);
-  }
-
-  /** Dernier résumé en grand, les précédents dans l'historique. */
-  function drawSummary(e) {
-    const prev = $("latest").textContent;
-    if (summaries++ > 0) {
-      const p = document.createElement("p");
-      p.textContent = $("phase-label").textContent + " " + prev;
-      $("hist").prepend(p);
-    }
-    $("latest").textContent = e.message || "";
-    const known = PHASES.find((p) => p[0] === e.phase);
-    $("phase-label").textContent = known ? known[1] : e.phase || "";
-    if (known) { phase = known[0]; failedPhase = false; }
-  }
-
-  /** Ligne de journal brut. */
-  function logLine(e) {
-    const li = document.createElement("li");
-    li.className = e.type;
-    const where = [e.sector, e.axis].filter(Boolean).join(" / ");
-    li.textContent = [e.type, where, e.message, e.costUsd != null && usd(e.costUsd), e.elapsedS != null && e.elapsedS.toFixed(1) + " s"]
-      .filter(Boolean).join(" · ");
-    $("log").prepend(li);
-  }
-
-  function running(on) { $("go").disabled = on; $("stop").disabled = !on; }
-
-  /** Point d'entrée : applique un événement SSE à toute l'interface. */
-  function show(e) {
-    if (e.type === "summary") drawSummary(e);
-    else track(e);
-    if (e.type === "error" && !e.sector) failedPhase = true;
-    if (e.type === "error") $("status").textContent = "Erreur : " + (e.message || "");
-    if (e.type === "done") { running(false); $("status").textContent = "Terminé : " + (e.message || ""); }
-    drawPhases(); drawAgents(); drawBudget(e); logLine(e);
-  }
-
-  $("go").onclick = async () => {
-    const r = await fetch("/go", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ budgetEur: Number($("budgetEur").value) }) });
-    if (r.ok) { $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); }
-    else $("status").textContent = "Refusé : " + ((await r.json()).error || r.status);
-  };
-  $("stop").onclick = () => fetch("/stop", { method: "POST" });
-
-  drawPhases();
-  const es = new EventSource("/events");
-  es.onmessage = (m) => { const e = JSON.parse(m.data); if (e.type !== "done") running(true); show(e); };
-</script>
+<body>
+<nav class="topnav" aria-label="Pages">
+  <b>dk-table</b>
+  <a href="/" aria-current="page">Boucle</a>
+  <a href="/moodboard.html">Moodboard</a>
+  <a href="/design.html">Design</a>
+</nav>
+<div class="wrap">
+  <aside id="control" class="box">
+    <h2>Contrôle</h2>
+    <button id="go" type="button">Go</button>
+    <button id="stop" type="button" disabled>Stop</button>
+    <div class="field">
+      <label for="budgetEur">Budget</label>
+      <input id="budgetEur" type="number" min="0.5" max="100" step="0.5" value="20">
+      <span>€</span>
+    </div>
+    <div id="estimate"></div>
+    <p id="status" role="status" aria-live="polite">Prêt.</p>
+    <div id="budget">
+      <div id="gauge" role="progressbar" aria-label="Budget dépensé" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <div id="amounts"></div>
+    </div>
+  </aside>
+  <main>
+    <section id="summary" class="box" aria-live="polite">
+      <p id="now" hidden></p>
+      <p id="idle">Go lance 4 phases dans l'ordre : recherche, implémentation, correction, design. Elles s'arrêtent au plafond du budget.</p>
+      <div id="phase-label"></div>
+      <p id="latest" hidden></p>
+      <details id="history" hidden><summary>Résumés précédents</summary><div id="hist"></div></details>
+    </section>
+    <section class="box"><h2>Phases</h2><ol id="phasebar"></ol></section>
+    <section class="box"><h2>Agents</h2><div id="agents"></div></section>
+    <section id="journal" class="box">
+      <details id="feed"><summary>Journal en direct</summary><ul id="log"></ul></details>
+    </section>
+  </main>
+</div>
+<script src="/panel.js"></script>
 </body>
 </html>

@@ -1,0 +1,82 @@
+// @vitest-environment jsdom
+/** Tests du panneau Boucle : nav commune, reperes stables, contraste, rendu des evenements. */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const read = (f: string) => readFileSync(join(__dirname, f), "utf8");
+const html = read("panel.html"), css = read("panel.css"), js = read("panel.js");
+
+/** Charge panel.html + panel.js dans jsdom; renvoie une fonction d'envoi d'evenements SSE. */
+function load() {
+  let push: (e: object) => void = () => {};
+  const g = globalThis as Record<string, unknown>;
+  g.fetch = async () => ({ ok: true, json: async () => ({}) });
+  g.EventSource = class { set onmessage(f: (m: { data: string }) => void) { push = (e) => f({ data: JSON.stringify(e) }); } };
+  document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
+  new Function(js)();
+  return (e: object) => push(e);
+}
+const q = (s: string) => document.querySelector(s);
+
+describe("panneau: fichiers", () => {
+  it("<= 200 lignes chacun", () => {
+    for (const t of [html, css, js]) expect(t.split("\n").length).toBeLessThanOrEqual(201);
+  });
+  it("nav Boucle/Moodboard/Design + panel.css dans les 3 pages", () => {
+    for (const f of ["panel.html", "moodboard.html", "design.html"]) {
+      const t = read(f);
+      expect(t, f).toContain('class="topnav"');
+      expect(t, f).toContain('href="/panel.css"');
+      for (const h of ['href="/"', 'href="/moodboard.html"', 'href="/design.html"']) expect(t, f).toContain(h);
+    }
+    expect(html).toContain('aria-current="page"');
+  });
+  it("jetons de contraste clair + sombre, focus, 4 etats", () => {
+    expect(css).toContain("prefers-color-scheme: dark");
+    for (const t of ["--fg", "--mut", "--acc", "--on-acc", "--ok", "--fail", ":focus-visible"]) expect(css).toContain(t);
+    for (const s of ["pending", "running", "ok", "fail"]) expect(css).toContain(`.${s}`);
+  });
+  it("reperes stables", () => {
+    for (const id of ["summary", "phasebar", "agents", "budget", "journal", "go", "stop", "budgetEur", "gauge", "idle"]) {
+      expect(html).toContain(`id="${id}"`);
+    }
+  });
+});
+
+describe("panneau: rendu", () => {
+  it("etat initial: explication, jauge 0 / budget, 4 etapes, cartes en attente", () => {
+    load();
+    expect(q("#idle")!.textContent).toMatch(/recherche.*implémentation.*correction.*design/s);
+    expect(q("#amounts")!.textContent).toContain("0,00 €");
+    expect(q("#amounts")!.textContent).not.toContain("-");
+    expect(document.querySelectorAll("#phasebar .step").length).toBe(4);
+    expect(q("#agents .card.pending")).toBeTruthy();
+    expect((q("#go") as HTMLButtonElement).disabled).toBe(false);
+  });
+  it("libelles lisibles des axes", () => {
+    load();
+    const t = q("#agents")!.textContent!;
+    for (const l of ["Idées nouvelles", "Fonctions manquantes", "Boudées", "Mal conçues"]) expect(t).toContain(l);
+  });
+  it("evenements: running, ok, fail, budget, resume, journal", () => {
+    const send = load();
+    send({ type: "start", sector: "research", axis: "nouveau" });
+    expect(q("#agents .card.running")!.textContent).toContain("en cours");
+    expect((q("#go") as HTMLButtonElement).disabled).toBe(true);
+    expect(q("#idle")).toBeNull();
+    send({ type: "end", sector: "research", axis: "nouveau", totalUsd: 1.08, remainingUsd: 20.52 });
+    send({ type: "end", sector: "research", axis: "mal", ok: false });
+    expect(q("#agents .card.ok")!.textContent).toContain("réussi");
+    expect(q("#agents .card.fail")!.textContent).toContain("échec");
+    expect(q("#amounts")!.textContent).toContain("1,00 €");
+    send({ type: "summary", phase: "research", message: "Premier résumé." });
+    send({ type: "summary", phase: "implementation", message: "Second résumé." });
+    expect(q("#latest")!.textContent).toBe("Second résumé.");
+    expect(q("#hist")!.textContent).toContain("Premier résumé.");
+    send({ type: "error", message: "boum" });
+    expect(q("#log li.error")).toBeTruthy();
+    send({ type: "done", message: "fini" });
+    expect((q("#go") as HTMLButtonElement).disabled).toBe(false);
+  });
+});
