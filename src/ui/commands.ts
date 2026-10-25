@@ -13,6 +13,7 @@ import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } fro
 import { openCfDialog } from "./cf/panel";
 import { openValidationDialog } from "./validation/panel";
 import { openPivot } from "./dialogs/pivot";
+import { openAnalysis } from "./dialogs/analysis";
 import { openQuery } from "./dialogs/query";
 import { openCompare } from "./dialogs/diff";
 import { openMerge } from "./dialogs/merge";
@@ -118,6 +119,7 @@ export function installCommands(app: App): void {
   run("format.underline", "Souligné", () => app.style({ underline: !app.activeStyle().underline }), "Ctrl+U");
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
   run("data.pivot", "Tableau croisé…", () => openPivot(app), undefined, ["pivot", "croisé", "dynamique", "agrégation", "somme"]);
+  run("data.analysis", "Outils d'analyse…", () => openAnalysis(app), undefined, ["analyse", "statistiques", "corrélation", "régression", "descriptives", "moyenne", "écart-type"]);
   run("data.query", "Transformations…", () => openQuery(app), undefined, ["power query", "requête", "étapes", "filtrer", "scinder", "dédoublonner", "rejouer"]);
   run("data.depmap", "Qui utilise cette cellule ?", () => openDepMap(app), undefined, ["dépendances", "précédents", "dépendants", "références", "carte", "liens"]);
   run("data.audit", "Audit de modèle", () => openAudit(app), undefined, ["audit", "erreurs", "constantes", "incohérences", "volatile", "cycle", "plage", "vérifier"]);
