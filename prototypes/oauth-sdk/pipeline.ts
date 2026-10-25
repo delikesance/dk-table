@@ -8,12 +8,12 @@
  * Usage : `createPipeline({ query, run, cwd })` -> `(opts: RunOpts) => Promise<void>` (voir boucle.ts).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { createBudget, type Budget } from "./budget";
 import { listDesigns, readDesign, watchDesigns } from "./designs";
 import { createGitFlow, type Run } from "./git";
 import { runResearch, type QueryFn } from "./research";
-import { SECTORS, toController, type Sector } from "./sectors";
+import { SECTORS, currentDesignPath, recapPath, toController, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
 import { summarizePhase, type Status } from "./summary";
 
@@ -119,11 +119,14 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
         await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env });
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
-          const files = await (deps.listDesigns ?? listDesigns)(ddir);
+          // recap du design de CE run (les precedents restent dans leurs propres fichiers); repli: tous les designs
+          const all = (await (deps.listDesigns ?? listDesigns)(ddir)).filter((f) => f.kind === "design");
+          const mine = all.filter((f) => f.name === basename(currentDesignPath()));
+          const files = mine.length ? mine : all;
           const read = deps.readDesign ?? readDesign;
           const designs = [];
           for (const f of files) designs.push({ name: f.name, html: (await read(ddir, f.name)) ?? "", mtimeMs: f.mtimeMs });
-          write(join(ddir, "recap.html"), deps.buildRecap(designs, steps));
+          write(join(ddir, basename(recapPath(currentDesignPath()))), deps.buildRecap(designs, steps));
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir);

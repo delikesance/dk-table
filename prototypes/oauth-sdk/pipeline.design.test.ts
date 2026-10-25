@@ -19,7 +19,7 @@ async function go() {
   const written: Record<string, string> = {};
   const dirs: (string | null)[] = [];
   const stops: string[] = [];
-  const file: DesignFile = { name: "d.html", bytes: 1, mtimeMs: 7, state: "ecrit" };
+  const file: DesignFile = { name: "d.html", bytes: 1, mtimeMs: 7, state: "ecrit", kind: "design" };
   let recapArgs: { designs: unknown; steps: BoucleEvent[] } | undefined;
   const pipeline = createPipeline({
     query, run, cwd: "/repo", eurUsd: 1,
@@ -42,9 +42,9 @@ describe("pipeline design", () => {
     expect(dirs.at(-1)).toBeNull();
     expect(stops.length).toBeGreaterThanOrEqual(1);
   });
-  it("ecrit docs/design/recap.html dans le worktree avec designs et etapes", async () => {
+  it("ecrit docs/design/recap-<date>-<HHmmss>.html dans le worktree avec designs et etapes", async () => {
     const { written, recapArgs } = await go();
-    const key = Object.keys(written).find((k) => /design-.*docs[\\/]+design[\\/]+recap\.html$/.test(k));
+    const key = Object.keys(written).find((k) => /design-.*docs[\\/]+design[\\/]+recap-\d{4}-\d{2}-\d{2}-\d{6}\.html$/.test(k));
     expect(key && written[key]).toBe("<recap/>");
     expect(recapArgs!.designs).toEqual([{ name: "d.html", html: "<h1>d</h1>", mtimeMs: 7 }]);
     expect(recapArgs!.steps.some((e) => e.type === "start" && e.sector === "design")).toBe(true);

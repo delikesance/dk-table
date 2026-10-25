@@ -40,11 +40,23 @@ const RULES =
   "lance `npm test`), fichiers de 200 lignes max, tout est documente, mets TODO.md a jour. " +
   "Ne touche pas a git (pas de commit, branche, push): la boucle s'en charge. Reponds brievement.";
 
-/** Chemin du document de design du jour (ecrit par le secteur design, lu par l'implementation). */
+/** Chemin horodate `docs/design/<date>-<HHmmss>.html` (UTC): un fichier par run, jamais ecrase. */
 export function designPath(d: Date = new Date()): string {
-  return `docs/design/${d.toISOString().slice(0, 10)}.html`;
+  const iso = d.toISOString();
+  return `docs/design/${iso.slice(0, 10)}-${iso.slice(11, 19).replace(/:/g, "")}.html`;
 }
-const DESIGN = designPath(); // fige au chargement: design et implementation d'un meme run s'accordent
+/** Recap associe a un design : `recap-` + meme horodatage. */
+export function recapPath(design: string): string {
+  return design.replace(/([^/]+)$/, "recap-$1");
+}
+const DESIGN = designPath(); // valeur par defaut dans les prompts; remplacee par celle du run (promptFor)
+let current = DESIGN;
+/** Fige le fichier de design du run qui commence (appele au debut du secteur design). */
+export function beginDesignRun(d: Date = new Date()): string { return (current = designPath(d)); }
+/** Fichier de design du run en cours (lu par l'implementation et le recap). */
+export function currentDesignPath(): string { return current; }
+/** Prompt du secteur avec le fichier de design du run courant. */
+export function promptFor(s: SectorDef): string { return s.prompt.split(DESIGN).join(current); }
 
 /** Definitions des trois secteurs, dans l'ordre d'execution (design d'abord). */
 export const SECTOR_DEFS: SectorDef[] = [
@@ -53,7 +65,7 @@ export const SECTOR_DEFS: SectorDef[] = [
     prompt:
       "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
-      `produis UN fichier ${DESIGN} : page HTML autonome (CSS et JS en ligne, aucune ressource externe) ` +
+      `produis UN fichier ${DESIGN} (nom exact, jamais ecrase: un design existant reste intact) : page HTML autonome (CSS et JS en ligne, aucune ressource externe) ` +
       "avec, pour chaque idee, une maquette visuelle (ecrans et etats, theme clair ET sombre, tokens de " +
       "src/styles/, outil professionnel sans texte decoratif) puis une section interfaces/contrats " +
       "(fonctions, types, evenements, fichiers touches). Ne modifie aucun autre fichier. " +
@@ -154,12 +166,13 @@ function makeSector(d: SectorDef): Sector {
       const t0 = Date.now();
       const cap = ctx.budget.spent() + ctx.budget.remaining();
       let cost = 0;
+      if (d.id === "design") beginDesignRun();
       ctx.emit({ type: "start", sector: d.id });
       const abort = toController(ctx.signal);
       for (let i = 0; i < MAX_PASSES && !ctx.signal.aborted && !ctx.budget.exhausted(); i++) {
         const granted = ctx.budget.reserve(cap * d.share);
         if (granted <= 0) break;
-        const r = await runSector(d, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
+        const r = await runSector({ ...d, prompt: promptFor(d) }, { query: ctx.query, maxBudgetUsd: granted, env: ctx.env, abort, cwd: ctx.dir });
         ctx.budget.settle(granted, r.costUsd);
         cost += r.costUsd;
         if (r.ok) break;
