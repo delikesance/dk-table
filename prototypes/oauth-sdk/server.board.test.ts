@@ -6,6 +6,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { waitFor } from "./testUtil";
 import { createServer, listen, type Deps } from "./server";
 
 const servers: Server[] = [];
@@ -64,8 +65,12 @@ describe("done", () => {
   it("transporte `complete` rendu par le pipeline", async () => {
     const base = await boot({ runPipeline: async () => ({ complete: true }) });
     await fetch(base + "/go", { method: "POST", body: "{}" });
-    await new Promise((r) => setTimeout(r, 50));
-    const txt = await (await fetch(base + "/events")).body!.getReader().read().then((r) => new TextDecoder().decode(r.value));
+    let txt = "";
+    await waitFor(async () => { // le flux /events rejoue l'historique: on relit jusqu'a ce que `done` y soit
+      const res = await fetch(base + "/events"), rd = res.body!.getReader();
+      txt = new TextDecoder().decode((await rd.read()).value); await rd.cancel();
+      return txt.includes('"type":"done"');
+    }, 30_000, "evenement done");
     expect(txt).toContain('"type":"done"');
     expect(txt).toContain('"complete":true');
   });

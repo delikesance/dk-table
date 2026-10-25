@@ -2,6 +2,7 @@
 /** Menus, mise en forme et insertion d'un document dans l'application montée. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "./app";
+import { waitFor } from "../test-wait";
 
 let app: App;
 let root: HTMLElement;
@@ -19,7 +20,7 @@ beforeEach(async () => {
 });
 async function openDoc(): Promise<void> {
   app.addDoc();
-  await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+  await waitFor(() => expect(app.docEditor()).toBeDefined());
 }
 
 describe("barre de menus selon le mode", () => {

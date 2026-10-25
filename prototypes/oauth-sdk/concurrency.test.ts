@@ -1,15 +1,19 @@
 /** Verrou FIFO et reserve de travailleurs: ordre, concurrence maximale, erreurs, arret. */
 import { describe, expect, it } from "vitest";
 import { createMutex, runPool } from "./concurrency";
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import { deferred, flush } from "./testUtil";
 
 describe("createMutex", () => {
   it("serialise les sections critiques, dans l'ordre d'arrivee", async () => {
     const m = createMutex();
     const log: string[] = [];
-    const task = (id: string, ms: number) => m.run(async () => { log.push(`+${id}`); await sleep(ms); log.push(`-${id}`); return id; });
-    const r = await Promise.all([task("a", 20), task("b", 1), task("c", 1)]);
+    const gate = deferred(); // "a" reste dans sa section tant que la porte est fermee: b et c ne peuvent pas doubler
+    const task = (id: string, wait?: Promise<void>) => m.run(async () => { log.push(`+${id}`); await wait; log.push(`-${id}`); return id; });
+    const all = Promise.all([task("a", gate.promise), task("b"), task("c")]);
+    await flush();
+    expect(log).toEqual(["+a"]);
+    gate.resolve();
+    const r = await all;
     expect(r).toEqual(["a", "b", "c"]);
     expect(log).toEqual(["+a", "-a", "+b", "-b", "+c", "-c"]);
   });
@@ -25,13 +29,13 @@ describe("createMutex", () => {
 describe("runPool", () => {
   it("jamais plus de n travailleurs a la fois, tous les elements traites, resultats dans l'ordre", async () => {
     let now = 0, peak = 0;
-    const r = await runPool([1, 2, 3, 4, 5, 6, 7], 3, async (x) => { peak = Math.max(peak, ++now); await sleep(5); now--; return x * 2; });
+    const r = await runPool([1, 2, 3, 4, 5, 6, 7], 3, async (x) => { peak = Math.max(peak, ++now); await flush(); now--; return x * 2; });
     expect(r).toEqual([2, 4, 6, 8, 10, 12, 14]);
     expect(peak).toBe(3);
   });
   it("n = 1: strictement en serie", async () => {
     let now = 0, peak = 0;
-    await runPool([1, 2, 3], 1, async () => { peak = Math.max(peak, ++now); await sleep(2); now--; });
+    await runPool([1, 2, 3], 1, async () => { peak = Math.max(peak, ++now); await flush(); now--; });
     expect(peak).toBe(1);
   });
   it("une erreur d'un element n'arrete pas les autres: resultat undefined pour lui, erreur remontee a onError", async () => {

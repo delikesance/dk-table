@@ -279,3 +279,4 @@ Classement par gravité (P0 = pire)
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`
+- [x] Tests fiables sous Windows/charge: attentes conditionnelles (`src/test-wait.ts`, `prototypes/oauth-sdk/testUtil.ts` waitFor/deferred/flush) au lieu de délais, git réel hermétique (`gitEnv`: config machine ignorée, modèle de hooks vide), timeouts vitest 30 s, CRLF dans `designStore`; `parallel.test.ts`/`pipeline.parallel.test.ts` laissés à l'autre fil

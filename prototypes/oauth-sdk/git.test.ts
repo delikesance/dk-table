@@ -1,4 +1,5 @@
 /** Tests of the git flow with a fake runner (no real git). */
+import { deferred } from "./testUtil";
 import { describe, it, expect } from "vitest";
 import { createGitFlow, type Run } from "./git";
 
@@ -166,10 +167,12 @@ describe("dependencies in the worktree", () => {
 describe("mergeIfGreen checks run in parallel", () => {
   it("starts npm test and tsc before either finishes, and reports the first red one", async () => {
     let active = 0, peak = 0;
+    const bothStarted = deferred(); // les deux verifications attendent que l'autre ait demarre: sinon elles seraient en serie
     const run: Run = async (cmd, args) => {
       if (cmd === "npm" && args[0] === "test" || cmd === "npx") {
         active++; peak = Math.max(peak, active);
-        await new Promise((r) => setTimeout(r, 20));
+        if (active === 2) bothStarted.resolve();
+        await bothStarted.promise;
         active--;
         return { code: cmd === "npx" ? 2 : 0, out: "tsc red" };
       }
