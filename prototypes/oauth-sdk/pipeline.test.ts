@@ -44,7 +44,7 @@ async function go(o: { cost?: number; red?: boolean; eur?: number; abort?: boole
 describe("runPipeline", () => {
   it("enchaine les 4 secteurs, ecrit la recherche dans le worktree et fusionne dans developpement", async () => {
     const { calls, files, events } = await go({});
-    const ended = events.filter((e) => e.type === "end").map((e) => e.sector);
+    const ended = events.filter((e) => e.type === "end" && !e.axis).map((e) => e.sector);
     expect(ended).toEqual(["research", "implementation", "correction", "design"]);
     expect(files[0]).toMatch(/\.claude[\\/]+worktrees[\\/]+research-.*docs[\\/]+recherche[\\/]+fonctionnalites\.md$/);
     const merges = calls.filter((c) => c.cmd === "git" && c.args[0] === "merge");
@@ -54,7 +54,7 @@ describe("runPipeline", () => {
 
   it("emet un resume par phase (ok=true si fusionnee) et le journalise", async () => {
     const { events } = await go({});
-    expect(events.filter((e) => e.type === "end").every((e) => e.ok === true)).toBe(true);
+    expect(events.filter((e) => e.type === "end" && !e.axis).every((e) => e.ok === true)).toBe(true);
     const sums = events.filter((e) => e.type === "summary");
     expect(sums.map((e) => e.phase)).toEqual(["research", "implementation", "correction", "design"]);
     expect(sums[0].message).toBeTruthy();
@@ -63,7 +63,7 @@ describe("runPipeline", () => {
 
   it("ok=false et resume de repli si les tests sont rouges", async () => {
     const { events } = await go({ red: true, cost: 1000, eur: 10 });
-    expect(events.filter((e) => e.type === "end").every((e) => e.ok === false)).toBe(true);
+    expect(events.filter((e) => e.type === "end" && !e.axis).every((e) => e.ok === false)).toBe(true);
     expect(events.find((e) => e.type === "summary")?.message).toMatch(/Échec : recherche/);
   });
 
@@ -82,8 +82,20 @@ describe("runPipeline", () => {
 
   it("partage un seul plafond: cout cumule <= budget", async () => {
     const { events } = await go({ cost: 1000, eur: 10 });
-    const sum = events.filter((e) => e.type === "end").reduce((a, e) => a + (e.costUsd ?? 0), 0);
+    const sum = events.filter((e) => e.type === "end" && !e.axis).reduce((a, e) => a + (e.costUsd ?? 0), 0);
     expect(sum).toBeLessThanOrEqual(10);
+  });
+
+  it("emet start/end par axe de recherche (contrat du panneau), sans cout dedoublé", async () => {
+    const { events } = await go({});
+    const ax = events.filter((e) => e.sector === "research" && e.axis);
+    for (const t of ["start", "end"]) {
+      expect(new Set(ax.filter((e) => e.type === t).map((e) => e.axis)).size).toBe(4); // 4 axes (x tours)
+    }
+    expect(ax.every((e) => e.costUsd == null && e.elapsedS == null)).toBe(true);
+    const rEnd = events.filter((e) => e.type === "end" && e.sector === "research" && !e.axis);
+    expect(rEnd).toHaveLength(1);
+    expect(typeof rEnd[0].ok).toBe("boolean");
   });
 
   it("ne demarre aucun secteur si deja abandonne", async () => {

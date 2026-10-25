@@ -10,6 +10,7 @@
  */
 
 import type { Budget } from "./budget";
+import type { BoucleEvent } from "./server";
 
 /** Message minimal du flux SDK utilise ici. */
 export interface ResultMsg {
@@ -75,6 +76,8 @@ export interface ResearchOpts {
   /** Abandon (bouton Stop) et dossier de travail des agents. */
   abort?: AbortController;
   cwd?: string;
+  /** Evenements start/end par axe (panneau), sans cout: le cout est sur l'evenement du secteur. */
+  emit?: (e: BoucleEvent) => void;
 }
 
 /** Resultat : markdown des 4 sections, puces par axe, cout total. */
@@ -105,6 +108,7 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
       `${BASE}${a.ask} Reponds en francais, uniquement par des puces "- **Nom** : description, ` +
       `source (URL), valeur pour dk-table", 5 a 8 puces.${known}`;
     const t0 = now();
+    o.emit?.({ type: "start", sector: "research", axis: a.id });
     log(`[${a.id}] debut (plafond ${money(share)})`);
     let cost = 0;
     const stream = o.query({
@@ -123,6 +127,7 @@ export async function runResearch(o: ResearchOpts): Promise<ResearchOut> {
     }
     o.budget.settle(share, cost);
     totalCost += cost;
+    o.emit?.({ type: "end", sector: "research", axis: a.id, totalUsd: o.budget.spent(), remainingUsd: o.budget.remaining() });
     log(`[${a.id}] fin ${money(cost)} ${Math.round((now() - t0) / 1000)}s | total ${money(o.budget.spent())} reste ${money(o.budget.remaining())}`);
   }
 
