@@ -4,6 +4,7 @@
  * à l'application du filtre (pas à chaque édition: une ligne éditée ne disparaît pas sous le curseur).
  */
 import { distinctValues } from "./filter";
+import { hiddenRows as outlineHidden } from "../../engine/outline";
 import { addFilterButtons, openFilterPopover } from "./filterPopover";
 import { rowTracks, visibleRows } from "./filterView";
 import type { GridView } from "./types";
@@ -16,6 +17,8 @@ export interface FilterCtl {
   hidden(row: number): boolean;
   /** Position de la ligne parmi les lignes visibles (-1 si masquée). */
   index(row: number): number;
+  /** Recalcule le masque (filtres + plan replié): à appeler après un changement de `view.outline`. */
+  reapply(): void;
   /** Ferme le popover ouvert. */
   close(): void;
 }
@@ -29,7 +32,9 @@ export function createFilterCtl(
   let pos = new Map<number, number>();
   let close = (): void => {};
   const apply = (): void => {
-    order = visibleRows(view.filters, rows, display);
+    const base = visibleRows(view.filters, rows, display);
+    const off = view.outline ? outlineHidden(view.outline) : new Set<number>();
+    order = off.size ? (base ?? Array.from({ length: rows }, (_, i) => i)).filter((r) => !off.has(r)) : base;
     pos = new Map((order ?? []).map((r, i) => [r, i]));
     root.style.gridTemplateRows = rowTracks(rows, order);
     heads.forEach((h, c) => h.classList.toggle("dkg-filtered", !!view.filters[c]));
@@ -53,6 +58,7 @@ export function createFilterCtl(
     order: () => order,
     hidden: (r) => order !== null && !pos.has(r),
     index: (r) => (order ? pos.get(r) ?? -1 : r),
+    reapply: apply,
     close: () => close(),
   };
 }

@@ -3,7 +3,7 @@ import { getRaw, setCell } from "../engine/sheet";
 import { checkCells, checkImport } from "./limits";
 import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
 import { createMacroStore } from "../macros/store";
-import { buildGrid, paintKey, refreshCf, refreshTabs, syncInfo, touch } from "./appGrid";
+import { buildGrid, paintKey, refreshCf, refreshTabs, setOutlineLevels, syncInfo, touch } from "./appGrid";
 import { firstKey, keysOf, relink, setTitle, type Ctx } from "./appState";
 import { sortColumn } from "./sort";
 import { customLists } from "../io/customLists";
@@ -168,6 +168,7 @@ export function createApi(c: Ctx): App {
       buildGrid(c); setTitle(c, true);
     },
     fitColumns: (cols) => fitColumns(c, cols ?? colsOfSelection(c.grid.getSelection())),
+    setOutlineLevels: (levels) => setOutlineLevels(c, levels),
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
     getFunctions: getUserFunctions,
