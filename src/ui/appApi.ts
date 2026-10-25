@@ -112,6 +112,7 @@ export function createApi(c: Ctx): App {
       notifyInvalid(c);
     },
     selection: () => c.grid?.getSelection() ?? "A1", // the menu bar is built before the grid
+    rowHidden: (row) => c.grid?.hiddenRow(row) ?? false,
     selectedKeys: () => keysOf(c.grid.getSelection()),
     select: (k) => c.grid.select(k),
     style(patch) {

@@ -1,30 +1,22 @@
 # Rapport : Valeur cible (Goal Seek)
-Statut : bloque
 Visible : oui
 
 ## Fait
-- Lecture du design `docs/design/2026-10-25-220125.html` (existe) et de `src/engine/solve.ts` (`solveRate`: Newton puis bissection, réutilisable).
-- Rapport créé.
+- Moteur `src/engine/goalSeek.ts` + `goalSeekMath.ts` (déjà présent, 98 lignes de tests).
+- Boîte `src/ui/dialogs/goalSeek.ts` : cellule formule, valeur cible, cellule variable; « Rechercher » travaille sur une copie, « Appliquer » écrit (annulable) après confirmation.
+- Refus formule en variable, cible sans formule, cible non numérique; échec signalé (aucune solution / plafond).
+- Entrées : menu Données > Valeur cible…, palette.
+- Tests écrits d'abord : `src/ui/dialogs/goalSeek.test.ts` (4), e2e `e2e/feat-vues.spec.ts`. Doc : `docs/valeur-cible.md`, CLAUDE.md.
 
 ## Non fait
-- Test TDD qui échoue (aucun test écrit).
-- `src/engine/goalSeek.ts` : recherche de l'entrée (Newton/bissection via `solve.ts`, tolérance, nombre max d'itérations, échec explicite).
-- Refus si la cellule d'entrée contient une formule ou si la cible n'a pas de formule.
-- Dialogue d'UI (`src/ui/dialogs/`), écriture de la valeur seulement après confirmation.
-- Entrée de menu/palette (Données > Valeur cible).
-- Captures Playwright clair/sombre dans `docs/screenshots/valeur-cible-goal-seek/`.
-- Documentation (`docs/valeur-cible.md`) et mise à jour de CLAUDE.md.
 
 ## Captures
+- docs/screenshots/valeur-cible-goal-seek/valeur-cible-initial-clair.png
+- docs/screenshots/valeur-cible-goal-seek/valeur-cible-initial-sombre.png
+- docs/screenshots/valeur-cible-goal-seek/valeur-cible-resultat-clair.png
+- docs/screenshots/valeur-cible-goal-seek/valeur-cible-resultat-sombre.png
 
 ## Decisions
-- Le module moteur ira dans `src/engine/goalSeek.ts` (pur), l'UI dans `src/ui/dialogs/goalSeek.ts`, pour rester sous 200 lignes par fichier.
-
-## Bloque
-- Budget de la session épuisé (quasi nul) avant d'écrire le test et le code. La carte est à reprendre par une nouvelle tournée.
-
-## Preuves
-- Tests : ok (non executes : documentation seule)
-- Typecheck : ok
-- Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
+- Fichiers de la carte (`.tsx`, `src/formula/`) inexistants : projet TS/DOM, code dans `src/engine/` et `src/ui/dialogs/`.
+- Le moteur garde sa recherche (sondes + bissection) au lieu de `solve.ts` (taux > -1 seulement, inadapté à une entrée quelconque).
+- Références inter-feuilles non résolues dans la copie (limite connue).

@@ -65,6 +65,8 @@ export interface Grid {
   destroy(): void;
   /** Current selection: "A1" or "A1:B3". */
   getSelection(): string;
+  /** Row (1-based) hidden by a column filter or a folded outline? */
+  hiddenRow(row: number): boolean;
   /** Replace the outline (levels, folds) and refresh the grid; `undefined` removes the plan. */
   setOutline(o: Outline | undefined): void;
 }
