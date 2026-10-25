@@ -10,6 +10,8 @@
  *        n'est pas `wt/*` sous `.claude/worktrees/` est ignore.
  * Usage : `await sweepWorktrees({ run, cwd, dev: "developpement", keep: new Set(dirs) })`.
  */
+import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import type { Run } from "./git";
 
 /** Action sur un worktree. */
@@ -21,22 +23,24 @@ export interface Swept { dir: string; branch: string; action: SweepAction }
 export interface SweepOpts { run: Run; cwd: string; dev: string; keep: ReadonlySet<string> }
 
 const norm = (p: string) => p.replace(/\\/g, "/").replace(/\/+$/, "");
+/** Chemin canonique (chemin long Windows, liens resolus) pour comparer; git affiche le chemin long, cwd peut etre en 8.3 (DELIKE~1). */
+const canon = (p: string) => { try { return norm(realpathSync.native(p)); } catch { return norm(p); } };
 
 /** Examine les worktrees de la boucle et traite ceux qui ne sont pas retenus. */
 export async function sweepWorktrees({ run, cwd, keep }: SweepOpts): Promise<Swept[]> {
   const git = (args: string[], at = cwd) => run("git", args, at);
   const list = await git(["worktree", "list", "--porcelain"]);
   if (list.code !== 0) return [];
-  const kept = new Set([...keep].map(norm));
-  const root = norm(cwd) + "/.claude/worktrees/";
+  const kept = new Set([...keep].map(canon));
+  const root = canon(cwd) + "/.claude/worktrees/";
   const out: Swept[] = [];
   for (const block of list.out.split(/\r?\n\r?\n/)) {
     const dir = /^worktree (.+)$/m.exec(block)?.[1].trim();
     const branch = /^branch refs\/heads\/(.+)$/m.exec(block)?.[1].trim() ?? "";
-    if (!dir || !norm(dir).startsWith(root)) continue;
+    if (!dir || !canon(dir).startsWith(root)) continue;
     const detached = /^detached$/m.test(block);
     if (!branch.startsWith("wt/") && !detached) continue;
-    if (kept.has(norm(dir))) { out.push({ dir, branch, action: "kept" }); continue; }
+    if (kept.has(canon(dir))) { out.push({ dir, branch, action: "kept" }); continue; }
     const st = await git(["status", "--porcelain"], dir);
     let action: SweepAction = "removed";
     if (st.out.trim() !== "") {
@@ -49,5 +53,6 @@ export async function sweepWorktrees({ run, cwd, keep }: SweepOpts): Promise<Swe
     const rm = await git(["worktree", "remove", "--force", dir]);
     out.push({ dir, branch, action: rm.code === 0 ? action : "left" });
   }
-  return out;
+  // chemin natif pour l'appelant (git imprime des "/" sous Windows); les commandes git gardent le chemin brut
+  return out.map((s) => ({ ...s, dir: resolve(s.dir) }));
 }
