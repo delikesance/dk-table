@@ -4,6 +4,7 @@ import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacr
 import { DktParseError, isObj } from "./parseError";
 import { checkCf } from "./cfFormat";
 import { checkDocs } from "./docsFormat";
+import { checkColWidths } from "./colWidthsFormat";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export { DktParseError };
@@ -99,6 +100,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   const sheet: DocSheet = { id: s.id, name: s.name, cols: s.cols, rows: s.rows, cells };
   if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
   if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
+  if (s.colWidths !== undefined) sheet.colWidths = checkColWidths(s.colWidths, `${at}.colWidths`);
   if (s.cf !== undefined) sheet.cf = checkCf(s.cf, `${at}.cf`);
   return sheet;
 }

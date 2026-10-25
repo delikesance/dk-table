@@ -219,3 +219,4 @@ Classement par gravité (P0 = pire)
 
 - [x] Plages ouvertes façon Sheets (`B2:B`, `B:B`, `A:C`, `2:5`, avec préfixe de feuille) : parseur, évaluation sur la plage utilisée, dépendances, recopie, insertion/suppression, SPARKLINE/BAR/TREND, puces de document, `getRangeValues` (`engine/openrange.ts`)
 - [x] Filtre de colonne : champ de recherche en tête du popover (focus à l'ouverture, casse/accents ignorés, « Tout sélectionner » sur les résultats visibles, Entrée = OK, Échap ferme). `filter.ts matchesSearch`, `grid/filterPopover.ts`; tests unitaires + `e2e/feat-filter.spec.ts`
+- [x] Largeurs de colonnes enregistrées dans `.dktable` (`DocSheet.colWidths`, lettres → px, absent si aucune), restaurées à l'ouverture (anciens fichiers OK), annulables (glisser et ajustement = un pas), suivent l'insertion/suppression de colonnes. `io/colWidthsFormat.ts`, `Entry.widths`; tests unitaires + `e2e/feat-colwidth.spec.ts`
