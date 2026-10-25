@@ -8,6 +8,7 @@
   --c-bg: #f2f2f2;            /* fond d'app, en-têtes */
   --c-surface: #fafafa;       /* cellules, panneaux */
   --c-surface-2: #f2f2f2;     /* en-têtes, barres */
+  --c-header: #e2e2f6;        /* en-têtes de la grille (opaque : les cellules défilent dessous) */
   --c-surface-hover: #e8e8f6;
   --c-overlay: #fafafa;       /* palette, menus : opaque, pas de verre */
   --c-scrim: rgba(0, 0, 60, 0.32);
