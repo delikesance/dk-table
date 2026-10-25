@@ -5,6 +5,8 @@
  */
 import type { DesignFile } from "./designs";
 import type { MoodCard } from "./moodboard";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { createServer as httpServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 /** Options passées au pipeline. */
@@ -26,7 +28,10 @@ export interface BoucleEvent {
 export interface Deps {
   runPipeline: (o: RunOpts) => Promise<void>;
   parseBudgetEur: (v: unknown) => number;
-  panelHtml: string;
+  /** Page du panneau (fonction: relue a chaque requete). */
+  panelHtml: string | (() => string);
+  /** Dossier des assets /panel.css et /panel.js (liste blanche, relus a chaque requete; absent: 404). */
+  assetsDir?: string;
   /** Cartes du moodboard (absent: GET /moodboard => 404 + liste vide). */
   moodboard?: () => Promise<MoodCard[]>;
   /** Page du moodboard (absente: 404). */
@@ -36,6 +41,12 @@ export interface Deps {
   /** Page de suivi du design (relue a chaque requete; absente: 404). */
   designHtml?: string | (() => string | undefined);
 }
+
+/** Assets servis (seuls fichiers lisibles hors pages): route -> [fichier, type]. */
+const ASSETS: Record<string, [string, string]> = {
+  "GET /panel.css": ["panel.css", "text/css; charset=utf-8"],
+  "GET /panel.js": ["panel.js", "text/javascript; charset=utf-8"],
+};
 
 const LOOPBACK_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
@@ -54,6 +65,16 @@ function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
     req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { resolve({}); } });
     req.on("error", () => resolve({}));
   });
+}
+
+/** 404: page HTML française pour un navigateur (Accept: text/html), JSON pour l'API. */
+function notFound(req: IncomingMessage, res: ServerResponse): void {
+  if (!(req.headers.accept ?? "").includes("text/html")) return send(res, 404, { error: "introuvable" });
+  res.writeHead(404, { "content-type": "text/html; charset=utf-8" }).end(
+    '<!doctype html><meta charset="utf-8"><title>Introuvable</title>' +
+    '<body style="font:16px system-ui;margin:2rem"><h1>Page introuvable</h1>' +
+    "<p>Cette page n'existe pas (ou le serveur est une ancienne version : relancez-le).</p><p><a href=\"/\">Retour au panneau</a></p>",
+  );
 }
 
 /** Réponse JSON courte. */
@@ -91,17 +112,23 @@ export function createServer(deps: Deps): Server {
     if (!isLoopback(req)) { res.writeHead(403).end("forbidden"); return; }
     const route = `${req.method} ${(req.url ?? "").split("?")[0]}`;
     if (route === "GET /") {
-      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(deps.panelHtml);
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(typeof deps.panelHtml === "function" ? deps.panelHtml() : deps.panelHtml);
+    } else if (route in ASSETS && deps.assetsDir) {
+      const [file, type] = ASSETS[route];
+      readFile(join(deps.assetsDir, file), "utf-8").then(
+        (txt) => void res.writeHead(200, { "content-type": type, "x-content-type-options": "nosniff" }).end(txt),
+        () => notFound(req, res),
+      );
     } else if (route === "GET /moodboard.html") {
       const page = typeof deps.moodboardHtml === "function" ? deps.moodboardHtml() : deps.moodboardHtml;
-      if (page === undefined) return send(res, 404, { error: "introuvable" });
+      if (page === undefined) return notFound(req, res);
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(page);
     } else if (route === "GET /moodboard") {
       if (!deps.moodboard) return send(res, 404, []);
       deps.moodboard().then((cards) => send(res, 200, cards), () => send(res, 500, { error: "moodboard indisponible" }));
     } else if (route === "GET /design.html") {
       const page = typeof deps.designHtml === "function" ? deps.designHtml() : deps.designHtml;
-      if (page === undefined) return send(res, 404, { error: "introuvable" });
+      if (page === undefined) return notFound(req, res);
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(page);
     } else if (route === "GET /designs" && deps.designs) {
       const d = deps.designs;
@@ -125,7 +152,7 @@ export function createServer(deps: Deps): Server {
       clients.add(res);
       req.on("close", () => clients.delete(res));
     } else {
-      send(res, 404, { error: "introuvable" });
+      notFound(req, res);
     }
   });
 }

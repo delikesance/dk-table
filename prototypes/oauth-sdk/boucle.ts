@@ -9,19 +9,11 @@
  *        Aucun push, jamais master (fusion dans `developpement` seulement, si tests + tsc verts).
  */
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import { parseBudgetEur, type Budget } from "./budget";
 import type { Run } from "./git";
-import { buildMoodboard, pickBudget } from "./moodboard";
-import { createPipeline } from "./pipeline";
 import type { QueryFn } from "./research";
-import { createServer, listen, type BoucleEvent } from "./server";
-import { listDesigns, readDesign, withStates } from "./designs";
-import { buildRecap } from "./recap";
+import { listen } from "./server";
+import { buildBoucleServer } from "./wiring";
 
 if (!process.env.CLAUDE_CODE_OAUTH_TOKEN) {
   process.stderr.write("CLAUDE_CODE_OAUTH_TOKEN absent (voir .env, `claude setup-token`).\n");
@@ -45,36 +37,6 @@ const run: Run = (cmd, args, cwd) =>
     p.on("close", (code) => resolve({ code: code ?? 1, out }));
   });
 
-// Moodboard : budget du run en cours (partage, jamais au-dela du plafond utilisateur), sinon <= 0,05 EUR par rafraichissement.
-let activeBudget: Budget | null = null;
-const moodCache = new Map<string, string>();
-/** Page du moodboard (ecrite par ailleurs); absente => 404. */
-const readOpt = (p: string): string | undefined => { try { return readFileSync(p, "utf-8"); } catch { return undefined; } };
-
-// Designs : dossier du secteur design en cours (sinon l'arbre principal) et etapes du secteur.
-let activeDesignDir: string | null = null;
-const designDir = (): string => activeDesignDir ?? join(process.cwd(), "docs", "design");
-const designSteps: BoucleEvent[] = [];
-const pipeline = createPipeline({
-  query: query as unknown as QueryFn, run, cwd: process.cwd(), env, buildRecap,
-  onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; },
-});
-
-const here = dirname(fileURLToPath(import.meta.url));
-const server = createServer({
-  runPipeline: (o) => {
-    designSteps.length = 0;
-    return pipeline({ ...o, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); o.onEvent(e); } });
-  },
-  designs: { list: async () => withStates(await listDesigns(designDir()), designSteps), read: (n) => readDesign(designDir(), n), steps: () => designSteps },
-  designHtml: () => readOpt(join(here, "design.html")),
-  parseBudgetEur,
-  panelHtml: readFileSync(join(here, "panel.html"), "utf-8"),
-  moodboard: () => buildMoodboard({
-    readFile: (p) => readFile(join(process.cwd(), p), "utf-8"),
-    query: query as unknown as QueryFn, budget: pickBudget(() => activeBudget), cache: moodCache, env,
-  }),
-  moodboardHtml: () => readOpt(join(here, "moodboard.html")),
-});
+const server = buildBoucleServer({ query: query as unknown as QueryFn, run, env, cwd: process.cwd() });
 const port = Number(process.env.PORT) || 4317;
 listen(server, port).then(() => console.error(`boucle: http://127.0.0.1:${port}`));
