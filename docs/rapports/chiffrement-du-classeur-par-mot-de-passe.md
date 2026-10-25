@@ -39,7 +39,7 @@ Visible : oui
 - « Retirer » enregistre immédiatement en clair ; si l'enregistrement est annulé, le mot de passe est restauré.
 
 ## Preuves
-- Tests : ok (297 tests, tests lies aux fichiers modifies)
+- Tests : ok (7 tests, tests lies aux fichiers modifies)
 - Typecheck : ok
 - Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":297,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"count":7,"scope":"related"},"tsc":{"ok":true}} -->
