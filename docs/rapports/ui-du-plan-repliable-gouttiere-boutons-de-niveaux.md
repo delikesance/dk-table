@@ -1,4 +1,5 @@
 # Rapport : UI du plan repliable (gouttière, boutons de niveaux)
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -30,3 +31,9 @@ Visible : oui
 - État dans `GridView.outline` (vue par feuille, non persistée).
 - `grid.ts` était à 200 lignes : compactage de trois blocs existants (apply de remplissage, `bindClipboard`, relist) pour rester sous la limite.
 - Hook de développement `window.__dkOutline(niveaux)` (et `App.setOutlineLevels`) : sert aux captures et aux tests e2e, car rien ne crée encore de niveaux.
+
+## Preuves
+- Tests : ok (331 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"count":331,"scope":"related"},"tsc":{"ok":true}} -->
