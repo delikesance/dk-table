@@ -69,10 +69,10 @@ function diskWrite(path: string, text: string): void {
 /** Construit `runPipeline` lie a ses dependances. */
 export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean; reason?: StopReason } | undefined> {
   const write = deps.writeFile ?? diskWrite;
+  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
   const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
-    const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
     const models = parseOverride(deps.env?.BOUCLE_MODELS);
     await flow.ensureDev();
 
@@ -136,6 +136,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
+        if (m.preexisting?.length) onEvent({ type: "info", sector: sector.name, message: `anomalie : test(s) deja rouge(s) sur developpement, sans rapport avec la carte : ${m.preexisting.join("; ")}` });
         if (m.merged && m.push) onEvent({ type: "info", sector: sector.name, message: m.push.pushed ? "developpement pousse sur origin" : `push non effectue : ${m.push.reason}` });
       } finally {
         stopReports?.();
@@ -186,6 +187,6 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     return { complete, reason };
   };
   return async (o) => {
-    try { return await inner(o); } finally { deps.onBudget?.(null); }
+    try { return await inner(o); } finally { deps.onBudget?.(null); await flow.dispose().catch(() => {}); }
   };
 }

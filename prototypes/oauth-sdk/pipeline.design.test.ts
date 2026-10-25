@@ -43,7 +43,7 @@ describe("pipeline design", () => {
     expect(stops.length).toBeGreaterThanOrEqual(1);
   });
   it("design non fusionne (tests rouges): le dossier reste expose pour que la page Design l'affiche", async () => {
-    const red: Run = async (cmd, args, cwd) => (cmd === "npm" && args[0] === "test" ? { code: 1, out: "FAIL x" } : run(cmd, args, cwd));
+    const red: Run = async (cmd, args, cwd) => (cmd === "npm" && args[0] === "test" && !cwd?.includes("/base-") ? { code: 1, out: "FAIL x" } : run(cmd, args, cwd));
     const { dirs } = await go(red);
     expect(dirs.at(-1)).toMatch(/worktrees[\\/]+design-.*docs[\\/]+design$/);
   });

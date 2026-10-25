@@ -36,7 +36,7 @@ describe("startSector", () => {
   it("adds a worktree on wt/<sector>-<ts> from developpement", async () => {
     const f = fake();
     const r = await createGitFlow(f.run, "/r").startSector("auth");
-    expect(r.branch).toMatch(/^wt\/auth-\d+$/);
+    expect(r.branch).toMatch(/^wt\/auth-\d+-\d+$/);
     expect(f.lines()).toContain(`git worktree add -b ${r.branch} ${r.dir} developpement`);
   });
 });
@@ -96,7 +96,8 @@ describe("mergeIfGreen", () => {
     const ESC = String.fromCharCode(27);
     const out = `${ESC}[31m FAIL ${ESC}[39m a.test.ts > cas\nAssertionError: x\n${"bruit\n".repeat(300)}${ESC}[2m Tests ${ESC}[22m 1 failed | 1833 passed (1835)`;
     const f = fake({ "npm test": { code: 1, out } });
-    const r = await createGitFlow(f.run, "/r").mergeIfGreen("wt/a-1", "/d");
+    const run: Run = (c, a, cwd) => (c === "npm" && a.includes("--") ? Promise.resolve({ code: 0, out: "" }) : f.run(c, a, cwd)); // la base est verte: l'echec vient de la branche
+    const r = await createGitFlow(run, "/r").mergeIfGreen("wt/a-1", "/d");
     expect(r.reason).not.toContain(ESC);
     expect(r.reason).toContain("FAIL  a.test.ts > cas");
     expect(r.reason).toContain("1 failed | 1833 passed");
