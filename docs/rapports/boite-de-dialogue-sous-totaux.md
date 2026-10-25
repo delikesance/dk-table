@@ -1,4 +1,5 @@
 # Rapport : Boîte de dialogue Sous-totaux
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -27,3 +28,9 @@ Visible : oui
   - Les formules de la zone écrite sont recopiées telles quelles (pas de décalage de références).
 - Appliquer sur une feuille où un plan existe déjà : le plan précédent est retiré d'abord, puis le nouveau est calculé sur la sélection courante.
 - Niveaux du plan : données = nombre de colonnes de groupe, sous-total de niveau l = l, total général = 0 (compatible avec `engine/outline.ts`).
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
