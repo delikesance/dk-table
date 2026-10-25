@@ -1,6 +1,6 @@
 /** Tests de ui/protection.ts : mot de passe du classeur courant, en mémoire seulement. */
 import { beforeEach, describe, expect, it } from "vitest";
-import { getPassword, setPassword } from "./protection";
+import { getPassword, onPasswordChange, setPassword } from "./protection";
 
 describe("protection", () => {
   beforeEach(() => setPassword(undefined));
@@ -14,5 +14,15 @@ describe("protection", () => {
     expect(getPassword()).toBe("secret");
     setPassword(undefined);
     expect(getPassword()).toBeUndefined();
+  });
+
+  it("notifies the listener on each change", () => {
+    const seen: (string | undefined)[] = [];
+    onPasswordChange(() => seen.push(getPassword()));
+    setPassword("a");
+    setPassword(undefined);
+    onPasswordChange(undefined);
+    setPassword("b");
+    expect(seen).toEqual(["a", undefined]);
   });
 });

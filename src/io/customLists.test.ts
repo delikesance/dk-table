@@ -36,4 +36,13 @@ describe("createCustomLists", () => {
     cl.add(["X", "Y"]);
     expect(cl.lists()).toEqual([["X", "Y"]]);
   });
+  it("supprime une liste par position et persiste", () => {
+    const store = memStore();
+    const cl = createCustomLists(store);
+    cl.add(["A", "B"]); cl.add(["X", "Y"]);
+    expect(cl.remove(0)).toBe(true);
+    expect(cl.lists()).toEqual([["X", "Y"]]);
+    expect(createCustomLists(store).lists()).toEqual([["X", "Y"]]);
+    expect(cl.remove(5)).toBe(false);
+  });
 });

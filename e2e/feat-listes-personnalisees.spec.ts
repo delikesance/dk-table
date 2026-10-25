@@ -1,4 +1,4 @@
-/** E2E: listes personnalisées (Paramètres > Listes personnalisées…): ajout, refus d'un doublon, captures dans docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/. */
+/** E2E: listes personnalisées (Paramètres > Listes personnalisées…): ajout, refus d'un doublon, suppression, captures dans docs/screenshots/listes-personnalisees-de-tri-et-de-recopie/. */
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers";
 
@@ -31,6 +31,10 @@ for (const theme of ["clair", "sombre"] as const) {
       await page.locator(`${dialog} button[data-action="add"]`).click();
       await expect(page.locator(`${dialog} [role="alert"]`)).toContainText("double");
       await page.screenshot({ path: `${SHOTS}/refus-doublon-${suffix}.png` });
+
+      await page.locator(`${dialog} button[data-action="remove"][data-index="0"]`).click();
+      await expect(page.locator(`${dialog} [data-role="lists"]`)).not.toContainText("Bas");
+      await page.screenshot({ path: `${SHOTS}/liste-supprimee-${suffix}.png` });
     });
   });
 }

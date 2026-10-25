@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mount, type App } from "./app";
 import { setTitle, type Ctx } from "./appState";
+import { setPassword } from "./protection";
 
 let app: App;
 beforeEach(() => {
@@ -35,6 +36,12 @@ describe("appState", () => {
     setTitle(c, false);
     expect(document.title).toBe("g.dktable — dk-table");
     expect(c.app.dirty).toBe(false);
+  });
+  it("shows the lock marker while the workbook is encrypted", () => {
+    setPassword("secret");
+    expect(document.title).toBe("Sans titre (chiffré) — dk-table");
+    setPassword(undefined);
+    expect(document.title).toBe("Sans titre — dk-table");
   });
   it("loadDoc leaves the document clean", () => {
     app.edit("A1", "1");
