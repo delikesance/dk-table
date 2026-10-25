@@ -27,7 +27,7 @@ describe("autosave wiring", () => {
     setTitle(c, true);
     expect(io.saveDocument).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1000);
-    expect(io.saveDocument).toHaveBeenCalledWith(expect.objectContaining({ version: 1, sheets: [] }), "a.dktable");
+    expect(io.saveDocument).toHaveBeenCalledWith(expect.objectContaining({ version: 1, sheets: [] }), "a.dktable", undefined, undefined);
     expect(c.app.dirty).toBe(false);
     expect(document.title).toContain("Enregistré");
   });
