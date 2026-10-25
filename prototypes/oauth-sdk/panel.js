@@ -6,23 +6,25 @@
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
   var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé" };
-  var agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0;
+  var agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0, ended = false;
 
-  PHASES.forEach(function (p) { phases[p[0]] = { label: p[1], state: "pending", cost: null, elapsed: null, t0: 0 }; });
-  AXES.forEach(function (a) { agents[a[0]] = { label: a[1], state: "pending", elapsed: null, t0: 0 }; });
+  /** Modele vierge (debut de page et de chaque run: rien du run precedent ne reste). */
+  function init() {
+    agents = {}; workers = {}; phases = {}; summaries = 0; current = null; spentUsd = 0;
+    PHASES.forEach(function (p) { phases[p[0]] = { label: p[1], state: "pending", cost: null, elapsed: null, t0: 0 }; });
+    AXES.forEach(function (a) { agents[a[0]] = { label: a[1], state: "pending", elapsed: null, t0: 0 }; });
+  }
+  init();
 
   /** Montant au format fr (virgule), `min` decimales minimum. */
   function fmt(n, min) { return n.toLocaleString("fr-FR", { minimumFractionDigits: min == null ? 2 : min, maximumFractionDigits: 2 }); }
-  function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; }
+  function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; } function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
   /** Duree lisible; rien sous 1 s (evite "0 s" au demarrage). */
   function dur(s) { return s == null || s < 1 ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
-  function cap() { return Number($("budgetEur").value) || 0; }
-  function two(n) { return (n < 10 ? "0" : "") + n; }
-  function clock(ts) { var d = new Date(ts); return two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds()); }
+  function cap() { return Number($("budgetEur").value) || 0; } function clock(ts) { var d = new Date(ts); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function (n) { return (n < 10 ? "0" : "") + n; }).join(":"); }
   /** Texte brut: retire les codes ANSI que les commandes laissent dans leur sortie. */
   function clean(t) { return t ? String(t).replace(/\u001b\[[0-9;?]*[ -\/]*[@-~]/g, "") : t; }
-  function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
 
   /** Pose l'etat d'une phase/agent en gardant duree et cout. */
   function setState(o, st, e) {
@@ -35,20 +37,22 @@
 
   /** Agent d'implementation en parallele (une carte): suit son etat; la phase reste en cours tant qu'un agent travaille. */
   function trackWorker(e, st, ph) {
+    // une reprise (conflit de fusion: cartes relancees ensemble) remplace les agents echoues dont elle reprend les cartes
+    if (st === "running") Object.keys(workers).forEach(function (k) {
+      if (workers[k].state === "fail" && k !== e.agent && k.split(", ").every(function (id) { return e.agent.split(", ").indexOf(id) >= 0; })) delete workers[k];
+    });
     var w = workers[e.agent] || (workers[e.agent] = { label: e.agent, state: "pending", elapsed: null, t0: 0 });
     setState(w, st, e);
-    var all = Object.keys(workers).map(function (k) { return workers[k]; });
-    var busy = all.some(function (x) { return x.state === "running"; });
+    var all = Object.keys(workers).map(function (k) { return workers[k]; }), busy = all.some(function (x) { return x.state === "running"; });
     if (busy) { if (ph.state !== "running") setState(ph, "running", {}); }
     else setState(ph, all.some(function (x) { return x.state === "fail"; }) ? "fail" : "ok", e);
   }
 
   /** Applique un evenement au modele (phases, agents, budget). */
   function track(e) {
-    var st = e.type === "start" ? "running" : e.type === "end" ? (e.ok === false ? "fail" : "ok") : e.type === "error" ? "fail" : null;
+    var st = e.type === "start" ? "running" : e.type === "end" ? (e.ok === false ? "fail" : "ok") : e.type === "error" ? "fail" : null, ph = phases[e.sector];
     if (e.totalUsd != null) spentUsd = e.totalUsd;
     if (!st) return;
-    var ph = phases[e.sector];
     if (e.axis && agents[e.axis]) setState(agents[e.axis], st, e);
     if (!ph) { if (e.type === "error") PHASES.forEach(function (p) { if (phases[p[0]].state === "running") setState(phases[p[0]], "fail", e); }); return; }
     if (e.agent && e.sector === "implementation" && !e.axis) trackWorker(e, st, ph);
@@ -64,8 +68,7 @@
       var o = phases[p[0]];
       if (o.state === "running") setState(o, stopped || (p[0] === "research" && any) ? "fail" : "ok", {});
     });
-    Object.keys(agents).forEach(function (k) { if (agents[k].state === "running") setState(agents[k], stopped ? "fail" : "ok", {}); });
-    Object.keys(workers).forEach(function (k) { if (workers[k].state === "running") setState(workers[k], stopped ? "fail" : "ok", {}); });
+    [agents, workers].forEach(function (m) { Object.keys(m).forEach(function (k) { if (m[k].state === "running") setState(m[k], stopped ? "fail" : "ok", {}); }); });
   }
 
   /** Ligne de statut finale unique : etat, depense, plafond (en euros). */
@@ -81,8 +84,7 @@
   function drawNow() {
     var p = phases[current]; if (!p) return;
     var i = PHASES.findIndex(function (x) { return x[0] === current; }) + 1;
-    $("now").hidden = false;
-    $("now").textContent = "Phase " + i + "/4 · " + p.label + " · " + ST[p.state][1];
+    $("now").hidden = false; $("now").textContent = "Phase " + i + "/4 · " + p.label + " · " + ST[p.state][1];
   }
 
   /** Une ligne d'etat: icone, libelle, etat, duree (+ cout pour une phase). */
@@ -119,8 +121,7 @@
   /** Jauge et montant unique : depense sur plafond, en euros. */
   function drawBudget() {
     var c = cap(), capUsd = c * RATE, pct = capUsd ? Math.min(100, spentUsd / capUsd * 100) : 0;
-    $("amounts").textContent = fmt(spentUsd / RATE) + " € sur " + fmt(c, 0) + " €";
-    $("amounts").title = "≈ " + fmt(spentUsd) + " $ sur " + fmt(capUsd) + " $";
+    $("amounts").textContent = fmt(spentUsd / RATE) + " € sur " + fmt(c, 0) + " €"; $("amounts").title = "≈ " + fmt(spentUsd) + " $ sur " + fmt(capUsd) + " $";
     $("gauge").firstChild.style.width = pct + "%";
     $("gauge").setAttribute("aria-valuenow", String(Math.round(pct)));
     $("gauge").classList.toggle("warn", pct > 85);
@@ -152,25 +153,30 @@
   }
 
   /** Bouton unique Go/Stop: le libelle et l'etat suivent l'execution. */
-  function running(on) { var b = $("run"); b.textContent = on ? "Stop" : "Go"; b.dataset.state = on ? "running" : "idle"; }
-  function alertMsg(msg) { $("alert").hidden = !msg; $("alert").textContent = msg || ""; }
-  function redraw() { drawNow(); drawSteps(); drawBudget(); }
+  function running(on) { var b = $("run"); b.textContent = on ? "Stop" : "Go"; b.dataset.state = on ? "running" : "idle"; if (!on) b.disabled = false; }
+  /** Nouveau run: modele, journal et resumes repartent de zero. */
+  function fresh() {
+    init(); ended = false; alertMsg("");
+    $("log").textContent = $("hist").textContent = $("phase-label").textContent = ""; $("history").hidden = $("latest").hidden = true;
+  }
+  function alertMsg(msg) { $("alert").hidden = !msg; $("alert").textContent = msg || ""; } function redraw() { drawNow(); drawSteps(); drawBudget(); }
 
   /** Point d'entree : applique un evenement SSE a toute l'interface. */
   function show(e) {
     if (!started) { started = true; var idle = $("idle"); if (idle) idle.remove(); }
+    if (ended && e.type !== "done") fresh(); // premier evenement d'un nouveau run (lance ici ou ailleurs)
     if (e.type === "summary") drawSummary(e); else track(e);
     if (e.type === "error") { alertMsg(e.message || "erreur inconnue"); $("status").textContent = "En cours, avec erreur"; }
-    if (e.type === "done") { running(false); finalStatus(e); }
+    if (e.type === "done") { ended = true; running(false); finalStatus(e); }
     redraw(); logLine(e);
   }
 
   $("run").onclick = function () {
-    if ($("run").dataset.state === "running") { fetch("/stop", { method: "POST" }); return; }
+    if ($("run").dataset.state === "running") { $("run").disabled = true; $("status").textContent = "Arrêt en cours…"; fetch("/stop", { method: "POST" }); return; }
     alertMsg("");
     fetch("/go", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ budgetEur: cap() }) })
       .then(function (r) {
-        if (r.ok) { workers = {}; $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); return; }
+        if (r.ok) { fresh(); $("status").textContent = "En cours…"; running(true); return; }
         return r.json().then(function (j) { alertMsg("Refusé : " + (j.error || r.status)); });
       });
   };
@@ -185,5 +191,10 @@
   var es = new EventSource("/events");
   es.onopen = function () { $("conn").hidden = true; };
   es.onerror = function () { $("conn").hidden = false; };
-  es.onmessage = function (m) { var e = JSON.parse(m.data); if (e.type !== "done") running(true); show(e); };
+  var run = null; // numero du run (id SSE `<run>-<rang>`): un autre numero = nouveau run, meme si « terminé » a ete manque pendant une coupure
+  es.onmessage = function (m) {
+    var e = JSON.parse(m.data), r = (m.lastEventId || "").split("-")[0];
+    if (run !== null && r !== run) fresh();
+    run = r; if (e.type !== "done") running(true); show(e);
+  };
 })();
