@@ -91,6 +91,13 @@ describe('contraste texte/fond >= 4.5', () => {
     it(`${name}: texte papier sur fond plein #0000F2`, () => {
       expect(ratio(parse('#f2f2f2'), c('--c-accent-solid'))).toBeGreaterThanOrEqual(4.5);
     });
+    it(`${name}: texte des en-têtes de grille sur --c-header`, () => {
+      for (const fg of ['--c-text', '--c-text-2', '--c-accent']) expect(ratio(c(fg), c('--c-header'))).toBeGreaterThanOrEqual(4.5);
+    });
+    it(`${name}: accent sur en-tête sélectionné (teinte sur fond d'en-tête)`, () => {
+      const bg = over(c('--c-accent-soft-2'), c('--c-header'));
+      expect(ratio(c('--c-accent'), bg)).toBeGreaterThanOrEqual(4.5);
+    });
     it(`${name}: accent sur plage sélectionnée`, () => {
       const bg = over(c('--c-accent-soft-2'), c('--c-surface'));
       expect(ratio(c('--c-accent'), bg)).toBeGreaterThanOrEqual(4.5);
