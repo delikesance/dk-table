@@ -193,6 +193,7 @@ Classement par gravité (P0 = pire)
 - [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
 - [x] G1b Rendu de la sélection retravaillé ; ajustement des colonnes au contenu (clic droit, palette, double-clic sur la bordure).
 - [x] G1c Fond d'en-tête dédié `--c-header` (clair/sombre) ; correctif : les en-têtes sélectionnés laissaient voir les cellules défilant dessous.
+- [x] G1d Clic droit sur une sélection multiple : le menu s'ouvre et garde la sélection (avant, le mousedown la réduisait à une cellule).
 - [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
 
 ## Outils comptables (rapport https://claude.ai/artifact/1cZrDkd42Y4xaXhtuX7Y3Z)
