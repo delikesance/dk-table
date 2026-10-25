@@ -6,12 +6,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGitFlow, type Run } from "./git";
+import { gitEnv } from "./testUtil";
 
 // vrais processus git: des dizaines de ms sous Linux mais des secondes sous Windows quand toute la suite tourne en parallele
 vi.setConfig({ testTimeout: 60_000 });
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
-const g = (cwd: string, ...a: string[]) => execFileSync("git", ["-c", "user.email=a@b", "-c", "user.name=a", "-c", "gc.auto=0", "-c", "core.fsync=none", ...a], { cwd, encoding: "utf8" }).trim();
+// git hermetique (testUtil.gitEnv): ni config de la machine (autocrlf, signature, hooks), ni identite globale requise
+const env = gitEnv();
+const g = (cwd: string, ...a: string[]) => execFileSync("git", a, { cwd, encoding: "utf8", env }).trim();
 
 /** Depot avec `developpement` + .gitattributes (TODO.md en union), npm/npx simules (compteur d'appels de tests). */
 function setup(red: () => boolean = () => false) {
@@ -24,7 +27,7 @@ function setup(red: () => boolean = () => false) {
   const run: Run = async (cmd, args, cwd) => {
     if (cmd === "npm" && args[0] === "test") { tests.push(cwd ?? ""); return { code: red() ? 1 : 0, out: "" }; }
     if (cmd === "npm" || cmd === "npx") return { code: 0, out: "" };
-    const r = spawnSync(cmd, ["-c", "user.email=a@b", "-c", "user.name=a", ...args], { cwd, encoding: "utf8" });
+    const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env });
     return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") };
   };
   return { repo, run, tests, flow: createGitFlow(run, repo) };

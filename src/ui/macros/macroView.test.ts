@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { vi } from "vitest";
 import { mount, type App } from "../app";
+import { waitFor } from "../../test-wait";
 
 let app: App;
 let root: HTMLElement;
@@ -45,7 +46,7 @@ describe("macro editor tab", () => {
     app.macros.update(m.id, { code: "print(2)" });
     await app.openMacros();
     panel().querySelector<HTMLElement>('[data-action="edit"]')!.click();
-    await vi.waitFor(() => expect(view().querySelector(".cm-content")!.textContent).toBe("print(2)"));
+    await waitFor(() => expect(view().querySelector(".cm-content")!.textContent).toBe("print(2)"));
     expect(tab(m.id)!.classList.contains("dk-tab--active")).toBe(true);
     expect(tab(m.id)!.classList.contains("dk-tab--macro")).toBe(true);
     expect(root.querySelector<HTMLElement>(".dk-app__grid")!.hidden).toBe(true);
@@ -81,7 +82,7 @@ describe("macro editor tab", () => {
     expect(root.querySelector<HTMLElement>(".dk-app__grid")!.hidden).toBe(false);
     expect(tab(m.id)).not.toBeNull();
     tab(m.id)!.click();
-    await vi.waitFor(() => expect(view().hidden).toBe(false));
+    await waitFor(() => expect(view().hidden).toBe(false));
   });
 
   it("closes the tab (without deleting the macro) from its context menu / Delete key", async () => {
@@ -115,7 +116,7 @@ describe("macro editor tab", () => {
   it("'+ Nouvelle' creates a macro and opens its editor", async () => {
     await app.openMacros();
     panel().querySelector<HTMLElement>(".dk-macros__new")!.click();
-    await vi.waitFor(() => expect(view().hidden).toBe(false));
+    await waitFor(() => expect(view().hidden).toBe(false));
     expect(app.macros.list()).toHaveLength(1);
   });
 });

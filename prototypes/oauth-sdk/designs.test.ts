@@ -3,14 +3,15 @@ import { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { waitFor } from "./testUtil";
 import { listDesigns, readDesign, watchDesigns, withStates, type DesignFile } from "./designs";
 
 const dirs: string[] = [];
 const tmp = () => { const d = mkdtempSync(join(tmpdir(), "designs-")); dirs.push(d); return d; };
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-/** Attend que `cond` soit vraie (max 4 s). */
-async function until(cond: () => boolean) { for (let i = 0; i < 80 && !cond(); i++) await wait(50); }
+/** Attend que `cond` soit vraie (plafond large, sans cout si elle arrive vite). */
+const until = (cond: () => boolean) => waitFor(cond, 30_000);
 
 describe("listDesigns", () => {
   it("liste les .html avec kind (recap-* = recap), plus recent d'abord; dossier absent => []", async () => {

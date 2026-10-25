@@ -2,6 +2,7 @@
 /** dk doc inside the app: tabs, switching between grid and document, persistence in the workbook. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "./app";
+import { waitFor } from "../test-wait";
 
 /** Insert text at the start of the active document, through the editor view. */
 function type_(a: App, text: string): void {
@@ -31,7 +32,7 @@ describe("documents dans le classeur", () => {
     expect(app.activeDocId()).toBe(id);
     expect(docHost().hidden).toBe(false);
     expect(gridHost().hidden).toBe(true);
-    await vi.waitFor(() => expect(docHost().querySelector(".cm-editor")).not.toBeNull());
+    await waitFor(() => expect(docHost().querySelector(".cm-editor")).not.toBeNull());
   });
   it("revient à la grille en cliquant une feuille", () => {
     app.addDoc();
@@ -42,7 +43,7 @@ describe("documents dans le classeur", () => {
   });
   it("persiste le document avec le classeur et le rouvre", async () => {
     const id = app.addDoc();
-    await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+    await waitFor(() => expect(app.docEditor()).toBeDefined());
     type_(app, "Rapport");
     const saved = app.toDoc();
     expect(saved.docs).toHaveLength(1);
@@ -58,7 +59,7 @@ describe("documents dans le classeur", () => {
   it("marque le classeur modifié à la création et à la saisie", async () => {
     app.markSaved();
     app.addDoc();
-    await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+    await waitFor(() => expect(app.docEditor()).toBeDefined());
     expect(app.dirty).toBe(true);
     app.markSaved();
     type_(app, "x");

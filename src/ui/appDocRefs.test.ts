@@ -2,6 +2,7 @@
 /** Live references of a dk doc inside the app: values follow the sheet, click opens the cell, Alt+← comes back. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type App } from "./app";
+import { waitFor } from "../test-wait";
 
 let app: App;
 let root: HTMLElement;
@@ -11,7 +12,7 @@ const chip = () => root.querySelector<HTMLElement>(".dk-ref")!;
 async function docWithRef(ref: string): Promise<string> {
   const sheet = app.sheets()[0].id;
   const id = app.addDoc();
-  await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+  await waitFor(() => expect(app.docEditor()).toBeDefined());
   const v = app.docEditor()!.view;
   v.dispatch({ changes: { from: 0, insert: `{{@${app.sheets().find((s) => s.id === sheet)!.name}!${ref}}}` } });
   return id;
@@ -49,7 +50,7 @@ describe("références dans le document ouvert", () => {
     const saved = app.toDoc();
     app.loadDoc(saved);
     await app.openDoc(id);
-    await vi.waitFor(() => expect(chip()?.textContent).toBe("40"));
+    await waitFor(() => expect(chip()?.textContent).toBe("40"));
   });
 });
 
@@ -66,7 +67,7 @@ describe("coller une plage copiée dans la feuille", () => {
     const data = new Map<string, string>();
     fire(root.querySelector(".dkg")!, "copy", data);
     app.addDoc();
-    await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
+    await waitFor(() => expect(app.docEditor()).toBeDefined());
     fire(app.docEditor()!.view.contentDOM, "paste", data);
     expect(root.querySelectorAll(".dk-block th")).toHaveLength(2);
     app.edit("B2", "77");

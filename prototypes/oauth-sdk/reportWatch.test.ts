@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scanReports, watchReports } from "./reportWatch";
+import { waitFor } from "./testUtil";
 
 describe("scanReports", () => {
   it("renvoie les ids nouveaux ou modifies, ignore les autres fichiers", async () => {
@@ -13,7 +14,7 @@ describe("scanReports", () => {
     const seen = new Map<string, number>();
     expect(await scanReports(d, seen)).toEqual(["a"]);
     expect(await scanReports(d, seen)).toEqual([]);
-    utimesSync(join(d, "a.md"), new Date(), new Date(Date.now() + 5000));
+    utimesSync(join(d, "a.md"), new Date(), new Date(4_000_000_000_000));
     expect(await scanReports(d, seen)).toEqual(["a"]);
     expect(await scanReports(join(d, "absent"), seen)).toEqual([]);
   });
@@ -26,7 +27,7 @@ describe("watchReports", () => {
     const stop = watchReports(dir, (id) => got.push(id));
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "z.md"), "# Rapport : Z");
-    for (let i = 0; i < 40 && !got.includes("z"); i++) await new Promise((r) => setTimeout(r, 100));
+    await waitFor(() => got.includes("z"), 30_000, "rapport z signale");
     stop();
     expect(got).toContain("z");
   });

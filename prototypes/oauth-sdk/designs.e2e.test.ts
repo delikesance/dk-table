@@ -1,5 +1,6 @@
 // @vitest-environment node
 /** Bout en bout (dossier temporaire reel): un faux secteur design ecrit x.html -> /designs, /designs/x.html (CSP sandbox), recap.html. */
+import { waitFor } from "./testUtil";
 import { existsSync, mkdirSync, readdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -56,10 +57,10 @@ describe("designs de bout en bout", () => {
       const done = pipeline({ budgetEur: 20, onEvent: (e) => { if (e.sector === "design") steps.push(e); }, signal: new AbortController().signal });
       await written;
       let files: { name: string }[] = [];
-      for (let i = 0; i < 60 && !files.some((f) => f.name === "x.html"); i++) {
+      await waitFor(async () => {
         files = ((await (await fetch(base + "/designs")).json()) as { files: { name: string }[] }).files;
-        await new Promise((r) => setTimeout(r, 50));
-      }
+        return files.some((f) => f.name === "x.html");
+      }, 30_000, "x.html listé");
       expect(files.map((f) => f.name)).toEqual(["x.html"]);
       const r = await fetch(base + "/designs/x.html");
       expect(r.status).toBe(200);
