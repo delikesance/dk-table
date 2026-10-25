@@ -13,7 +13,7 @@ Visible : oui
 - Pas de changement de mise en page du dialogue (seulement la preselection).
 
 ## Preuves
-- Tests : ok hors 1 echec pre-existant (pipeline.parallel.test.ts, chronometrage) : 2111 passes, 1 echec, 3 ignores (2115). Echec reproduit seul (217 > 203.7); ce fichier n'importe pas `engine/pivot`. `npx tsc --noEmit` ok. e2e `e2e/feat-pivot-defaut.spec.ts` : 2 ok.
+- Tests : ok (2214 tests, 4 ignores). `npx tsc --noEmit` ok. e2e `e2e/feat-pivot-defaut.spec.ts` : 2 ok.
 - Captures : docs/screenshots/tableaux-croises-de-calc-incomplets-non-verifie/disposition-defaut-clair.png, disposition-defaut-sombre.png (dialogue initial : Lignes=Region, Valeur=Montant malgre colonnes Ref et Id). Anciennes : dialogue-*.png, resultat-*.png.
 
 ## Decisions
