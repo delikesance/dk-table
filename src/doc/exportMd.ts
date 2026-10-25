@@ -41,7 +41,7 @@ function block(n: JNode, x: Ctx, indent = ""): string {
     case "paragraph": return inline(n.content, x);
     case "blockquote": return (n.content ?? []).map((c) => block(c, x)).join("\n\n").split("\n").map((l) => `> ${l}`).join("\n");
     case "horizontal_rule": return "---";
-    case "code_block": return "```\n" + (n.content ?? []).map((c) => c.text).join("") + "\n```";
+    case "code_block": return "```" + String(n.attrs?.params ?? "") + "\n" + (n.content ?? []).map((c) => c.text).join("") + "\n```";
     case "liveBlock": return table(x, n.attrs as unknown as BlockAttrs);
     case "bullet_list": case "ordered_list": {
       const start = Number(n.attrs?.order) || 1;

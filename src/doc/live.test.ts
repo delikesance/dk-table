@@ -107,3 +107,24 @@ describe("keys and rules", () => {
     expect(ed.view.state.doc.toString()).toBe(" fin");
   });
 });
+
+describe("blocs de code", () => {
+  const md = "avant\n\n```js\nconst a = 1;\n```\n\nfin";
+  it("masque les ``` loin du curseur et affiche le langage", () => {
+    const ed = mount(md);
+    expect(shown(ed)).not.toContain("```");
+    expect(shown(ed)).toContain("const a = 1;");
+    expect(ed.view.contentDOM.querySelector(".dk-cb-lang")?.textContent).toBe("js");
+    expect(ed.view.contentDOM.querySelectorAll(".dk-codeblock").length).toBe(3);
+  });
+  it("montre les ``` quand le curseur est dans le bloc", () => {
+    const ed = mount(md, md.indexOf("const"));
+    expect(shown(ed)).toContain("```js");
+    expect(ed.view.contentDOM.querySelector(".dk-cb-lang")).toBeNull();
+  });
+  it("un bloc sans langage n'affiche pas d'étiquette", () => {
+    const ed = mount("```\nx\n```\n\nfin");
+    expect(shown(ed)).not.toContain("```");
+    expect(ed.view.contentDOM.querySelector(".dk-cb-lang")).toBeNull();
+  });
+});
