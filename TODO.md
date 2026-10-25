@@ -245,3 +245,4 @@ Classement par gravité (P0 = pire)
 - [x] Étape 1 : squelette `tools/autoloop/` (config, budget, journal, redact, agent injectable + fake, loop pur, main `--dry-run`), tests `tools/autoloop/__tests__/`, tsconfig inclut `tools`. Aucun appel réel au SDK.
 - [x] Étape 2 (MVP) : cycle audit -> dédoublonnage (empreinte `fp`) -> issues `auto:bug` (`github.ts`, `dedupe.ts`, `roles/audit.ts`, `checks.ts`, `cycle.ts`, `live.ts`); `--live` branché mais jamais lancé; SDK en devDependency
 - [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees
+- [x] Fix e2e `shell-tabs.spec.ts` : test de sélection aligné sur la sélection propre à chaque feuille (PR #31)
