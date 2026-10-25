@@ -1,7 +1,8 @@
 /** Tests du moodboard : statuts (found/developing/lead), resume Haiku groupe, cache, budget, repli sans LLM. */
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import { buildMoodboard, fallbackSummary, matches } from "./moodboard";
+import { readFileSync } from "node:fs";
+import { IDLE_EUR, buildMoodboard, fallbackSummary, matches, pickBudget } from "./moodboard";
 import type { QueryFn } from "./research";
 
 const MD = `# Recherche
@@ -94,5 +95,37 @@ describe("buildMoodboard", () => {
     await buildMoodboard({ readFile, query: f.q, env: {} });
     expect(f.calls).toHaveLength(0);
     expect(await buildMoodboard({ readFile: async () => { throw new Error("no"); }, query: f.q })).toEqual([]);
+  });
+});
+
+describe("budget du moodboard", () => {
+  it("pendant un run: le budget partage de la boucle; hors run: un petit plafond neuf (<= 0,05 EUR)", () => {
+    const shared = createBudget(5);
+    expect(pickBudget(() => shared)).toBe(shared);
+    const idle = pickBudget(() => null, 1);
+    expect(idle).not.toBe(shared);
+    expect(idle.remaining()).toBeLessThanOrEqual(0.05);
+    expect(IDLE_EUR).toBeLessThanOrEqual(0.05);
+  });
+
+  it("les resumes sont regles dans le budget partage (jamais au-dela)", async () => {
+    const shared = createBudget(1, 1);
+    const q: QueryFn = ({ options }) => (async function* () {
+      yield { type: "result", subtype: "success", result: "1|ok", total_cost_usd: Math.min(0.02, options.maxBudgetUsd as number) };
+    })();
+    await buildMoodboard({ readFile, query: q, budget: shared, cache: new Map(), env: { CLAUDE_CODE_OAUTH_TOKEN: "x" } });
+    expect(shared.spent()).toBeGreaterThan(0);
+    expect(shared.spent()).toBeLessThanOrEqual(1);
+  });
+
+  it("champs de la vue = MoodCard (statuts et axes connus de moodboard.html)", async () => {
+    const html = readFileSync(new URL("./moodboard.html", import.meta.url), "utf-8");
+    const cards = await buildMoodboard({ readFile, query: (() => (async function* () {})()) as QueryFn });
+    for (const c of cards) {
+      expect(html).toContain(`${c.status}:`);
+      if (c.axis) expect(html).toContain(`${c.axis}:`);
+      expect(Object.keys(c).sort()).toEqual(["axis", "id", "source", "status", "summary", "title"]);
+    }
+    for (const f of ["c.status", "c.axis", "c.summary", "c.source", "c.title"]) expect(html).toContain(f);
   });
 });

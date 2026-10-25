@@ -26,7 +26,7 @@ export interface Deps {
   /** Cartes du moodboard (absent: GET /moodboard => 404 + liste vide). */
   moodboard?: () => Promise<MoodCard[]>;
   /** Page du moodboard (absente: 404). */
-  moodboardHtml?: string;
+  moodboardHtml?: string | (() => string | undefined);
 }
 
 const LOOPBACK_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
@@ -84,8 +84,10 @@ export function createServer(deps: Deps): Server {
     const route = `${req.method} ${(req.url ?? "").split("?")[0]}`;
     if (route === "GET /") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(deps.panelHtml);
-    } else if (route === "GET /moodboard.html" && deps.moodboardHtml !== undefined) {
-      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(deps.moodboardHtml);
+    } else if (route === "GET /moodboard.html") {
+      const page = typeof deps.moodboardHtml === "function" ? deps.moodboardHtml() : deps.moodboardHtml;
+      if (page === undefined) return send(res, 404, { error: "introuvable" });
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(page);
     } else if (route === "GET /moodboard") {
       if (!deps.moodboard) return send(res, 404, []);
       deps.moodboard().then((cards) => send(res, 200, cards), () => send(res, 500, { error: "moodboard indisponible" }));

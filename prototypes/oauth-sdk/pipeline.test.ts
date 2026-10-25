@@ -98,6 +98,16 @@ describe("runPipeline", () => {
     expect(typeof rEnd[0].ok).toBe("boolean");
   });
 
+  it("expose le budget du run (onBudget) puis null a la fin, pour le moodboard", async () => {
+    const seen: unknown[] = [];
+    const { run } = fakeRun();
+    const p = createPipeline({ query: fakeQuery(0.1), run, cwd: "/repo", eurUsd: 1, writeFile: () => {}, onBudget: (b) => seen.push(b) });
+    await p({ budgetEur: 20, onEvent: () => {}, signal: new AbortController().signal });
+    expect(seen).toHaveLength(2);
+    expect((seen[0] as { spent(): number }).spent()).toBeGreaterThan(0);
+    expect(seen[1]).toBeNull();
+  });
+
   it("ne demarre aucun secteur si deja abandonne", async () => {
     const { calls, events } = await go({ abort: true });
     expect(calls.some((c) => c.args[0] === "worktree")).toBe(false);
