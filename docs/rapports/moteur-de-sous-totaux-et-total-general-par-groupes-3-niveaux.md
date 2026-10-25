@@ -1,4 +1,5 @@
 # Rapport : Moteur de sous-totaux et total général par groupes (3 niveaux)
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -23,3 +24,9 @@ Aucune (moteur pur, sans effet visible).
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
 
 <!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
