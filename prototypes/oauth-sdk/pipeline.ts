@@ -56,6 +56,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
         ctx.emit({ type: "start", sector: "research" });
         const out = await runResearch({
           query: ctx.query, budget: ctx.budget, env: ctx.env, cwd: ctx.dir, abort: toController(ctx.signal),
+          emit: ctx.emit,
           log: (message) => ctx.emit({ type: "info", sector: "research", message }),
         });
         write(join(ctx.dir, DOC), out.markdown);
@@ -88,7 +89,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
       status[sector.name] = "running";
       // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
       let held: BoucleEvent | undefined;
-      const emit = (e: BoucleEvent) => { if (e.type === "end" && e.sector === sector.name) held = e; else onEvent(e); };
+      const emit = (e: BoucleEvent) => { if (e.type === "end" && e.sector === sector.name && !e.axis) held = e; else onEvent(e); };
       let ok = false;
       try {
         await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env });
