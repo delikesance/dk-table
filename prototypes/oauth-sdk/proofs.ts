@@ -5,6 +5,7 @@
  *        parentheses), accolades developpees (`{a,b}-{clair,sombre}.png`), notes entre parentheses ignorees,
  *        « sans objet » = exemption explicite (carte sans effet visible). Texte libre sans chemin = ignore.
  *        Element « `chemin` : legende » : seul le premier mot (le chemin) est garde.
+ *        Nom nu sans dossier apres un chemin : herite du dossier de ce chemin.
  * Pourquoi : l'ancien parseur coupait sur toute virgule et gardait les notes comme chemins, bloquant des cartes finies.
  * Usage : `parseCaptures("docs/s/{a,b}.png (note)")` -> `{ paths: ["docs/s/a.png", "docs/s/b.png"], exempt: false }`.
  */
@@ -34,7 +35,10 @@ export function parseCaptures(text: string): { paths: string[]; exempt: boolean 
   if (/\bsans objet\b/.test(plain)) return { paths: [], exempt: true };
   const noNotes = text.replace(/\([^()]*\)/g, " ").replace(/\{[^{}]*\}/g, (m) => m.replace(/\s+/g, ""));
   // Premier mot de chaque element: `chemin : legende` garde le chemin; texte libre (1er mot sans chemin) ignore.
+  // Nom nu (`b.png`) apres un chemin: herite du dossier precedent (`docs/s/a.png, b.png`).
+  let dir = "";
   const paths = split(noNotes).map((t) => t.replace(/[`'"]/g, "").trim().split(/\s+/)[0]).filter((t) => /[/\\]|\.png\b/i.test(t))
+    .map((t) => /[/\\]/.test(t) ? (dir = t.replace(/[^/\\]*$/, ""), t) : dir + t)
     .flatMap(expandBraces);
   return { paths: [...new Set(paths)], exempt: false };
 }

@@ -27,6 +27,10 @@ describe("parseCaptures", () => {
     expect(parseCaptures("docs/s/a.png (import CSV non capturé, couvert en unitaire), docs/s/b.png").paths).toEqual(["docs/s/a.png", "docs/s/b.png"]);
     expect(parseCaptures("voir les tests").paths).toEqual([]);
   });
+  it("nom nu apres un chemin: herite du dossier precedent (ancienne ligne Preuves relue)", () => {
+    expect(parseCaptures("docs/s/a-clair.png, a-sombre.png (absente), docs/t/b.png, c.png").paths)
+      .toEqual(["docs/s/a-clair.png", "docs/s/a-sombre.png", "docs/t/b.png", "docs/t/c.png"]);
+  });
 });
 describe("rapport complet", () => {
   const md = (caps: string) => `# Rapport : x\nStatut : termine\nVisible : oui\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n<!-- boucle-proof {"tests":{"ok":true,"count":12},"tsc":{"ok":true}} -->\n- Captures : ${caps}\n`;
