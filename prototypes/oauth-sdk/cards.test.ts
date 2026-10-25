@@ -23,7 +23,7 @@ const query = (() => (async function* () {})()) as QueryFn;
 
 describe("buildBoard", () => {
   it("etat par carte: en-cours, termine, preuves manquantes, bloque", async () => {
-    const b = await buildBoard({ readFile, query, exists });
+    const b = await buildBoard({ readFile, query, exists, active: new Set(["alpha-idee"]) });
     const s = Object.fromEntries(b.map((c) => [c.id, c]));
     expect(s["alpha-idee"].state).toBe("en-cours");
     expect(s["beta-idee"].state).toBe("termine");

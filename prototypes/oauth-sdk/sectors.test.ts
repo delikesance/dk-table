@@ -68,13 +68,18 @@ describe("design d'abord", () => {
 });
 
 describe("modeles par type de tache", () => {
-  it("chaque secteur est une seule requete think (choix + edition melanges) -> sonnet", async () => {
+  it("routage: design sonnet (raisonnement), implementation et correction haiku (plus petit modele suffisant)", async () => {
+    const want: Record<string, string> = { design: "sonnet", implementation: "haiku", correction: "haiku" };
     for (const d of SECTOR_DEFS) {
-      expect(d.kind).toBe("think");
       const { q, seen } = fake(0.1);
       await runSector(d, { query: q, maxBudgetUsd: 1 });
-      expect(seen[0].options.model).toBe("sonnet");
+      expect(seen[0].options.model).toBe(want[d.id]);
     }
+  });
+  it("un modele impose (repli apres echec) l'emporte sur la table", async () => {
+    const { q, seen } = fake(0.1);
+    await runSector(SECTOR_DEFS[1], { query: q, maxBudgetUsd: 1, model: "opus" });
+    expect(seen[0].options.model).toBe("opus");
   });
 });
 

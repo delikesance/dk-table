@@ -26,7 +26,7 @@ import type { QueryFn } from "./research";
 import { createServer, type BoucleEvent } from "./server";
 
 /** Dependances reelles (ou factices en test). */
-export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string }
+export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
 
 /** Lit un fichier du dossier du code; `undefined` s'il est absent (=> 404). */
 const here = dirname(fileURLToPath(import.meta.url));
@@ -49,20 +49,24 @@ export function buildBoucleServer(o: WiringOpts): Server {
   const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir });
   // Cartes terminees: registre durable (jamais purge), hors depot (.boucle/ ignore par git).
   const ledger = createFileLedger(join(o.cwd, ".boucle", "termines.jsonl"));
-  const boardOf = (order: Order) => buildBoard({
-    ledger,
+  // Cartes du lot en cours de traitement (evenement de tournee): seules celles-ci peuvent etre « en cours ».
+  let activeIds: ReadonlySet<string> = new Set();
+  const boardOf = (order: Order, active: ReadonlySet<string> = activeIds) => buildBoard({
+    ledger, active,
     readFile: async (p) => (await files.read(p, order)) ?? Promise.reject(new Error("absent")),
     exists: (p) => files.exists(p, order),
     query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
   });
   const pipeline = createPipeline({
-    query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, board: () => boardOf("merged"),
+    query: o.query, run: o.run, cwd: o.cwd, env: o.env, buildRecap, push: o.push ?? o.env.BOUCLE_PUSH !== "0",
+    board: (a) => { activeIds = new Set(a ?? []); return boardOf("merged", activeIds); },
     onBudget: (b) => { activeBudget = b; }, onSectorDir: (d) => { activeDesignDir = d; }, onDir: (d) => { activeDir = d; },
   });
   return createServer({
     runPipeline: (r) => {
       designSteps.length = 0;
-      return pipeline({ ...r, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); r.onEvent(e); } });
+      return pipeline({ ...r, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); if (e.round && e.cards) activeIds = new Set(e.cards); r.onEvent(e); } })
+        .finally(() => { activeIds = new Set(); });
     },
     designs: { list: async () => withStates(await listMemo(), designSteps), read: (n) => store.read(n), steps: () => designSteps },
     designHtml: () => page("design.html"),

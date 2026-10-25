@@ -12,11 +12,11 @@ import { basename, dirname, join } from "node:path";
 import { createBudget, type Budget } from "./budget";
 import { listDesigns, readDesign, watchDesigns } from "./designs";
 import { createGitFlow, type Run } from "./git";
-import { allDone, type BoardCard } from "./cards";
+import type { BoardCard } from "./cards";
 import type { QueryFn } from "./research";
 import { researchSector } from "./researchSector";
-import { reportRules } from "./reportRules";
-import { createPlanner, stopMessage, type StopReason } from "./rounds";
+import { parseOverride } from "./routing";
+import { runRounds, stopMessage, type StopReason } from "./rounds";
 import { watchReports as defaultWatchReports } from "./reportWatch";
 import { SECTORS, currentDesignPath, recapPath, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
@@ -46,8 +46,10 @@ export interface PipelineDeps {
   buildRecap?: (designs: { name: string; html: string; mtimeMs: number }[], steps: BoucleEvent[]) => string;
   /** Opt-in: resumes de fin de phase rediges par Haiku (defaut: texte deterministe, aucun processus Claude). */
   llmSummaries?: boolean;
+  /** Pousser `developpement` apres chaque fusion validee (defaut: non; boucle.ts l'active, `BOUCLE_PUSH=0` le coupe). */
+  push?: boolean;
   /** Etat des cartes une fois fusionne (absent: un seul passage implementation + correction, sans boucle). */
-  board?: () => Promise<BoardCard[]>;
+  board?: (active?: string[]) => Promise<BoardCard[]>;
   /** Surveillance des rapports d'un worktree (defaut: reportWatch.ts; injectable pour les tests). */
   watchReports?: typeof defaultWatchReports;
   /** Suivi des designs (defauts: designs.ts; injectables pour les tests). */
@@ -70,7 +72,8 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
   const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
-    const flow = createGitFlow(deps.run, deps.cwd);
+    const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push });
+    const models = parseOverride(deps.env?.BOUCLE_MODELS);
     await flow.ensureDev();
 
     const research = researchSector(write);
@@ -91,7 +94,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     };
 
     /** Un secteur: worktree, execution (consigne `task` en plus), commit, fusion si vert. */
-    const runOne = async (sector: Sector, task?: string): Promise<boolean> => {
+    const runOne = async (sector: Sector, task?: string, attempt = 0): Promise<boolean> => {
       const { branch, dir } = await flow.startSector(sector.name);
       deps.onDir?.(dir);
       status[sector.name] = "running";
@@ -114,7 +117,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         ? (deps.watchReports ?? defaultWatchReports)(join(dir, "docs", "rapports"), (id) => onEvent({ type: "card", sector: "implementation", cardId: id }))
         : undefined;
       try {
-        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task });
+        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env, task, attempt, models });
         if (isDesign && deps.buildRecap) {
           stopWatch?.();
           // recap du design de CE run (les precedents restent dans leurs propres fichiers); repli: tous les designs
@@ -133,6 +136,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
+        if (m.merged && m.push) onEvent({ type: "info", sector: sector.name, message: m.push.pushed ? "developpement pousse sur origin" : `push non effectue : ${m.push.reason}` });
       } finally {
         stopReports?.();
         deps.onDir?.(null);
@@ -166,31 +170,18 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       return undefined;
     }
 
-    // tournees jusqu'a ce que toutes les cartes soient terminees; arret seulement: budget epuise,
-    // abandon, aucune avancee pendant `patience` tournees, ou garde-fou de tournees
-    const planner = createPlanner();
-    let cards = await deps.board();
-    remaining = cards.filter((c) => c.state !== "termine").length;
-    planner.observe(cards);
-    let round = 0;
-    let reason: StopReason = "complete";
-    while (!allDone(cards)) {
-      if (signal.aborted) { reason = "abort"; break; }
-      if (budget.exhausted()) { reason = "budget"; break; }
-      if (planner.stuck()) { reason = "stuck"; break; }
-      if (round >= planner.maxRounds) { reason = "max-rounds"; break; }
-      round++;
-      const batch = planner.nextBatch(cards);
-      onEvent({ type: "info", round, message: `tournee ${round} : ${remaining} carte(s) restante(s), lot ${batch.map((c) => c.id).join(", ")}` });
-      await runOne(implementation, reportRules(batch));
-      if (!stopped()) await runOne(correction, "Verifie aussi que chaque rapport de docs/rapports/ dit vrai : tests verts, captures presentes.");
-      cards = await deps.board();
-      remaining = cards.filter((c) => c.state !== "termine").length;
-      planner.observe(cards);
-    }
-    const complete = allDone(cards);
+    // tournees (voir rounds.ts) puis dernier resume: « terminee » seulement si plus aucune carte
+    const res = await runRounds({
+      board: (active) => deps.board!(active),
+      impl: (task, attempt) => runOne(implementation, task, attempt),
+      corr: (task, attempt) => runOne(correction, task, attempt),
+      emit: onEvent, progress: (n) => { remaining = n; },
+      halt: () => (signal.aborted ? "abort" : budget.exhausted() ? "budget" : null),
+    });
+    const { complete, reason, cards } = res;
+    if (status.correction === "pending") status.correction = "ok"; // ecartee par la validation de code, pas manquante
     remaining = cards.filter((c) => c.state !== "termine").length; halt = reason;
-    await summarize("correction"); // dernier resume: « terminee » seulement si plus aucune carte
+    await summarize("correction");
     onEvent({ type: "info", complete, reason, message: stopMessage(reason, cards.filter((c) => c.state !== "termine")) });
     return { complete, reason };
   };

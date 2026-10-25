@@ -56,14 +56,14 @@ describe("matches / fallbackSummary", () => {
 });
 
 describe("buildMoodboard", () => {
-  it("statuts: developing (tache ouverte), lead (piste/mention), found, tache faite exclue", async () => {
+  it("statuts: developing (tache ouverte), lead (piste/mention), found, done (tache cochee)", async () => {
     const cards = await buildMoodboard({ llm: true, readFile, query: fake().q });
     const by = Object.fromEntries(cards.map((c) => [c.title, c]));
     expect(by["Graphe de dépendances complet"].status).toBe("developing");
     expect(by["Historique par cellule"].status).toBe("lead");
     expect(by["Tableau croisé dynamique"].status).toBe("lead");
     expect(by["Vue fiche d'une ligne"].status).toBe("found");
-    expect(by["Validation de données"]).toBeUndefined();
+    expect(by["Validation de données"].status).toBe("done"); // cochee au TODO: la carte reste, le reconciliateur exige un rapport
     expect(by["Vue fiche d'une ligne"].axis).toBe("new");
     expect(by["Annulation conservée après macro"].axis).toBe("poor");
   });

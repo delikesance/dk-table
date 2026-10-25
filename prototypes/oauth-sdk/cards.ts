@@ -7,7 +7,8 @@
  *        complet, tests verts, captures presentes); la vue affiche le rapport en direct.
  * Usage : `await buildBoard({ readFile, query, exists })`, `allDone(cartes)`, `reportPath(id)`.
  */
-import { cardState, parseReport, validateReport, type CardState, type Report } from "./card";
+import { parseReport, validateReport, type CardState, type Report } from "./card";
+import { reconcileCard } from "./reconcile";
 import type { DoneEntry, DoneLedger } from "./doneLedger";
 import { buildMoodboard, type MoodCard, type MoodDeps } from "./moodboard";
 
@@ -18,15 +19,17 @@ export interface BoardCard extends MoodCard {
   report?: Report;
   /** Preuves manquantes d'un rapport declare termine. */
   missing: string[];
+  /** Incoherences detectees par le reconciliateur (orpheline, finie sans rapport...). */
+  anomalies: string[];
 }
 
 /** Dependances: celles du moodboard + test d'existence d'un fichier (captures). */
-export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger };
+export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger; /** Ids des cartes du lot en cours de traitement (aucune hors tournee). */ active?: ReadonlySet<string> };
 
 /** Carte terminee reconstituee depuis le registre. */
 const fromLedger = (e: DoneEntry): BoardCard => ({
   id: e.id, title: e.title, status: "found", axis: e.axis, summary: e.summary, source: e.source,
-  state: "termine", reportPath: e.reportPath, report: parseReport(e.markdown), missing: [],
+  state: "termine", reportPath: e.reportPath, report: parseReport(e.markdown), missing: [], anomalies: [],
 });
 
 /** Chemin du rapport d'une carte (relatif a la racine du depot). */
@@ -35,27 +38,26 @@ export const reportPath = (id: string) => `docs/rapports/${id}.md`;
 /** Construit le tableau; ne leve jamais (rapport illisible = carte sans rapport). */
 export async function buildBoard(d: BoardDeps): Promise<BoardCard[]> {
   const cards = await buildMoodboard(d);
+  const kept = new Map((await d.ledger?.load().catch(() => [] as DoneEntry[]) ?? []).map((e) => [e.id, e]));
   const live = await Promise.all(cards.map(async (c): Promise<BoardCard & { markdown?: string }> => {
     const path = reportPath(c.id);
     const md = await d.readFile(path).catch(() => "");
-    if (!md) return { ...c, state: c.status === "developing" ? "en-cours" : cardState(undefined, c.status === "lead"), reportPath: path, missing: [] };
-    const report = parseReport(md);
+    const report = md ? parseReport(md) : undefined;
     const known = new Set<string>();
-    await Promise.all(report.screenshots.map(async (p) => { if (await d.exists(p).catch(() => false)) known.add(p); }));
-    const v = validateReport(report, (p) => known.has(p));
-    return { ...c, report, state: cardState(report, c.status === "lead", v), reportPath: path, missing: v.missing, markdown: md };
+    await Promise.all((report?.screenshots ?? []).map(async (p) => { if (await d.exists(p).catch(() => false)) known.add(p); }));
+    const proof = report ? validateReport(report, (p) => known.has(p)) : { ok: true, missing: [] };
+    const r = reconcileCard({ status: c.status, report, proof, active: !!d.active?.has(c.id), ledgered: kept.has(c.id) });
+    if (kept.has(c.id) && !(report?.status === "termine" && proof.ok)) return { ...fromLedger(kept.get(c.id)!), axis: c.axis ?? kept.get(c.id)!.axis };
+    return { ...c, report, ...r, reportPath: path, markdown: md || undefined };
   }));
   if (!d.ledger) return live;
-  // Registre: toute carte terminee y est inscrite; une carte inscrite reste terminee, meme disparue de la liste.
   for (const c of live) {
     if (c.state === "termine" && c.markdown) {
       await d.ledger.record({ id: c.id, title: c.title, summary: c.summary, source: c.source, axis: c.axis, reportPath: c.reportPath, markdown: c.markdown, doneAt: Date.now() });
     }
   }
-  const kept = new Map((await d.ledger.load().catch(() => [] as DoneEntry[])).map((e) => [e.id, e]));
-  const board = live.map(({ markdown: _m, ...c }) => (kept.has(c.id) && c.state !== "termine" ? { ...fromLedger(kept.get(c.id)!), axis: c.axis ?? kept.get(c.id)!.axis } : c));
-  const seen = new Set(board.map((c) => c.id));
-  return [...board, ...[...kept.values()].filter((e) => !seen.has(e.id)).map(fromLedger)];
+  const seen = new Set(live.map((c) => c.id));
+  return [...live.map(({ markdown: _m, ...c }) => c), ...[...kept.values()].filter((e) => !seen.has(e.id)).map(fromLedger)];
 }
 
 /** Boucle terminee : toutes les cartes sont `termine` (aucune carte = rien a faire). */
@@ -73,5 +75,6 @@ export async function cardDetail(
   const known = new Set<string>();
   await Promise.all(report.screenshots.map(async (p) => { if (await exists(p).catch(() => false)) known.add(p); }));
   const v = validateReport(report, (p) => known.has(p));
-  return { id, markdown, report, state: saved ? "termine" : cardState(report, false, v), missing: saved ? [] : v.missing };
+  const r = reconcileCard({ status: "found", report, proof: v, active: true, ledgered: !!saved });
+  return { id, markdown, report, state: r.state, missing: r.missing };
 }
