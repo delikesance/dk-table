@@ -58,6 +58,7 @@
     var w = S.vp, sc = scaleFor(w);
     box.style.width = w ? Math.round(w * sc) + "px" : "100%";
     if (box.dataset.key !== key) {
+      if (i === 0) { errors = []; drawErrors(); }
       box.dataset.key = key; box.textContent = "";
       var fr = document.createElement("iframe");
       fr.setAttribute("sandbox", "allow-scripts"); fr.setAttribute("title", name);

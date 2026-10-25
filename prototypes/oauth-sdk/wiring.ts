@@ -18,6 +18,7 @@ import type { Run } from "./git";
 import { buildBoard, cardDetail } from "./cards";
 import { createFiles, type Order } from "./files";
 import { pickBudget } from "./moodboard";
+import { memo } from "./memo";
 import { createPipeline } from "./pipeline";
 import { buildRecap } from "./recap";
 import type { QueryFn } from "./research";
@@ -41,6 +42,7 @@ export function buildBoucleServer(o: WiringOpts): Server {
   let activeDesignDir: string | null = null;
   const store = createDesignStore({ cwd: o.cwd, run: o.run, activeDir: () => activeDesignDir });
   const designSteps: BoucleEvent[] = [];
+  const listMemo = memo(() => store.list(), 2000);
   // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
   let activeDir: string | null = null;
   const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir });
@@ -58,12 +60,12 @@ export function buildBoucleServer(o: WiringOpts): Server {
       designSteps.length = 0;
       return pipeline({ ...r, onEvent: (e) => { if (e.sector === "design") designSteps.push(e); r.onEvent(e); } });
     },
-    designs: { list: async () => withStates(await store.list(), designSteps), read: (n) => store.read(n), steps: () => designSteps },
+    designs: { list: async () => withStates(await listMemo(), designSteps), read: (n) => store.read(n), steps: () => designSteps },
     designHtml: () => page("design.html"),
     parseBudgetEur,
     panelHtml: () => page("panel.html") ?? "<p>panel.html introuvable</p>",
     assetsDir: here,
-    moodboard: () => boardOf("live"),
+    moodboard: memo(() => boardOf("live"), 2000),
     report: (id) => cardDetail(id, (p) => files.read(p), (p) => files.exists(p)),
     shot: async (rel) => {
       for (const base of [activeDir, o.cwd]) {

@@ -194,3 +194,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cycle handling (#CYCLE)
 - Linux packaging format
 - Whether pépites 1/2 are dropped or kept as stretch
+- Boucle optimisée (`docs/boucle-optimisee.md`): `agentOptions.ts` (preset claude_code + skills, git et AskUserQuestion interdits, `trancheur`), cartes/rapports `card.ts`/`cards.ts`/`reportRules.ts`/`reportWatch.ts`/`files.ts`, boucle jusqu'à `allDone` (`complete` dans `done`), pages `moodboard.html` + `moodboard-view.*`, toile `design.html` + `design-view.*` + `designRuntime.ts` (`docs/design-canvas.md`, skill design-canvas). Les assets `*-view.js` ne portent pas le nom d'un module `.ts` (vite résoudrait le `.js`).
+
