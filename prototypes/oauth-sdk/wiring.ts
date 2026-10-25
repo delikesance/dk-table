@@ -16,6 +16,7 @@ import { withStates } from "./designs";
 import { createDesignStore } from "./designStore";
 import type { Run } from "./git";
 import { buildBoard, cardDetail } from "./cards";
+import { createFileLedger } from "./doneLedger";
 import { createFiles, type Order } from "./files";
 import { pickBudget } from "./moodboard";
 import { memo } from "./memo";
@@ -46,7 +47,10 @@ export function buildBoucleServer(o: WiringOpts): Server {
   // Fichiers en couches: worktree actif (rapports en direct), arbre principal, ref developpement.
   let activeDir: string | null = null;
   const files = createFiles({ cwd: o.cwd, run: o.run, activeDir: () => activeDir });
+  // Cartes terminees: registre durable (jamais purge), hors depot (.boucle/ ignore par git).
+  const ledger = createFileLedger(join(o.cwd, ".boucle", "termines.jsonl"));
   const boardOf = (order: Order) => buildBoard({
+    ledger,
     readFile: async (p) => (await files.read(p, order)) ?? Promise.reject(new Error("absent")),
     exists: (p) => files.exists(p, order),
     query: o.query, budget: pickBudget(() => activeBudget), cache: moodCache, env: o.env,
@@ -66,7 +70,7 @@ export function buildBoucleServer(o: WiringOpts): Server {
     panelHtml: () => page("panel.html") ?? "<p>panel.html introuvable</p>",
     assetsDir: here,
     moodboard: memo(() => boardOf("live"), 2000),
-    report: (id) => cardDetail(id, (p) => files.read(p), (p) => files.exists(p)),
+    report: (id) => cardDetail(id, (p) => files.read(p), (p) => files.exists(p), ledger),
     shot: async (rel) => {
       for (const base of [activeDir, o.cwd]) {
         if (base) try { return await readFile(join(base, rel)); } catch { /* couche suivante */ }
