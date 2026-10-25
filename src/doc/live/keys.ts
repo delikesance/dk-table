@@ -1,4 +1,5 @@
 /** Keys of the dk doc editor: formats, `=` chip, and whole-chip deletion. */
+import type { SyntaxNode } from "@lezer/common";
 import { indentLess, indentMore } from "@codemirror/commands";
 import { syntaxTree } from "@codemirror/language";
 import { EditorSelection, Prec, type Extension } from "@codemirror/state";
@@ -52,8 +53,8 @@ export const docKeys: Extension = [
     if (text !== "=" || !view.state.facet(liveHost)) return false;
     const before = view.state.doc.sliceString(Math.max(0, from - 1), from);
     if (before !== "" && !/\s/.test(before) && before !== "\n") return false;
-    const node = syntaxTree(view.state).resolveInner(from, -1).name;
-    if (/Code|Chip|HTML/.test(node)) return false;
+    // `resolve` stays in the Markdown tree: inside a fence the nested language tree must not hide the code block.
+    for (let n: SyntaxNode | null = syntaxTree(view.state).resolve(from, -1); n; n = n.parent) if (/Code|Chip|HTML/.test(n.name)) return false;
     view.dispatch({ changes: { from, to, insert: "{{=}}" }, selection: EditorSelection.cursor(from + 3), userEvent: "input.type" });
     return true;
   }),
