@@ -1,4 +1,5 @@
 # Rapport : Corrélation et matrice de corrélation
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -22,3 +23,9 @@ Aucune (fonctionnalité interne, `Visible : non`).
 - Pas de module `utils.ts` séparé : le calcul des paires tient dans `correlation.ts` (87 lignes).
 - Designs `docs/design/2026-10-25-200330.html` et `2026-10-25-212335.html` (what-if, Espion, Remplissage instantané) ne couvrent pas la corrélation : carte purement moteur.
 - Tournée du 2026-10-25 : code et tests déjà présents et complets, aucune modification de code ; les 4 critères d'acceptation sont couverts par `correlation.test.ts` (y = 2x donne 1, y = -x donne -1, r dans [-1, 1], matrice N×N symétrique à diagonale 1, paires non numériques ignorées sans NaN, variance nulle = erreur ou `null`).
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
