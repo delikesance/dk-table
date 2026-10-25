@@ -15,8 +15,11 @@ export function selectionStats(values: Value[]): SelStats {
 
 const fmt = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 10 });
 
-/** Labelled figures to display, in order; empty unless at least 2 cells are selected. */
-export function statItems(cells: number, values: Value[]): { label: string; value: string }[] {
+/** All selectable entries, in display order. */
+export const STAT_LABELS = ["Moyenne", "Nb", "Nb numérique", "Min", "Max", "Somme"];
+
+/** Labelled figures to display, in order; empty unless at least 2 cells are selected; `enabled` limits the labels. */
+export function statItems(cells: number, values: Value[], enabled: string[] = STAT_LABELS): { label: string; value: string }[] {
   if (cells < 2) return [];
   const s = selectionStats(values);
   const out: { label: string; value: string }[] = [];
@@ -24,5 +27,5 @@ export function statItems(cells: number, values: Value[]): { label: string; valu
   out.push({ label: "Nb", value: fmt(s.count) });
   if (s.numCount) out.push({ label: "Nb numérique", value: fmt(s.numCount) }, { label: "Min", value: fmt(s.min!) },
     { label: "Max", value: fmt(s.max!) }, { label: "Somme", value: fmt(s.sum!) });
-  return out;
+  return out.filter((i) => enabled.includes(i.label));
 }
