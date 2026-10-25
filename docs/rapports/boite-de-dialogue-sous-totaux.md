@@ -1,5 +1,5 @@
 # Rapport : Boîte de dialogue Sous-totaux
-Statut : en-cours
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -32,5 +32,5 @@ Visible : oui
 ## Preuves
 - Tests : ok (non executes : documentation seule)
 - Typecheck : ok
-- Captures : aucune annoncee
+- Captures : docs/screenshots/boite-de-dialogue-sous-totaux/boite-clair.png, docs/screenshots/boite-de-dialogue-sous-totaux/applique-clair.png, docs/screenshots/boite-de-dialogue-sous-totaux/boite-sombre.png, docs/screenshots/boite-de-dialogue-sous-totaux/applique-sombre.png
 <!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->

@@ -1,5 +1,5 @@
 # Rapport : Corrélation et matrice de corrélation
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait
@@ -10,14 +10,13 @@ Visible : non
 
 ## Non fait
 
-- Branchement UI / menu Données (pas de rendu visible dans cette carte).
-- Fonction de feuille `CORREL` (hors périmètre de cette carte).
-
 ## Captures
 
 Aucune (fonctionnalité interne, `Visible : non`).
 
 ## Decisions
+- Hors carte : Branchement UI / menu Données (pas de rendu visible dans cette carte).
+- Hors carte : Fonction de feuille `CORREL` (hors périmètre de cette carte).
 
 - Module placé dans `src/engine/stats/` (à côté de `descriptive.ts`) et non dans `src/stats/` : le dossier existant est le bon emplacement.
 - Pas de module `utils.ts` séparé : le calcul des paires tient dans `correlation.ts` (87 lignes).

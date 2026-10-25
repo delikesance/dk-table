@@ -1,5 +1,5 @@
 # Rapport : Moyenne mobile et lissage
-Statut : en-cours
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -14,14 +14,13 @@ Visible : oui
 
 ## Non fait
 
-- Pas de format de nombre automatique : les résultats s'affichent en précision brute (ex. 6.3333333333). Relève du format de cellule, hors périmètre.
-
 ## Captures
 
 - docs/screenshots/moyenne-mobile-et-lissage/resultat-clair.png
 - docs/screenshots/moyenne-mobile-et-lissage/resultat-sombre.png
 
 ## Decisions
+- Hors carte : Pas de format de nombre automatique : les résultats s'affichent en précision brute (ex. 6.3333333333). Relève du format de cellule, hors périmètre.
 
 - Pas de dossier `src/stats/` ni `src/formulas/registry.ts` (inexistants) : le moteur est `src/engine/`, les fonctions de débordement suivent `SPILL_FORMS`.
 - Noms : `MOVING_AVERAGE` et `EXP_SMOOTH` (la carte ne fixe pas de nom).

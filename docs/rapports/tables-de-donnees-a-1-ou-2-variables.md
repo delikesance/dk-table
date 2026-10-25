@@ -1,5 +1,5 @@
 # Rapport : Tables de données à 1 ou 2 variables
-Statut : en-cours
+Statut : termine
 Visible : non
 
 ## Fait

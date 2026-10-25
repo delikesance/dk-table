@@ -1,5 +1,5 @@
 # Rapport : Moteur de consolidation sur plusieurs feuilles (somme, moyenne, etc. par étiquettes ou position)
-Statut : en-cours
+Statut : termine
 Visible : non
 
 Moteur pur (`src/engine/consolidate.ts`), sans branchement UI. L'entrée visible (Données > Consolider) relève de la carte « Boîte de dialogue Données > Consolider ».
@@ -13,14 +13,13 @@ Moteur pur (`src/engine/consolidate.ts`), sans branchement UI. L'entrée visible
 
 ## Non fait
 
-- Branchement UI (dialogue, menu Données, palette) : carte « Boîte de dialogue Données > Consolider ».
-- Lecture des plages depuis le classeur (`Book`) : le moteur reçoit des grilles déjà extraites.
-
 ## Captures
 
 Aucune (moteur sans effet visible).
 
 ## Decisions
+- Hors carte : Branchement UI (dialogue, menu Données, palette) : carte « Boîte de dialogue Données > Consolider ».
+- Hors carte : Lecture des plages depuis le classeur (`Book`) : le moteur reçoit des grilles déjà extraites.
 
 - Pas de branchement UI dans cette carte : le moteur est pur et testable seul ; la boîte de dialogue reste à faire.
 - Une cellule sans nombre contributeur renvoie `""` (pas `0`), pour distinguer « vide » de « zéro ».
