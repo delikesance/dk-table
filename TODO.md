@@ -192,6 +192,7 @@ Classement par gravité (P0 = pire)
 ## Contrôles de la grille façon Google Sheets
 - [x] G1 En-têtes : clic = colonne/ligne entière, Maj+clic / glisser étendent, coin = tout (`ui/grid/mouse.ts`) ; clic droit = insérer, supprimer, trier, « Figer jusqu'à la colonne C / ligne 5 », libérer, effacer (`ui/headerMenu.ts`, `ui/freeze/freezeMenu.ts`) ; Affichage « Figer jusqu'à » ; poignées de gel glissables (`ui/grid/freezeHandle.ts`).
 - [x] G1b Rendu de la sélection retravaillé ; ajustement des colonnes au contenu (clic droit, palette, double-clic sur la bordure).
+- [x] G1c Fond d'en-tête dédié `--c-header` (clair/sombre) ; correctif : les en-têtes sélectionnés laissaient voir les cellules défilant dessous.
 - [x] G3 Poignée de recopie (cran du coin bas-droit de la sélection) : glisser vers le bas / haut / droite / gauche prolonge les séries (nombres, dates texte, mois/jours FR, « Item 1 », motifs, formules décalées), aperçu pendant le glisser, Ctrl = série ↔ recopie, double-clic = jusqu'à la fin des données voisines (`engine/series*.ts`, `ui/grid/{seriesFill,fillHandle}.ts`, `docs/serie-fill.md`). Tests : `series.test.ts`, `seriesFill.test.ts`, `fillHandle.test.ts`, e2e `feat-fillhandle.spec.ts`.
 - [ ] G3b Recopie : copier aussi les styles/formats de la source, défilement automatique pendant le glisser, jours ouvrés via menu, séries de dates sur numéros de série formatés en date (mois/années), réduire la zone en glissant vers l'intérieur.
 - [ ] G2 Masquer/afficher des colonnes et lignes, hauteur de ligne réglable.
@@ -209,5 +210,7 @@ Classement par gravité (P0 = pire)
 - [x] D5 Puce de calcul `=` (formules du moteur, `@`, formats, mini-graphiques, exports)
 - [ ] D6 Bloc « Calcul » à lignes libellées (variables par libellé)
 - [x] D7 Rendu Live Preview façon Obsidian : texte Markdown comme document (CodeMirror 6), syntaxe cachée hors du curseur, puces `{{@…}}` / `{{=…}}` et blocs ```dkblock en widgets, anciens documents ProseMirror convertis (`doc/md/`, `doc/live/`)
+- [x] D8 Style administratif classique du contenu des documents (A4, sérif, titres noirs), exports HTML/PDF alignés
 - [x] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 
+- [x] Somme rapide (Σ, Alt+=) : une sélection multi-cellules est sommée (une SOMME par colonne dessous, ou à droite d’une ligne), `ui/autosum.ts`, tests unitaires + e2e

@@ -68,4 +68,22 @@ describe("autosum", () => {
     document.querySelector<HTMLButtonElement>('.dk-toolbar [data-action="sum"]')!.click();
     expect(raw("A3")).toBe("=SUM(A1:A2)");
   });
+  it("sums a column selection into the cell below", () => {
+    fill({ A1: "1", A2: "2", A3: "3" });
+    app.select("A1:A3");
+    expect(autosum(app)).toBe(true);
+    expect(raw("A4")).toBe("=SUM(A1:A3)");
+  });
+  it("sums each column of a block selection in the row below", () => {
+    fill({ A1: "1", A2: "2", B1: "3", B2: "4" });
+    app.select("A1:B2");
+    autosum(app);
+    expect([raw("A3"), raw("B3")]).toEqual(["=SUM(A1:A2)", "=SUM(B1:B2)"]);
+  });
+  it("sums a row selection into the cell to the right", () => {
+    fill({ A1: "1", B1: "2", C1: "3" });
+    app.select("A1:C1");
+    autosum(app);
+    expect(raw("D1")).toBe("=SUM(A1:C1)");
+  });
 });
