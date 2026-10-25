@@ -219,3 +219,5 @@ Classement par gravité (P0 = pire)
 
 - [x] Plages ouvertes façon Sheets (`B2:B`, `B:B`, `A:C`, `2:5`, avec préfixe de feuille) : parseur, évaluation sur la plage utilisée, dépendances, recopie, insertion/suppression, SPARKLINE/BAR/TREND, puces de document, `getRangeValues` (`engine/openrange.ts`)
 - [x] Filtre de colonne : champ de recherche en tête du popover (focus à l'ouverture, casse/accents ignorés, « Tout sélectionner » sur les résultats visibles, Entrée = OK, Échap ferme). `filter.ts matchesSearch`, `grid/filterPopover.ts`; tests unitaires + `e2e/feat-filter.spec.ts`
+
+- [x] Règle CLAUDE.md : captures d'écran (clair/sombre, `docs/screenshots/`) obligatoires dans toute PR de fonctionnalité visible

@@ -16,6 +16,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Everything is documented: every module/function/component gets a short doc comment, and each implementation is documented (what/why, usage) in the same change.
 - After every implementation, update `CLAUDE.md` when needed (commands, architecture, structure, decisions) and update `TODO.md` (see To-do list).
 
+## Captures d'écran pour les nouvelles fonctionnalités
+
+- Toute PR qui ajoute une fonctionnalité visible (UI, rendu, interaction) DOIT inclure des captures d'écran prouvant qu'elle fonctionne. Sans captures, la PR n'est pas prête à être relue.
+- Une capture par comportement clé (état initial, résultat), en thème clair ET sombre dès que le rendu dépend du thème. Corrections de bug visibles : capture avant/après.
+- Une PR purement interne (refactor, doc, config, CI, logique sans effet visible) en est dispensée; le dire dans le corps de la PR.
+- Méthode : Playwright (voir `npm run test:e2e`, helpers `e2e/helpers.ts`) avec `page.screenshot({ path })`, viewport fixe 1200x800, accueil désactivé (`?onboarding=0`), données de démonstration réalistes.
+- Hébergement : les images sont versionnées dans le dépôt sous `docs/screenshots/<fonctionnalité>/` (PNG, nom explicite `<sujet>-clair.png` / `<sujet>-sombre.png`, quelques dizaines de Ko chacune), dans la même branche que la PR.
+- Dans le corps de la PR, section « Captures » qui les intègre en Markdown avec une URL absolue sur la branche : `![légende](https://raw.githubusercontent.com/delikesance/dk-table/<branche>/docs/screenshots/<fonctionnalité>/<fichier>.png)`, une légende par image. Alternative : glisser les images directement dans la description de la PR.
+- Les captures illustrent une fonctionnalité qui marche réellement dans l'app (pas de maquette); elles ne remplacent pas les tests.
+
 ## Parallel workflow
 
 - Before launching a task, split it into small independent mini-tasks (disjoint files where possible).
