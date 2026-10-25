@@ -65,6 +65,8 @@ export interface Ctx {
   autosave?: { touch(): void };
   /** Last autosave state, shown in the title. */
   autosaveState?: "idle" | "pending" | "saving" | "saved" | "error";
+  /** Keys of the active sheet breaking a validation rule (see appValidation.ts). */
+  invalid?: Set<string>;
   /** Counter bumped on every modification (detects edits made during a write). */
   version?: number;
 }

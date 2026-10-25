@@ -191,6 +191,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `engine/textsplit.ts` (`splitLine`, `splitColumn`; délimiteurs, guillemets, fusion, `widths` largeur fixe, `formats` général/texte = préfixe `'`), dialogue `ui/dialogs/textToCols.ts` (menu Données), e2e `e2e/feat-texte-colonnes.spec.ts`. Détail: `docs/texte-en-colonnes.md`.
 
+## Decisions (validation)
+- `engine/validation/` (`checkValue`, `invalidCells`), `DocSheet.validation`, `ui/validation/panel.ts`, `ui/appValidation.ts` (`data-inv`, toast après collage/remplissage/ouverture via hook grille `onBulk`). Détail: `docs/validation.md`.
+
 ## Decisions (croisé, diff)
 
 - `engine/pivot.ts` (`pivot(table, spec)`, `defaultSpec`) + `pivotCalc.ts` (champ calculé `Qte*Prix`, noms de colonnes sans espace): pur, sortie = grille de chaînes; dialogue `ui/dialogs/pivot.ts` (palette `data.pivot`) crée la feuille « Croisé » (`importSheet`). Agrégations SUM/COUNT/AVG, totaux recalculés, vides ignorés.

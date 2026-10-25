@@ -29,6 +29,8 @@ export interface ClipboardHooks {
   clear(): void;
   /** Called on copy / cut with the range ("A1:B2", null for a cut) and its TSV text (docs paste it as a link). */
   onCopy?(ref: string | null, text: string): void;
+  /** Called once after a paste wrote its cells. */
+  onBulk?(): void;
 }
 
 /** Wire copy/cut/paste (TSV) listeners on `root`. */
@@ -60,6 +62,7 @@ export function bindClipboard(root: HTMLElement, h: ClipboardHooks): void {
     pasteMatrix(text, top, last).forEach((line, r) => line.forEach((v, c) => {
       if (top.col + c < h.cols && top.row + r < h.rows) h.put(keyOf(top.col + c, top.row + r), v);
     }));
+    h.onBulk?.();
   });
 }
 

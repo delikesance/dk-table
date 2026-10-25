@@ -144,14 +144,14 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Write one cell through the host and repaint it. */
   const put = (k: string, v: string): void => { opts.onEdit(k, v); paint(k); };
-
   /** Empty the filled cells of the selection (whole columns/rows: skip the empty ones). */
   const clear = (): void => rangeKeys(anchor, active).filter((k) => opts.getRaw(k) !== "").forEach((k) => put(k, ""));
-
+  /** Write a fill plan, then let the app check validation rules once. */
+  const bulk = (plan: Record<string, string>): void => { Object.entries(plan).forEach(([k, v]) => put(k, v)); opts.onBulk?.(); };
   bindKeys(root, {
     busy: () => !!editor, nav, startEdit, sheet: (d) => opts.onSheetStep?.(d),
     clear,
-    fill: (dir) => Object.entries(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)).forEach(([k, v]) => put(k, v)),
+    fill: (dir) => bulk(fillPlan(anchor, active, dir, opts.getRaw, ctl.hidden)),
   });
 
   const unbindMouse = bindMouse(root, {
@@ -162,7 +162,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const unbindFill = bindFillHandle(root, {
     cols, rows, sel: () => ({ anchor, active }), getRaw: opts.getRaw, busy: () => !!editor,
     apply: ({ plan, sel }) => {
-      Object.entries(plan).forEach(([k, v]) => put(k, v));
+      bulk(plan);
       ({ anchor, active } = sel);
       render();
     },
@@ -171,7 +171,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
     put,
-    clear, onCopy: opts.onCopy,
+    clear, onCopy: opts.onCopy, onBulk: opts.onBulk,
   });
 
   root.addEventListener("scroll", sync);

@@ -13,6 +13,7 @@ import { widthsToDoc } from "../io/colWidthsFormat";
 import type { App } from "./appTypes";
 import { setupAutosave } from "./autosaveUi";
 import { fitColumns } from "./appFit";
+import { invalidOf, markInvalid, notifyInvalid } from "./appValidation";
 import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
@@ -77,7 +78,8 @@ export function createApi(c: Ctx): App {
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(Object.keys(e.widths).length ? { colWidths: widthsToDoc(e.widths) } : {}),
-        ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
+        ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}),
+        ...(e.validation.length ? { validation: structuredClone(e.validation) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
       ...(decimalMode() ? { decimal: true } : {}),
       ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
@@ -95,6 +97,7 @@ export function createApi(c: Ctx): App {
       app.path = path;
       loading = true; macros.load(doc.macros ?? []); loading = false;
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
+      notifyInvalid(c); // rules stored in the file are enforced on open too
     },
     importSheet(name, sheet) {
       checkImport(sheet);
@@ -102,6 +105,7 @@ export function createApi(c: Ctx): App {
       c.cur = newEntry(name, sheet);
       c.entries.push(c.cur);
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, true);
+      notifyInvalid(c);
     },
     selection: () => c.grid?.getSelection() ?? "A1", // the menu bar is built before the grid
     selectedKeys: () => keysOf(c.grid.getSelection()),
@@ -128,6 +132,18 @@ export function createApi(c: Ctx): App {
       c.cur.cf = structuredClone(rules);
       refreshCf(c);
       setTitle(c, true); syncInfo(c);
+    },
+    validationRules: () => structuredClone(c.cur.validation),
+    setValidationRules(rules) {
+      pushUndo(c.cur);
+      c.cur.validation = structuredClone(rules);
+      markInvalid(c);
+      setTitle(c, true); syncInfo(c);
+    },
+    invalidCells: () => invalidOf(c),
+    fixInvalid(keys) {
+      const todo = keys ?? invalidOf(c).map((i) => i.key);
+      if (todo.length) app.editMany(Object.fromEntries(todo.map((k) => [k, ""])));
     },
     toggleSidebar: () => c.sidebar.toggle(),
     insertFunction(name) {
