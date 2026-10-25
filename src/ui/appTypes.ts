@@ -3,6 +3,7 @@ import type { DktDoc, DocSheet } from "../io/types";
 import type { SheetInfo } from "./tabs/tabs";
 import type { RecentFile } from "./sidebar/sidebar";
 import type { Sheet } from "../engine/sheet";
+import type { SpecialChoice } from "./appSpecial";
 import type { CellStyle } from "./model";
 import type { BorderMode } from "./borders";
 import type { MacroStore } from "../macros/store";
@@ -93,6 +94,8 @@ export interface App {
   markSaved(): void;
   /** Freeze the top `rows` rows / left `cols` columns of the active sheet (0,0 = unfreeze); persisted, not undoable. */
   setFreeze(f: { rows: number; cols: number }): void;
+  /** Atteindre spécial: select the matching cells of the active sheet (first = cursor, others marked); returns how many. */
+  goSpecial(o: SpecialChoice): number;
   /** Frozen rows/cols of the active sheet ({0,0} when none). */
   getFreeze(): { rows: number; cols: number };
   /** Named (user-defined) functions of the workbook, persisted with the document. */
