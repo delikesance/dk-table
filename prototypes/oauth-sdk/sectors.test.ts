@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
 import { MODEL_BY_KIND, type QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
-import { SECTORS, SECTOR_DEFS, runSector } from "./sectors";
+import { SECTORS, SECTOR_DEFS, designPath, runSector } from "./sectors";
 
 /** Query factice : enregistre les options, cout `cost` borne par maxBudgetUsd. */
 function fake(cost: number, subtype = "success") {
@@ -19,7 +19,7 @@ function fake(cost: number, subtype = "success") {
 
 describe("definitions", () => {
   it("implementation, correction, design: contrat {name, run}", () => {
-    expect(SECTORS.map((s) => s.name)).toEqual(["implementation", "correction", "design"]);
+    expect(SECTORS.map((s) => s.name)).toEqual(["design", "implementation", "correction"]);
     for (const s of SECTORS) expect(typeof s.run).toBe("function");
   });
 
@@ -33,6 +33,18 @@ describe("definitions", () => {
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
     expect(get("implementation").prompt).toMatch(/docs\/recherche\/fonctionnalites\.md/);
     expect(get("correction").allowedTools).toContain("Bash(npx tsc:*)");
+  });
+});
+
+describe("design d'abord", () => {
+  it("le design ecrit docs/design/<date>.md; l'implementation le lit, repli sur recherche + TODO", () => {
+    const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
+    expect(designPath(new Date("2026-10-25T10:00:00Z"))).toBe("docs/design/2026-10-25.md");
+    expect(get("design").prompt).toContain(designPath());
+    expect(get("design").prompt).toContain("interfaces");
+    expect(get("implementation").prompt).toContain(designPath());
+    expect(get("implementation").prompt).toContain("docs/recherche/fonctionnalites.md");
+    expect(get("implementation").prompt).toContain("TODO.md");
   });
 });
 
@@ -69,9 +81,9 @@ describe("SECTORS[].run", () => {
     const { q } = fake(1);
     const { c, events, budget } = ctx(q);
     await SECTORS[0].run(c);
-    expect(events[0]).toMatchObject({ type: "start", sector: "implementation" });
+    expect(events[0]).toMatchObject({ type: "start", sector: "design" });
     const end = events.find((e) => e.type === "end")!;
-    expect(end).toMatchObject({ sector: "implementation", costUsd: 1 });
+    expect(end).toMatchObject({ sector: "design", costUsd: 1 });
     expect(end.elapsedS).toBeGreaterThanOrEqual(0);
     expect(budget.spent()).toBe(1);
     expect(budget.remaining()).toBe(19);

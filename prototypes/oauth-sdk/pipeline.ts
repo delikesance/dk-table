@@ -1,5 +1,5 @@
 /**
- * Chaine de la boucle : research -> implementation -> correction -> design.
+ * Chaine de la boucle : research -> design -> implementation -> correction.
  *
  * Quoi : pour chaque secteur, worktree + branche `wt/<secteur>-<ts>` (git.ts), execution dans
  *        ce dossier, commit, fusion dans `developpement` seulement si tests + tsc sont verts.

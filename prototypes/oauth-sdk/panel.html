@@ -78,8 +78,8 @@
 <script>
   const $ = (id) => document.getElementById(id);
   const usd = (n) => (typeof n === "number" ? n.toFixed(2) + " $" : "-");
-  const PHASES = [["research", "Recherche"], ["implementation", "Implémentation"],
-    ["correction", "Correction"], ["design", "Design"]];
+  const PHASES = [["research", "Recherche"], ["design", "Design"],
+    ["implementation", "Implémentation"], ["correction", "Correction"]];
   const STATE = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
   const agents = new Map(); // secteur -> { state, cost, elapsed, axes: Map(axe -> {state}) }
   let phase = null, failedPhase = false, summaries = 0;
