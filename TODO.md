@@ -306,6 +306,7 @@ Classement par gravité (P0 = pire)
 - [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
 
 ## Boucle
+- [x] Régression linéaire (carte regression-lineaire)
 - [x] Valeur cible (recherche de racine sur une cellule) (carte valeur-cible-recherche-de-racine-sur-une-cellule)
 - [x] UI du plan repliable (gouttière, boutons de niveaux) (carte ui-du-plan-repliable-gouttiere-boutons-de-niveaux)
 - [x] Mode de calcul manuel et itératif (carte mode-de-calcul-manuel-et-iteratif)
