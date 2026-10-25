@@ -10,7 +10,9 @@ export interface RunOpts { budgetEur: number; onEvent: (e: BoucleEvent) => void;
 
 /** Événement de progression envoyé au panneau. */
 export interface BoucleEvent {
-  type: "start" | "end" | "info" | "error" | "done";
+  type: "start" | "end" | "info" | "error" | "done" | "summary";
+  /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
+  phase?: string; ok?: boolean;
   sector?: string; axis?: string; costUsd?: number; elapsedS?: number;
   totalUsd?: number; remainingUsd?: number; message?: string;
 }

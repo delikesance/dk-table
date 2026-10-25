@@ -52,6 +52,21 @@ describe("runPipeline", () => {
     expect(merges[0].args).toContain("--no-ff");
   });
 
+  it("emet un resume par phase (ok=true si fusionnee) et le journalise", async () => {
+    const { events } = await go({});
+    expect(events.filter((e) => e.type === "end").every((e) => e.ok === true)).toBe(true);
+    const sums = events.filter((e) => e.type === "summary");
+    expect(sums.map((e) => e.phase)).toEqual(["research", "implementation", "correction", "design"]);
+    expect(sums[0].message).toBeTruthy();
+    expect(events.some((e) => e.type === "info" && /^resume: /.test(e.message ?? ""))).toBe(true);
+  });
+
+  it("ok=false et resume de repli si les tests sont rouges", async () => {
+    const { events } = await go({ red: true, cost: 1000, eur: 10 });
+    expect(events.filter((e) => e.type === "end").every((e) => e.ok === false)).toBe(true);
+    expect(events.find((e) => e.type === "summary")?.message).toMatch(/Échec : recherche/);
+  });
+
   it("n'utilise jamais push ni master", async () => {
     const { calls } = await go({});
     const flat = calls.flatMap((c) => c.args);

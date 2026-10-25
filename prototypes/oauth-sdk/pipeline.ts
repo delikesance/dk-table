@@ -14,6 +14,10 @@ import { createGitFlow, type Run } from "./git";
 import { runResearch, type QueryFn } from "./research";
 import { SECTORS, toController, type Sector } from "./sectors";
 import type { BoucleEvent, RunOpts } from "./server";
+import { summarizePhase, type Status } from "./summary";
+
+/** Libelle francais d'une phase (resume et panneau). */
+const LABEL: Record<string, string> = { research: "recherche", implementation: "implémentation", correction: "correction", design: "design" };
 
 /** Dependances injectees (vraies dans boucle.ts, factices dans les tests). */
 export interface PipelineDeps {
@@ -62,20 +66,44 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<void
       },
     };
 
-    for (const sector of [research, ...SECTORS]) {
+    const all = [research, ...SECTORS];
+    const status: Record<string, Status> = Object.fromEntries(all.map((x) => [x.name, "pending"]));
+    /** Resume de la phase (Haiku ou repli): emis au panneau et journalise. */
+    const summarize = async (name: string) => {
+      const message = await summarizePhase({
+        phase: LABEL[name] ?? name,
+        phases: all.map((x) => ({ name: LABEL[x.name] ?? x.name, status: status[x.name] })),
+        agents: [], spentUsd: budget.spent(), remainingUsd: budget.remaining(),
+      }, { query: deps.query, budget, env: deps.env });
+      onEvent({ type: "summary", phase: name, message });
+      onEvent({ type: "info", sector: name, message: `resume: ${message}` });
+    };
+
+    for (const sector of all) {
       if (signal.aborted || budget.exhausted()) {
         onEvent({ type: "info", message: signal.aborted ? "arrete" : "budget epuise (90 %)" });
         break;
       }
       const { branch, dir } = await flow.startSector(sector.name);
-      await sector.run({ query: deps.query, budget, emit: onEvent, dir, signal, env: deps.env });
-      await flow.commit(dir, `Boucle: ${sector.name}`);
-      const m = await flow.mergeIfGreen(branch, dir);
-      const e: BoucleEvent = {
-        type: "info", sector: sector.name,
-        message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
-      };
-      onEvent(e);
+      status[sector.name] = "running";
+      // l'evenement `end` du secteur est retenu pour porter `ok` (resultat de la fusion)
+      let held: BoucleEvent | undefined;
+      const emit = (e: BoucleEvent) => { if (e.type === "end" && e.sector === sector.name) held = e; else onEvent(e); };
+      let ok = false;
+      try {
+        await sector.run({ query: deps.query, budget, emit, dir, signal, env: deps.env });
+        await flow.commit(dir, `Boucle: ${sector.name}`);
+        const m = await flow.mergeIfGreen(branch, dir);
+        ok = m.merged;
+        onEvent({
+          type: "info", sector: sector.name,
+          message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
+        });
+      } finally {
+        status[sector.name] = ok ? "ok" : "failed";
+        if (held) onEvent({ ...(held as BoucleEvent), ok });
+        await summarize(sector.name);
+      }
     }
   };
 }
