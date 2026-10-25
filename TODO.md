@@ -233,4 +233,5 @@ Classement par gravité (P0 = pire)
   - [x] implementation / correction / design : implémentés (`sectors.ts`, prompts + outils sans git) et testés avec requêtes factices, jamais lancés en réel
   - [x] panneau (`server.ts`, `panel.html`, budget en euros, Go/Stop, SSE) et git (`git.ts` : `developpement`, worktree par secteur, fusion si `npm test` + tsc verts, jamais master/push) : testés avec factices, jamais lancés en réel
   - [x] résumé Haiku par phase (`summary.ts`, repli déterministe sans LLM, événement `summary`, `ok` sur `end`); [x] zone résumé + cartes d'agents + barre de phases dans `panel.html` ; événements start/end par axe de recherche (contrat panneau vérifié par test)
+  - [x] moodboard de recherche, côté données (`moodboard.ts` + tests, routes `/moodboard` et `/moodboard.html` dans `server.ts`, câblage `boucle.ts`); la page `moodboard.html` est faite à part (worker-mood-view)
   - [ ] Premier run réel complet de la boucle (l'utilisateur appuie sur Go); limites connues : `index.ts` = recherche seule en CLI
