@@ -1,6 +1,7 @@
 /** Inline cell editor: textarea creation and key/blur handling, decoupled from the grid state. */
 import { cycleRefIn } from "./refcycle";
 import { attachFnComplete } from "../formula/fnPopup";
+import { toInput } from "../formula/syntax";
 
 const MOVES: Record<string, [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
@@ -31,7 +32,7 @@ export function openEditor(el: HTMLElement, value: string, typed: boolean, h: Ed
   input.className = "dkg-editor";
   input.rows = 1;
   input.spellcheck = false;
-  input.value = value;
+  input.value = toInput(value);
   el.replaceChildren(input);
   input.focus();
   if (!typed) input.select();
