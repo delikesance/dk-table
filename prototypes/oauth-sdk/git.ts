@@ -16,14 +16,25 @@ export interface GitFlow {
   /** Commit all changes in dir (message + trailer), skip if nothing to commit. */
   commit(dir: string, message: string): Promise<boolean>;
   /** Run tests + tsc in dir; if green merge --no-ff into developpement and remove the worktree. */
-  mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string }>;
+  mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string; push?: PushResult }>;
+  /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
+  pushDev(): Promise<PushResult>;
+}
+
+/** Resultat d'un push: `reason` dit pourquoi rien n'est parti (journal). */
+export interface PushResult { pushed: boolean; reason?: string }
+
+/** Options du flux git. */
+export interface GitOpts {
+  /** Pousser `developpement` apres chaque fusion validee (defaut: non; `BOUCLE_PUSH=0` le coupe dans boucle.ts). */
+  push?: boolean;
 }
 
 const DEV = "developpement";
 const TRAILER = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>";
 
 /** Build a GitFlow bound to repo root `cwd`, using runner `run`. */
-export function createGitFlow(run: Run, cwd: string): GitFlow {
+export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlow {
   const git = (args: string[], at = cwd) => run("git", args, at);
 
   /** Echecs d'installation par worktree (dir -> raison), lus par mergeIfGreen. */
@@ -92,8 +103,26 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
       return { merged: false, reason: `merge conflict: ${stripAnsi(m.out).slice(-500)}` };
     }
     await git(["worktree", "remove", "--force", dir]);
-    return { merged: true };
+    return { merged: true, push: await pushDev() };
   }
 
-  return { ensureDev, startSector, commit, mergeIfGreen };
+  /** Push de `developpement` seulement (refspec explicite), apres integration du distant s'il est en avance. */
+  async function pushDev(): Promise<PushResult> {
+    if (!opts.push) return { pushed: false, reason: "push desactive (BOUCLE_PUSH=0)" };
+    if ((await git(["remote", "get-url", "origin"])).code !== 0) return { pushed: false, reason: "pas de remote origin" };
+    if ((await git(["rev-parse", "--abbrev-ref", "HEAD"])).out.trim() !== DEV) return { pushed: false, reason: `push refuse : pas sur ${DEV}` };
+    const push = () => git(["push", "origin", `${DEV}:${DEV}`]);
+    let r = await push();
+    if (r.code === 0) return { pushed: true };
+    // rejete: integrer le distant (fusion, jamais de rebase d'un historique fusionne) puis repousser une fois
+    const f = await git(["pull", "--no-rebase", "--no-edit", "origin", DEV]);
+    if (f.code !== 0) {
+      await git(["merge", "--abort"]);
+      return { pushed: false, reason: `push rejete, conflit avec origin/${DEV} : ${stripAnsi(f.out).slice(-300)}` };
+    }
+    r = await push();
+    return r.code === 0 ? { pushed: true } : { pushed: false, reason: `push echoue : ${stripAnsi(r.out).slice(-300)}` };
+  }
+
+  return { ensureDev, startSector, commit, mergeIfGreen, pushDev };
 }

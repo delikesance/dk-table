@@ -66,10 +66,10 @@ describe("boucle jusqu'a completion", () => {
     expect(h.events.some((e) => e.type === "info" && e.reason === "stuck" && /bloquee/.test(e.message ?? "") && /a \(idee\)/.test(e.message ?? ""))).toBe(true);
   });
 
-  it("une avancee d'etat compte comme progres: idee -> en-cours -> preuves -> termine continue au-dela de 3 tournees", async () => {
+  it("une avancee d'etat compte comme progres: idee -> en-cours -> preuves -> termine, la correction ne tourne que sur « preuves »", async () => {
     const h = harness([[card("a", "idee")], [card("a", "en-cours")], [card("a", "preuves")], [card("a", "termine")]]);
     expect(await h.go()).toEqual({ complete: true, reason: "complete" });
-    expect(impl(h.events)).toHaveLength(3);
+    expect(impl(h.events)).toHaveLength(2);   // « preuves » apres la tournee 2: correction ciblee, puis termine
   });
 
   it("s'arrete quand le budget est epuise (reason=budget) avec le nombre de cartes restantes", async () => {
