@@ -33,6 +33,16 @@ for (const theme of ["clair", "sombre"] as const) {
       await page.screenshot({ path: `${SHOTS}/manuel-apres-f9-${theme === "clair" ? "clair" : "sombre"}.png` });
     });
 
+    test("barre d'état: le mode manuel est affiché, masqué en automatique", async ({ page }) => {
+      const badge = page.locator(".dk-calc-mode");
+      await expect(badge).toBeHidden();
+      await setSetting(page, "manual", true);
+      await expect(badge).toHaveText("Manuel · F9");
+      await page.screenshot({ path: `${SHOTS}/barre-etat-manuel-${theme === "clair" ? "clair" : "sombre"}.png` });
+      await setSetting(page, "manual", false);
+      await expect(badge).toBeHidden();
+    });
+
     test("itératif: une référence circulaire converge au lieu de #CYCLE!", async ({ page }) => {
       await setSetting(page, "iterative", true);
       await typeInCell(page, "A2", "=1+B2*0.5");
