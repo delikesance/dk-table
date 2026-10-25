@@ -37,3 +37,8 @@ export function resolveSheet(from: Sheet, name: string): Sheet | undefined {
 export function sheetName(sheet: Sheet): string | undefined {
   return bookOf(sheet)?.list().find((e) => e.sheet === sheet)?.name.toLowerCase();
 }
+
+/** Give one standalone sheet (e.g. a document's scratch sheet) a view of `book` without listing it there. */
+export function attachTo(sheet: Sheet, book: Book): void {
+  books.set(sheet, book);
+}

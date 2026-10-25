@@ -43,7 +43,7 @@ export interface App {
   /** Apply a text command (bold, title, list...) to the open document. */
   docFormat(name: DocFormat): void;
   /** Insert a live cell prompt (`@`) or a linked block into the open document. */
-  docInsert(kind: "cell" | "table" | "bar" | "trend"): void;
+  docInsert(kind: "cell" | "calc" | "table" | "bar" | "trend"): void;
   /** Show sheet and document side by side, or back to one. */
   toggleSplit(): void;
   exportDoc(kind: "md" | "html" | "pdf"): Promise<void>;

@@ -17,6 +17,7 @@ export function docFormatMenu(app: App): MenuDef {
 export function insertionMenu(app: App): MenuDef {
   return { label: "Insertion", items: [
     { label: "Cellule liée", hint: "@", run: () => app.docInsert("cell") },
+    { label: "Calcul", hint: "=", run: () => app.docInsert("calc") },
     { label: "Tableau lié", sep: true, run: () => app.docInsert("table") },
     { label: "Graphique en barres lié", run: () => app.docInsert("bar") },
     { label: "Graphique de tendance lié", run: () => app.docInsert("trend") },
