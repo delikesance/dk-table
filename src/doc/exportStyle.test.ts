@@ -27,3 +27,16 @@ describe("blocs liés", () => {
     expect(css2.split("\n").find((l: string) => l.startsWith(".dk-block__tag"))).not.toMatch(/position:\s*absolute|italic/);
   });
 });
+
+describe("blocs de code exportés", () => {
+  const code = { type: "code_block", attrs: { params: "js" }, content: [{ type: "text", text: "a < 1" }] };
+  it("cadre sobre avec le nom du langage, code échappé", () => {
+    const h = toHtml("N", { content: [code] }, { sheets: () => [] });
+    expect(h).toMatch(/<pre class="code" data-lang="js"><span class="lang">js<\/span>a &lt; 1<\/pre>/);
+    expect(h).toMatch(/pre\.code\{/);
+  });
+  it("sans langage, pas d'étiquette", () => {
+    const h = toHtml("N", { content: [{ ...code, attrs: {} }] }, { sheets: () => [] });
+    expect(h).toMatch(/<pre class="code">a &lt; 1<\/pre>/);
+  });
+});
