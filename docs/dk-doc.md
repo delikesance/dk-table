@@ -36,6 +36,13 @@ Un dk doc est un document de texte riche (titres, listes, citation, gras / itali
 - Morceau d'un tableau lié : glisser sur des cellules affiche « Citer la sélection · A3:D4 » (puce de plage sous le bloc) et « Nouveau bloc lié » (`doc/blockPick.ts`). Les colonnes masquées sont comptées dans l'adresse.
 - Mode « Figé » non implémenté (non spécifié).
 
+## Menus, vue scindée, exports (phase 4)
+
+- **Menus** : avec un document ouvert, la barre devient Fichier, Édition, Format, Insertion, Scripts, Affichage, Aide (Insertion remplace Feuille et Données ; `ui/menubar/docSpec.ts`). La barre est reconstruite à l'ouverture / fermeture d'un document (`Ctx.rebuildMenus`). Format agit sur le texte (`DocEditor.command`, `doc/commands.ts`) ; Insertion : « Cellule liée » tape `@`, « Tableau lié » et graphiques lient la plage sélectionnée de la feuille active (zone utilisée si une seule cellule). Fichier : « Nouveau document » (toujours), « Exporter le document… » (Ctrl+E, document ouvert).
+- **Vue scindée** `Ctrl+\` (`appDocs.toggleSplit`, `Ctx.split`) : la grille à gauche, le document à droite. Cliquer une puce sélectionne la cellule sans quitter le document ; un onglet de feuille change la feuille visible en gardant le document. Sans document ouvert, ouvre le dernier consulté (ou en crée un). La barre flottante de la grille se masque quand la grille est cachée.
+- **Exports** : `doc/exportMd.ts`, `exportHtml.ts` (+ `exportShared.ts`) lisent le JSON du document et les valeurs courantes sans charger ProseMirror ; une puce devient sa valeur, un bloc devient un tableau (barres / tendance : étiquette + valeur). Markdown et HTML passent par la boîte d'enregistrement (`io/docFiles.ts`), PDF par l'impression d'un iframe (`ui/docPrint.ts`, « Enregistrer en PDF »). Boîte `ui/dialogs/exportDoc.ts`.
+- Non vérifié : l'impression PDF dans les fenêtres Tauri (WebView2, WebKitGTK) ; le reste a été exercé en navigateur (`e2e/feat-doc.spec.ts`).
+
 ## Tests
 
-`npx vitest run src/doc src/ui/appDocs.test.ts src/io/format.docs.test.ts`.
+`npx vitest run src/doc src/ui/appDocs.test.ts src/io/format.docs.test.ts`, puis `npx playwright test e2e/feat-doc.spec.ts` (navigateur).

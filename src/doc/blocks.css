@@ -1,5 +1,5 @@
 /* dk doc: linked blocks (table / bars / trend), floating bar, cell pick bar. */
-.dk-block { position: relative; margin: var(--s-6) 0 var(--s-4); border: 1px solid var(--c-line-strong); cursor: default; }
+.dk-block { position: relative; margin: 52px 0 var(--s-4); border: 1px solid var(--c-line-strong); cursor: default; }
 .dk-block.ProseMirror-selectednode { outline: 2px solid var(--c-accent); outline-offset: 0; }
 .dk-block__tag { position: absolute; top: -9px; right: 10px; padding: 0 6px; background: var(--c-surface); font: var(--fs-xs) var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-accent); }
 .dk-block--err { border-color: var(--c-error); }
