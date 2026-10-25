@@ -1,4 +1,5 @@
 # Rapport : Tables de données à 1 ou 2 variables
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -25,3 +26,9 @@ Aucune (carte sans effet visible).
 - Visible: non (moteur pur, sans UI), selon la consigne de la carte.
 - « Circulaire » = la cellule d'entrée dépend (directement ou non) de la cellule résultat: la substitution créerait un cycle.
 - Les valeurs de la table sont des saisies brutes (texte ou nombre) passées à `setCell`, comme la saisie utilisateur.
+
+## Preuves
+- Tests : ok (12 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":12,"scope":"related"},"tsc":{"ok":true}} -->
