@@ -14,6 +14,7 @@ import { openGoToSpecial } from "../dialogs/goToSpecial";
 import { openValidationDialog } from "../validation/panel";
 import { toggleKinds } from "../grid/kinds";
 import { openTextToColumns } from "../dialogs/textToCols";
+import { openSubtotals } from "../dialogs/subtotals";
 import { openCustomFormat } from "../dialogs/customFormat";
 import { openNamedFns } from "../dialogs/namedFns";
 import { openMerge } from "../dialogs/merge";
@@ -99,6 +100,7 @@ export function buildMenuSpec(app: App, d: MenuDeps): MenuDef[] {
     { label: "Données", items: [
       { label: "Trier A → Z", run: () => void app.sortColumn(false) },
       { label: "Trier Z → A", run: () => void app.sortColumn(true) },
+      { label: "Sous-totaux…", run: () => openSubtotals(app) },
       { label: "Texte en colonnes…", sep: true, run: () => openTextToColumns(app) },
       { label: "Somme rapide", hint: "Alt+=", run: d.autosum },
       { label: "Validation des données…", run: () => openValidationDialog(app) },
