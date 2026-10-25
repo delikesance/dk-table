@@ -22,6 +22,7 @@ Enveloppe JSON lisible : `format: "dktable-encrypted"`, `kdf` (PBKDF2-SHA256, 31
 - `src/io/files.ts` : `pickDocument`, `openPath(path, deps, pw?)`, `saveDocument`/`saveAs` acceptent le mot de passe.
 - `src/ui/fileops.ts` : flux ouvrir / chiffrer / retirer (`openWithPassword`, `protectDoc`, `unprotectDoc`).
 - `src/ui/dialogs/password.ts` : boîte mot de passe (`openPasswordDialog`).
+- `src/ui/protection.ts` : mot de passe de session + écouteur `onPasswordChange` ; tant qu'il est fixé, le titre de la fenêtre porte « (chiffré) » (`appState.renderTitle`, ex. `compte.dktable (chiffré) — dk-table`).
 
 ## Limites
 

@@ -22,7 +22,7 @@ import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
 import { decimalMode, onDecimalChange, setDecimalMode } from "../engine/decimal";
 import { recalcAll } from "../engine/userfn";
-import { calcApi } from "./appCalc";
+import { calcApi, calcField, loadCalc } from "./appCalc";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
 import { historyField, loadHistory } from "./history/store";
@@ -87,10 +87,10 @@ export function createApi(c: Ctx): App {
       ...(decimalMode() ? { decimal: true } : {}),
       ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
-      ...historyField(),
+      ...historyField(), ...calcField(),
     }),
     loadDoc(doc, path) {
-      loadHistory(doc);
+      loadHistory(doc); loadCalc(doc);
       leaveDoc(c);
       c.docs.load(doc.docs);
       setDecimalMode(doc.decimal === true);
@@ -160,10 +160,8 @@ export function createApi(c: Ctx): App {
       c.sidebar.setRecent(c.recents);
     },
     markSaved: () => setTitle(c, false),
-    insertRows: () => structOp(c, "insertRows"),
-    deleteRows: () => structOp(c, "deleteRows"),
-    insertCols: () => structOp(c, "insertCols"),
-    deleteCols: () => structOp(c, "deleteCols"),
+    insertRows: () => structOp(c, "insertRows"), deleteRows: () => structOp(c, "deleteRows"),
+    insertCols: () => structOp(c, "insertCols"), deleteCols: () => structOp(c, "deleteCols"),
     goSpecial: (o) => goSpecial(c, o),
     setFreeze(f) {
       c.cur.freeze = f.rows > 0 || f.cols > 0 ? { rows: f.rows, cols: f.cols } : undefined;

@@ -4,7 +4,9 @@
  * le mode manuel ne recalcule rien à lui seul. Rien n'est marqué modifié : le calcul ne change pas les données.
  */
 import { recalcWorkbook } from "../engine/workbook";
-import { calcMode, onCalcModeChange } from "../engine/calc-mode";
+import { DEFAULT_CALC, calcMode, onCalcModeChange, setCalcMode } from "../engine/calc-mode";
+import { calcToDoc } from "../io/calcFormat";
+import type { DktDoc } from "../io/types";
 import { refreshCf, syncInfo } from "./appGrid";
 import type { Ctx } from "./appState";
 
@@ -17,4 +19,15 @@ export function calcApi(c: Ctx): { recalc(all: boolean): void } {
     redraw();
   });
   return { recalc(all) { recalcWorkbook(c.cur.sheet, all); redraw(); } };
+}
+
+/** Champ `calc` du document pour l'enregistrement (vide si mode par défaut). */
+export function calcField(): Pick<DktDoc, "calc"> {
+  const calc = calcToDoc(calcMode());
+  return calc ? { calc } : {};
+}
+
+/** Applique le mode de calcul d'un document ouvert (automatique s'il n'en a pas), avant de construire ses feuilles. */
+export function loadCalc(doc: DktDoc): void {
+  setCalcMode(doc.calc ?? DEFAULT_CALC);
 }

@@ -101,6 +101,8 @@ export interface DktDoc {
   functions?: DocFn[];
   /** Mode décimal exact (arrondi 15 chiffres significatifs) ; absent = IEEE 754. */
   decimal?: boolean;
+  /** Mode de calcul (manuel, itératif) ; absent = automatique (`io/calcFormat.ts`). */
+  calc?: { manual: boolean; iterative: boolean; maxIter: number; maxChange: number };
   /** Rich-text documents of the workbook, shown as tabs after the sheets (optional). */
   docs?: DocText[];
   /** Journal par cellule + instantanés nommés (optionnel). */

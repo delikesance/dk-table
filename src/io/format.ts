@@ -8,6 +8,7 @@ import { checkDocs } from "./docsFormat";
 import { checkFunctions } from "./fnFormat";
 import { checkColWidths } from "./colWidthsFormat";
 import { checkHistory } from "./historyFormat";
+import { checkCalc } from "./calcFormat";
 
 /** Thrown by `parse` when the text is not a valid `.dktable` document. */
 export { DktParseError };
@@ -162,6 +163,7 @@ export function parse(text: string): DktDoc {
     if (typeof data.decimal !== "boolean") throw new DktParseError("decimal must be a boolean");
     doc.decimal = data.decimal;
   }
+  if (data.calc !== undefined) doc.calc = checkCalc(data.calc);
   if (data.history !== undefined) doc.history = checkHistory(data.history);
   return doc;
 }

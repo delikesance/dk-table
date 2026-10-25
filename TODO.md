@@ -302,3 +302,7 @@ Classement par gravité (P0 = pire)
 - [x] identifiants-longs-intacts : saisie > 15 chiffres gardée en texte exact et signalée (`engine/longnum.ts`, `dkg-long`); `docs/identifiants-longs.md`, rapport `docs/rapports/identifiants-longs-intacts.md`
 - [x] Correction: npm test (2293 ok) + tsc verts; captures des rapports decimal-exact, identifiants-longs, plages-tronquees, statistiques-selection, tableaux-croises listees en chemins complets (les noms nus n etaient pas trouves par `validateReport`)
 - [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
+
+## Boucle
+
+- [x] Chiffrement du classeur par mot de passe (carte chiffrement-du-classeur-par-mot-de-passe)
