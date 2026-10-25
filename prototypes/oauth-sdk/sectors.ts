@@ -1,5 +1,5 @@
 /**
- * Secteurs de la boucle autres que la recherche : design (spec ecrite), implementation, correction.
+ * Secteurs de la boucle autres que la recherche : design (maquette HTML), implementation, correction.
  *
  * Quoi : definition de chaque secteur (prompt, modele, outils) + `runSector`, une requete
  *        Agent SDK avec `query` injectee (testable sans reseau).
@@ -42,7 +42,7 @@ const RULES =
 
 /** Chemin du document de design du jour (ecrit par le secteur design, lu par l'implementation). */
 export function designPath(d: Date = new Date()): string {
-  return `docs/design/${d.toISOString().slice(0, 10)}.md`;
+  return `docs/design/${d.toISOString().slice(0, 10)}.html`;
 }
 const DESIGN = designPath(); // fige au chargement: design et implementation d'un meme run s'accordent
 
@@ -53,9 +53,11 @@ export const SECTOR_DEFS: SectorDef[] = [
     prompt:
       "Secteur design/UX, AVANT tout code. Lis CLAUDE.md (section Design, regles), src/styles/, " +
       "docs/recherche/fonctionnalites.md et TODO.md. Choisis les 1 a 3 meilleures idees non realisees et " +
-      `ecris un document court dans ${DESIGN} : parcours UX/UI (ecrans, etats, themes clair et sombre, ` +
-      "accessibilite) et interfaces/contrats (fonctions, types, evenements, fichiers touches) pour chacune. " +
-      "Ne modifie aucun autre fichier. Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
+      `produis UN fichier ${DESIGN} : page HTML autonome (CSS et JS en ligne, aucune ressource externe) ` +
+      "avec, pour chaque idee, une maquette visuelle (ecrans et etats, theme clair ET sombre, tokens de " +
+      "src/styles/, outil professionnel sans texte decoratif) puis une section interfaces/contrats " +
+      "(fonctions, types, evenements, fichiers touches). Ne modifie aucun autre fichier. " +
+      "Ne touche pas a git (la boucle s'en charge). Reponds brievement.",
   },
   {
     id: "implementation", kind: "think", maxTurns: 60, share: 0.4, tools: EDIT, allowedTools: [...EDIT.slice(0, 5), ...RUN], disallowedTools: NO_GIT,
