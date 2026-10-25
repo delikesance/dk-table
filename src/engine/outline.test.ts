@@ -18,11 +18,11 @@ describe("outline model", () => {
   });
 
   it("accepts levels 0 to MAX_LEVEL only", () => {
-    expect(MAX_LEVEL).toBe(3);
-    expect(() => setLevel(emptyOutline(2), 0, 4)).toThrow(RangeError);
+    expect(MAX_LEVEL).toBe(8);
+    expect(() => setLevel(emptyOutline(2), 0, 9)).toThrow(RangeError);
     expect(() => setLevel(emptyOutline(2), 0, -1)).toThrow(RangeError);
     expect(() => setLevel(emptyOutline(2), 0, 1.5)).toThrow(RangeError);
-    expect(setLevel(emptyOutline(2), 1, 3).levels).toEqual([0, 3]);
+    expect(setLevel(emptyOutline(2), 1, 8).levels).toEqual([0, 8]);
   });
 
   it("collapsing a sub-total hides the detail rows above it up to the previous summary", () => {
