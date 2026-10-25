@@ -42,6 +42,20 @@ describe("moodboard: fichiers", () => {
   });
 });
 
+describe("moodboard: anomalies du reconciliateur", () => {
+  it("pastille sur la carte (premiere anomalie) et compteur dans l'en-tete; rien sans anomalie", async () => {
+    await load([C("a", "idee", { anomalies: ["orpheline : rapport en cours sans agent actif"] }), C("b", "preuves", { missing: ["rapport"], anomalies: ["finie (TODO coche) sans rapport : rapport a ecrire"] }), C("c", "idee")]);
+    expect(document.querySelector(".card[data-id=a] .anom")!.textContent).toContain("orpheline");
+    expect(document.querySelector(".card[data-id=b] .anom")!.textContent).toContain("sans rapport");
+    expect(document.querySelector(".card[data-id=c] .anom")).toBeNull();
+    expect(document.getElementById("counters")!.textContent).toMatch(/Anomalies\s*2/);
+  });
+  it("aucun compteur d'anomalies quand tout est coherent", async () => {
+    await load([C("a", "idee")]);
+    expect(document.getElementById("counters")!.textContent).not.toMatch(/Anomalies/);
+  });
+});
+
 describe("moodboard: rendu", () => {
   it("range les cartes par etat (piste avec les idees, bloque avec les en cours) et compte", async () => {
     await load(CARDS);

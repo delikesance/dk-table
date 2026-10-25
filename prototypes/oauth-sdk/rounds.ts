@@ -8,7 +8,9 @@
  *        sans la moindre avancee; l'arret dit pourquoi (`stopMessage`), jamais « terminee » s'il reste des cartes.
  * Usage : `const p = createPlanner(); p.observe(cards); p.nextBatch(cards); p.observe(cards); p.stuck()`.
  */
-import type { BoardCard } from "./cards";
+import { allDone, type BoardCard } from "./cards";
+import { reportRules } from "./reportRules";
+import type { BoucleEvent } from "./server";
 
 /** Raison de fin de boucle. */
 export type StopReason = "complete" | "budget" | "stuck" | "abort" | "max-rounds";
@@ -54,6 +56,8 @@ export function createPlanner(o: PlannerOpts = {}) {
       if (rounds > 0) idle = progress ? 0 : idle + 1;
       return progress;
     },
+    /** Tentative du lot: plus gros nombre d'echecs d'une de ses cartes (route vers un modele plus gros). */
+    attempt: (ids: string[]): number => Math.max(0, ...ids.map((id) => fails.get(id) ?? 0)),
     /** Vrai apres `patience` tournees de suite sans aucune avancee. */
     stuck: () => idle >= patience,
   };
@@ -69,4 +73,57 @@ export function stopMessage(reason: StopReason, left: Pick<BoardCard, "id" | "st
     case "abort": return `arrete : ${left.length} carte(s) restante(s)`;
     default: return `tournees max atteintes : ${left.length} carte(s) restante(s) : ${list}`;
   }
+}
+
+/** Dependances de `runRounds` (injectees par le pipeline). */
+export interface RoundsCtx {
+  /** Tableau reconcilie; `active` = ids des cartes en cours de traitement (aucune apres une tournee). */
+  board: (active?: string[]) => Promise<BoardCard[]>;
+  impl: (task: string, attempt: number) => Promise<boolean>;
+  corr: (task: string, attempt: number) => Promise<boolean>;
+  emit: (e: BoucleEvent) => void;
+  /** Raison d'arret immediate (abandon, budget), sinon null. */
+  halt: () => "abort" | "budget" | null;
+  /** Cartes restantes apres chaque lecture du tableau. */
+  progress: (remaining: number) => void;
+}
+
+/** Tache de correction ciblee, ecrite par le code a partir des preuves manquantes (aucun modele ne « verifie »). */
+function correctionTask(merged: boolean, bad: Pick<BoardCard, "id" | "missing">[]): string {
+  const head = merged ? "" : "La derniere fusion a ete refusee (tests ou tsc rouges) : lance `npm test` et `npx tsc --noEmit`, corrige. ";
+  return head + "Cartes dont le rapport declare termine sans preuve valide : " + (bad.map((c) => `${c.id} (manque : ${c.missing.join(", ")})`).join("; ") || "aucune") + ".";
+}
+
+/**
+ * Tournees implementation (+ correction seulement si le code l'exige) jusqu'a cartes terminees, budget epuise,
+ * abandon, absence d'avancee ou garde-fou. La validation est du code: fusion refusee (tests/tsc), rapport sans preuves.
+ */
+export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reason: StopReason; cards: BoardCard[] }> {
+  const planner = createPlanner();
+  const left = (cs: BoardCard[]) => cs.filter((x) => x.state !== "termine");
+  let cards = await c.board();
+  c.progress(left(cards).length);
+  planner.observe(cards);
+  let round = 0, reason: StopReason = "complete";
+  while (!allDone(cards)) {
+    const h = c.halt();
+    if (h) { reason = h; break; }
+    if (planner.stuck()) { reason = "stuck"; break; }
+    if (round >= planner.maxRounds) { reason = "max-rounds"; break; }
+    round++;
+    const batch = planner.nextBatch(cards), ids = batch.map((b) => b.id), attempt = planner.attempt(ids);
+    c.emit({ type: "info", round, cards: ids, message: `tournee ${round} : ${left(cards).length} carte(s) restante(s), lot ${ids.join(", ")}` });
+    const merged = await c.impl(reportRules(batch), attempt);
+    cards = await c.board();
+    const bad = cards.filter((x) => ids.includes(x.id) && x.state === "preuves");
+    if (!c.halt() && (!merged || bad.length)) {
+      await c.corr(correctionTask(merged, bad), attempt);
+      cards = await c.board();
+    } else if (merged) c.emit({ type: "info", round, message: "correction ignoree : lot valide par le code (aucun appel modele)" });
+    c.progress(left(cards).length);
+    planner.observe(cards);
+    const anomalies = cards.flatMap((x) => (x.anomalies ?? []).map((a) => `${x.id} : ${a}`));
+    if (anomalies.length) c.emit({ type: "info", round, message: `anomalies (${anomalies.length}) : ${anomalies.slice(0, 5).join(" | ")}` });
+  }
+  return { complete: allDone(cards), reason, cards };
 }
