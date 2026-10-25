@@ -47,14 +47,14 @@ body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--bg); c
 /* Etapes : numero, libelle, etat, cout et duree. */
 #phasebar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); }
 @media (max-width: 700px) { #phasebar { grid-template-columns: 1fr 1fr; } }
-.step { border: 1px solid var(--line); border-top: 5px solid var(--mut); border-radius: 4px; padding: var(--s2) var(--s3); }
+.step { border: 1px solid var(--line); border-radius: 4px; padding: var(--s2) var(--s3); }
 .step b { display: block; } .step small { color: var(--mut); font-variant-numeric: tabular-nums; }
 .step.running, #agents .card.running { border-color: var(--acc); background: var(--soft); }
-.step.ok { border-top-color: var(--ok); } .step.fail { border-top-color: var(--fail); }
+.step.ok { border-color: var(--ok); } .step.fail { border-color: var(--fail); }
 /* Agents. */
 #agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s3); }
-#agents .card { border: 1px solid var(--line); border-left: 6px solid var(--mut); border-radius: 4px; padding: var(--s3); }
-#agents .card.running { border-left-color: var(--acc); } #agents .card.ok { border-left-color: var(--ok); } #agents .card.fail { border-left-color: var(--fail); }
+#agents .card { border: 1px solid var(--line); border-radius: 4px; padding: var(--s3); }
+#agents .card.ok { border-color: var(--ok); } #agents .card.fail { border-color: var(--fail); background: var(--soft); }
 #agents .card b { display: block; } #agents .meta { color: var(--mut); font-variant-numeric: tabular-nums; }
 .ico { display: inline-block; width: 1.2em; font-weight: 700; }
 .running .ico { color: var(--acc); animation: pulse 1.2s ease-in-out infinite; }
@@ -64,4 +64,4 @@ body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--bg); c
 /* Journal en direct. */
 #log { list-style: none; margin: var(--s3) 0 0; padding: 0; max-height: 18rem; overflow: auto; font: 13px/1.6 ui-monospace, monospace; }
 #log li { padding: 2px var(--s2); border-bottom: 1px solid var(--line); }
-#log li.error { color: var(--fail); font-weight: 700; background: var(--soft); border-left: 4px solid var(--fail); }
+#log li.error { color: var(--fail); font-weight: 700; background: var(--soft); border: 1px solid var(--fail); border-radius: 4px; }
