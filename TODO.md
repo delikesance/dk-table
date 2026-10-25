@@ -239,3 +239,9 @@ Classement par gravité (P0 = pire)
   - [ ] Premier run réel complet de la boucle (l'utilisateur appuie sur Go); limites connues : `index.ts` = recherche seule en CLI
 - [x] Boucle, design : `/design` + outil Artifact NON atteignables en headless (sondes SDK 0.3.310 à coût nul, jeton OAuth et connexion stockée, `settings.enableArtifact`, `skills: all` : `Artifact`/`ClaudeDesign`/`Skill` absents des outils; doc : Artifact désactivé par défaut dans le SDK et publication réservée à une session claude.ai; `no_transport` ne concerne que PushNotification). Chemin retenu : le secteur design écrit lui-même une maquette HTML autonome (clair + sombre, interfaces) dans `docs/design/<date>.html`, lue par l'implementation
 - [x] Défilement et sélection propres à chaque feuille : `appGrid.buildGrid` mémorise scrollTop/scrollLeft + sélection de la feuille quittée (WeakMap par entrée, non enregistrés dans le fichier) et les restaure au retour; une feuille neuve démarre en A1 en haut. Tests `appScroll.test.ts` + `e2e/sheet-scroll.spec.ts`. Onglets doc/macro non concernés (éditeurs recréés à l'ouverture)
+
+## Boucle autonome (autoloop)
+
+- [x] Étape 1 : squelette `tools/autoloop/` (config, budget, journal, redact, agent injectable + fake, loop pur, main `--dry-run`), tests `tools/autoloop/__tests__/`, tsconfig inclut `tools`. Aucun appel réel au SDK.
+- [x] Étape 2 (MVP) : cycle audit -> dédoublonnage (empreinte `fp`) -> issues `auto:bug` (`github.ts`, `dedupe.ts`, `roles/audit.ts`, `checks.ts`, `cycle.ts`, `live.ts`); `--live` branché mais jamais lancé; SDK en devDependency
+- [ ] Étape 3+ : worker/reviewer réels, PR, état `state.json`, worktrees
