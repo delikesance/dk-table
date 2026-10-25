@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toile — Évaluer, tracer, importer sans surprise</title>
+<style>
+:root { --bg:#f2f2f2; --surf:#fafafa; --card:#fff; --fg:#0000f2; --fg2:#4a4ac8; --mut:#5c5cb8; --line:rgba(0,0,242,.14); --line2:rgba(0,0,242,.28); --acc:#0000f2; --on:#f2f2f2; --soft:rgba(0,0,242,.06); --soft2:rgba(0,0,242,.14); --hdr:#e2e2f6; --err:#a8380a; --errs:rgba(194,65,12,.08); --ok:#13703c; --oks:rgba(19,112,60,.10); --in:#9a4708; --ins:rgba(154,71,8,.12); --out:#0b6178; --outs:rgba(11,97,120,.12); --code:#0000a6; --codefg:#f2f2f2; --ring:#0000f2; }
+:root[data-theme="dark"] { --bg:#19192f; --surf:#141426; --card:#1e1e3a; --fg:#f2f2f2; --fg2:#c9c9ff; --mut:#a9a9e8; --line:rgba(148,148,162,.18); --line2:rgba(148,148,162,.38); --acc:#8c8cff; --on:#0a0a2a; --soft:rgba(140,140,255,.08); --soft2:rgba(140,140,255,.2); --hdr:#24244a; --err:#ff9a6b; --errs:rgba(255,154,107,.12); --ok:#5bd08a; --oks:rgba(91,208,138,.12); --in:#f0a14a; --ins:rgba(240,161,74,.16); --out:#52c7e0; --outs:rgba(82,199,224,.16); --code:#0000a6; --ring:#8c8cff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#19192f; --surf:#141426; --card:#1e1e3a; --fg:#f2f2f2; --fg2:#c9c9ff; --mut:#a9a9e8; --line:rgba(148,148,162,.18); --line2:rgba(148,148,162,.38); --acc:#8c8cff; --on:#0a0a2a; --soft:rgba(140,140,255,.08); --soft2:rgba(140,140,255,.2); --hdr:#24244a; --err:#ff9a6b; --errs:rgba(255,154,107,.12); --ok:#5bd08a; --oks:rgba(91,208,138,.12); --in:#f0a14a; --ins:rgba(240,161,74,.16); --out:#52c7e0; --outs:rgba(82,199,224,.16); --ring:#8c8cff; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:24px; font:14px/1.5 "Inter Tight",system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+h1 { font:800 2.2rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h2 { font:700 1.5rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; margin:0 0 4px; }
+h3 { font:700 1rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; letter-spacing:.04em; margin:18px 0 6px; color:var(--fg2); }
+p { margin:0 0 8px; color:var(--fg2); max-width:78ch; }
+.idea { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:20px; margin:20px 0; }
+.mono,.mono * { font-family:"DM Mono",ui-monospace,Consolas,monospace; }
+.row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+.col { flex:1 1 440px; min-width:0; }
+.cap { font:600 .78rem "DM Mono",ui-monospace,monospace; color:var(--mut); margin:0 0 6px; text-transform:uppercase; letter-spacing:.05em; }
+.btn { font:600 .9rem "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; letter-spacing:.04em; background:transparent; color:var(--fg); border:1px solid var(--line2); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.btn:hover { background:var(--soft2); } .btn[aria-pressed="true"],.btn.on { background:var(--acc); color:var(--on); border-color:var(--acc); }
+.btn:focus-visible,select:focus-visible,input:focus-visible { outline:2px solid var(--ring); outline-offset:1px; }
+/* Barre de formule (terminal) */
+.fbar { background:var(--code); color:var(--codefg,#f2f2f2); border-radius:2px; padding:8px 12px; font:500 15px "DM Mono",ui-monospace,monospace; display:flex; gap:10px; align-items:center; min-height:40px; flex-wrap:wrap; }
+.fbar .nm { opacity:.8; border-right:1px solid rgba(242,242,242,.28); padding-right:10px; }
+.tok { padding:1px 3px; border-radius:2px; transition:background .35s,color .35s; }
+.tok.hl { background:#ffd166; color:#14142b; } .tok.val { background:#8ef0a8; color:#14142b; }
+.tok.err { background:#ffb08a; color:#14142b; }
+.eval { margin-top:8px; border:1px solid var(--line2); border-radius:2px; background:var(--surf); }
+.eval header { display:flex; gap:6px; align-items:center; padding:6px 8px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.eval header .sp { flex:1; }
+.steps { list-style:none; margin:0; padding:0; font:500 13.5px "DM Mono",ui-monospace,monospace; }
+.steps li { display:grid; grid-template-columns:28px 1fr; gap:6px; padding:5px 8px; border-bottom:1px solid var(--line); opacity:.4; transition:opacity .3s,background .3s; }
+.steps li.done { opacity:1; } .steps li.cur { opacity:1; background:var(--soft2); }
+.steps li:last-child { border-bottom:0; } .steps .n { color:var(--mut); }
+.steps .why { grid-column:2; color:var(--mut); font:400 12px "Inter Tight",system-ui,sans-serif; }
+.chip { display:inline-block; padding:0 6px; border-radius:2px; font:600 12px "DM Mono",ui-monospace,monospace; }
+.chip.in { background:var(--ins); color:var(--in); } .chip.out { background:var(--outs); color:var(--out); }
+.chip.err { background:var(--errs); color:var(--err); } .chip.ok { background:var(--oks); color:var(--ok); }
+.explain { margin-top:8px; border:1px solid var(--err); background:var(--errs); border-radius:2px; padding:8px 10px; color:var(--fg); }
+.explain b { color:var(--err); font-family:"DM Mono",monospace; }
+/* Grille mini */
+table.g { border-collapse:collapse; background:var(--surf); font:500 13.5px "DM Mono",ui-monospace,monospace; width:100%; }
+table.g th { background:var(--hdr); font-weight:500; padding:3px 8px; border:1px solid var(--line); text-align:left; }
+table.g td { padding:3px 8px; border:1px solid var(--line); transition:background .3s; white-space:nowrap; }
+td.in { background:var(--ins); box-shadow:inset 0 0 0 1.5px var(--in); } td.out { background:var(--outs); box-shadow:inset 0 0 0 1.5px var(--out); }
+td.cur { box-shadow:inset 0 0 0 2px var(--acc); } td.flag { background:var(--errs); box-shadow:inset 0 0 0 1.5px var(--err); }
+td.num,th.num { text-align:right; }
+/* Graphe */
+svg.graph { width:100%; height:auto; background:var(--surf); border:1px solid var(--line); border-radius:2px; }
+.node rect { fill:var(--card); stroke:var(--line2); stroke-width:1; rx:2; transition:fill .3s,stroke .3s; }
+.node text { font:500 12.5px "DM Mono",ui-monospace,monospace; fill:var(--fg); pointer-events:none; }
+.node { cursor:pointer; } .node:focus-visible rect { stroke:var(--ring); stroke-width:2; outline:none; }
+.node.cur rect { fill:var(--acc); stroke:var(--acc); } .node.cur text { fill:var(--on); }
+.node.in rect { fill:var(--ins); stroke:var(--in); } .node.out rect { fill:var(--outs); stroke:var(--out); }
+.node.off { opacity:.3; }
+.edge { fill:none; stroke:var(--line2); stroke-width:1.5; transition:stroke .3s,opacity .3s; }
+.edge.in { stroke:var(--in); } .edge.out { stroke:var(--out); } .edge.x { stroke-dasharray:5 4; } .edge.off { opacity:.15; }
+.edge.run { stroke-dasharray:6 6; animation:flow 1s linear infinite; }
+@keyframes flow { to { stroke-dashoffset:-12; } }
+.lane { font:700 14px "Sofia Sans Extra Condensed","Arial Narrow",sans-serif; text-transform:uppercase; fill:var(--mut); letter-spacing:.06em; }
+.laneb { fill:var(--soft); stroke:var(--line); stroke-dasharray:2 3; }
+/* Import */
+select,input[type=range] { font:500 12.5px "DM Mono",monospace; background:var(--surf); color:var(--fg); border:1px solid var(--line2); border-radius:2px; padding:1px 4px; }
+.warn { font:12px "Inter Tight",system-ui,sans-serif; color:var(--err); display:block; }
+.contract { font:500 .85rem/1.5 "DM Mono",ui-monospace,monospace; color:var(--fg2); white-space:pre-wrap; background:var(--surf); border:1px solid var(--line); border-radius:2px; padding:12px; margin:0; overflow:auto; }
+.tests { margin:8px 0 0; padding-left:18px; color:var(--fg2); } .tests li { margin:2px 0; }
+.sum { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+.sum div { border:1px solid var(--line); border-radius:2px; padding:8px 10px; background:var(--surf); } .sum b { font-family:"DM Mono",monospace; }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<h1>Évaluer, tracer, importer sans surprise</h1>
+<p>Trois idées issues de docs/recherche/fonctionnalites.md, non réalisées dans TODO.md (axe 1 : graphe inter-feuilles ; évaluation pas à pas / explication d'erreur ; import CSV typé). Toutes sont des vues sur le moteur existant, sans nouvelle syntaxe.</p>
+<div class="sum">
+<div><b>A. Évaluer pas à pas + expliquer l'erreur</b><br>Barre de formule : chaque sous-expression remplacée par sa valeur, cellules sources surlignées.</div>
+<div><b>B. Graphe de dépendances inter-feuilles</b><br>Un clic : antécédents (ambre) et dépendants (cyan), toutes feuilles, profondeur réglable.</div>
+<div><b>C. Import CSV typé</b><br>Aperçu avant ouverture : type par colonne, valeurs à risque signalées, rien converti en silence.</div>
+</div>
+
+<!-- ============ A ============ -->
+<section class="idea" id="A">
+<h2>A — Évaluer pas à pas, expliquer l'erreur</h2>
+<p>Entrée : bouton « Évaluer » (barre de formule, ou menu Formule) sur une cellule contenant une formule ou une erreur. Panneau sous la barre ; Échap ferme. Ordre = ordre réel d'évaluation du moteur (arguments d'abord, de l'intérieur vers l'extérieur).</p>
+<div class="row">
+<div class="col">
+<p class="cap">Écran 1 · formule valide</p>
+<div class="fbar" aria-label="Barre de formule"><span class="nm">D5</span><span id="fa"></span></div>
+<div class="eval" role="group" aria-label="Évaluation pas à pas">
+<header><button class="btn" id="aPrev" aria-label="Étape précédente">◀ Préc.</button><button class="btn" id="aNext" aria-label="Étape suivante">Suiv. ▶</button><button class="btn" id="aPlay" aria-pressed="false">Lecture</button><span class="sp"></span><span class="chip ok" id="aRes">–</span></header>
+<ol class="steps" id="aSteps"></ol>
+</div>
+</div>
+<div class="col">
+<p class="cap">Grille liée · cellules lues par l'étape courante</p>
+<table class="g" id="aGrid"></table>
+<p class="cap" style="margin-top:14px">Écran 2 · erreur expliquée</p>
+<div class="fbar"><span class="nm">E2</span><span><span class="tok">=B2/</span><span class="tok err">C2</span></span><span class="chip err" style="margin-left:auto">#DIV/0!</span></div>
+<div class="explain"><b>#DIV/0!</b> : <span class="mono">C2</span> vaut 0 (cellule vide). Le diviseur de <span class="mono">B2/C2</span> doit être non nul.<br><button class="btn" style="margin-top:6px" id="aGo">Aller à C2</button></div>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/engine/trace.ts  (pur, sans DOM)
+type TraceStep = { id: number; node: [start: number, end: number];   // offsets dans le brut
+                   expr: string; value: Value; reads: string[];       // refs lues ("B2","Feuille2!A1")
+                   why?: string };                                    // ex. "branche fausse non évaluée"
+evalTrace(sheet: Sheet, key: string): { steps: TraceStep[]; result: Value }
+explainError(sheet: Sheet, key: string): { code: ErrorCode; cause: string; at: string } | null
+// src/ui/formula/evalPanel.ts
+openEvalPanel(app: App, key: string): { close(): void }          // événements: "eval:step" {index}, "eval:goto" {ref}
+// App: app.evaluate(key?: string) ; palette "formula.evaluate"
+// Fichiers: engine/trace.ts, engine/trace-explain.ts (messages FR), ui/formula/evalPanel.ts + .css, toolbar/formulabar.ts (bouton)
+// Règles: lazy IF/IFS/SWITCH n'émettent pas la branche non prise; LIMITE: plage = 1 pas (valeurs résumées).
+// Premier test (rouge): engine/trace.test.ts — evalTrace(sheet "=IF(SUM(B2:B4)>100;SUM(B2:B4)*C1;0)")
+//   renvoie 5 pas dans l'ordre [SUM(B2:B4)=150, 150>100=VRAI, SUM(B2:B4)=150, 150*C1=165, IF=165], result 165.
+// Commande: npm test -- trace</pre>
+</section>
+
+<!-- ============ B ============ -->
+<section class="idea" id="B">
+<h2>B — Graphe de dépendances inter-feuilles</h2>
+<p>Entrée : clic droit sur une cellule &gt; « Tracer les dépendances » (ou Ctrl+Alt+D). Vue en volet bas, 3 colonnes (antécédents · cellule · dépendants), regroupées par feuille. Clic sur un nœud = recentrer ; Entrée = aller à la cellule. Les liens inter-feuilles sont en pointillés. Profondeur : 1, 2, tout.</p>
+<div class="row">
+<div class="col" style="flex-basis:620px">
+<p class="cap">Écran · cellule Synthèse!B2 (cliquer un nœud pour recentrer)</p>
+<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span class="mono" style="font-size:12px">Profondeur</span>
+<button class="btn" data-d="1">1</button><button class="btn on" data-d="2">2</button><button class="btn" data-d="9">Tout</button>
+<span class="chip in">antécédents</span><span class="chip out">dépendants</span><span class="mono" style="font-size:12px;margin-left:auto" id="bInfo"></span></div>
+<svg class="graph" id="bSvg" viewBox="0 0 640 340" role="group" aria-label="Graphe de dépendances"></svg>
+</div>
+<div class="col" style="flex-basis:280px">
+<p class="cap">États</p>
+<p>Cycle : arêtes en <span class="chip err">#CYCLE!</span> clignotantes une fois, puis fixes. Aucune dépendance : « Aucun antécédent » affiché dans la colonne vide. Plus de 40 nœuds : regroupés en « +N cellules » par feuille (clic = déplier).</p>
+<p>Le mouvement ne sert qu'à montrer le sens du recalcul : à chaque changement de profondeur ou de nœud, les arêtes s'animent des antécédents vers les dépendants.</p>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/engine/depgraph.ts  (pur)
+type DepNode = { ref: string; sheet: string; depth: number; kind: "in" | "out" | "cur" };
+type DepEdge = { from: string; to: string; cross: boolean };     // from = antécédent, to = dépendant
+depGraph(book: Book, ref: string, depth: number): { nodes: DepNode[]; edges: DepEdge[]; cycle: string[] | null }
+// src/ui/deps/graphView.ts   openDepGraph(app, ref): { setDepth(n): void; focus(ref): void; close(): void }
+// événements: "deps:focus" {ref}  "deps:goto" {sheet, ref}
+// Source: engine/book.ts (registre feuilles) + state.ts (précédents/dépendants, xprec). Lecture seule: aucun état ajouté au moteur.
+// Fichiers: engine/depgraph.ts, ui/deps/graphView.ts, ui/deps/layout.ts (colonnes/regroupement), deps.css; menu contextuel + palette "view.deps".
+// Premier test (rouge): engine/depgraph.test.ts — classeur {S1!A1=1, S2!B2="=S1!A1+1", S1!C3="=S2!B2*2"}:
+//   depGraph(book,"S2!B2",1) -> nodes {S1!A1:in, S2!B2:cur, S1!C3:out}, edges cross=true x2.
+// Commande: npm test -- depgraph</pre>
+</section>
+
+<!-- ============ C ============ -->
+<section class="idea" id="C">
+<h2>C — Import CSV typé, sans conversion silencieuse</h2>
+<p>Entrée : Fichier &gt; Importer CSV (existant). Un aperçu précède l'ouverture : 20 premières lignes, type détecté par colonne modifiable, valeurs à risque entourées. Par défaut, tout identifiant ambigu reste du texte.</p>
+<div class="row">
+<div class="col" style="flex-basis:560px">
+<p class="cap">Écran · produits.csv · séparateur « ; » · 5 lignes sur 1 204</p>
+<table class="g" id="cGrid"></table>
+<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn on">Importer</button><button class="btn">Annuler</button><span class="mono" style="font-size:12px;margin-left:auto" id="cCount"></span></div>
+</div>
+<div class="col" style="flex-basis:320px">
+<p class="cap">Comparaison sur la valeur DEC1 et 007</p>
+<table class="g"><tr><th></th><th>Excel</th><th>dk-table</th></tr><tr><td>DEC1</td><td class="flag">1-déc</td><td style="background:var(--oks)">DEC1</td></tr><tr><td>007</td><td class="flag num">7</td><td style="background:var(--oks)">007</td></tr></table>
+<p style="margin-top:8px">Changer le type d'une colonne met à jour l'aperçu et le compteur immédiatement. « Auto » ne convertit en nombre/date que si 100 % des valeurs de la colonne s'y prêtent sans perte.</p>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/io/csvTypes.ts  (pur)
+type ColType = "auto" | "text" | "number" | "date";
+type CsvRisk = { row: number; col: number; kind: "leading-zero" | "gene-date" | "long-int" | "ambiguous-date"; raw: string };
+inferTypes(rows: string[][], delimiter: Delimiter): ColType[]               // auto → text si une valeur perdrait de l'information
+findRisks(rows: string[][], types: ColType[]): CsvRisk[]
+applyTypes(rows: string[][], types: ColType[]): CsvSheet                     // text → préfixe ' (voir engine/recalc.ts), sinon valeur typée
+// src/ui/dialogs/csvPreview.ts  openCsvPreview(text, deps): Promise<{ types: ColType[] } | null>   événement "csv:type" {col, type}
+// Fichiers: io/csvTypes.ts, ui/dialogs/csvPreview.ts (+ css), io/files.ts (appel avant fromCsv), menubar/deps.ts (câblage)
+// Premier test (rouge): io/csvTypes.test.ts — inferTypes([["id"],["007"],["012"]]) = ["text"]; inferTypes([["DEC1"]]) = ["text"];
+//   findRisks(...) signale "leading-zero" pour "007"; applyTypes(text) conserve "007" via le préfixe apostrophe.
+// Commande: npm test -- csvTypes</pre>
+</section>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---------- A ---------- */
+const grid = {B2:40,B3:60,B4:50,C1:1.1};
+const toks = [ // segments de la formule, avec offsets logiques
+ ['=IF(', 'k'], ['SUM(B2:B4)', 's1'], ['>100;', 'k'], ['SUM(B2:B4)', 's3'], ['*', 'k'], ['C1', 'r'], [';0)', 'k'] ];
+const steps = [
+ {t:['s1'], e:'SUM(B2:B4)', v:'150', r:['B2','B3','B4'], w:'Plage lue : 3 cellules'},
+ {t:['s1','k'], e:'150 > 100', v:'VRAI', r:[], w:'La condition est vraie : seule la branche « alors » est évaluée'},
+ {t:['s3'], e:'SUM(B2:B4)', v:'150', r:['B2','B3','B4'], w:'Branche « alors »'},
+ {t:['s3','r'], e:'150 * C1', v:'165', r:['C1'], w:'C1 = 1,1'},
+ {t:['all'], e:'IF(VRAI; 165; 0)', v:'165', r:[], w:'Branche « sinon » (0) non évaluée'} ];
+const fa = $('#fa'); fa.className='mono';
+fa.innerHTML = toks.map(([s,k],i)=>`<span class="tok" data-k="${k}">${s}</span>`).join('');
+const list = $('#aSteps'); list.className='steps';
+list.innerHTML = steps.map((s,i)=>`<li data-i="${i}"><span class="n">${i+1}</span><span>${s.e} → <b>${s.v}</b></span><span class="why">${s.w}</span></li>`).join('');
+const ag = $('#aGrid'); ag.innerHTML = '<tr><th></th><th>A</th><th>B</th><th>C</th></tr>' + [1,2,3,4].map(r=>`<tr><th>${r}</th><td>${r==1?'Taux':'Ligne '+r}</td><td class="num" data-r="B${r}">${grid['B'+r]??''}</td><td class="num" data-r="C${r}">${grid['C'+r]??''}</td></tr>`).join('');
+let ai = -1, timer = null;
+function aShow(i){
+  ai = Math.max(-1, Math.min(steps.length-1, i));
+  list.querySelectorAll('li').forEach((li,j)=>{ li.className = j<ai?'done':j==ai?'cur':''; });
+  const st = steps[ai];
+  fa.querySelectorAll('.tok').forEach(t=>{ const on = st && (st.t.includes('all')||st.t.includes(t.dataset.k)); t.className='tok'+(on?(ai==steps.length-1?' val':' hl'):''); });
+  ag.querySelectorAll('td[data-r]').forEach(td=>{ td.className='num'+(st&&st.r.includes(td.dataset.r)?' in':''); });
+  $('#aRes').textContent = ai==steps.length-1 ? 'Résultat : 165' : ai<0 ? '–' : `Étape ${ai+1}/${steps.length}`;
+}
+function aStop(){ clearInterval(timer); timer=null; $('#aPlay').setAttribute('aria-pressed','false'); }
+$('#aNext').onclick = ()=>{ aStop(); aShow(ai+1); }; $('#aPrev').onclick = ()=>{ aStop(); aShow(ai-1); };
+$('#aPlay').onclick = e=>{ if(timer){aStop();return;} if(ai>=steps.length-1) aShow(-1); e.currentTarget.setAttribute('aria-pressed','true');
+  timer=setInterval(()=>{ if(document.hidden) return; if(ai>=steps.length-1) aStop(); else aShow(ai+1); }, reduce?400:1100); };
+$('#aGo').onclick = ()=>{ $('#aGo').textContent = 'C2 sélectionnée'; };
+aShow(0);
+/* ---------- B ---------- */
+const N = { // ref -> [feuille, colonne logique]
+ 'Saisie!A1':'Saisie','Saisie!A2':'Saisie','Saisie!B2':'Saisie','Ventes!C4':'Ventes','Ventes!D4':'Ventes','Taux!A1':'Taux',
+ 'Synthèse!B2':'Synthèse','Synthèse!B5':'Synthèse','Rapport!A1':'Rapport','Rapport!C9':'Rapport','Doc!bloc':'Rapport'};
+const E = [ // antécédent -> dépendant
+ ['Saisie!A1','Ventes!C4'],['Saisie!A2','Ventes!C4'],['Saisie!B2','Ventes!D4'],['Taux!A1','Ventes!D4'],
+ ['Ventes!C4','Synthèse!B2'],['Ventes!D4','Synthèse!B2'],['Synthèse!B2','Synthèse!B5'],['Synthèse!B2','Rapport!A1'],
+ ['Synthèse!B5','Rapport!C9'],['Rapport!A1','Doc!bloc']];
+let cur = 'Synthèse!B2', depth = 2;
+const svg = $('#bSvg'), NS='http://www.w3.org/2000/svg';
+function walk(start, dir, max){ const d = {}; let front=[start];
+  for(let k=1;k<=max&&front.length;k++){ const nx=[]; for(const n of front) for(const [a,b] of E){ const [s,t]=dir=='in'?[b,a]:[a,b]; if(s==n&&!(t in d)&&t!=start){ d[t]=k; nx.push(t);} } front=nx; }
+  return d; }
+function bDraw(){
+  const ins = walk(cur,'in',depth), outs = walk(cur,'out',depth);
+  const pos = {}; const cols = [[], [cur], []];
+  Object.keys(ins).sort((a,b)=>ins[b]-ins[a]||a.localeCompare(b)).forEach(n=>cols[0].push(n));
+  Object.keys(outs).sort((a,b)=>outs[a]-outs[b]||a.localeCompare(b)).forEach(n=>cols[2].push(n));
+  const xs=[20,250,480], W=140, H=26;
+  svg.innerHTML = '';
+  const mk=(t,a,p)=>{ const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); (p||svg).appendChild(e); return e; };
+  ['Antécédents','Cellule','Dépendants'].forEach((l,i)=>{ mk('rect',{x:xs[i]-8,y:8,width:W+16,height:324,class:'laneb',rx:3}); const t=mk('text',{x:xs[i],y:28,class:'lane'}); t.textContent=l; });
+  cols.forEach((c,i)=>{ const gap = Math.min(40, 270/Math.max(c.length,1)); const y0 = 50 + (270-gap*(c.length-1))/2 - H/2; c.forEach((n,j)=>{ pos[n]={x:xs[i],y:y0+gap*j}; }); });
+  const shown = new Set(Object.keys(pos));
+  const eg = mk('g',{}), ng = mk('g',{});
+  E.forEach(([a,b])=>{ if(!shown.has(a)||!shown.has(b)) return;
+    const pa=pos[a], pb=pos[b]; if(Math.abs(pa.x-pb.x)<1) return;
+    const x1=pa.x+W, y1=pa.y+H/2, x2=pb.x, y2=pb.y+H/2, m=(x1+x2)/2;
+    const cls = 'edge '+(pb.x>pa.x&&b==cur||ins[a]!==undefined&&(b==cur||ins[b]!==undefined)?'in':'out')+(N[a]!=N[b]?' x':'')+(reduce?'':' run');
+    mk('path',{d:`M${x1},${y1} C${m},${y1} ${m},${y2} ${x2},${y2}`,class:cls},eg); });
+  shown.forEach(n=>{ const p=pos[n]; const g=mk('g',{class:'node '+(n==cur?'cur':n in ins?'in':'out'),tabindex:0,role:'button','aria-label':'Recentrer sur '+n,transform:`translate(${p.x},${p.y})`},ng);
+    mk('rect',{width:W,height:H},g); const t=mk('text',{x:8,y:17},g); t.textContent=n.length>19?n.slice(0,18)+'…':n;
+    const go=()=>{ cur=n; bDraw(); }; g.onclick=go; g.onkeydown=e=>{ if(e.key=='Enter'||e.key==' '){e.preventDefault();go();} }; });
+  if(!cols[0].length){ const t=mk('text',{x:xs[0],y:180,class:'lane'}); t.textContent='Aucun antécédent'; }
+  if(!cols[2].length){ const t=mk('text',{x:xs[2],y:180,class:'lane'}); t.textContent='Aucun dépendant'; }
+  $('#bInfo').textContent = `${shown.size} cellules · ${new Set([...shown].map(n=>N[n])).size} feuilles`;
+}
+document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ depth=+b.dataset.d; document.querySelectorAll('[data-d]').forEach(x=>x.classList.toggle('on',x==b)); bDraw(); });
+bDraw();
+/* ---------- C ---------- */
+const hdr = ['Code','Gène','Réf.','Prix','Date'];
+const rows = [['007','DEC1','2024-03-01','12,50','01/02/2024'],['012','SEPT2','2024-03-02','8,00','03/02/2024'],['104','MARCH1','2024-03-05','19,90','12/02/2024'],['0420','OCT4','2024-03-07','5,20','28/02/2024'],['998','TP53','2024-03-09','7,75','04/03/2024']];
+const types = ['auto','auto','auto','auto','auto'];
+const risky = (v,c,t)=> t=='number'||t=='date' ? false : (c==0&&/^0\d+/.test(v)&&(t=='auto')) ? 'zéros de tête' : (c==1&&/^(DEC|SEPT|MARCH|OCT)\d/i.test(v)&&t=='auto') ? 'lu comme date' : (c==4&&/^\d\d\/\d\d\//.test(v)&&t=='auto'&&+v.slice(0,2)<13) ? 'JJ/MM ou MM/JJ' : false;
+const eff = c => types[c]!='auto' ? types[c] : (c==3?'number':c==2?'date':'text');
+function cDraw(){
+  let flags = 0;
+  const head = '<tr>'+hdr.map((h,c)=>`<th>${h}<br><select aria-label="Type de ${h}" data-c="${c}">${['auto','text','number','date'].map(t=>`<option value="${t}"${types[c]==t?' selected':''}>${t=='auto'?'Auto ('+({text:'texte',number:'nombre',date:'date'})[eff(c)]+')':({text:'Texte',number:'Nombre',date:'Date'})[t]}</option>`).join('')}</select></th>`).join('')+'</tr>';
+  const body = rows.map(r=>'<tr>'+r.map((v,c)=>{ const f = types[c]=='auto'&&(c==0||c==1||c==4) ? risky(v,c,'auto') : false; if(f) flags++;
+    return `<td class="${c==3?'num':''}${f?' flag':''}">${v}${f?`<span class="warn">${f} → conservé en texte</span>`:''}</td>`; }).join('')+'</tr>').join('');
+  $('#cGrid').innerHTML = head + body;
+  $('#cCount').textContent = flags ? `${flags} valeurs protégées` : 'Aucune valeur à risque';
+  $('#cGrid').querySelectorAll('select').forEach(s=>s.onchange=()=>{ types[+s.dataset.c]=s.value; cDraw(); });
+}
+cDraw();
+})();
+</script>
+</body>
+</html>

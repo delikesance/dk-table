@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 15:32:46 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-143022.html</h2><div class="frame">
+<h1>Évaluer, tracer, importer sans surprise</h1>
+<p>Trois idées issues de docs/recherche/fonctionnalites.md, non réalisées dans TODO.md (axe 1 : graphe inter-feuilles ; évaluation pas à pas / explication d'erreur ; import CSV typé). Toutes sont des vues sur le moteur existant, sans nouvelle syntaxe.</p>
+<div class="sum">
+<div><b>A. Évaluer pas à pas + expliquer l'erreur</b><br>Barre de formule : chaque sous-expression remplacée par sa valeur, cellules sources surlignées.</div>
+<div><b>B. Graphe de dépendances inter-feuilles</b><br>Un clic : antécédents (ambre) et dépendants (cyan), toutes feuilles, profondeur réglable.</div>
+<div><b>C. Import CSV typé</b><br>Aperçu avant ouverture : type par colonne, valeurs à risque signalées, rien converti en silence.</div>
+</div>
+
+<!-- ============ A ============ -->
+<section class="idea" id="A">
+<h2>A — Évaluer pas à pas, expliquer l'erreur</h2>
+<p>Entrée : bouton « Évaluer » (barre de formule, ou menu Formule) sur une cellule contenant une formule ou une erreur. Panneau sous la barre ; Échap ferme. Ordre = ordre réel d'évaluation du moteur (arguments d'abord, de l'intérieur vers l'extérieur).</p>
+<div class="row">
+<div class="col">
+<p class="cap">Écran 1 · formule valide</p>
+<div class="fbar" aria-label="Barre de formule"><span class="nm">D5</span><span id="fa"></span></div>
+<div class="eval" role="group" aria-label="Évaluation pas à pas">
+<button class="btn" id="aPrev" aria-label="Étape précédente">◀ Préc.</button><button class="btn" id="aNext" aria-label="Étape suivante">Suiv. ▶</button><button class="btn" id="aPlay" aria-pressed="false">Lecture</button><span class="sp"></span><span class="chip ok" id="aRes">–</span>
+<ol class="steps" id="aSteps"></ol>
+</div>
+</div>
+<div class="col">
+<p class="cap">Grille liée · cellules lues par l'étape courante</p>
+<table class="g" id="aGrid"></table>
+<p class="cap" style="margin-top:14px">Écran 2 · erreur expliquée</p>
+<div class="fbar"><span class="nm">E2</span><span><span class="tok">=B2/</span><span class="tok err">C2</span></span><span class="chip err" style="margin-left:auto">#DIV/0!</span></div>
+<div class="explain"><b>#DIV/0!</b> : <span class="mono">C2</span> vaut 0 (cellule vide). Le diviseur de <span class="mono">B2/C2</span> doit être non nul.<br><button class="btn" style="margin-top:6px" id="aGo">Aller à C2</button></div>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/engine/trace.ts  (pur, sans DOM)
+type TraceStep = { id: number; node: [start: number, end: number];   // offsets dans le brut
+                   expr: string; value: Value; reads: string[];       // refs lues ("B2","Feuille2!A1")
+                   why?: string };                                    // ex. "branche fausse non évaluée"
+evalTrace(sheet: Sheet, key: string): { steps: TraceStep[]; result: Value }
+explainError(sheet: Sheet, key: string): { code: ErrorCode; cause: string; at: string } | null
+// src/ui/formula/evalPanel.ts
+openEvalPanel(app: App, key: string): { close(): void }          // événements: "eval:step" {index}, "eval:goto" {ref}
+// App: app.evaluate(key?: string) ; palette "formula.evaluate"
+// Fichiers: engine/trace.ts, engine/trace-explain.ts (messages FR), ui/formula/evalPanel.ts + .css, toolbar/formulabar.ts (bouton)
+// Règles: lazy IF/IFS/SWITCH n'émettent pas la branche non prise; LIMITE: plage = 1 pas (valeurs résumées).
+// Premier test (rouge): engine/trace.test.ts — evalTrace(sheet "=IF(SUM(B2:B4)>100;SUM(B2:B4)*C1;0)")
+//   renvoie 5 pas dans l'ordre [SUM(B2:B4)=150, 150>100=VRAI, SUM(B2:B4)=150, 150*C1=165, IF=165], result 165.
+// Commande: npm test -- trace</pre>
+</section>
+
+<!-- ============ B ============ -->
+<section class="idea" id="B">
+<h2>B — Graphe de dépendances inter-feuilles</h2>
+<p>Entrée : clic droit sur une cellule &gt; « Tracer les dépendances » (ou Ctrl+Alt+D). Vue en volet bas, 3 colonnes (antécédents · cellule · dépendants), regroupées par feuille. Clic sur un nœud = recentrer ; Entrée = aller à la cellule. Les liens inter-feuilles sont en pointillés. Profondeur : 1, 2, tout.</p>
+<div class="row">
+<div class="col" style="flex-basis:620px">
+<p class="cap">Écran · cellule Synthèse!B2 (cliquer un nœud pour recentrer)</p>
+<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span class="mono" style="font-size:12px">Profondeur</span>
+<button class="btn" data-d="1">1</button><button class="btn on" data-d="2">2</button><button class="btn" data-d="9">Tout</button>
+<span class="chip in">antécédents</span><span class="chip out">dépendants</span><span class="mono" style="font-size:12px;margin-left:auto" id="bInfo"></span></div>
+<svg class="graph" id="bSvg" viewBox="0 0 640 340" role="group" aria-label="Graphe de dépendances"></svg>
+</div>
+<div class="col" style="flex-basis:280px">
+<p class="cap">États</p>
+<p>Cycle : arêtes en <span class="chip err">#CYCLE!</span> clignotantes une fois, puis fixes. Aucune dépendance : « Aucun antécédent » affiché dans la colonne vide. Plus de 40 nœuds : regroupés en « +N cellules » par feuille (clic = déplier).</p>
+<p>Le mouvement ne sert qu'à montrer le sens du recalcul : à chaque changement de profondeur ou de nœud, les arêtes s'animent des antécédents vers les dépendants.</p>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/engine/depgraph.ts  (pur)
+type DepNode = { ref: string; sheet: string; depth: number; kind: "in" | "out" | "cur" };
+type DepEdge = { from: string; to: string; cross: boolean };     // from = antécédent, to = dépendant
+depGraph(book: Book, ref: string, depth: number): { nodes: DepNode[]; edges: DepEdge[]; cycle: string[] | null }
+// src/ui/deps/graphView.ts   openDepGraph(app, ref): { setDepth(n): void; focus(ref): void; close(): void }
+// événements: "deps:focus" {ref}  "deps:goto" {sheet, ref}
+// Source: engine/book.ts (registre feuilles) + state.ts (précédents/dépendants, xprec). Lecture seule: aucun état ajouté au moteur.
+// Fichiers: engine/depgraph.ts, ui/deps/graphView.ts, ui/deps/layout.ts (colonnes/regroupement), deps.css; menu contextuel + palette "view.deps".
+// Premier test (rouge): engine/depgraph.test.ts — classeur {S1!A1=1, S2!B2="=S1!A1+1", S1!C3="=S2!B2*2"}:
+//   depGraph(book,"S2!B2",1) -> nodes {S1!A1:in, S2!B2:cur, S1!C3:out}, edges cross=true x2.
+// Commande: npm test -- depgraph</pre>
+</section>
+
+<!-- ============ C ============ -->
+<section class="idea" id="C">
+<h2>C — Import CSV typé, sans conversion silencieuse</h2>
+<p>Entrée : Fichier &gt; Importer CSV (existant). Un aperçu précède l'ouverture : 20 premières lignes, type détecté par colonne modifiable, valeurs à risque entourées. Par défaut, tout identifiant ambigu reste du texte.</p>
+<div class="row">
+<div class="col" style="flex-basis:560px">
+<p class="cap">Écran · produits.csv · séparateur « ; » · 5 lignes sur 1 204</p>
+<table class="g" id="cGrid"></table>
+<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn on">Importer</button><button class="btn">Annuler</button><span class="mono" style="font-size:12px;margin-left:auto" id="cCount"></span></div>
+</div>
+<div class="col" style="flex-basis:320px">
+<p class="cap">Comparaison sur la valeur DEC1 et 007</p>
+<table class="g"><tr><th></th><th>Excel</th><th>dk-table</th></tr><tr><td>DEC1</td><td class="flag">1-déc</td><td style="background:var(--oks)">DEC1</td></tr><tr><td>007</td><td class="flag num">7</td><td style="background:var(--oks)">007</td></tr></table>
+<p style="margin-top:8px">Changer le type d'une colonne met à jour l'aperçu et le compteur immédiatement. « Auto » ne convertit en nombre/date que si 100 % des valeurs de la colonne s'y prêtent sans perte.</p>
+</div>
+</div>
+<h3>Interfaces et contrats</h3>
+<pre class="contract">// src/io/csvTypes.ts  (pur)
+type ColType = "auto" | "text" | "number" | "date";
+type CsvRisk = { row: number; col: number; kind: "leading-zero" | "gene-date" | "long-int" | "ambiguous-date"; raw: string };
+inferTypes(rows: string[][], delimiter: Delimiter): ColType[]               // auto → text si une valeur perdrait de l'information
+findRisks(rows: string[][], types: ColType[]): CsvRisk[]
+applyTypes(rows: string[][], types: ColType[]): CsvSheet                     // text → préfixe ' (voir engine/recalc.ts), sinon valeur typée
+// src/ui/dialogs/csvPreview.ts  openCsvPreview(text, deps): Promise<{ types: ColType[] } | null>   événement "csv:type" {col, type}
+// Fichiers: io/csvTypes.ts, ui/dialogs/csvPreview.ts (+ css), io/files.ts (appel avant fromCsv), menubar/deps.ts (câblage)
+// Premier test (rouge): io/csvTypes.test.ts — inferTypes([["id"],["007"],["012"]]) = ["text"]; inferTypes([["DEC1"]]) = ["text"];
+//   findRisks(...) signale "leading-zero" pour "007"; applyTypes(text) conserve "007" via le préfixe apostrophe.
+// Commande: npm test -- csvTypes</pre>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td></td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-143022.html</td><td>25/10/2026 15:32:18</td><td>écrit</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.65 $</td></tr></table></section>
+</body></html>
