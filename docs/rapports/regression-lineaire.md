@@ -1,4 +1,5 @@
 # Rapport : Régression linéaire
+Statut : termine
 Visible : non
 
 ## Fait
@@ -22,3 +23,9 @@ Aucune (fonctionnalité interne, `Visible : non`).
 - Erreur explicite (`#DIV/0!`) si moins de 2 paires valides ou x constant ; jamais de NaN.
 - Y constant (pente 0) : R² = 1 (droite exacte), pas d'erreur.
 - Hors carte (suite possible, non traité ici) : branchement UI et fonctions de feuille `LINEST`/`SLOPE`/`INTERCEPT`/`RSQ`, documentation utilisateur dédiée.
+
+## Preuves
+- Tests : ok (non executes : documentation seule)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
