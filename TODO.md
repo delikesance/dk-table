@@ -306,5 +306,6 @@ Classement par gravité (P0 = pire)
 - [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
 
 ## Boucle
+- [x] Listes personnalisées de tri et de recopie (carte listes-personnalisees-de-tri-et-de-recopie)
 
 - [x] Chiffrement du classeur par mot de passe (carte chiffrement-du-classeur-par-mot-de-passe)
