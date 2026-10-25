@@ -83,6 +83,7 @@ P3 : livraison
 - [ ] Test de l'installeur Windows (MSI/NSIS construits en T1.7)
 - [ ] T4.1 Analyser LibreOffice Calc via REA, sans copier de code (optionnel ; "Libre Fiscal" à confirmer)
 - [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : section Status encore "no app code")
+- [x] Pépite 2 voyage dans le temps : historique local dans le fichier, curseur, instantanés, comparaison (`docs/historique-local.md`, palette « Historique et versions… »)
 - [ ] Décision pépites 1 (flèches) / 2 (voyage dans le temps) : abandon ou bonus si le temps le permet
 
 ## Phase 8 : Modules intégrés, câblage à faire
