@@ -5,8 +5,8 @@
   var PHASES = [["research", "Recherche"], ["design", "Design"], ["implementation", "Implémentation"], ["correction", "Correction"]];
   var AXES = [["nouveau", "Idées nouvelles"], ["absent", "Fonctions manquantes"], ["neglige", "Boudées"], ["mal", "Mal conçues"]];
   var ST = { pending: ["○", "en attente"], running: ["●", "en cours"], ok: ["✓", "réussi"], fail: ["✕", "échec"] };
-  var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé" };
-  var agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0, ended = false;
+  var TAGS = { start: "début", end: "fin", info: "info", error: "erreur", summary: "résumé", file: "fichier", done: "terminé", card: "carte" };
+  var cardRows = {}, agents = {}, workers = {}, phases = {}, summaries = 0, current = null, started = false, spentUsd = 0, ended = false;
 
   /** Modele vierge (debut de page et de chaque run: rien du run precedent ne reste). */
   function init() {
@@ -16,15 +16,12 @@
   }
   init();
 
-  /** Montant au format fr (virgule), `min` decimales minimum. */
-  function fmt(n, min) { return n.toLocaleString("fr-FR", { minimumFractionDigits: min == null ? 2 : min, maximumFractionDigits: 2 }); }
+  /** Montant au format fr (virgule), `min` decimales minimum. */ function fmt(n, min) { return n.toLocaleString("fr-FR", { minimumFractionDigits: min == null ? 2 : min, maximumFractionDigits: 2 }); }
   function secs(t0) { return t0 ? (Date.now() - t0) / 1000 : 0; } function live(o) { return o.state === "running" ? secs(o.t0) : o.elapsed; }
-  /** Duree lisible; rien sous 1 s (evite "0 s" au demarrage). */
-  function dur(s) { return s == null || s < 1 ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
+  /** Duree lisible; rien sous 1 s. */ function dur(s) { return s == null || s < 1 ? "" : s < 90 ? Math.round(s) + " s" : Math.floor(s / 60) + " min " + Math.round(s % 60) + " s"; }
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function cap() { return Number($("budgetEur").value) || 0; } function clock(ts) { var d = new Date(ts); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function (n) { return (n < 10 ? "0" : "") + n; }).join(":"); }
-  /** Texte brut: retire les codes ANSI que les commandes laissent dans leur sortie. */
-  function clean(t) { return t ? String(t).replace(/\u001b\[[0-9;?]*[ -\/]*[@-~]/g, "") : t; }
+  /** Texte brut sans codes ANSI. */ function clean(t) { return t ? String(t).replace(/\u001b\[[0-9;?]*[ -\/]*[@-~]/g, "") : t; }
 
   /** Pose l'etat d'une phase/agent en gardant duree et cout. */
   function setState(o, st, e) {
@@ -142,13 +139,16 @@
   function logLine(e) {
     var msg = clean(e.message);
     if (/^resume: /.test(msg)) return; // deja affiche par l'evenement « resume »
+    var row = e.type === "card" ? cardRows[e.cardId] : (cardRows = {}, null); // rapports repetes d'une carte: une ligne + compteur
+    if (e.type === "card") msg = "rapport " + e.cardId + " mis à jour";
+    if (row) { row.dataset.n = +row.dataset.n + 1; row.lastChild.textContent = [e.sector, msg].filter(Boolean).join(" · ") + " ×" + row.dataset.n; row.firstChild.textContent = clock(e.ts || Date.now()); return; }
     var where = [e.sector, e.axis].filter(Boolean).join(" / ");
     var li = el("li", e.type), log = $("log"), bottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 24;
     li.appendChild(el("time", null, clock(e.ts || Date.now())));
     li.appendChild(el("span", "tag", TAGS[e.type] || e.type));
     li.appendChild(el("span", null, [where, msg, e.costUsd != null && fmt(e.costUsd / RATE) + " €",
       e.elapsedS != null && dur(e.elapsedS)].filter(Boolean).join(" · ")));
-    li.hidden = $("onlyErr").checked && e.type !== "error";
+    li.hidden = $("onlyErr").checked && e.type !== "error"; if (e.type === "card") { li.dataset.n = 1; cardRows[e.cardId] = li; }
     log.appendChild(li); if (bottom) log.scrollTop = log.scrollHeight;
   }
 

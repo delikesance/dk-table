@@ -5,6 +5,7 @@
  */
 import { failureDigest, stripAnsi } from "./cleanOutput";
 import { createMutex } from "./concurrency";
+import { relatedFailures } from "./mergeGuard";
 import { failedFiles, failedTests, onlyOnBranch } from "./testFailures";
 
 /** Runs a command; resolves with exit code and combined output. */
@@ -114,16 +115,20 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     });
   }
 
-  /** Tests + tsc en parallele (independants). Un test deja rouge sur la base ne bloque pas (`preexisting`); tsc rouge ou test introduit bloque. */
+  const suiteLock = createMutex(); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
+  /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
   async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[] }> {
-    const [t, c] = await Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]);
+    const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
     if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
     if (t.code === 0) return { reason: null };
     const mine = failedTests(t.out);
     const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
     if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}` };
     const added = onlyOnBranch(mine, base);
-    return added.length ? { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` } : { reason: null, preexisting: mine };
+    if (added.length) return { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` };
+    const changed = (await git(["diff", "--name-only", `${DEV}...HEAD`], dir)).out.split(/\r?\n/).filter(Boolean);
+    const linked = relatedFailures(mine, changed);
+    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}` } : { reason: null, preexisting: mine };
   }
 
   async function mergeIfGreen(branch: string, dir: string) {
@@ -150,13 +155,21 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
         if (again.reason) return { merged: false, reason: `apres synchro avec ${DEV}: ${again.reason}` };
         preexisting = again.preexisting ?? preexisting;
       }
+      const before = (await git(["rev-parse", "HEAD"])).out.trim();
       const m = await git(["merge", "--no-ff", branch]);
       if (m.code !== 0) {
         await git(["merge", "--abort"]);
         return { merged: false, conflict: true, reason: `merge conflict: ${stripAnsi(m.out).slice(-500)}` };
       }
+      // l'etat pousse doit etre celui qui a ete verifie: arbre fusionne = arbre teste dans le worktree, sinon annulation
+      const merged = (await git(["rev-parse", "HEAD^{tree}"])).out.trim(), tested = (await git(["rev-parse", "HEAD^{tree}"], dir)).out.trim();
+      if (merged !== tested) {
+        await git(["reset", "--keep", before]);
+        return { merged: false, reason: `arbre fusionne different de l'arbre verifie (${merged.slice(0, 8)} / ${tested.slice(0, 8)}) : fusion annulee` };
+      }
       await git(["worktree", "remove", "--force", dir]);
-      return { merged: true, preexisting, push: await pushDev() };
+      // suite non verte (tests deja rouges tolérés): on garde la fusion en local, jamais sur origin
+      return { merged: true, preexisting, push: preexisting?.length ? { pushed: false, reason: "suite non verte (tests deja rouges sur la base) : push retenu" } : await pushDev() };
     });
   }
 

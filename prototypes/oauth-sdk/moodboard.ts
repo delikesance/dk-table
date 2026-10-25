@@ -134,6 +134,22 @@ async function summarize(cards: MoodCard[], d: MoodDeps, cache: Map<string, stri
   }
 }
 
+const RANK: Record<MoodCard["status"], number> = { found: 0, lead: 1, developing: 2, done: 3 };
+const sig = (t: string) => words(t).sort().join(" ");
+
+/** Fusionne les cartes de meme id ou de memes mots significatifs; la 1re garde son id, le statut le plus avance gagne. */
+export function mergeDuplicates(cards: MoodCard[]): MoodCard[] {
+  const out: MoodCard[] = [], by = new Map<string, MoodCard>();
+  for (const c of cards) {
+    const key = by.has(c.id) ? c.id : sig(c.title) || c.id;
+    const seen = by.get(key) ?? by.get(c.id);
+    if (!seen) { out.push(c); by.set(c.id, c); if (sig(c.title)) by.set(sig(c.title), c); continue; }
+    if (RANK[c.status] > RANK[seen.status]) seen.status = c.status;
+    seen.axis ??= c.axis;
+  }
+  return out;
+}
+
 /** Construit le moodboard; ne leve jamais (fichier illisible -> liste vide). */
 export async function buildMoodboard(d: MoodDeps): Promise<MoodCard[]> {
   const read = (p: string) => d.readFile(p).catch(() => "");
@@ -145,6 +161,7 @@ export async function buildMoodboard(d: MoodDeps): Promise<MoodCard[]> {
     const id = norm(r.title).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     cards.push({ id, title: r.title, status, axis: r.axis, summary: "", source: r.source });
   }
+  cards.splice(0, cards.length, ...mergeDuplicates(cards));
   const cache = d.cache ?? new Map<string, string>();
   try { await summarize(cards, d, cache); } catch { /* repli ci-dessous */ }
   for (const c of cards) c.summary = cache.get(keyOf(c)) ?? fallbackSummary(c.source);

@@ -10,6 +10,7 @@
 import { parseReport, validateReport, type CardState, type Report } from "./card";
 import { reconcileCard } from "./reconcile";
 import type { DoneEntry, DoneLedger } from "./doneLedger";
+import { hashOf, type StaleStore } from "./stale";
 import { buildMoodboard, type MoodCard, type MoodDeps } from "./moodboard";
 
 /** Carte enrichie de son etat et de son rapport. */
@@ -24,7 +25,7 @@ export interface BoardCard extends MoodCard {
 }
 
 /** Dependances: celles du moodboard + test d'existence d'un fichier (captures). */
-export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger; /** Ids des cartes du lot en cours de traitement (aucune hors tournee). */ active?: ReadonlySet<string> };
+export type BoardDeps = MoodDeps & { exists: (path: string) => Promise<boolean>; /** Registre des cartes terminees (jamais perdues). */ ledger?: DoneLedger; /** Rapports perimes (ignores, voir stale.ts). */ stale?: StaleStore; /** Ids des cartes du lot en cours de traitement (aucune hors tournee). */ active?: ReadonlySet<string> };
 
 /** Carte terminee reconstituee depuis le registre. */
 const fromLedger = (e: DoneEntry): BoardCard => ({
@@ -39,9 +40,11 @@ export const reportPath = (id: string) => `docs/rapports/${id}.md`;
 export async function buildBoard(d: BoardDeps): Promise<BoardCard[]> {
   const cards = await buildMoodboard(d);
   const kept = new Map((await d.ledger?.load().catch(() => [] as DoneEntry[]) ?? []).map((e) => [e.id, e]));
+  const retired = await d.stale?.hashes().catch(() => new Map<string, string>()) ?? new Map<string, string>();
   const live = await Promise.all(cards.map(async (c): Promise<BoardCard & { markdown?: string }> => {
     const path = reportPath(c.id);
-    const md = await d.readFile(path).catch(() => "");
+    let md = await d.readFile(path).catch(() => "");
+    if (md && retired.get(c.id) === hashOf(md)) md = ""; // rapport perime et archive: la carte repart propre
     const report = md ? parseReport(md) : undefined;
     const known = new Set<string>();
     await Promise.all((report?.screenshots ?? []).map(async (p) => { if (await d.exists(p).catch(() => false)) known.add(p); }));
