@@ -1,5 +1,6 @@
 /** Shared types for the `.dktable` document format. */
 import type { CfRule } from "../engine/cf/types";
+import type { ValRule } from "../engine/validation/types";
 
 /** One cell: only the raw user input is persisted (values are recomputed). */
 export interface DocCell {
@@ -40,6 +41,8 @@ export interface DocSheet {
   colWidths?: Record<string, number>;
   /** Optional conditional formatting rules, by priority (absent = none). */
   cf?: CfRule[];
+  /** Data-validation rules (checked on typing, paste, fill and import); absent = none. */
+  validation?: ValRule[];
   /** Saved views (filter, sort, group, hidden columns); absent = none. */
   views?: SheetView[];
 }
