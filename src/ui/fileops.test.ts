@@ -4,14 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../io/files", () => ({
   openDocument: vi.fn(), openPath: vi.fn(), saveAs: vi.fn(), saveDocument: vi.fn(),
-  importCsvFile: vi.fn(), exportCsvFile: vi.fn(), exportFecFile: vi.fn(),
+  readCsvFile: vi.fn(), exportCsvFile: vi.fn(), exportFecFile: vi.fn(),
 }));
 import * as io from "../io/files";
 import { exportFec, importCsv, installUnloadGuard, openFile, saveFile, setConfirm } from "./fileops";
 import type { App } from "./appTypes";
 
 const doc = { version: 1 as const, sheets: [] };
-const csv = { cols: 1, rows: 1, cells: {} };
 let active = { id: "s", name: "S", cols: 26, rows: 100, cells: {} as Record<string, { raw: string }> };
 
 /** Minimal fake App recording the calls fileops makes. */
@@ -29,10 +28,10 @@ describe("fileops", () => {
   beforeEach(() => { vi.clearAllMocks(); setConfirm(() => true); });
 
   it.each([["C:\\me\\data.csv"], ["/home/me/data.csv"]])("CSV sheet name from %s", async (p) => {
-    vi.mocked(io.importCsvFile).mockResolvedValue({ path: p, sheet: csv } as never);
+    vi.mocked(io.readCsvFile).mockResolvedValue({ path: p, text: "a" } as never);
     const app = fakeApp(false);
     await importCsv(app);
-    expect(app.importSheet).toHaveBeenCalledWith("data", csv);
+    expect(app.importSheet).toHaveBeenCalledWith("data", expect.objectContaining({ cells: { A1: { raw: "a" } } }));
   });
 
   it("open keeps the workbook when dirty and confirm is refused", async () => {

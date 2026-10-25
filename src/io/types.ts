@@ -40,6 +40,8 @@ export interface DocSheet {
   colWidths?: Record<string, number>;
   /** Optional conditional formatting rules, by priority (absent = none). */
   cf?: CfRule[];
+  /** Saved views (filter, sort, group, hidden columns); absent = none. */
+  views?: SheetView[];
 }
 
 /** One Lua macro stored with the document (see src/macros). */
@@ -63,6 +65,27 @@ export interface DocText {
   md: string;
 }
 
+/** One cell change of the history journal (`""` = empty); `t` = epoch ms of the save that recorded it. */
+export interface HistoryEntry { t: number; sheet: string; key: string; from: string; to: string }
+/** Named snapshot: raw cells of every sheet at one moment. */
+export interface Snapshot { id: string; name: string; t: number; sheets: { id: string; name: string; cells: Record<string, string> }[] }
+/** Local history stored in the file (see io/history.ts). */
+export interface History { log: HistoryEntry[]; snaps: Snapshot[] }
+
+/** Saved view of a sheet, database style (see io/views.ts). */
+export interface SheetView {
+  id: string;
+  name: string;
+  /** Filter: column letter -> accepted displayed values (absent column = no filter). */
+  filter: Record<string, string[]>;
+  /** Sort keys, in priority order. */
+  sort: { col: string; desc: boolean }[];
+  /** Column to group by (rows with the same value are kept together), if any. */
+  group?: string;
+  /** Hidden column letters. */
+  hidden: string[];
+}
+
 /** Whole document persisted as JSON. */
 export interface DktDoc {
   version: 1;
@@ -75,6 +98,8 @@ export interface DktDoc {
   functions?: DocFn[];
   /** Rich-text documents of the workbook, shown as tabs after the sheets (optional). */
   docs?: DocText[];
+  /** Journal par cellule + instantanés nommés (optionnel). */
+  history?: History;
 }
 
 /** Current `.dktable` format version. */

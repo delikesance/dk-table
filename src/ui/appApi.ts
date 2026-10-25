@@ -20,6 +20,7 @@ import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
 import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
 import { setFunctions } from "./appFns";
+import { historyField, loadHistory } from "./history/store";
 import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
@@ -78,8 +79,10 @@ export function createApi(c: Ctx): App {
       macros: macros.list().map((m) => ({ ...m })),
       ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
+      ...historyField(),
     }),
     loadDoc(doc, path) {
+      loadHistory(doc);
       leaveDoc(c);
       c.docs.load(doc.docs);
       setUserFunctions(doc.functions ?? []);
