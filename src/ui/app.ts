@@ -18,6 +18,7 @@ import { buildGrid, refreshTabs } from "./appGrid";
 import { createApi } from "./appApi";
 import { createWidgets } from "./appWidgets";
 import { installMacros } from "./macros/wire";
+import { watchMacros } from "./appMacros";
 import { relink, type Ctx } from "./appState";
 import { createDocStore } from "../doc/store";
 import "../doc/doc.css";
@@ -28,7 +29,7 @@ export type { App, Hooks } from "./appTypes";
 
 const LAYOUT =
   '<div class="dk-app dk-app--minimal"><div class="dk-app__top"><div class="dk-app__menubar"></div><div class="dk-app__bar"></div><div class="dk-app__tools"></div></div>' +
-  '<div class="dk-app__main"><div class="dk-app__grid"></div><div class="dk-app__doc" hidden></div></div>' +
+  '<div class="dk-app__main"><div class="dk-app__grid"></div><div class="dk-app__doc" hidden></div><div class="dk-app__macro" hidden></div></div>' +
   '<div class="dk-app__tabs"></div></div>';
 
 /** Disposer of the previous mount (palette hotkey, menus click listener), run before a remount. */
@@ -44,12 +45,15 @@ export function mount(root: HTMLElement): App {
   const c = {
     gridHost: root.querySelector<HTMLElement>(".dk-app__grid")!,
     docHost: root.querySelector<HTMLElement>(".dk-app__doc")!,
+    macroHost: root.querySelector<HTMLElement>(".dk-app__macro")!,
+    macroTabs: [],
     docs: createDocStore(),
     entries: [first], cur: first, recents: [], coalescing: false,
   } as unknown as Ctx;
   relink(c);
   c.app = createApi(c);
   createWidgets(c, root);
+  watchMacros(c);
   c.macroUi = installMacros(c.app, root.querySelector<HTMLElement>(".dk-app__main")!);
   c.sidebar.setRecent(c.recents);
   const palette = createPalette({ hotkey: true });

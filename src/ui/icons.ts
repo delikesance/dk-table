@@ -37,6 +37,7 @@ import bordersNone from "iconoir/icons/regular/square-dashed.svg?raw";
 import arrowUp from "iconoir/icons/regular/arrow-up.svg?raw";
 import arrowDown from "iconoir/icons/regular/arrow-down.svg?raw";
 import edit from "iconoir/icons/regular/edit-pencil.svg?raw";
+import play from "iconoir/icons/regular/play.svg?raw";
 import trash from "iconoir/icons/regular/trash.svg?raw";
 
 const RAW: Record<string, string> = {
@@ -44,7 +45,7 @@ const RAW: Record<string, string> = {
   chevron: tools, "chevron-right": chevronRight,
   "align-left": alignLeft, "align-center": alignCenter, "align-right": alignRight,
   filter, underline, wrap, borders, "borders-all": bordersAll, "borders-bottom": bordersBottom, "borders-none": bordersNone,
-  "arrow-up": arrowUp, "arrow-down": arrowDown, edit, trash,
+  "arrow-up": arrowUp, "arrow-down": arrowDown, edit, trash, play,
 };
 
 /** Names accepted by {@link icon}. */

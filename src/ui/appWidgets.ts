@@ -9,6 +9,7 @@ import { floatingAction, installFloating } from "./appFloating";
 import { autosum } from "./autosum";
 import { createToolsToggle, installToolsToggle } from "./appTools";
 import { renameDoc } from "./appDocs";
+import { closeMacroTab } from "./appMacros";
 
 /** Build the chrome widgets into `root` and store them on `c` (needs `c.app` set). */
 export function createWidgets(c: Ctx, root: HTMLElement): void {
@@ -41,8 +42,9 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
   });
   c.tabs = createSheetTabs(q(".dk-app__tabs"), {
     onAdd: () => app.addSheet(),
-    onSwitch: (id) => (c.docs.get(id) ? void app.openDoc(id) : app.switchSheet(id)),
+    onSwitch: (id) => (c.docs.get(id) ? void app.openDoc(id) : c.app.macros.get(id) ? void app.editMacro(id) : app.switchSheet(id)),
     onRename: (id, name) => {
+      if (c.app.macros.get(id)) { c.app.macros.update(id, { name }); return; }
       if (c.docs.get(id)) { renameDoc(c, id, name); return; }
       const e = c.entries.find((x) => x.id === id);
       if (e) e.name = name;
@@ -50,6 +52,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
       refreshTabs(c);
     },
     onDelete: (id) => {
+      if (c.macroTabs.includes(id)) { closeMacroTab(c, id); return; }
       if (c.docs.get(id)) { app.removeDoc(id); return; }
       if (c.entries.length < 2) return;
       c.entries = c.entries.filter((x) => x.id !== id);

@@ -16,6 +16,7 @@ import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
 import { exportDoc } from "./appDocExport";
+import { openMacroView } from "./appMacros";
 import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
@@ -147,7 +148,8 @@ export function createApi(c: Ctx): App {
     docEditor: () => c.docEd,
     sheetName: () => c.cur.name,
     runMacro: (id) => c.macroUi.run(id),
-    openMacros: (id) => c.macroUi.open(id),
+    openMacros: () => c.macroUi.open(),
+    editMacro: (id) => openMacroView(c, id),
     sortColumn(desc) {
       if (!sortColumn(c.cur, firstKey(c), { desc })) return false;
       touch(c);

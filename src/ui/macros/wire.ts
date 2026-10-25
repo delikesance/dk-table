@@ -9,8 +9,9 @@ import type { App } from "../appTypes";
 
 /** Lazy macro UI handle. */
 export interface MacroUi {
-  open(id?: string): Promise<void>;
-  /** Run a macro; errors open the panel on it. */
+  /** Open the macro list panel. */
+  open(): Promise<void>;
+  /** Run a macro; errors open the panel. */
   run(id: string): Promise<RunResult>;
 }
 
@@ -18,19 +19,19 @@ export interface MacroUi {
 export function installMacros(app: App, host: HTMLElement): MacroUi {
   let kit: Promise<{ panel: MacroPanel; run: (id: string) => RunResult }> | undefined;
   const load = () => (kit ??= import("./kit").then((k) => ({
-    panel: k.createMacroPanel(host, { store: app.macros, run: (id) => k.runAppMacro(app, id) }),
+    panel: k.createMacroPanel(host, { store: app.macros, run: (id) => k.runAppMacro(app, id), edit: (id) => void app.editMacro(id) }),
     run: (id: string) => k.runAppMacro(app, id),
   })));
   const ui: MacroUi = {
-    open: async (id) => (await load()).panel.open(id),
+    open: async () => (await load()).panel.open(),
     async run(id) {
       const k = await load();
       const r = k.run(id);
-      k.panel.report(id, r);
+      k.panel.report(r);
       return r;
     },
   };
-  registerCommand({ id: "macros.editor", label: "Éditeur de macros", shortcut: "Alt+F11",
+  registerCommand({ id: "macros.editor", label: "Macros", shortcut: "Alt+F11",
     keywords: ["lua", "script"], run: () => void ui.open() });
   let unregister: (() => void)[] = [];
   const sync = () => {
