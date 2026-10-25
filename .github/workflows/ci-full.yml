@@ -1,0 +1,67 @@
+# CI complète : uniquement sur PR vers `main` (ex. développement -> main) et au push sur `main`.
+# Gros tests : vitest complet, cargo, e2e Playwright en 3 shards. Jobs `test` et `e2e` = checks requis.
+name: CI complète
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-full-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - run: npx tsc --noEmit
+      - name: npm test
+        run: npm test
+
+  # Rust en parallèle des tests JS : le crate Tauri a besoin de webkit2gtk (paquets mis en cache).
+  cargo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libxdo-dev
+          version: 1.0
+      # Le build Tauri embarque `dist/` : un dossier vide suffit aux tests.
+      - run: mkdir -p dist
+      - name: cargo test
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    env:
+      # Chrome est préinstallé sur le runner : aucun navigateur à télécharger.
+      E2E_CHANNEL: chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: e2e (shard ${{ matrix.shard }}/3)
+        run: npx playwright test --shard=${{ matrix.shard }}/3
