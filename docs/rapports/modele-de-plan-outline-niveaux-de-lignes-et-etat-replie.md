@@ -1,4 +1,5 @@
 # Rapport : Modèle de plan (outline) : niveaux de lignes et état replié
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -23,3 +24,9 @@ Visible : non
 - Groupe = lignes contiguës au-dessus du sous-total, de niveau strictement supérieur. Replier masque ce groupe.
 - `showLevel(n)` remplace l'état : replie chaque ligne de niveau ≤ n dont la ligne du dessus est plus profonde que n.
 - Limite : un groupe sans ligne de sous-total en dessous (fin de feuille) ne peut pas être replié.
+
+## Preuves
+- Tests : ok (7 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":7,"scope":"related"},"tsc":{"ok":true}} -->
