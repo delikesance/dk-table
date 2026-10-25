@@ -211,3 +211,4 @@ Classement par gravité (P0 = pire)
 - [x] D8 Style administratif classique du contenu des documents (A4, sérif, titres noirs), exports HTML/PDF alignés
 - [x] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 
+- [x] Somme rapide (Σ, Alt+=) : une sélection multi-cellules est sommée (une SOMME par colonne dessous, ou à droite d’une ligne), `ui/autosum.ts`, tests unitaires + e2e
