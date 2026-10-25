@@ -81,3 +81,11 @@ puis `shots.board.mjs`.
 - Design non fusionné : son dossier reste exposé (worktree conservé), la page Design l'affiche au lieu de « Aucun design ».
 - Preuve sans réseau : `shots.journal.mjs` (captures `docs/screenshots/boucle-run/`) et un run complet avec faux agent, vrai git
   et vrai `npm test` + `tsc` (recherche fusionnée dans `developpement`).
+
+## Thème = celui de l'application
+
+- Les trois pages (panneau, moodboard, toile design) chargent les tokens de l'app : `src/styles/tokens.css` (clair) et
+  `theme-dark.css` (nuit), servis tels quels sous `/theme/` (`assets.ts`), puis `theme.js` qui pose `data-theme` (light|dark) selon le système.
+- `panel.css` n'a plus que des alias (`--bg: var(--c-bg)`, `--acc: var(--c-accent)`…), les feuilles de page n'ont aucune couleur en dur
+  (`theme.test.ts`, seul `#fff` reste : fond du design affiché). Polices, rayons, états (succès, erreur, dépendances) viennent aussi des tokens.
+- Changer un token dans l'app change donc la Boucle. Captures avant/après : `docs/screenshots/boucle-theme/`.

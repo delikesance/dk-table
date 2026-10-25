@@ -31,7 +31,8 @@ for (const scheme of ["light", "dark"]) {
   await page.route("**/*", (r) => {
     const p = new URL(r.request().url()).pathname;
     if (p.startsWith("/fonts/")) return r.fulfill({ body: readFileSync(join(here, p)), contentType: "font/woff2" });
-    const f = { "/": "panel.html", "/panel.css": "panel.css", "/panel.js": "panel.js", "/fonts.css": "fonts.css" }[p];
+    if (p.startsWith("/theme/")) return r.fulfill({ body: readFileSync(join(here, "../../src/styles", p.slice(7))), contentType: "text/css" });
+    const f = { "/": "panel.html", "/panel.css": "panel.css", "/panel.js": "panel.js", "/fonts.css": "fonts.css", "/theme.js": "theme.js" }[p];
     return f ? r.fulfill({ body: readFileSync(join(dir, f)), contentType: f.endsWith("css") ? "text/css" : f.endsWith("js") ? "text/javascript" : "text/html" }) : r.fulfill({ status: 404 });
   });
   await page.addInitScript((evs) => {
