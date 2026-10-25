@@ -16,6 +16,7 @@ import { openCompare } from "./dialogs/diff";
 import { openMerge } from "./dialogs/merge";
 import { openHistory } from "./dialogs/history";
 import { openDepMap } from "./dialogs/depmap";
+import { openAudit } from "./dialogs/audit";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -112,6 +113,7 @@ export function installCommands(app: App): void {
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
   run("data.pivot", "Tableau croisé…", () => openPivot(app), undefined, ["pivot", "croisé", "dynamique", "agrégation", "somme"]);
   run("data.depmap", "Qui utilise cette cellule ?", () => openDepMap(app), undefined, ["dépendances", "précédents", "dépendants", "références", "carte", "liens"]);
+  run("data.audit", "Audit de modèle", () => openAudit(app), undefined, ["audit", "erreurs", "constantes", "incohérences", "volatile", "cycle", "plage", "vérifier"]);
   run("file.compare", "Comparer avec un fichier…", () => openCompare(app), undefined, ["diff", "différences", "fusion", "version"]);
   run("file.history", "Historique et versions…", () => openHistory(app), undefined, ["historique", "temps", "instantané", "version", "journal", "restaurer"]);
   run("file.merge", "Fusionner avec d'autres versions…", () => openMerge(app), undefined, ["fusion", "merge", "conflit", "version", "diff"]);
