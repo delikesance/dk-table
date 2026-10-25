@@ -16,6 +16,8 @@ export interface BoucleEvent {
   type: "start" | "end" | "info" | "error" | "done" | "summary" | "file";
   /** `phase`/`ok`: resume de fin de phase (ok = fusionnee). */
   phase?: string; ok?: boolean;
+  /** Evenement `file`: etat du fichier de design et horodatage (ms). */
+  state?: "ecrit" | "mis-a-jour"; ts?: number;
   sector?: string; axis?: string; costUsd?: number; elapsedS?: number;
   totalUsd?: number; remainingUsd?: number; message?: string;
 }

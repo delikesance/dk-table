@@ -37,7 +37,7 @@ async function go() {
 describe("pipeline design", () => {
   it("emet des evenements file, expose le dossier actif puis null, arrete le watcher", async () => {
     const { events, dirs, stops } = await go();
-    expect(events.filter((e) => e.type === "file")).toEqual([{ type: "file", sector: "design", message: "d.html" }]);
+    expect(events.filter((e) => e.type === "file")).toEqual([{ type: "file", sector: "design", message: "d.html", state: "ecrit", ts: 7 }]);
     expect(dirs[0]).toMatch(/worktrees[\\/]+design-.*docs[\\/]+design$/);
     expect(dirs.at(-1)).toBeNull();
     expect(stops.length).toBeGreaterThanOrEqual(1);

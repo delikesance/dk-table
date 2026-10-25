@@ -6,11 +6,7 @@
 import type { BoucleEvent } from "./server";
 
 /** Étape du designer; `file` est l'événement d'écriture d'un fichier de design. */
-export type RecapStep = Omit<BoucleEvent, "type"> & {
-  type: BoucleEvent["type"] | "file";
-  state?: "ecrit" | "mis-a-jour";
-  ts?: number;
-};
+export type RecapStep = BoucleEvent;
 /** Design à embarquer. */
 export interface RecapDesign { name: string; html: string; mtimeMs: number }
 
