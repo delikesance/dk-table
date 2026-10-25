@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - No file may exceed 200 lines (code, CSS, docs, tests); split into modules before crossing it.
 - Everything is documented: every module/function/component gets a short doc comment, and each implementation is documented (what/why, usage) in the same change.
 - After every implementation, update `CLAUDE.md` when needed (commands, architecture, structure, decisions) and update `TODO.md` (see To-do list).
+- Réponses : phrases les plus courtes possibles, zéro blabla, un minimum d'erreurs d'inattention (relire avant d'envoyer).
 
 ## Captures d'écran pour les nouvelles fonctionnalités
 
