@@ -1,4 +1,5 @@
 # Rapport : Boîte de dialogue Sous-totaux
+Statut : en-cours
 Visible : oui
 
 ## Fait
@@ -26,3 +27,9 @@ Visible : oui
 - Niveaux du plan : données = nombre de colonnes de groupe, sous-total de niveau l = l, total général = 0 (compatible avec `engine/outline.ts`).
 - Appliquer sur une feuille où un plan existe déjà : le plan précédent est retiré d'abord, puis le nouveau est calculé sur la sélection courante.
 - « Tout supprimer » ne marche que sur la feuille où le plan a été appliqué.
+
+## Preuves
+- Tests : ok (255 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : aucune annoncee
+<!-- boucle-proof {"tests":{"ok":true,"count":255,"scope":"related"},"tsc":{"ok":true}} -->
