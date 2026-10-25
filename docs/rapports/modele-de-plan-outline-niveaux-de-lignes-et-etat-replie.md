@@ -28,7 +28,7 @@ Visible : non
 - Tournée suivante : critères d'acceptation relus, tous couverts par les 7 tests existants (niveaux 0-3, repli, dépli sans sous-groupes, `showLevel`). Aucun changement de code.
 
 ## Preuves
-- Tests : ok (7 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":7,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
