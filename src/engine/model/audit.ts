@@ -5,13 +5,15 @@
  */
 import { parseKey } from "../address";
 import type { Node } from "../types";
-import { indexFormulas, refHits, type FCell } from "./formulaIndex";
+import { cellsInRef, indexFormulas, refHits, type FCell } from "./formulaIndex";
 import type { DktDoc } from "../../io/types";
 
 /** Famille d'un constat. */
 export type FindingKind = "constant" | "inconsistent" | "range" | "volatile" | "cycle";
 /** Un constat sur une cellule. */
-export interface Finding { kind: FindingKind; sheetId: string; sheet: string; key: string; message: string }
+export interface Finding { kind: FindingKind; sheetId: string; sheet: string; key: string; message: string; fix?: Fix }
+/** Correction en un clic : cellules à réécrire (`raw` brut) avec libellé du bouton. */
+export interface Fix { label: string; edits: { sheetId: string; key: string; raw: string }[] }
 
 const OK_NUMS = new Set([0, 1, 2, 100]);
 /** Fonctions dont les arguments numériques sont des paramètres (décimales, positions), pas des hypothèses. */
@@ -96,15 +98,35 @@ function cycles(all: FCell[]): FCell[] {
   return all.filter((f) => reach(f).has(f));
 }
 
-/** Plage de `f` qui s'arrête juste avant une cellule remplie (nouvelle ligne ratée), ou null. */
-function missedRow(doc: DktDoc, f: FCell): string | null {
+/** Plage de `f` qui s'arrête juste avant une cellule remplie (nouvelle ligne ratée), ou null; avec correction. */
+function missedRow(doc: DktDoc, f: FCell): { message: string; fix: Fix } | null {
   for (const r of f.refs) {
     const s = doc.sheets.find((x) => x.id === r.sheetId), end = parseKey(r.b);
     if (!s || r.a === r.b || !end || !/^[A-Za-z]+\d+$/.test(r.b)) continue;
     const below = `${r.b.replace(/\d+$/, "")}${end.row + 1}`.toUpperCase();
-    if ((s.cells[below]?.raw ?? "") !== "" && !(s.id === f.sheetId && below === f.key)) return `La plage ${r.a}:${r.b} s'arrête avant ${below}, qui contient une valeur`;
+    if ((s.cells[below]?.raw ?? "") !== "" && !(s.id === f.sheetId && below === f.key)) {
+      const raw = f.raw.replace(`${r.a}:${r.b}`, `${r.a}:${below}`);
+      return { message: `La plage ${r.a}:${r.b} s'arrête avant ${below}, qui contient une valeur`,
+        fix: { label: `Étendre à ${below}`, edits: [{ sheetId: f.sheetId, key: f.key, raw }] } };
+    }
   }
   return null;
+}
+
+/** Nombres stockés en texte (`'12`) dans les plages de `f` : ignorés par SUM/AVERAGE; correction = les convertir. */
+function textNumbers(doc: DktDoc, f: FCell): { message: string; fix: Fix } | null {
+  const edits: Fix["edits"] = [];
+  for (const r of f.refs) {
+    const s = doc.sheets.find((x) => x.id === r.sheetId);
+    if (!s || r.a === r.b) continue;
+    for (const k of cellsInRef(s, r.a, r.b)) {
+      const m = /^'\s*(-?\d+(?:[.,]\d+)?)\s*$/.exec(s.cells[k].raw);
+      if (m) edits.push({ sheetId: s.id, key: k, raw: m[1].replace(",", ".") });
+    }
+  }
+  if (!edits.length) return null;
+  return { message: `Nombres stockés en texte, ignorés par la somme : ${edits.map((e) => e.key).join(", ")}`,
+    fix: { label: "Convertir en nombres", edits } };
 }
 
 /** Audite le classeur; constats triés par type puis cellule. */
@@ -117,8 +139,7 @@ export function auditModel(doc: DktDoc): Finding[] {
     if (k.length) out.push(find(f, "constant", `Constante codée en dur : ${k.join(", ")}`));
     const v = calls(f.ast).filter((n) => VOLATILE.has(n));
     if (v.length) out.push(find(f, "volatile", `Fonction volatile : ${[...new Set(v)].join(", ")}`));
-    const m = missedRow(doc, f);
-    if (m) out.push(find(f, "range", m));
+    for (const m of [missedRow(doc, f), textNumbers(doc, f)]) if (m) out.push({ ...find(f, "range", m.message), fix: m.fix });
   }
   out.push(...inconsistent(doc, all));
   out.push(...cycles(all).map((f) => find(f, "cycle", "Référence circulaire")));
