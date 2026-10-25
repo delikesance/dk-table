@@ -10,12 +10,18 @@ const html = read("panel.html"), css = read("panel.css"), js = read("panel.js");
 /** Charge panel.html + panel.js dans jsdom; renvoie une fonction d'envoi d'evenements SSE. */
 function load() {
   let push: (e: object) => void = () => {};
+  let open: () => void = () => {}, fail: () => void = () => {};
   const g = globalThis as Record<string, unknown>;
   g.fetch = async () => ({ ok: true, json: async () => ({}) });
-  g.EventSource = class { set onmessage(f: (m: { data: string }) => void) { push = (e) => f({ data: JSON.stringify(e) }); } };
+  g.EventSource = class {
+    set onmessage(f: (m: { data: string }) => void) { push = (e) => f({ data: JSON.stringify(e) }); }
+    set onopen(f: () => void) { open = f; }
+    set onerror(f: () => void) { fail = f; }
+  };
   document.documentElement.innerHTML = html.replace(/^[\s\S]*?<html[^>]*>/i, "");
   new Function(js)();
-  return (e: object) => push(e);
+  const send = (e: object) => push(e);
+  return Object.assign(send, { open: () => open(), fail: () => fail() });
 }
 const q = (s: string) => document.querySelector(s);
 
@@ -38,7 +44,7 @@ describe("panneau: fichiers", () => {
     for (const s of ["pending", "running", "ok", "fail"]) expect(css).toContain(`.${s}`);
   });
   it("reperes stables", () => {
-    for (const id of ["summary", "phasebar", "agents", "budget", "journal", "go", "stop", "budgetEur", "gauge", "idle"]) {
+    for (const id of ["summary", "phasebar", "budget", "journal", "run", "budgetEur", "gauge", "idle", "alert", "conn", "onlyErr", "log"]) {
       expect(html).toContain(`id="${id}"`);
     }
   });
@@ -51,33 +57,72 @@ describe("panneau: rendu", () => {
     expect(q("#amounts")!.textContent).toContain("0,00 €");
     expect(q("#amounts")!.textContent).not.toContain("-");
     expect(document.querySelectorAll("#phasebar .step").length).toBe(4);
-    expect(q("#agents .card.pending")).toBeTruthy();
-    expect((q("#go") as HTMLButtonElement).disabled).toBe(false);
+    expect(q("#phasebar .agent.pending")).toBeTruthy();
+    expect((q("#run") as HTMLButtonElement).disabled).toBe(false);
+    expect(q("#run")!.textContent).toBe("Go");
+    expect(q("#alert")!.hasAttribute("hidden")).toBe(true);
+    expect(q("#conn")!.hasAttribute("hidden")).toBe(true);
   });
   it("libelles lisibles des axes", () => {
     load();
-    const t = q("#agents")!.textContent!;
+    const t = q("#phasebar")!.textContent!;
     for (const l of ["Idées nouvelles", "Fonctions manquantes", "Boudées", "Mal conçues"]) expect(t).toContain(l);
   });
   it("evenements: running, ok, fail, budget, resume, journal", () => {
     const send = load();
     send({ type: "start", sector: "research", axis: "nouveau" });
-    expect(q("#agents .card.running")!.textContent).toContain("en cours");
-    expect((q("#go") as HTMLButtonElement).disabled).toBe(true);
+    expect(q("#phasebar .agent.running")!.textContent).toContain("en cours");
+    expect(q("#phasebar .agent.running")!.textContent).not.toContain("0 s");
+    expect(q("#run")!.textContent).toBe("Stop");
+    expect(q("#run")!.getAttribute("data-state")).toBe("running");
     expect(q("#idle")).toBeNull();
     send({ type: "end", sector: "research", axis: "nouveau", totalUsd: 1.08, remainingUsd: 20.52 });
     send({ type: "end", sector: "research", axis: "mal", ok: false });
-    expect(q("#agents .card.ok")!.textContent).toContain("réussi");
-    expect(q("#agents .card.fail")!.textContent).toContain("échec");
-    expect(q("#amounts")!.textContent).toContain("1,00 €");
+    expect(q("#phasebar .agent.ok")!.textContent).toContain("réussi");
+    expect(q("#phasebar .agent.fail")!.textContent).toContain("échec");
+    expect(q("#amounts")!.textContent).toBe("1,00 € sur 20 €");
     send({ type: "summary", phase: "research", message: "Premier résumé." });
     send({ type: "summary", phase: "implementation", message: "Second résumé." });
     expect(q("#latest")!.textContent).toBe("Second résumé.");
     expect(q("#hist")!.textContent).toContain("Premier résumé.");
-    send({ type: "error", message: "boum" });
-    expect(q("#log li.error")).toBeTruthy();
     send({ type: "done", message: "fini" });
-    expect((q("#go") as HTMLButtonElement).disabled).toBe(false);
+    expect(q("#run")!.textContent).toBe("Go");
+  });
+  it("erreur: bandeau persistant, ligne rouge au journal, effacee au prochain Go", () => {
+    const send = load();
+    send({ type: "start", sector: "research", axis: "mal" });
+    send({ type: "error", sector: "research", axis: "mal", message: "boum" });
+    expect(q("#alert")!.hasAttribute("hidden")).toBe(false);
+    expect(q("#alert")!.getAttribute("role")).toBe("alert");
+    expect(q("#alert")!.textContent).toContain("boum");
+    expect(q("#phasebar .agent.fail")).toBeTruthy();
+    expect(q("#log li.error")).toBeTruthy();
+    send({ type: "done", message: "terminé" });
+    expect(q("#alert")!.hasAttribute("hidden")).toBe(false);
+    (q("#run") as HTMLButtonElement).click();
+    expect(q("#alert")!.hasAttribute("hidden")).toBe(true);
+  });
+});
+
+describe("panneau: flux et journal", () => {
+  it("connexion perdue puis reprise", () => {
+    const send = load();
+    send.fail();
+    expect(q("#conn")!.hasAttribute("hidden")).toBe(false);
+    expect(q("#conn")!.textContent).toContain("Connexion perdue");
+    send.open();
+    expect(q("#conn")!.hasAttribute("hidden")).toBe(true);
+  });
+  it("journal: heure + type, filtre Erreurs seulement", () => {
+    const send = load();
+    send({ type: "info", message: "a" });
+    send({ type: "error", message: "b" });
+    expect(q("#log li time")!.textContent).toMatch(/^\d\d:\d\d:\d\d$/);
+    const only = q("#onlyErr") as HTMLInputElement;
+    only.checked = true; only.dispatchEvent(new Event("change"));
+    const shown = [...document.querySelectorAll("#log li")].filter((li) => !li.hasAttribute("hidden"));
+    expect(shown.length).toBe(1);
+    expect(shown[0].classList.contains("error")).toBe(true);
   });
 });
 
@@ -99,7 +144,7 @@ describe("panneau: fin de boucle", () => {
     send({ type: "done", message: "terminé" });
     expect(document.querySelectorAll("#phasebar .step.ok").length).toBe(4);
     expect(document.body.textContent).not.toContain("en cours");
-    expect(q("#status")!.textContent).toBe("Terminé · 3,06 $ dépensés sur 21,60 $");
+    expect(q("#status")!.textContent).toBe("Terminé · 2,83 € sur 20 €");
   });
   it("done ferme la phase restee en cours selon ses agents; arret => echec", () => {
     let send = load();
