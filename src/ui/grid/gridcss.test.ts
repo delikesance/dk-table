@@ -32,6 +32,14 @@ describe("grid.css", () => {
     expect(rule(".dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active")).toMatch(/--c-accent-soft-2/);
   });
   it("range fill uses accent-soft", () => expect(rule(".dkg-range")).toMatch(/--c-accent-soft/));
+  it("headers have their own opaque background token (visibly tinted, not the cell paper)", () => {
+    expect(rule(".dkg-corner, .dkg-colh, .dkg-rowh")).toMatch(/background:\s*var\(--c-header\)/);
+  });
+  it("selected headers keep an opaque base: the translucent tint never lets scrolled cells show through", () => {
+    const r = rule(".dkg-colh.dkg-on, .dkg-rowh.dkg-on");
+    expect(r).toMatch(/linear-gradient\(var\(--c-accent-soft\), var\(--c-accent-soft\)\) var\(--c-header\)/);
+    expect(rule(".dkg-colh.dkg-on-active, .dkg-rowh.dkg-on-active")).toMatch(/var\(--c-header\)/);
+  });
   it("headers medium weight, text-2", () => {
     const r = rule(".dkg-corner, .dkg-colh, .dkg-rowh");
     expect(r).toMatch(/--fw-medium/);
