@@ -13,7 +13,7 @@ async function docWithRef(ref: string): Promise<string> {
   const id = app.addDoc();
   await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
   const v = app.docEditor()!.view;
-  v.dispatch(v.state.tr.insert(1, v.state.schema.nodes.cellRef.create({ sheet, ref })));
+  v.dispatch({ changes: { from: 0, insert: `{{@${app.sheets().find((s) => s.id === sheet)!.name}!${ref}}}` } });
   return id;
 }
 
@@ -34,12 +34,11 @@ describe("références dans le document ouvert", () => {
   });
   it("la puce suit le renommage de la feuille", async () => {
     await docWithRef("B2");
-    chip().dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-    expect(document.querySelector(".dk-refcard")!.textContent).toContain("Feuille 1!B2");
+    expect(chip().title).toBe("Feuille 1!B2");
   });
   it("un clic ouvre la cellule dans la feuille, Alt+← ramène au document", async () => {
     const id = await docWithRef("B2");
-    chip().click();
+    chip().dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
     expect(app.activeDocId()).toBeUndefined();
     expect(app.selection()).toBe("B2");
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", altKey: true, bubbles: true }));
@@ -68,7 +67,7 @@ describe("coller une plage copiée dans la feuille", () => {
     fire(root.querySelector(".dkg")!, "copy", data);
     app.addDoc();
     await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
-    fire(app.docEditor()!.view.dom, "paste", data);
+    fire(app.docEditor()!.view.contentDOM, "paste", data);
     expect(root.querySelectorAll(".dk-block th")).toHaveLength(2);
     app.edit("B2", "77");
     expect(root.querySelector(".dk-block")!.textContent).toContain("77");

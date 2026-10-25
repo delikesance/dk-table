@@ -47,11 +47,11 @@ export interface DocMacro {
   code: string;
 }
 
-/** Rich-text document (dk doc) stored in the workbook; `content` is a ProseMirror doc as JSON. */
+/** Document (dk doc) stored in the workbook; `md` is its Markdown text, sheets cited by id (see src/doc/md). */
 export interface DocText {
   id: string;
   name: string;
-  content: { type: "doc"; content?: unknown[] };
+  md: string;
 }
 
 /** Whole document persisted as JSON. */

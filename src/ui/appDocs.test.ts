@@ -6,7 +6,7 @@ import { mount, type App } from "./app";
 /** Insert text at the start of the active document, through the editor view. */
 function type_(a: App, text: string): void {
   const v = a.docEditor()!.view;
-  v.dispatch(v.state.tr.insertText(text, 1));
+  v.dispatch({ changes: { from: 0, insert: text } });
 }
 
 let app: App;
@@ -31,7 +31,7 @@ describe("documents dans le classeur", () => {
     expect(app.activeDocId()).toBe(id);
     expect(docHost().hidden).toBe(false);
     expect(gridHost().hidden).toBe(true);
-    await vi.waitFor(() => expect(docHost().querySelector(".ProseMirror")).not.toBeNull());
+    await vi.waitFor(() => expect(docHost().querySelector(".cm-editor")).not.toBeNull());
   });
   it("revient à la grille en cliquant une feuille", () => {
     app.addDoc();
@@ -46,7 +46,7 @@ describe("documents dans le classeur", () => {
     type_(app, "Rapport");
     const saved = app.toDoc();
     expect(saved.docs).toHaveLength(1);
-    expect(JSON.stringify(saved.docs![0].content)).toContain("Rapport");
+    expect(saved.docs![0].md).toContain("Rapport");
     app.loadDoc({ version: 1, sheets: saved.sheets, active: saved.active });
     expect(app.toDoc().docs).toBeUndefined();
     expect(tabs()).toHaveLength(1);

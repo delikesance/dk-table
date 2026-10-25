@@ -1,10 +1,10 @@
-/** Helpers shared by the Markdown and HTML exports (read from the JSON content, no ProseMirror needed). */
+/** Helpers shared by the Markdown and HTML exports (read from the JSON tree of `mdToJson`). */
 import { chartData, readRange, tableView, type BlockAttrs } from "./blocks";
 import { resolveRef, type RefBook } from "./refs";
 import { trendInfo } from "../engine/live";
 import { createCalc, type Calc } from "./calc";
 
-/** Minimal shape of a ProseMirror JSON node. */
+/** Minimal shape of a node of the document tree. */
 export interface JNode { type: string; attrs?: Record<string, unknown>; content?: JNode[]; text?: string; marks?: { type: string; attrs?: Record<string, unknown> }[] }
 
 /** Text of a cell reference chip. */
