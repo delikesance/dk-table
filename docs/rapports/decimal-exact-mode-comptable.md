@@ -6,9 +6,10 @@ Visible : oui
 - `engine/decimal.ts`, evaluator `fix`, champ `.dktable` `decimal`, case dans Paramètres, recalcul au changement, coin orange + infobulle (`dkg-gap`), docs/decimal-exact.md.
 
 ## Non fait
+- Le design `docs/design/2026-10-25-180012.html` ne couvre pas cette fonctionnalité (aucune mention écart/décimal); conformité non vérifiable, UI alignée sur les tokens existants (`--c-error`, Paramètres).
 
 ## Preuves
-- Tests : ok (`npm test` : 302 fichiers, 2219 tests passés, 4 ignorés; `npx tsc --noEmit` sans erreur)
+- Tests : ok (`npm test` : 307 fichiers passés + 4 ignorés; 2240 tests passés, 4 ignorés; `npx tsc --noEmit` sans erreur)
 - E2E : `npm run test:e2e -- feat-decimal` : 2 passed (clair 655ms, sombre 604ms)
 - Captures : docs/screenshots/decimal-exact-mode-comptable/option-clair.png, option-sombre.png, ecart-clair.png, ecart-sombre.png
 
