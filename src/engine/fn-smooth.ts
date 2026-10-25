@@ -49,7 +49,7 @@ export function movingAverage(args: SArg[]): SpillResult {
 /**
  * EXP_SMOOTH(plage; alpha) : s_1 = x_1, puis s_t = alpha*x_t + (1-alpha)*s_(t-1), alpha dans ]0;1].
  * Une case vide ou non numérique donne une case vide et ne met pas s à jour.
- * alpha hors ]0;1] -> #NUM!.
+ * alpha hors ]0;1] -> #VALUE! (erreur de valeur).
  */
 export function expSmooth(args: SArg[]): SpillResult {
   if (args.length !== 2) return err("#VALUE!");
@@ -57,7 +57,7 @@ export function expSmooth(args: SArg[]): SpillResult {
   if (!xs) return err("#VALUE!");
   const alpha = toNum(first(args[1]));
   if (typeof alpha !== "number") return alpha;
-  if (!(alpha > 0 && alpha <= 1)) return err("#NUM!");
+  if (!(alpha > 0 && alpha <= 1)) return err("#VALUE!");
   const e = firstErr(xs);
   if (e) return e;
   const out: Value[][] = [];
