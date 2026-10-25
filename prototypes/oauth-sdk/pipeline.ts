@@ -138,7 +138,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
         const m = await flow.mergeIfGreen(branch, dir);
-        ok = m.merged; conflict = !!m.conflict;
+        ok = m.merged; conflict = !!m.conflict; if (!ok && !isDesign) await flow.release(branch, dir); // le design non fusionne reste affiche par la toile
         send({
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
