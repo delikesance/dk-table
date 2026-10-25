@@ -1,60 +1,37 @@
-# CI: guarded steps so it passes on a near-empty repo.
+# CI rapide : tout push sur une branche autre que `main` (une PR vers développement a déjà ses pushs).
+# Objectif < 1-2 min : types + tests des fichiers modifiés seulement.
+# Les gros tests (vitest complet, e2e, Rust, builds) sont dans ci-full.yml (vers/sur main).
 name: CI
 
 on:
   push:
-  pull_request:
+    branches-ignore: [main]
+
+# Un nouveau push annule le run précédent de la même branche.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  fast:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
+      # Deux commits : HEAD~1 sert de base à --changed (suffit pour un push ou un merge).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          # Cache only once a lockfile exists (setup-node errors otherwise)
-          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+          cache: npm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci --no-audit --no-fund --prefer-offline
 
-      - uses: Swatinem/rust-cache@v2
-        if: ${{ hashFiles('src-tauri/Cargo.toml') != '' }}
-        with:
-          workspaces: src-tauri
+      - name: Types
+        run: npx tsc --noEmit
 
-      # Tauri v2 Linux deps (only when the Tauri crate exists)
-      - name: Install Tauri system deps
-        if: ${{ hashFiles('src-tauri/Cargo.toml') != '' }}
-        timeout-minutes: 10
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends             libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev             patchelf build-essential libssl-dev libxdo-dev
-
-      - name: npm ci
-        if: ${{ hashFiles('package.json') != '' }}
-        run: npm ci
-
-      - name: npm test
-        if: ${{ hashFiles('package.json') != '' }}
-        run: npm test --if-present
-
-      - name: cargo test
-        if: ${{ hashFiles('src-tauri/Cargo.toml') != '' }}
-        run: cargo test --manifest-path src-tauri/Cargo.toml
-
-  e2e:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # Seuls les tests liés aux fichiers modifiés ; la suite complète tourne vers main.
+      - name: Tests des fichiers modifiés
+        run: npx vitest run --changed HEAD~1 --passWithNoTests
