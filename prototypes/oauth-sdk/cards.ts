@@ -49,7 +49,7 @@ export async function buildBoard(d: BoardDeps): Promise<BoardCard[]> {
     const known = new Set<string>();
     await Promise.all((report?.screenshots ?? []).map(async (p) => { if (await d.exists(p).catch(() => false)) known.add(p); }));
     const proof = report ? validateReport(report, (p) => known.has(p)) : { ok: true, missing: [] };
-    const r = reconcileCard({ status: c.status, report, proof, active: !!d.active?.has(c.id), ledgered: kept.has(c.id) });
+    const r = reconcileCard({ status: c.status, report, proof, active: !!d.active?.has(c.id), ledgered: kept.has(c.id), proven: !!report?.proof });
     if (kept.has(c.id) && !(report?.status === "termine" && proof.ok)) return { ...fromLedger(kept.get(c.id)!), axis: c.axis ?? kept.get(c.id)!.axis };
     return { ...c, report, ...r, reportPath: path, markdown: md || undefined };
   }));

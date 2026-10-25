@@ -14,7 +14,8 @@ Visible : oui
 - aucun
 
 ## Preuves
-- Tests : npm test -> OK (412 tests)
+- Tests : ok (412 tests)
+<!-- boucle-proof {"tests":{"ok":true,"count":412,"scope":"full"},"tsc":{"ok":true}} -->
 - Captures : docs/screenshots/tri/clair.png, docs/screenshots/tri/sombre.png
 
 ## Decisions
@@ -29,7 +30,8 @@ describe("parseReport", () => {
     expect(r.visible).toBe(true);
     expect(r.done).toEqual(["Tri sur 2 colonnes", "Test ecrit en premier : src/engine/sort.test.ts"]);
     expect(r.todo).toEqual(["aucun"]);
-    expect(r.tests).toBe("npm test -> OK (412 tests)");
+    expect(r.tests).toBe("ok (412 tests)");
+    expect(r.proof).toEqual({ tests: { ok: true, count: 412, scope: "full" }, tsc: { ok: true } });
     expect(r.screenshots).toEqual(["docs/screenshots/tri/clair.png", "docs/screenshots/tri/sombre.png"]);
     expect(r.decisions).toEqual(["Tri stable ou non ? -> stable (trancheur)"]);
   });
@@ -56,7 +58,7 @@ describe("validateReport", () => {
     const r = parseReport("# Rapport : x\nStatut : termine\nVisible : oui\n## Fait\n\n## Preuves\n");
     const v = validateReport(r, () => false);
     expect(v.ok).toBe(false);
-    expect(v.missing).toEqual(expect.arrayContaining(["fait", "tests", "captures"]));
+    expect(v.missing).toEqual(expect.arrayContaining(["fait", "preuves", "captures"]));
   });
   it("capture declaree mais fichier absent", () => {
     const v = validateReport(parseReport(GOOD), (p) => !p.endsWith("sombre.png"));
@@ -65,7 +67,7 @@ describe("validateReport", () => {
   it("visible: non dispense des captures mais pas des tests", () => {
     const md = GOOD.replace("Visible : oui", "Visible : non").replace(/- Captures.*\n/, "");
     expect(validateReport(parseReport(md), exists).ok).toBe(true);
-    expect(validateReport(parseReport(md.replace(/- Tests.*\n/, "")), exists).missing).toEqual(["tests"]);
+    expect(validateReport(parseReport(md.replace(/<!--.*-->\n/, "")), exists).missing).toEqual(["preuves"]);
   });
   it("un rapport en cours n'exige rien", () => {
     expect(validateReport(parseReport("Statut : en-cours"), () => false).ok).toBe(true);
@@ -93,5 +95,6 @@ describe("reportTemplate", () => {
     const r = parseReport(reportTemplate("Mon idee"));
     expect(r.title).toBe("Mon idee");
     expect(r.status).toBe("en-cours");
+    expect(reportTemplate("x")).not.toMatch(/Statut|Preuves/); // ecrits par le code
   });
 });

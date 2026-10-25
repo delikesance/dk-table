@@ -6,7 +6,7 @@ import type { QueryFn } from "./research";
 import { reconcileCard } from "./reconcile";
 import { parseReport } from "./card";
 
-const OK = "# Rapport : A\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (3)\n- Captures : docs/screenshots/a/a.png\n";
+const OK = "# Rapport : A\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (3)\n<!-- boucle-proof {\"tests\":{\"ok\":true,\"count\":12},\"tsc\":{\"ok\":true}} -->\n- Captures : docs/screenshots/a/a.png\n";
 const WIP = "# Rapport : A\nStatut : en-cours\n\n## Fait\n- debut\n";
 const base = { status: "found" as const, report: undefined, proof: { ok: true, missing: [] as string[] }, active: false, ledgered: false };
 const r = (md: string) => parseReport(md);
@@ -22,6 +22,9 @@ describe("reconcileCard", () => {
     const x = reconcileCard({ ...base, report: r(WIP) });
     expect(x.state).toBe("idee");
     expect(x.anomalies[0]).toMatch(/orpheline/);
+  });
+  it("rapport « en cours » portant des preuves du code (travail partiel fusionne): reste en cours, pas orphelin", () => {
+    expect(reconcileCard({ ...base, report: r(WIP), proven: true })).toMatchObject({ state: "en-cours", anomalies: [] });
   });
   it("rapport « en cours » avec agent actif = en cours, sans anomalie", () => {
     expect(reconcileCard({ ...base, report: r(WIP), active: true })).toMatchObject({ state: "en-cours", anomalies: [] });

@@ -28,7 +28,7 @@ describe("parseCaptures", () => {
   });
 });
 describe("rapport complet", () => {
-  const md = (caps: string) => `# Rapport : x\nStatut : termine\nVisible : oui\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n- Captures : ${caps}\n`;
+  const md = (caps: string) => `# Rapport : x\nStatut : termine\nVisible : oui\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n<!-- boucle-proof {"tests":{"ok":true,"count":12},"tsc":{"ok":true}} -->\n- Captures : ${caps}\n`;
   it("accolades developpees puis verifiees une a une par le code", () => {
     const r = parseReport(md("docs/s/{a,b}-{clair,sombre}.png"));
     expect(r.screenshots).toHaveLength(4);

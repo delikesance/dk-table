@@ -29,3 +29,9 @@ export function onlyOnBranch(branch: string[], base: string[]): string[] {
   const b = new Set(base);
   return branch.filter((t) => !b.has(t) && !b.has(t.split(" > ")[0]));
 }
+
+/** Nombre de tests passes lu dans le bilan vitest (`Tests  458 passed | 4 skipped (462)`); `undefined` si illisible. */
+export function testCount(out: string): number | undefined {
+  const m = /^\s*Tests\s+(?:\d+ failed \| )?(\d+) passed/m.exec(stripAnsi(out));
+  return m ? Number(m[1]) : undefined;
+}

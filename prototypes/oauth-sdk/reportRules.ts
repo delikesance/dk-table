@@ -4,7 +4,7 @@
  * Quoi : `pickBatch(cartes)` choisit les cartes a traiter (reprise des cartes commencees d'abord),
  *        `reportRules(lot)` rend le texte ajoute au prompt : TDD, rapport `docs/rapports/<id>.md`,
  *        captures, zero question (les doutes vont au sous-agent `trancheur`).
- * Pourquoi : une carte n'est terminee que si son rapport prouve le travail (card.ts / cards.ts).
+ * Pourquoi : une carte n'est terminee que si les preuves ECRITES PAR LE CODE (proveReport.ts) sont vertes (card.ts / cards.ts).
  * Usage : `reportRules(pickBatch(board))`.
  */
 import { reportTemplate } from "./card";
@@ -30,10 +30,9 @@ export function reportRules(batch: Pick<BoardCard, "id" | "title" | "source" | "
     "Cartes a traiter dans cette tournee (traite-les toutes) :", list, "",
     "Pour CHAQUE carte, des le debut puis a chaque etape, tiens a jour `docs/rapports/<id>.md` (gabarit ci-dessous, ecris-le avant de coder) :",
     "1. TDD : ecris d'abord un test qui echoue, lance `npm test`, puis implemente jusqu'au vert.",
-    "2. Si la carte a un effet visible : capture Playwright (viewport 1200x800, `?onboarding=0`, clair ET sombre) dans docs/screenshots/<id>/ ; sinon ecris `Visible : non`.",
-    "3. Preuves : `- Tests : ok (N tests)` et `- Captures : chemin1.png, chemin2.png` (chemins depuis la racine du depot).",
-    "4. `Statut : termine` seulement si les tests sont verts et les captures existent; sinon `Statut : bloque` et la raison sous `## Non fait`.",
-    "5. Mets TODO.md a jour (coche la tache).",
+    "2. Si la carte a un effet visible : capture Playwright (viewport 1200x800, `?onboarding=0`, clair ET sombre) dans docs/screenshots/<id>/, chemins listes sous `## Captures` (depuis la racine du depot) ; sinon ecris `Visible : non`.",
+    "3. N'ecris NI `Statut`, NI `## Preuves`, NI les resultats de tests, NI TODO.md : la boucle lance tests et tsc, ecrit les preuves, le statut et coche TODO.md apres la fusion.",
+    "4. Ce qui reste a faire va sous `## Non fait` (la carte sera reprise); si tu ne peux pas finir, ecris la raison sous `## Bloque`.",
     "Aucune question a l'utilisateur, jamais de question : devant un doute, delegue-le au sous-agent `trancheur` (outil Agent), applique sa decision et note-la sous `## Decisions`.",
     "Utilise les skills et outils disponibles quand ils aident.", "",
     "Gabarit du rapport :", "```", reportTemplate("<titre de la carte>"), "```",

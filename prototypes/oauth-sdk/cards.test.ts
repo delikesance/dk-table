@@ -10,7 +10,7 @@ const MD = `## Idees nouvelles
 - **Gamma idee** : troisieme.
 - **Delta idee** : quatrieme.
 `;
-const done = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n- Captures : docs/screenshots/b/a.png\n";
+const done = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n<!-- boucle-proof {\"tests\":{\"ok\":true,\"count\":12},\"tsc\":{\"ok\":true}} -->\n- Captures : docs/screenshots/b/a.png\n";
 const files: Record<string, string> = {
   "docs/recherche/fonctionnalites.md": MD, "TODO.md": "- [ ] Alpha idee en cours\n",
   [reportPath("beta-idee")]: done,

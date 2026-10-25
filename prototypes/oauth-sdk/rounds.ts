@@ -100,6 +100,8 @@ export interface RoundsCtx {
   halt: () => "abort" | "budget" | null;
   /** Cartes restantes apres chaque lecture du tableau. */
   progress: (remaining: number) => void;
+  /** Preuves manquantes seulement (rapport complet): le code les ecrit sans agent; renvoie les ids prouves. */
+  prove?: (cards: BoardCard[]) => Promise<string[]>;
   /** Etat persistant (absent: rien n'est ecrit). Un run interrompu (`finished` faux) reprend planificateur et `avoid`. */
   state?: StateStore;
   /** Depense du run (USD), ecrite avec l'etat. */
@@ -142,7 +144,10 @@ export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reas
       run: (cards, task, a) => c.impl(task, a, cards),
     });
     cards = await c.board();
-    const bad = cards.filter((x) => ids.includes(x.id) && x.state === "preuves");
+    const isBad = (x: BoardCard) => ids.includes(x.id) && x.state === "preuves";
+    const provable = cards.filter((x) => isBad(x) && x.missing.length === 1 && x.missing[0] === "preuves");
+    if (provable.length && c.prove && !c.halt() && (await c.prove(provable)).length) cards = await c.board();
+    const bad = cards.filter(isBad);
     if (!c.halt() && (!merged || bad.length)) {
       await c.corr(correctionTask(merged, bad), attempt);
       cards = await c.board();
