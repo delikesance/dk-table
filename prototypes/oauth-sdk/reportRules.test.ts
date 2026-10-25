@@ -9,7 +9,8 @@ describe("reportRules", () => {
     const t = reportRules([card("a", "idee"), card("b", "preuves")]);
     expect(t).toContain("docs/rapports/a.md");
     expect(t).toContain("T b");
-    expect(t).toMatch(/Statut : termine/);
+    expect(t).toMatch(/N'ecris NI `Statut`/); // les preuves sont ecrites par le code
+    expect(t).not.toMatch(/Tests : ok/);
     expect(t).toMatch(/test qui echoue/);
     expect(t).toMatch(/docs\/screenshots\/<id>/);
     expect(t).toMatch(/trancheur/);

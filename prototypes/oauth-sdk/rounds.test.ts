@@ -67,6 +67,24 @@ describe("stopMessage", () => {
   });
 });
 
+describe("runRounds: preuves ecrites par le code", () => {
+  const stuck = (missing: string[]): BoardCard => ({ ...card("a", "preuves"), missing } as BoardCard);
+  it("preuves seules manquantes: le code les ecrit, aucun agent de correction", async () => {
+    let proved = false, corr = 0;
+    const board = async () => [proved ? card("a", "termine") : stuck(["preuves"])];
+    const r = await runRounds({ board, impl: async () => ({ merged: true }), corr: async () => { corr++; return true; }, emit: () => {}, halt: () => null, progress: () => {}, prove: async (cs) => { proved = true; return cs.map((x) => x.id); } });
+    expect(r.complete).toBe(true);
+    expect(corr).toBe(0);
+  });
+  it("autre chose que les preuves (fait, captures): la correction reste a l'agent", async () => {
+    let corr = 0, proves = 0, done = false;
+    const board = async () => [done ? card("a", "termine") : stuck(["captures"])];
+    await runRounds({ board, impl: async () => ({ merged: true }), corr: async () => { corr++; done = true; return true; }, emit: () => {}, halt: () => null, progress: () => {}, prove: async () => { proves++; return []; } });
+    expect(proves).toBe(0);
+    expect(corr).toBe(1);
+  });
+});
+
 describe("runRounds: etat persistant", () => {
   const mk = (state: ReturnType<typeof createFileStateStore>, cards: () => BoardCard[]) => ({
     board: async () => cards(), impl: async () => ({ merged: true }), corr: async () => true,

@@ -10,7 +10,8 @@ import { failureDigest } from "./cleanOutput";
 import { createMutex, type LockStat, type Mutex } from "./concurrency";
 import type { Run } from "./git";
 import { relatedFailures } from "./mergeGuard";
-import { failedFiles, failedTests, onlyOnBranch } from "./testFailures";
+import type { Proof } from "./card";
+import { failedFiles, failedTests, onlyOnBranch, testCount } from "./testFailures";
 
 /** Dependances fournies par le flux git. */
 export interface ChecksDeps {
@@ -30,28 +31,48 @@ export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDe
   /** Worktree de reference (developpement detache), cree a la demande: sert a savoir si un test rouge l'est deja sur la base. */
   const baseLock = createMutex({ name: "baseLock", onLock });
   let baseDir: string | null = null;
+  /** Met le worktree de reference sur `developpement` (cree et installe a la demande); `null` si impossible. A appeler sous `baseLock`. */
+  async function ensureBase(): Promise<string | null> {
+    if (!baseDir) {
+      const dir = await lock.run(async () => {
+        const d = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/base-${Date.now()}`;
+        return (await git(["worktree", "add", "--detach", d, DEV])).code === 0 ? d : null;
+      });
+      if (!dir) return null;
+      if ((await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir)).code !== 0) { await git(["worktree", "remove", "--force", dir]); return null; }
+      baseDir = dir;
+    } else await git(["checkout", "--detach", DEV], baseDir);
+    return baseDir;
+  }
+
   async function baseFailures(files: string[]): Promise<string[] | null> {
     return baseLock.run(async () => {
-      if (!baseDir) {
-        const dir = await lock.run(async () => {
-          const d = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/base-${Date.now()}`;
-          return (await git(["worktree", "add", "--detach", d, DEV])).code === 0 ? d : null;
-        });
-        if (!dir) return null;
-        if ((await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir)).code !== 0) { await git(["worktree", "remove", "--force", dir]); return null; }
-        baseDir = dir;
-      } else await git(["checkout", "--detach", DEV], baseDir);
-      const r = await run("npm", ["test", "--", ...files], baseDir);
+      const dir = await ensureBase();
+      if (!dir) return null;
+      const r = await run("npm", ["test", "--", ...files], dir);
       return r.code === 0 ? [] : failedTests(r.out);
+    });
+  }
+
+  /** Suite complete + tsc sur `developpement` dans le worktree de reference (jamais l'arbre principal de l'utilisateur). */
+  async function checkBase(): Promise<{ reason: string | null; proof?: Proof }> {
+    return baseLock.run(async () => { // le worktree de reference ne bouge pas pendant la suite
+      const dir = await ensureBase();
+      if (!dir) return { reason: "worktree de reference indisponible (creation ou npm ci)" };
+      const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
+      if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
+      if (t.code !== 0) return { reason: `npm test failed: ${failureDigest(t.out)}` };
+      return { reason: null, proof: { tests: { ok: true, count: testCount(t.out), scope: "full" }, tsc: { ok: true } } };
     });
   }
 
   const suiteLock = createMutex({ name: "suiteLock", onLock }); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
   /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
-  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[] }> {
+  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[]; proof?: Proof }> {
     const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
     if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}` };
-    if (t.code === 0) return { reason: null };
+    const proof: Proof = { tests: { ok: true, count: testCount(t.out), scope: "full" }, tsc: { ok: true } };
+    if (t.code === 0) return { reason: null, proof };
     const mine = failedTests(t.out);
     const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
     if (!base) return { reason: `npm test failed: ${failureDigest(t.out)}` };
@@ -59,7 +80,7 @@ export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDe
     if (added.length) return { reason: `npm test failed (introduit par la branche): ${added.join("; ")}\n${failureDigest(t.out)}` };
     const changed = (await git(["diff", "--name-only", `${DEV}...HEAD`], dir)).out.split(/\r?\n/).filter(Boolean);
     const linked = relatedFailures(mine, changed);
-    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}` } : { reason: null, preexisting: mine };
+    return linked.length ? { reason: `npm test failed (deja rouge sur la base mais lie aux fichiers modifies par la carte): ${linked.join("; ")}` } : { reason: null, preexisting: mine, proof };
   }
 
   /** Retire le worktree de reference (fin du run). */
@@ -68,5 +89,5 @@ export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDe
     if (d) await git(["worktree", "remove", "--force", d]);
   }
 
-  return { checks, dispose };
+  return { checks, checkBase, dispose };
 }

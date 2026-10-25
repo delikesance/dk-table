@@ -12,7 +12,7 @@ const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
 
 const MD = "## Idees nouvelles\n\n- **Beta idee** : deuxieme. Texte.\n- **Alpha idee** : premiere.\n";
-const REPORT = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n- Captures : docs/screenshots/b/a.png\n";
+const REPORT = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (12)\n<!-- boucle-proof {\"tests\":{\"ok\":true,\"count\":12},\"tsc\":{\"ok\":true}} -->\n- Captures : docs/screenshots/b/a.png\n";
 const query = (() => (async function* () {})()) as QueryFn;
 const exists = async () => true;
 /** Depot simule: fichiers lisibles, modifiables entre deux tournees. */

@@ -22,6 +22,7 @@ import { researchSector } from "./researchSector";
 import { parseOverride } from "./routing";
 import type { AgentResult } from "./parallel";
 import { runRounds, stopMessage, type StopReason } from "./rounds";
+import { createProver } from "./proveCards";
 import { beginRun } from "./resume";
 import { watchReports as defaultWatchReports } from "./reportWatch";
 import { SECTORS, type Sector } from "./sectors";
@@ -73,7 +74,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     /** Un secteur: worktree, execution (consigne `task` en plus), commit, fusion si vert. */
     const live = new Set<string>(), inflight: Record<string, number> = {};
     const setDir = (dir: string, on: boolean) => { if (on) live.add(dir); else live.delete(dir); deps.onDir?.(on ? dir : [...live].at(-1) ?? null); deps.onDirs?.([...live]); };
-    const runOne = async (sector: Sector, task?: string, attempt = 0, cards: { id: string }[] = []): Promise<AgentResult> => {
+    const runOne = async (sector: Sector, task?: string, attempt = 0, cards: { id: string; title: string }[] = []): Promise<AgentResult> => {
       const agent = cards.map((c) => c.id).join(", ") || undefined;
       const { branch, dir } = await flow.startSector(sector.name, cards.map((c) => c.id).join("-"));
       setDir(dir, true); inflight[sector.name] = (inflight[sector.name] ?? 0) + 1;
@@ -104,12 +105,14 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
           await writeDesignRecap({ ddir, steps, build: deps.buildRecap, write, list: deps.listDesigns ?? listDesigns, read: deps.readDesign ?? readDesign });
         }
         await flow.commit(dir, `Boucle: ${sector.name}`);
-        const m = await flow.mergeIfGreen(branch, dir);
+        const m = await flow.mergeIfGreen(branch, dir, sector.name === "implementation" && cards.length ? { prove: createProver({ cwd: deps.cwd, cards }) } : undefined);
         ok = m.merged; conflict = !!m.conflict; if (!ok && !isDesign) await flow.release(branch, dir); // le design non fusionne reste affiche par la toile
         send({
           type: "info", sector: sector.name,
           message: m.merged ? `${branch} fusionne dans developpement` : `non fusionne (${m.reason ?? "?"})`,
         });
+        if (m.proofCommit) send({ type: "info", sector: sector.name, message: `preuves ecrites par le code (commit ${m.proofCommit}) : rapports + TODO.md` });
+        if (m.proofError) send({ type: "info", sector: sector.name, message: `anomalie : preuves non ecrites (${m.proofError})` });
         if (m.preexisting?.length) send({ type: "info", sector: sector.name, message: `anomalie : test(s) deja rouge(s) sur developpement, sans rapport avec la carte : ${m.preexisting.join("; ")}` });
         if (m.merged && m.push) send({ type: "info", sector: sector.name, message: m.push.pushed ? "developpement pousse sur origin" : `push non effectue : ${m.push.reason}` });
       } finally {
@@ -152,6 +155,11 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       impl: (task, attempt, cards) => runOne(implementation, task, attempt, cards), parallel,
       corr: async (task, attempt) => (await runOne(correction, task, attempt)).merged,
       emit: onEvent, progress: (n) => { remaining = n; }, state: deps.state, spent: () => budget.spent(),
+      prove: async (cs) => {
+        const r = await flow.reprove(createProver({ cwd: deps.cwd, cards: cs }));
+        onEvent({ type: "info", message: r.proved.length ? `preuves ecrites par le code sans agent (commit ${r.proofCommit ?? "?"}) : ${r.proved.join(", ")}` : `preuves non ecrites : ${r.reason ?? "aucun rapport"}` });
+        return r.proved;
+      },
       halt: () => (signal.aborted ? "abort" : budget.exhausted() ? "budget" : null),
     });
     const { complete, reason, cards } = res;

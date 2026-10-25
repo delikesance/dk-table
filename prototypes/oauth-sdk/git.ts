@@ -4,6 +4,9 @@
  * The command runner is injected so tests need no real git.
  */
 import { stripAnsi } from "./cleanOutput";
+import type { Proof } from "./card";
+import { createProofs } from "./gitProofs";
+import { createPush, type PushResult } from "./gitPush";
 import { createMutex, type LockStat } from "./concurrency";
 import { createChecks } from "./gitChecks";
 
@@ -21,17 +24,30 @@ export interface GitFlow {
    * Tests + tsc dans dir; si vert, sous verrou: synchronise la branche avec developpement (tests relances si developpement a avance),
    * fusion --no-ff, retrait du worktree, push. `conflict`: la synchro a echoue (la carte sera relancee en serie).
    */
-  mergeIfGreen(branch: string, dir: string): Promise<{ merged: boolean; reason?: string; conflict?: boolean; preexisting?: string[]; push?: PushResult }>;
+  mergeIfGreen(branch: string, dir: string, extra?: MergeExtra): Promise<MergeResult>;
   /** Agent non fusionne : retire son worktree (npm ci pese des centaines de Mo); la branche reste (le travail y est), sauf si elle est vide. Sans effet si le commit a echoue. */
   release(branch: string, dir: string): Promise<void>;
   /** Retire le worktree de reference (fin du run). */
   dispose(): Promise<void>;
+  /** Preuves de cartes dont le rapport est complet mais sans preuves ecrites par le code: suite complete sur `developpement` (worktree de reference), puis commit de preuves si verte. Sans agent. */
+  reprove(prove: (proof: Proof) => Promise<string[]>): Promise<{ proved: string[]; reason?: string; proofCommit?: string }>;
   /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
   pushDev(): Promise<PushResult>;
 }
 
-/** Resultat d'un push: `reason` dit pourquoi rien n'est parti (journal). */
-export interface PushResult { pushed: boolean; reason?: string }
+/** Crochet apres une fusion verte: ecrit rapports/TODO dans l'arbre principal; renvoie les ids prouves (vide: rien a commiter). */
+export interface MergeExtra { prove?: (proof: Proof) => Promise<string[]> }
+
+/** Resultat de `mergeIfGreen`. `proofCommit`: commit `Boucle: preuves ...` ecrit apres la fusion (identifiable, jamais reverifie). */
+export interface MergeResult {
+  merged: boolean; reason?: string; conflict?: boolean; preexisting?: string[]; push?: PushResult;
+  proof?: Proof; proofCommit?: string; proofError?: string;
+}
+
+/** Fichiers ecrits par le code (rapports, TODO.md): un changement qui ne touche qu'eux ne relance aucune verification. */
+export const isMeta = (p: string) => p === "TODO.md" || p.startsWith("docs/rapports/");
+
+export type { PushResult } from "./gitPush";
 
 /** Options du flux git. */
 export interface GitOpts {
@@ -97,16 +113,18 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return (await git(["checkout", DEV])).code === 0;
   }
 
-  const { checks, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock });
+  const { writeProofs, reprove } = createProofs({ git, lock, onDev, check: () => checkBase(), trailer: TRAILER });
+  const pushDev = createPush(git, DEV, !!opts.push);
+  const { checks, checkBase, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock });
 
-  async function mergeIfGreen(branch: string, dir: string) {
+  async function mergeIfGreen(branch: string, dir: string, extra: MergeExtra = {}): Promise<MergeResult> {
     const failed = installFail.get(dir);
     if (failed) return { merged: false, reason: failed };
     const noCommit = commitFail.get(dir);
     if (noCommit) return { merged: false, reason: `commit failed: ${noCommit}` };
     const first = await checks(dir);
     if (first.reason) return { merged: false, reason: first.reason };
-    let preexisting = first.preexisting;
+    let preexisting = first.preexisting, proof = first.proof;
     return lock.run(async () => {
       if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
       const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
@@ -118,10 +136,16 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
         await git(["merge", "--abort"], dir);
         return { merged: false, conflict: true, reason: `merge conflict avec ${DEV}: ${stripAnsi(sync.out).slice(-500)}` };
       }
-      if ((await git(["rev-parse", "HEAD"], dir)).out !== head) {
-        const again = await checks(dir); // tests sur l'etat fusionne, pas sur l'etat de depart
-        if (again.reason) return { merged: false, reason: `apres synchro avec ${DEV}: ${again.reason}` };
-        preexisting = again.preexisting ?? preexisting;
+      const now = (await git(["rev-parse", "HEAD"], dir)).out;
+      if (now !== head) {
+        // un developpement qui n'a avance que par des preuves/TODO ecrits par le code ne justifie aucune nouvelle verification
+        const moved = (await git(["diff", "--name-only", head.trim(), now.trim()], dir)).out.split(/\r?\n/).filter(Boolean);
+        if (!moved.length || !moved.every(isMeta)) {
+          const again = await checks(dir); // tests sur l'etat fusionne, pas sur l'etat de depart
+          if (again.reason) return { merged: false, reason: `apres synchro avec ${DEV}: ${again.reason}` };
+          preexisting = again.preexisting ?? preexisting;
+          proof = again.proof ?? proof;
+        }
       }
       const before = (await git(["rev-parse", "HEAD"])).out.trim();
       const m = await git(["merge", "--no-ff", branch]);
@@ -135,28 +159,11 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
         await git(["reset", "--keep", before]);
         return { merged: false, reason: `arbre fusionne different de l'arbre verifie (${merged.slice(0, 8)} / ${tested.slice(0, 8)}) : fusion annulee` };
       }
+      const prov = await writeProofs(proof, extra.prove);
       await git(["worktree", "remove", "--force", dir]);
       // suite non verte (tests deja rouges tolérés): on garde la fusion en local, jamais sur origin
-      return { merged: true, preexisting, push: preexisting?.length ? { pushed: false, reason: "suite non verte (tests deja rouges sur la base) : push retenu" } : await pushDev() };
+      return { merged: true, preexisting, proof, ...prov, push: preexisting?.length ? { pushed: false, reason: "suite non verte (tests deja rouges sur la base) : push retenu" } : await pushDev() };
     });
-  }
-
-  /** Push de `developpement` seulement (refspec explicite), apres integration du distant s'il est en avance. */
-  async function pushDev(): Promise<PushResult> {
-    if (!opts.push) return { pushed: false, reason: "push desactive (BOUCLE_PUSH=0)" };
-    if ((await git(["remote", "get-url", "origin"])).code !== 0) return { pushed: false, reason: "pas de remote origin" };
-    if ((await git(["rev-parse", "--abbrev-ref", "HEAD"])).out.trim() !== DEV) return { pushed: false, reason: `push refuse : pas sur ${DEV}` };
-    const push = () => git(["push", "origin", `${DEV}:${DEV}`]);
-    let r = await push();
-    if (r.code === 0) return { pushed: true };
-    // rejete: integrer le distant (fusion, jamais de rebase d'un historique fusionne) puis repousser une fois
-    const f = await git(["pull", "--no-rebase", "--no-edit", "origin", DEV]);
-    if (f.code !== 0) {
-      await git(["merge", "--abort"]);
-      return { pushed: false, reason: `push rejete, conflit avec origin/${DEV} : ${stripAnsi(f.out).slice(-300)}` };
-    }
-    r = await push();
-    return r.code === 0 ? { pushed: true } : { pushed: false, reason: `push echoue : ${stripAnsi(r.out).slice(-300)}` };
   }
 
   async function release(branch: string, dir: string): Promise<void> {
@@ -171,5 +178,5 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
 
   const dispose = disposeChecks;
 
-  return { ensureDev, startSector, commit, mergeIfGreen, pushDev, release, dispose };
+  return { ensureDev, startSector, commit, mergeIfGreen, reprove, pushDev, release, dispose };
 }

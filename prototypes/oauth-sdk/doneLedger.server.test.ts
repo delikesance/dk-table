@@ -14,7 +14,7 @@ const servers: Server[] = [];
 const dirs: string[] = [];
 afterEach(() => { servers.splice(0).forEach((s) => s.close()); for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
 
-const REPORT = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (3)\n- Captures : docs/screenshots/b/a.png\n";
+const REPORT = "# Rapport : Beta\nStatut : termine\n\n## Fait\n- ok\n\n## Preuves\n- Tests : ok (3)\n<!-- boucle-proof {\"tests\":{\"ok\":true,\"count\":12},\"tsc\":{\"ok\":true}} -->\n- Captures : docs/screenshots/b/a.png\n";
 const query = (() => (async function* () {})()) as QueryFn;
 const run = async () => ({ code: 1, out: "" });
 async function start(cwd: string) {
