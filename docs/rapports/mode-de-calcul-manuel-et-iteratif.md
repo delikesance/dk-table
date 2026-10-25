@@ -1,5 +1,5 @@
 # Rapport : Mode de calcul manuel et itératif
-Statut : en-cours
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -21,35 +21,21 @@ Visible : oui
 
 ## Non fait
 
-- Lint : aucun script dédié dans le projet, seuls `tsc --noEmit` et vitest ont été lancés.
-
 ## Captures
 
-Barre d'état en mode manuel, clair (indicateur « Manuel · F9 » à droite) :
-![Barre d'état, mode manuel, clair](docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-clair.png)
-
-Barre d'état en mode manuel, sombre :
-![Barre d'état, mode manuel, sombre](docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-sombre.png)
-
-Mode manuel, clair (A1 modifiée à 5, B1 reste à 2 avant F9) :
-![Manuel, avant F9, clair](docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-clair.png)
-
-Mode manuel, sombre, avant F9 :
-![Manuel, avant F9, sombre](docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-sombre.png)
-
-Après F9 (clair) :
-![Manuel, après F9, clair](docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-clair.png)
-
-Après F9 (sombre) :
-![Manuel, après F9, sombre](docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-sombre.png)
-
-Itératif, convergence (clair) :
-![Itératif, convergence, clair](docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-clair.png)
-
-Itératif, convergence (sombre) :
-![Itératif, convergence, sombre](docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-sombre.png)
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-clair.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-sombre.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-clair.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-sombre.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-clair.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-sombre.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-clair.png
+- docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-sombre.png
 
 ## Decisions
+
+- Lint : aucun script dédié dans le projet ; `tsc --noEmit` et vitest servent de contrôle.
+- Le design `docs/design/2026-10-25-212335.html` (valeur cible, espion, remplissage instantané) ne porte pas sur le mode de calcul : non utilisé.
 
 - Persistance : champ `calc` absent si mode par défaut ; un fichier sans champ rouvre en automatique (le mode suit le classeur). Mode appliqué avant la construction des feuilles, pour que les cycles d'un fichier itératif soient calculés à l'ouverture.
 
@@ -65,7 +51,7 @@ Itératif, convergence (sombre) :
 - Suite complète `npx vitest run` : 2466 tests verts ; 4 échecs dans `prototypes/oauth-sdk/orphans.test.ts` (balayage de worktrees git, sans lien avec le calcul), non vérifiés contre master.
 
 ## Preuves
-- Tests : ok (924 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
-- Captures : aucune annoncee
-<!-- boucle-proof {"tests":{"ok":true,"count":924,"scope":"related"},"tsc":{"ok":true}} -->
+- Captures : docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/barre-etat-manuel-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-avant-f9-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/manuel-apres-f9-sombre.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-clair.png, docs/screenshots/mode-de-calcul-manuel-et-iteratif/iteratif-convergence-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
