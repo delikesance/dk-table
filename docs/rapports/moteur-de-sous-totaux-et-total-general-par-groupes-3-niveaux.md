@@ -1,4 +1,5 @@
 # Rapport : Moteur de sous-totaux et total général par groupes (3 niveaux)
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -24,3 +25,9 @@ Aucune (moteur pur, sans effet visible).
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
 - Clé vide : « Total (vide) » plutôt que « Total » nu (lisible, distinct du total général).
 - Plus de 3 niveaux : erreur explicite (`RangeError`) plutôt que troncature silencieuse.
+
+## Preuves
+- Tests : ok (11 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":11,"scope":"related"},"tsc":{"ok":true}} -->
