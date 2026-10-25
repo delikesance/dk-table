@@ -37,7 +37,7 @@ describe("moodboard: fichiers", () => {
     for (const t of [html, css, js]) expect(t.split("\n").length).toBeLessThanOrEqual(201);
     expect(html).toContain('href="/panel.css"');
     expect(html).toContain('href="/moodboard-view.css"');
-    expect(css).toContain("prefers-color-scheme: dark");
+    expect(css).toContain("--c-dep-in"); // jetons de l'app (clair + sombre via theme-dark.css)
     for (const id of ["board", "col-idee", "col-en-cours", "col-preuves", "col-termine", "drawer", "q", "progress", "counters"]) expect(html).toContain(`id="${id}"`);
   });
 });

@@ -3,6 +3,7 @@
  * Routes: GET / (panneau), GET /moodboard(.html), POST /go, POST /stop, GET /events (SSE avec rejeu).
  * Le pipeline réel est injecté (`deps.runPipeline`); écoute sur 127.0.0.1 seulement.
  */
+import { ASSETS } from "./assets";
 import { isFontRoute, readFont } from "./fontRoute";
 import type { DesignFile } from "./designs";
 import { injectRuntime } from "./designRuntime";
@@ -49,17 +50,6 @@ export interface Deps {
   /** Page de suivi du design (relue a chaque requete; absente: 404). */
   designHtml?: string | (() => string | undefined);
 }
-
-/** Assets servis (seuls fichiers lisibles hors pages): route -> [fichier, type]. */
-const ASSETS: Record<string, [string, string]> = {
-  "GET /panel.css": ["panel.css", "text/css; charset=utf-8"],
-  "GET /fonts.css": ["fonts.css", "text/css; charset=utf-8"],
-  "GET /panel.js": ["panel.js", "text/javascript; charset=utf-8"],
-  "GET /moodboard-view.css": ["moodboard-view.css", "text/css; charset=utf-8"],
-  "GET /moodboard-view.js": ["moodboard-view.js", "text/javascript; charset=utf-8"],
-  "GET /design-view.css": ["design-view.css", "text/css; charset=utf-8"],
-  "GET /design-view.js": ["design-view.js", "text/javascript; charset=utf-8"],
-};
 
 /** Canevas du design: scripts et animations en ligne permis, aucun reseau ni sortie du cadre. */
 const DESIGN_CSP =
