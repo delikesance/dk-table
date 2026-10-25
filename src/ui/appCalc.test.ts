@@ -35,6 +35,24 @@ describe("calc mode UI", () => {
     expect(cell("B1")).toBe("14");
   });
 
+  it("saves the calc mode in the document and restores it on open", () => {
+    expect(app.toDoc().calc).toBeUndefined();
+    setCalcMode({ manual: true, maxIter: 20 });
+    const doc = app.toDoc();
+    expect(doc.calc).toEqual({ ...DEFAULT_CALC, manual: true, maxIter: 20 });
+    setCalcMode(DEFAULT_CALC);
+    app.loadDoc(doc);
+    expect(calcMode()).toEqual(doc.calc);
+    app.loadDoc({ version: 1, sheets: doc.sheets });
+    expect(calcMode()).toEqual(DEFAULT_CALC);
+  });
+
+  it("opening an iterative file computes its circular references", () => {
+    const cells = { A1: { raw: "=B1/2+1" }, B1: { raw: "=A1" } };
+    app.loadDoc({ version: 1, sheets: [{ id: "s", name: "F", cols: 26, rows: 100, cells }], calc: { ...DEFAULT_CALC, iterative: true } });
+    expect(Number(cell("A1"))).toBeCloseTo(2, 2);
+  });
+
   it("Paramètres: the manual checkbox switches the calc mode", () => {
     openSettings();
     const box = document.querySelector<HTMLInputElement>('input[name="manual"]')!;
