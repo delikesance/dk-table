@@ -15,7 +15,8 @@ describe("magasin de documents", () => {
     const s = createDocStore();
     const a = s.add();
     s.rename(a.id, "Rapport T1");
-    s.setContent(a.id, { type: "doc", content: [{ type: "paragraph" }] });
+    s.setText(a.id, "# Titre");
+    expect(s.get(a.id)!.md).toBe("# Titre");
     expect(s.get(a.id)!.name).toBe("Rapport T1");
     s.remove(a.id);
     expect(s.get(a.id)).toBeUndefined();
@@ -23,7 +24,7 @@ describe("magasin de documents", () => {
   });
   it("charge et exporte la liste persistée (copie profonde)", () => {
     const s = createDocStore();
-    const saved = [{ id: "d9", name: "X", content: { type: "doc" as const, content: [{ type: "paragraph" }] } }];
+    const saved = [{ id: "d9", name: "X", md: "texte" }];
     s.load(saved);
     saved[0].name = "modifié après coup";
     expect(s.list()[0].name).toBe("X");
@@ -38,7 +39,7 @@ describe("magasin de documents", () => {
     s.onChange(cb);
     const a = s.add();
     s.rename(a.id, "Y");
-    s.setContent(a.id, { type: "doc", content: [] });
+    s.setText(a.id, "x");
     s.remove(a.id);
     expect(cb).toHaveBeenCalledTimes(4);
     s.load([]);

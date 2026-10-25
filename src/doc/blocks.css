@@ -1,13 +1,12 @@
-/* dk doc: linked blocks (table / bars / trend), floating bar, cell pick bar. */
+/* dk doc: linked blocks (table / bars / trend) and their bar. */
 .dk-block { position: relative; margin: 52px 0 var(--s-4); border: 1px solid var(--c-line-strong); cursor: default; }
-.dk-block.ProseMirror-selectednode { outline: 2px solid var(--c-accent); outline-offset: 0; }
 .dk-block__tag { position: absolute; top: -9px; right: 10px; padding: 0 6px; background: var(--c-surface); font: var(--fs-xs) var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-accent); }
 .dk-block--err { border-color: var(--c-error); }
 .dk-block--err .dk-block__tag { color: var(--c-error); }
 .dk-block__error { padding: var(--s-3) var(--s-4); color: var(--c-error); font: var(--fs-sm) var(--font-mono); }
 .dk-block__table { border-collapse: collapse; width: 100%; font: 13.5px var(--font-mono); }
 .dk-block__table th { padding: 9px 12px; background: var(--c-accent-soft); color: var(--c-accent); font-weight: var(--fw-medium); text-align: left; }
-.dk-block__table td { padding: 9px 12px; border-top: 1px solid var(--c-line); user-select: none; }
+.dk-block__table td { padding: 9px 12px; border-top: 1px solid var(--c-line); }
 .dk-block__table th.dk-num, .dk-block__table td.dk-num { text-align: right; }
 .dk-block__bars { padding: var(--s-3) var(--s-4); display: grid; gap: var(--s-2); }
 .dk-bar { display: grid; grid-template-columns: 120px 1fr 90px; align-items: center; gap: var(--s-3); font: 13.5px var(--font-mono); }
@@ -17,14 +16,10 @@
 .dk-bar__value { text-align: right; }
 .dk-block__trend { padding: var(--s-3) var(--s-4); display: flex; align-items: center; gap: var(--s-4); font: 13.5px var(--font-mono); }
 .dk-trend__name { color: var(--c-text-2); }
-.dk-block__bar, .dk-block__pick { display: none; position: absolute; left: -1px; z-index: 5; align-items: stretch; background: var(--c-surface); border: 1px solid var(--c-accent); border-radius: var(--r-sm); box-shadow: var(--sh-2); font: var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; }
+.dk-block__bar { display: none; position: absolute; left: -1px; z-index: 5; align-items: stretch; background: var(--c-surface); border: 1px solid var(--c-accent); border-radius: var(--r-sm); box-shadow: var(--sh-2); font: var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; }
 .dk-block__bar { top: -44px; }
-.dk-block__pick { display: flex; bottom: -44px; }
-.dk-block.ProseMirror-selectednode .dk-block__bar, .dk-block:focus-within .dk-block__bar { display: flex; }
+.dk-block:hover .dk-block__bar { display: flex; }
 .dk-block__btn { padding: 7px 14px; border: 0; border-left: 1px solid var(--c-line); background: transparent; color: var(--c-text); font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
 .dk-block__bar > :first-child { border-left: 0; }
 .dk-block__btn--on { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
-.dk-block__cols { position: relative; border-left: 1px solid var(--c-line); }
-.dk-block__cols summary { list-style: none; border: 0; }
 .dk-block__col { display: flex; gap: var(--s-2); padding: var(--s-1) var(--s-3); background: var(--c-surface); text-transform: none; letter-spacing: 0; white-space: nowrap; }
-.dk-block__cols[open] { flex-direction: column; }

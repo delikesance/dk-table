@@ -23,8 +23,7 @@ async function docWithText(): Promise<void> {
   app.addDoc();
   await vi.waitFor(() => expect(app.docEditor()).toBeDefined());
   const v = app.docEditor()!.view;
-  v.dispatch(v.state.tr.insertText("Bonjour"));
-  v.dispatch(v.state.tr.insert(1, v.state.schema.nodes.cellRef.create({ sheet: app.sheets()[0].id, ref: "B2" })));
+  v.dispatch({ changes: { from: 0, insert: "Bonjour {{@Feuille 1!B2}}" } });
 }
 
 describe("exporter le document ouvert", () => {
