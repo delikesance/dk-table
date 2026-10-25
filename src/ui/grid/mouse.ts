@@ -29,6 +29,12 @@ export function headerSel(kind: "col" | "row", from: number, to: number, cols: n
     : { anchor: { col: cols - 1, row: from }, active: { col: 0, row: to } };
 }
 
+/** True when `p` lies in the rectangle spanned by the selection corners. */
+export function inSelection(s: Sel, p: Pos): boolean {
+  return p.col >= Math.min(s.anchor.col, s.active.col) && p.col <= Math.max(s.anchor.col, s.active.col)
+    && p.row >= Math.min(s.anchor.row, s.active.row) && p.row <= Math.max(s.anchor.row, s.active.row);
+}
+
 /** Target of a mouse event; resizers and filter buttons inside headers are not targets. */
 function hit(target: EventTarget | null): Hit | null {
   const el = target as HTMLElement;
@@ -51,6 +57,11 @@ export function bindMouse(root: HTMLElement, h: MouseHooks): () => void {
     if (e.button === 2 && t.kind !== "cell") return; // right-click on a header: its context menu handles the selection
     h.endEdit();
     const { anchor } = h.sel();
+    if (e.button === 2 && t.kind === "cell") { // context menu: keep the selection it falls in, else select the cell; never a drag
+      if (!inSelection(h.sel(), t.pos)) h.set({ anchor: t.pos, active: t.pos }, true);
+      root.focus();
+      return;
+    }
     if (t.kind === "cell") {
       h.set({ anchor: e.shiftKey ? anchor : t.pos, active: t.pos }, true);
       drag = { kind: "cell" };

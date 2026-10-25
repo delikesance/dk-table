@@ -16,3 +16,8 @@
 .dkg-pop__btns [data-act="ok"] { background: var(--c-accent-solid); border-color: var(--c-accent-solid); color: var(--c-text-on-solid); font-weight: var(--fw-semibold); }
 .dkg-pop__btns [data-act="ok"]:hover { background: var(--c-accent-solid); color: var(--c-text-on-solid); filter: brightness(1.08); }
 .dkg-pop button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+/* Champ de recherche en tête: même langage que les champs du chrome, anneau de focus accent. */
+.dkg-pop__search { box-sizing: border-box; width: 100%; margin-bottom: var(--s-2); padding: var(--s-1) var(--s-2); background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-line-strong); border-radius: var(--r-sm); font: inherit; }
+.dkg-pop__search::placeholder { color: var(--c-text-3); }
+.dkg-pop__search:focus-visible { outline: none; border-color: var(--c-accent); box-shadow: var(--focus-ring); }
+.dkg-pop label[hidden] { display: none; }
