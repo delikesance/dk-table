@@ -23,8 +23,10 @@ Aucune (moteur pur, sans effet visible).
 - COUNT compte les nombres (comme Excel COUNT), pas les cellules non vides.
 - AVERAGE/MIN/MAX sans nombre : `""` (pas d'erreur).
 
+<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+
 ## Preuves
-- Tests : ok (9 tests, tests lies aux fichiers modifies)
+- Tests : ok (non executes : documentation seule)
 - Typecheck : ok
 - Captures : sans objet
-<!-- boucle-proof {"tests":{"ok":true,"count":9,"scope":"related"},"tsc":{"ok":true}} -->
+<!-- boucle-proof {"tests":{"ok":true,"scope":"none"},"tsc":{"ok":true}} -->
