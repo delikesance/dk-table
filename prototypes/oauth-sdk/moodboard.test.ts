@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
 import { readFileSync } from "node:fs";
-import { IDLE_EUR, buildMoodboard, fallbackSummary, matches, pickBudget } from "./moodboard";
+import { IDLE_EUR, buildMoodboard, mergeDuplicates, fallbackSummary, matches, pickBudget } from "./moodboard";
 import type { QueryFn } from "./research";
 
 const MD = `# Recherche
@@ -127,5 +127,24 @@ describe("budget du moodboard", () => {
     }
     for (const f of ["c.state", "c.axis", "c.summary", "c.title", "c.missing"]) expect(js).toContain(f);
     for (const st of ["idee", "piste", "en-cours", "bloque", "preuves", "termine"]) expect(js).toContain(st);
+  });
+});
+
+describe("doublons", () => {
+  const c = (id: string, title: string, status: "found" | "developing" | "lead" | "done" = "found") =>
+    ({ id, title, status, axis: undefined, summary: "", source: "s " + title }) as import("./moodboard").MoodCard;
+  it("meme id: une seule carte, le statut le plus avance gagne", () => {
+    const r = mergeDuplicates([c("texte-en-colonnes", "Texte en colonnes"), c("texte-en-colonnes", "Texte en colonnes", "developing")]);
+    expect(r).toHaveLength(1);
+    expect(r[0].status).toBe("developing");
+  });
+  it("quasi-doublon (memes mots significatifs, ordre ou accents differents): fusionne, la 1re garde son id", () => {
+    const r = mergeDuplicates([c("texte-en-colonnes", "Texte en colonnes"), c("colonnes-texte", "Colonnes: texte"), c("autre", "Autre idee")]);
+    expect(r.map((x) => x.id)).toEqual(["texte-en-colonnes", "autre"]);
+  });
+  it("buildMoodboard n'emet pas deux fois la meme idee", async () => {
+    const md = "## Idees nouvelles\n\n- **Texte en colonnes** : a.\n\n## Absent de dk-table, present ailleurs\n\n- **Texte en colonnes** : b.\n";
+    const cards = await buildMoodboard({ readFile: async (p) => (p.endsWith("fonctionnalites.md") ? md : ""), query: fake().q, env: {} });
+    expect(cards.map((x) => x.id)).toEqual(["texte-en-colonnes"]);
   });
 });

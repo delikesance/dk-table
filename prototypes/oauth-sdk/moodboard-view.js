@@ -3,7 +3,8 @@
   const COLS = { idee: "idee", piste: "idee", "en-cours": "en-cours", bloque: "en-cours", preuves: "preuves", termine: "termine" };
   const LABEL = { idee: "Idées", "en-cours": "En cours", preuves: "Preuves", termine: "Terminées" };
   const AXES = { new: "✚ Nouveau", missing: "∅ Manquant", neglected: "◔ Négligé", poor: "▽ Pauvre" };
-  let cards = [], filter = null, query = "", open = null, loop = null;
+  let cards = [], filter = null, query = "", open = null, loop = null, stamp = 0;
+  const working = new Set(); // cartes qu'un agent traite en ce moment (evenements `agent`)
   const $ = (id) => document.getElementById(id);
 
   /** Element avec classe et texte (textContent: pas d'injection HTML). */
@@ -27,6 +28,7 @@
     if (c.state === "bloque") tags.append(el("span", "tag bad", "bloqué"));
     if (c.state === "preuves" && c.missing && c.missing.length) tags.append(el("span", "tag warn", "manque : " + c.missing.join(", ")));
     if (c.anomalies && c.anomalies.length) tags.append(el("span", "tag warn anom", "⚠ " + c.anomalies[0]));
+    if (working.has(c.id) && c.state === "en-cours") tags.prepend(Object.assign(el("span", "tag agent", "● agent"), { title: "Un agent traite cette carte" }));
     b.append(tags, el("h3", null, c.title), el("p", null, c.summary || ""));
     b.addEventListener("click", () => select(c.id));
     return b;
@@ -113,33 +115,53 @@
     box.append(b); $("board").before(box);
   }
 
-  /** Recharge les cartes (get /moodboard), au plus une fois toutes les 3 s en rafale; en cas d'echec garde l'etat et propose de reessayer. */
-  let last = 0, timer = null;
+  /** Recharge les cartes (GET /moodboard); un seul appel en vol, un dernier relance si des evenements sont arrives entre-temps. */
+  let busy = false, again = false;
   async function load() {
-    last = Date.now();
+    if (busy) { again = true; return; }
+    busy = true;
     try {
       const r = await fetch("/moodboard");
       if (!r.ok) throw new Error(String(r.status));
-      cards = await r.json(); const e = $("loaderr"); if (e) e.remove(); render();
+      cards = await r.json(); stamp = Date.now(); const e = $("loaderr"); if (e) e.remove(); render(); fresh();
     } catch { showError(); }
+    busy = false;
+    if (again) { again = false; load(); }
   }
-  function soon() {
-    if (timer) return;
-    timer = setTimeout(() => { timer = null; load(); }, Math.max(0, 3000 - (Date.now() - last)));
+
+  /** Fraicheur affichee: temps depuis le dernier chargement reussi. */
+  function fresh() {
+    const s = Math.floor((Date.now() - stamp) / 1000);
+    $("fresh").textContent = s < 2 ? "mis à jour à l'instant" : "mis à jour il y a " + s + " s";
+  }
+  /** Etat de la liaison en direct. */
+  function link(up) { const l = $("live"); l.textContent = up ? "● en direct" : "○ reconnexion…"; l.className = up ? "up" : "down"; }
+
+  /** Applique un evenement tout de suite (carte marquee, agents), puis relit l'etat reel. */
+  function onEvent(m) {
+    const ids = (m.agent ? String(m.agent).split(",") : []).map((x) => x.trim()).filter(Boolean);
+    if (m.type === "card" && m.cardId) {
+      working.add(m.cardId);
+      const c = cards.find((x) => x.id === m.cardId);
+      if (c && (c.state === "idee" || c.state === "piste")) { c.state = "en-cours"; render(); }
+      if (m.cardId === open) loadReport();
+    }
+    if (m.type === "start" && m.sector === "implementation") ids.forEach((i) => working.add(i));
+    if (m.type === "end" && m.sector === "implementation") ids.forEach((i) => working.delete(i));
+    if (m.type === "done") { working.clear(); loop = m.complete === true ? true : m.complete === false ? false : null; }
+    if (m.type === "start" && loop !== null && !m.agent) loop = null;
+    if (["card", "start", "end", "info", "summary", "done", "error"].includes(m.type)) { render(); load(); }
   }
 
   $("q").addEventListener("input", (e) => { query = norm(e.target.value); render(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && open) select(open); });
   load();
-  setInterval(() => { if (!document.hidden) load(); }, 15000);
+  setInterval(() => { if (!document.hidden) load(); }, 15000); // filet de securite
+  setInterval(fresh, 1000);
   try {
     const es = new EventSource("/events");
-    es.addEventListener("message", (e) => {
-      let m = {}; try { m = JSON.parse(e.data); } catch { return; }
-      if (m.type === "card" && m.cardId === open) loadReport();
-      if (m.type === "card" || m.type === "end" || m.type === "summary") soon();
-      if (m.type === "done") { loop = m.complete === true ? true : m.complete === false ? false : null; render(); load(); }
-      if (m.type === "start" && loop !== null) { loop = null; render(); }
-    });
+    es.addEventListener("open", () => { link(true); load(); }); // a la reconnexion: etat complet relu
+    es.addEventListener("error", () => link(false));
+    es.addEventListener("message", (e) => { try { onEvent(JSON.parse(e.data)); } catch { /* evenement illisible */ } });
   } catch { /* SSE indisponible: le rafraichissement periodique suffit */ }
 })();

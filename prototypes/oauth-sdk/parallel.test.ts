@@ -37,10 +37,11 @@ describe("runBatch", () => {
     expect(h.peak()).toBe(3);
     expect(h.calls.map((x) => x.ids).sort()).toEqual([["a"], ["b"], ["d"], ["e"]]);
   });
-  it("gain de temps: 6 cartes de 30 ms, 3 en parallele = environ 2 temps au lieu de 6", async () => {
-    const t = Date.now();
-    await runBatch(["a", "b", "c", "d", "e", "f"].map((i) => card(i)), ctx({ ms: 30 }).c);
-    expect(Date.now() - t).toBeLessThan(6 * 30 * 0.7);
+  it("6 cartes, 3 en parallele: concurrence maximale observee = 3 (jamais de seuil en ms)", async () => {
+    const h = ctx({ ms: 5 });
+    await runBatch(["a", "b", "c", "d", "e", "f"].map((i) => card(i)), h.c);
+    expect(h.peak()).toBe(3);
+    expect(h.calls).toHaveLength(6);
   });
   it("n = 1: un seul agent pour tout le lot (comportement historique)", async () => {
     const h = ctx({ n: 1 });

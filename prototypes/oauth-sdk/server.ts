@@ -7,6 +7,7 @@ import { ASSETS } from "./assets";
 import { isFontRoute, readFont } from "./fontRoute";
 import type { DesignFile } from "./designs";
 import { injectRuntime } from "./designRuntime";
+import { handleLogs, type LogSource } from "./logRoutes";
 import type { MoodCard } from "./moodboard";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -47,8 +48,9 @@ export interface Deps {
   moodboardHtml?: string | (() => string | undefined);
   /** Designs du secteur design (absent: /designs => 404). `steps` = evenements du secteur design. */
   designs?: { list: () => Promise<DesignFile[]>; read: (name: string) => Promise<string | null>; steps: () => BoucleEvent[] };
-  /** Page de suivi du design (relue a chaque requete; absente: 404). */
   designHtml?: string | (() => string | undefined);
+  onEmit?: (e?: BoucleEvent) => void; /** Appele a chaque evenement (invalide les caches derives). */
+  logs?: LogSource; /** Journaux techniques: GET /logs et /diagnostic (absent: 404). */
 }
 
 /** Canevas du design: scripts et animations en ligne permis, aucun reseau ni sortie du cadre. */
@@ -102,7 +104,9 @@ export function createServer(deps: Deps): Server {
   const frame = (e: BoucleEvent, n: number): string => `id: ${run}-${n}\ndata: ${JSON.stringify(e)}\n\n`;
 
   const emit = (e: BoucleEvent): void => {
+    e.ts ??= Date.now();
     history.push(e);
+    deps.onEmit?.(e);
     for (const c of clients) c.write(frame(e, history.length - 1));
   };
 
@@ -124,6 +128,7 @@ export function createServer(deps: Deps): Server {
 
   return httpServer((req, res) => {
     if (!isLoopback(req)) { res.writeHead(403).end("forbidden"); return; }
+    if (deps.logs && handleLogs(req, res, deps.logs)) return;
     const route = `${req.method} ${(req.url ?? "").split("?")[0]}`;
     if (route === "GET /") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(typeof deps.panelHtml === "function" ? deps.panelHtml() : deps.panelHtml);

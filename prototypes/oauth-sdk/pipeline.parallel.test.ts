@@ -55,11 +55,12 @@ describe("agents en parallele", () => {
     expect(h.impl.map((x) => x.ids.length)).toEqual([1, 1, 1, 1, 1, 1]);
     expect(h.mergePeak()).toBe(1);
   });
-  it("gain de temps mesure: meme travail, 3 agents plus rapides que 1", async () => {
-    const serial = await harness({ cards: six(), parallel: 1, ms: 150 }).go();
-    const par = await harness({ cards: six(), parallel: 3, ms: 150 }).go();
-    console.log(`MESURE parallele serie=${serial.ms} ms, 3 agents=${par.ms} ms, gain x${(serial.ms / par.ms).toFixed(1)}`);
-    expect(par.ms).toBeLessThan(serial.ms * 0.7);
+  it("meme travail: 1 agent = concurrence 1, 3 agents = concurrence 3 (compteur, pas de chronometre)", async () => {
+    const serial = harness({ cards: six(), parallel: 1, ms: 1 });
+    await serial.go();
+    const par = harness({ cards: six(), parallel: 3, ms: 1 });
+    await par.go();
+    expect([serial.peak(), par.peak()]).toEqual([1, 3]);
   });
   it("parallel = 1 (defaut): un seul agent pour tout le lot, comme avant", async () => {
     const h = harness({ cards: six(), parallel: 1 });

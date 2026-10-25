@@ -18,3 +18,15 @@ describe("memo", () => {
     expect(await f()).toBe(7);
   });
 });
+
+describe("memoBy", () => {
+  it("un changement de version invalide tout de suite, meme dans le delai; sinon le resultat est partage", async () => {
+    const { memoBy } = await import("./memo");
+    let v = 0, calls = 0;
+    const get = memoBy(async () => ++calls, 60000, () => v);
+    expect([await get(), await get()]).toEqual([1, 1]);
+    v++;
+    expect(await get()).toBe(2);
+    expect(await get()).toBe(2);
+  });
+});
