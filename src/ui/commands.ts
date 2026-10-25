@@ -21,6 +21,7 @@ import { openDepMap } from "./dialogs/depmap";
 import { openAudit } from "./dialogs/audit";
 import { openGoToSpecial } from "./dialogs/goToSpecial";
 import { toggleKinds } from "./grid/kinds";
+import { calcMode, setCalcMode } from "../engine/calc-mode";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -136,6 +137,9 @@ export function installCommands(app: App): void {
   run("view.split", "Vue scindée feuille / document", () => app.toggleSplit(), "Ctrl+\\", ["document", "côte à côte", "split"]);
   run("doc.new", "Nouveau document", () => void app.addDoc(), undefined, ["dk doc", "texte", "rapport", "word"]);
   run("app.settings", "Paramètres…", openSettings, "Ctrl+,", ["réglages", "préférences", "options"]);
+  run("calc.now", "Calculer maintenant", () => app.recalc(true), "F9", ["recalcul", "calcul", "f9", "manuel"]);
+  run("calc.sheet", "Calculer la feuille", () => app.recalc(false), "Maj+F9", ["recalcul", "feuille", "calcul"]);
+  run("calc.manual", "Basculer calcul manuel / automatique", () => setCalcMode({ manual: !calcMode().manual }), undefined, ["manuel", "automatique", "recalcul", "f9"]);
   run("edit.special", "Atteindre spécial…", () => openGoToSpecial(app), "Ctrl+G", ["go to special", "vides", "formules", "constantes", "sélectionner"]);
   run("app.about", "À propos de dk-table", openAbout);
   run("view.sidebar", "Afficher/masquer le panneau latéral", () => app.toggleSidebar());
@@ -171,6 +175,7 @@ export function installCommands(app: App): void {
     if (e.altKey && e.key === "=" && !e.ctrlKey && !e.metaKey && !inTextField(e.target)) {
       e.preventDefault(); autosum(app); return;
     }
+    if (e.key === "F9") { e.preventDefault(); app.recalc(!e.shiftKey); return; }
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const k = e.key === "=" && e.shiftKey ? "+" : e.key.toLowerCase();
     const fn = map[k];
