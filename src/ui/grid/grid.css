@@ -153,3 +153,7 @@
 .dkg-fz-guide { position: fixed; background: var(--c-accent); z-index: 10; pointer-events: none; }
 .dkg-fz-guide--rows { height: 2px; }
 .dkg-fz-guide--cols { width: 2px; }
+
+/* Surlignage formules / constantes (palette « Surligner formules / constantes », classe dk-kinds sur <html>) */
+.dk-kinds .dkg-kf { background-color: var(--c-accent-soft-2); }
+.dk-kinds .dkg-kc { background-color: color-mix(in srgb, var(--c-error) 18%, transparent); }
