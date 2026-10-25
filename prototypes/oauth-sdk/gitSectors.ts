@@ -1,7 +1,7 @@
 /**
  * Worktrees des secteurs (extrait de git.ts) : creation, reprise d'une branche refusee, commit, liberation.
  *
- * Quoi : `createSectors({ run, git, cwd, lock, dev, trailer })` -> `{ startSector, resumeSector, commit, release, installFail, commitFail }`.
+ * Quoi : `createSectors({ run, git, cwd, lock, dev, trailer })` -> `{ startSector, resumeSector, commit, release, ensureInstalled, installFail, commitFail }`.
  *        `resumeSector` rouvre le worktree d'une carte refusee (ou le recree sur sa branche) au lieu de repartir de `developpement`.
  * Pourquoi : git.ts depassait 200 lignes; comportement inchange. Les echecs d'installation et de commit sont lus par `mergeIfGreen`.
  */
@@ -27,6 +27,16 @@ export function createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER,
   /** Echecs de `git commit` par worktree (dir -> raison): le travail reste dans le worktree, jamais « fusionne ». */
   const commitFail = new Map<string, string>();
   let seq = 0;
+  /** Worktrees dont les dependances sont installees. */
+  const installed = new Set<string>();
+  /** Installe les dependances si besoin; renvoie la raison d'echec ou null. Appelee a la demande (secteurs sans tests au depart). */
+  async function ensureInstalled(dir: string): Promise<string | null> {
+    if (installed.has(dir)) return installFail.get(dir) ?? null;
+    installed.add(dir);
+    const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir);
+    if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
+    return installFail.get(dir) ?? null;
+  }
 
   async function startSector(sector: string, tag = "") {
     return lock.run(async () => {
@@ -40,8 +50,9 @@ export function createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER,
       return { branch, dir };
     }).then(async (w) => {
       // Dependances propres au worktree (pas de jonction: "Denied ID" sous vitest, voir CLAUDE.md); hors verrou: en parallele.
-      const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], w.dir);
-      if (ci.code !== 0) installFail.set(w.dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
+      // Seuls les secteurs qui lancent des tests (implementation, correction) installent tout de suite; recherche et design
+      // (documentation) installent a la demande, si une verification en a besoin.
+      if (sector === "implementation" || sector === "correction") await ensureInstalled(w.dir);
       return w;
     });
   }
@@ -59,10 +70,8 @@ export function createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER,
     });
     if (!w) return null;
     installFail.delete(dir); commitFail.delete(dir);
-    if (recreated) { // dossier recree: dependances a reinstaller (un dossier conserve a deja les siennes)
-      const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir);
-      if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
-    }
+    if (recreated) { installed.delete(dir); await ensureInstalled(dir); } // dossier recree: dependances a reinstaller (un dossier conserve a deja les siennes)
+    else installed.add(dir);
     return w;
   }
 
@@ -78,7 +87,9 @@ export function createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER,
 
   async function release(branch: string, dir: string): Promise<void> {
     if (commitFail.has(dir)) return; // le travail n'existe que dans le dossier
-    installFail.delete(dir);
+    // jamais de retrait avec du travail non commite: archive d'abord sur la branche (recuperable), sinon le dossier reste
+    if ((await git(["status", "--porcelain"], dir)).out.trim() !== "" && !(await commit(dir, "Boucle: WIP archive avant liberation du worktree")) ) return;
+    installFail.delete(dir); installed.delete(dir);
     await lock.run(async () => {
       const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
       await git(["worktree", "remove", "--force", dir]);
@@ -86,5 +97,5 @@ export function createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER,
     });
   }
 
-  return { startSector, resumeSector, commit, release, installFail, commitFail };
+  return { startSector, resumeSector, commit, release, ensureInstalled, installFail, commitFail };
 }

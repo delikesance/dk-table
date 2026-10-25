@@ -1,5 +1,6 @@
 /** Garde de fusion: tolerance restreinte aux tests deja rouges sans lien, pas de push d'un etat non vert, etat pousse = etat verifie, une suite a la fois. */
 import { describe, expect, it } from "vitest";
+import { isTest } from "./testUtil";
 import { createGitFlow, type Run } from "./git";
 
 const FAIL = (f: string) => ` FAIL  ${f} > suite > cas\nAssertionError: x`;
@@ -10,7 +11,7 @@ function harness(o: { fails?: string; changed?: string[]; tree?: (cwd?: string) 
   let live = 0, peak = 0;
   const run: Run = async (cmd, args, cwd) => {
     calls.push({ cmd, args, cwd });
-    if (cmd === "npm" && args[0] === "test") {
+    if (isTest(cmd, args)) {
       peak = Math.max(peak, ++live); await sleep(3); live--;
       return { code: o.fails ? 1 : 0, out: o.fails ?? "" };
     }

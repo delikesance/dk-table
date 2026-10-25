@@ -35,7 +35,7 @@ export interface Report {
 
 /** Resultats reels d'une fusion verte. */
 export interface Proof {
-  tests: { ok: boolean; count?: number; scope?: "related" | "full" };
+  tests: { ok: boolean; count?: number; scope?: "related" | "full" | "none" };
   tsc: { ok: boolean };
 }
 
@@ -48,7 +48,7 @@ export function parseProof(md: string): Proof | undefined {
   try {
     const j = JSON.parse(m[1]);
     if (typeof j?.tests?.ok !== "boolean" || typeof j?.tsc?.ok !== "boolean") return undefined;
-    return { tests: { ok: j.tests.ok, count: typeof j.tests.count === "number" ? j.tests.count : undefined, scope: j.tests.scope === "related" || j.tests.scope === "full" ? j.tests.scope : undefined }, tsc: { ok: j.tsc.ok } };
+    return { tests: { ok: j.tests.ok, count: typeof j.tests.count === "number" ? j.tests.count : undefined, scope: j.tests.scope === "related" || j.tests.scope === "full" || j.tests.scope === "none" ? j.tests.scope : undefined }, tsc: { ok: j.tsc.ok } };
   } catch { return undefined; }
 }
 

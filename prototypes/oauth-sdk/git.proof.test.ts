@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseReport } from "./card";
 import { createGitFlow, type Run } from "./git";
 import { createProver } from "./proveCards";
-import { gitEnv } from "./testUtil";
+import { gitEnv, isTest } from "./testUtil";
 
 vi.setConfig({ testTimeout: 60_000 });
 const dirs: string[] = [];
@@ -24,7 +24,7 @@ function setup() {
   g(repo, "add", "-A"); g(repo, "commit", "-qm", "init");
   const tests: string[] = [];
   const run: Run = async (cmd, args, cwd) => {
-    if (cmd === "npm" && args[0] === "test") { tests.push(cwd ?? ""); return { code: 0, out: " Tests  12 passed (12)\n" }; }
+    if (isTest(cmd, args)) { tests.push(cwd ?? ""); return { code: 0, out: " Tests  12 passed (12)\n" }; }
     if (cmd === "npm" || cmd === "npx") return { code: 0, out: "" };
     const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env });
     return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") };

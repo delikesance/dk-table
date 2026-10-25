@@ -105,6 +105,8 @@ export interface RoundsCtx {
   progress: (remaining: number) => void;
   /** Preuves manquantes seulement (rapport complet): le code les ecrit sans agent; renvoie les ids prouves. */
   prove?: (cards: BoardCard[]) => Promise<string[]>;
+  /** Fin de lot : suite complete unique sur developpement, push seulement si verte (voir finishLot.ts). */
+  finish?: () => Promise<{ verified: boolean; skipped?: boolean; reason?: string }>;
   /** Etat persistant (absent: rien n'est ecrit). Un run interrompu (`finished` faux) reprend planificateur et `avoid`. */
   state?: StateStore;
   /** Depense du run (USD), ecrite avec l'etat. */
@@ -156,6 +158,14 @@ export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reas
       await c.corr(correctionTask(bad), attempt);
       cards = await c.board();
     } else c.emit({ type: "info", round, message: merged ? "correction ignoree : lot valide par le code (aucun appel modele)" : "correction ignoree : cartes refusees reprises sur leur branche au prochain essai" });
+    if (c.finish && !c.halt()) {
+      const f = await c.finish();
+      if (!f.verified && !f.skipped) { // developpement rouge apres le lot: correction depuis developpement (le code fautif y est), puis nouvelle verification
+        await c.corr(`La suite complete sur developpement est rouge apres le lot (aucun push) : ${f.reason ?? "?"}`, attempt);
+        cards = await c.board();
+        await c.finish();
+      }
+    }
     const blocked = c.state ? enforceLimit(c.state, cards) : [];
     if (blocked.length) { c.emit({ type: "info", round, message: `cartes bloquees (limite d'essais) : ${blocked.map((b) => `${b.id} (${b.reason})`).join(" | ")}` }); cards = await c.board(); }
     c.progress(left(cards).length);

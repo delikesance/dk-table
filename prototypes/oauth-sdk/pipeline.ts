@@ -22,6 +22,7 @@ import { researchSector } from "./researchSector";
 import { parseOverride } from "./routing";
 import type { AgentResult } from "./parallel";
 import { runRounds, stopMessage, type StopReason } from "./rounds";
+import { makeFinish, recoverUnpushed } from "./finishLot";
 import { createProver } from "./proveCards";
 import { planRetry, recordAttempt } from "./retry";
 import { beginRun } from "./resume";
@@ -44,7 +45,7 @@ function diskWrite(path: string, text: string): void {
 /** Construit `runPipeline` lie a ses dependances. */
 export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ complete: boolean; reason?: StopReason } | undefined> {
   const write = deps.writeFile ?? diskWrite;
-  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push, onLock: deps.onLock });
+  const flow = createGitFlow(deps.run, deps.cwd, { push: deps.push, pushAt: "batch", onLock: deps.onLock });
   const inner = async ({ budgetEur, onEvent, signal }: RunOpts): Promise<{ complete: boolean; reason?: StopReason } | undefined> => {
     const budget = createBudget(budgetEur, deps.eurUsd);
     deps.onBudget?.(budget);
@@ -52,6 +53,8 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     const parallel = Math.max(1, Math.floor(deps.parallel ?? 1));
     await flow.ensureDev();
     const begun = await beginRun({ state: deps.state, run: deps.run, cwd: deps.cwd, dev: "developpement", runId: new Date().toISOString() });
+    const finish = makeFinish({ flow, emit: onEvent, state: deps.state });
+    await recoverUnpushed(flow, finish, onEvent, deps.state); // fusions locales non poussees d'un run interrompu: suite complete d'abord
     if (begun.resumed) onEvent({ type: "info", message: "reprise d'un run interrompu : essais, branches et planificateur restaures" });
     for (const w of begun.swept.filter((x) => x.action !== "kept")) onEvent({ type: "info", message: `worktree orphelin ${w.action === "archived" ? "archive sur sa branche " + w.branch : w.action === "left" ? "laisse en place (non archivable)" : "retire"} : ${w.dir}` });
 
@@ -156,6 +159,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     }
     if (!deps.board) {
       for (const sector of [implementation, correction]) { if (stopped()) break; await runOne(sector); }
+      await finish();
       return undefined;
     }
 
@@ -164,7 +168,7 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
       board: (active) => deps.board!(active),
       impl: (task, attempt, cards) => runOne(implementation, task, attempt, cards), parallel,
       corr: async (task, attempt) => (await runOne(correction, task, attempt)).merged,
-      emit: onEvent, progress: (n) => { remaining = n; }, state: deps.state, spent: () => budget.spent(),
+      emit: onEvent, progress: (n) => { remaining = n; }, state: deps.state, spent: () => budget.spent(), finish: () => finish(),
       prove: async (cs) => {
         const r = await flow.reprove(createProver({ cwd: deps.cwd, cards: cs }));
         onEvent({ type: "info", message: r.proved.length ? `preuves ecrites par le code sans agent (commit ${r.proofCommit ?? "?"}) : ${r.proved.join(", ")}` : `preuves non ecrites : ${r.reason ?? "aucun rapport"}` });
@@ -180,6 +184,10 @@ export function createPipeline(deps: PipelineDeps): (o: RunOpts) => Promise<{ co
     return { complete, reason };
   };
   return async (o) => {
-    try { return await inner(o); } finally { deps.onBudget?.(null); await flow.dispose().catch(() => {}); }
+    try { return await inner(o); } finally {
+      deps.onBudget?.(null);
+      await flow.unpushed().then((n) => deps.state?.update((s) => { s.unpushed = n > 0; })).catch(() => {}); // arret en cours de lot: la reprise verifiera avant de pousser
+      await flow.dispose().catch(() => {});
+    }
   };
 }

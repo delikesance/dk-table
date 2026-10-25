@@ -50,3 +50,6 @@ export function gitEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
     ...extra,
   };
 }
+
+/** Vrai pour une commande de tests de la boucle : `npm test` (suite complete) ou `npx vitest related ...` (tests lies a une carte). */
+export const isTest = (cmd: string, args: string[]): boolean => (cmd === "npm" && args[0] === "test") || (cmd === "npx" && args[0] === "vitest");
