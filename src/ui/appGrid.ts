@@ -16,6 +16,7 @@ import { fitColumns } from "./appFit";
 import { colsOfSelection } from "./grid/fit";
 import { markInvalid, notifyInvalid } from "./appValidation";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
+import { clearSpecial } from "./appSpecial";
 
 /** Per-sheet grid view state (column widths, filters): survives rebuilds, widths and freeze come from the entry (saved in files), filters are not saved; `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
@@ -122,7 +123,7 @@ export function buildGrid(c: Ctx): void {
       setCell(c.cur.sheet, k, raw);
     },
     onBulk: () => queueMicrotask(() => notifyInvalid(c)), // after the coalesced touch
-    onSelect: () => syncInfo(c),
+    onSelect: () => { clearSpecial(c); syncInfo(c); },
     onResizeStart: () => { pushUndo(c.cur); setTitle(c, true); syncInfo(c); },
     onFitColumn: (col) => { const sel = colsOfSelection(c.grid.getSelection()); fitColumns(c, sel.length > 1 && sel.includes(col) ? sel : [col]); },
     onSheetStep: (d) => stepSheet(c, d),
@@ -136,6 +137,7 @@ export function buildGrid(c: Ctx): void {
     // rows are virtualized: styles are re-applied whenever a cell element is (re)created
     onCellCreated: (k, el) => {
       if (c.invalid?.has(k)) el.dataset.inv = "";
+      if (c.special?.has(k)) el.classList.add("dkg-special");
       const st = c.cur.styles[k], cf = c.cfMap?.get(k);
       if (st || cf) paintCell(el, st, cf);
     },

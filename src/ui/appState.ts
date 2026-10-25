@@ -67,6 +67,8 @@ export interface Ctx {
   autosaveState?: "idle" | "pending" | "saving" | "saved" | "error";
   /** Keys of the active sheet breaking a validation rule (see appValidation.ts). */
   invalid?: Set<string>;
+  /** Cells found by Atteindre spécial (marked `dkg-special`); cleared by the next selection change. */
+  special?: Set<string>;
   /** Counter bumped on every modification (detects edits made during a write). */
   version?: number;
 }
