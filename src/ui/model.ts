@@ -41,7 +41,8 @@ export interface Entry {
   freeze?: { rows: number; cols: number };
 }
 
-const MAX_UNDO = 100;
+/** Undo depth per sheet: 10x Excel's 100 levels; macros never clear the stack (one step each). */
+const MAX_UNDO = 1000;
 let seq = 0;
 
 /** Unique sheet id. */
