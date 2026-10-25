@@ -60,3 +60,11 @@ Test de régression : `overhead.test.ts`.
 
 `docs/screenshots/boucle-board/` (clair et sombre) : `shots.board.fixture.test.ts` (vrai serveur, données de démonstration)
 puis `shots.board.mjs`.
+
+## Polices et connexion (correctif)
+
+- Le panneau demandait Sofia Sans Extra Condensed, Inter Tight et DM Mono sans jamais les charger : rendu en police
+  système. `fonts.css` + `fonts/*.woff2` (latin seulement) sont servis par `fontRoute.ts` (`/fonts/<nom>.woff2`, liste blanche), aucun réseau.
+- `/events` envoie les en-têtes tout de suite et un `: ping` toutes les 15 s : sans historique, le navigateur restait en
+  « connexion » puis affichait « Connexion perdue ».
+- Captures avant/après : `docs/screenshots/boucle-polices/`.
