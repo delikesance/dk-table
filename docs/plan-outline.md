@@ -25,3 +25,11 @@ o = showLevel(o, 1);            // plis de profondeur 2 : masque seulement les n
 - `setLevel` lève `RangeError` hors de 0-3 ou pour une ligne absente.
 - Limite : un groupe sans sous-total en dessous ne se replie pas.
 - `showLevel(n)` ne masque jamais une ligne de niveau ≤ n, même avec des niveaux mélangés (ex. 3,1,3,0).
+
+## Interface (grille)
+
+- `ui/grid/outlineView.ts` : +/- dans la marge de l'en-tête de ligne (`.dkg-fold`, `aria-expanded`) sur chaque ligne qui a du détail au-dessus ; boutons 1 à 3 dans le coin (`.dkg-lvl`, cachés sans niveau > 0).
+- `ui/grid/gridOutline.ts` : clics -> `GridView.outline` (`collapse`/`expand`/`showLevel(k-1)`), puis `changed` relance le masque. Les boutons ne sélectionnent pas la ligne et ne déclenchent pas l'édition (`mousedown`/`keydown` arrêtés).
+- Masque : `ui/grid/gridFilter.ts` combine filtres et lignes repliées (même `order`), les numéros de ligne restent ceux de la feuille.
+- API : `Grid.setOutline(o)`; app : `App.setOutlineLevels(levels)`, dev seulement `window.__dkOutline([...])` (pas encore de commande de groupement).
+- Tests: `ui/grid/gridOutline.test.ts`; e2e `e2e/feat-plan-repliable.spec.ts` (captures `docs/screenshots/ui-du-plan-repliable-gouttiere-boutons-de-niveaux/`).

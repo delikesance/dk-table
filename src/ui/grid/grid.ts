@@ -14,6 +14,7 @@ import { shiftTyped } from "../formula/syntax";
 import { bindKeys } from "./gridKeys";
 import { fillPlan } from "./fill";
 import { createFilterCtl } from "./gridFilter";
+import { createOutlineCtl } from "./gridOutline";
 import { stepRow } from "./filterView";
 import { openEditor, type Editor } from "./editor";
 import { addResizers, templateColumns } from "./colwidth";
@@ -47,11 +48,12 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     view, fit: opts.onFitColumn, begin: opts.onResizeStart, apply: () => { applyWidths(); fz.layout(); },
     columnTexts: (c) => Array.from({ length: rows }, (_, r) => opts.getDisplay(keyOf(c, r))),
   });
-  const ctl = createFilterCtl(root, colHeads, rows, view, (c, r) => opts.getDisplay(keyOf(c, r)), () => {
+  const relist = (): void => { // filters or plan changed: new visible rows, keep the cursor on a visible row
+    ctl.reapply();
     if (ctl.hidden(active.row)) { active = { col: active.col, row: stepRow(ctl.order(), active.row, 1, rows, false) }; anchor = active; }
-    fz.layout();
-    render();
-  });
+    fz.layout(); render();
+  };
+  const ctl = createFilterCtl(root, colHeads, rows, view, (c, r) => opts.getDisplay(keyOf(c, r)), relist);
   fz.layout();
   if (opts.onFreeze) {
     const f = clampFreeze(view.freeze, cols, rows);
@@ -63,6 +65,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     opts.onCellCreated?.(k, el);
   });
   const cells = win.cells;
+  const outline = createOutlineCtl(root, () => win.heads, view, relist);
 
   const sigs = new Map<string, string>();
   /** Render one cell (hook element if provided, else text); skips the DOM write when unchanged. */
@@ -96,6 +99,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
     for (const r of removed) for (let c = 0; c < cols; c++) sigs.delete(keyOf(c, r));
     for (const r of added) {
       fz.decorate(win.heads.get(r)!, -1, r, true);
+      outline.decorate(r);
       for (let c = 0; c < cols; c++) paint(keyOf(c, r));
     }
     if (added.length || removed.length) mark();
@@ -161,17 +165,12 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   const unbindFill = bindFillHandle(root, {
     cols, rows, sel: () => ({ anchor, active }), getRaw: opts.getRaw, busy: () => !!editor,
-    apply: ({ plan, sel }) => {
-      bulk(plan);
-      ({ anchor, active } = sel);
-      render();
-    },
+    apply: ({ plan, sel }) => { bulk(plan); ({ anchor, active } = sel); render(); },
   });
 
   bindClipboard(root, {
     sel: () => ({ anchor, active }), cols, rows, busy: () => !!editor, getRaw: opts.getRaw,
-    put,
-    clear, onCopy: opts.onCopy, onBulk: opts.onBulk,
+    put, clear, onCopy: opts.onCopy, onBulk: opts.onBulk,
   });
 
   root.addEventListener("scroll", sync);
@@ -196,5 +195,6 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
       root.remove();
     },
     getSelection: selection,
+    setOutline(o) { view.outline = o; outline.refresh(); relist(); },
   };
 }

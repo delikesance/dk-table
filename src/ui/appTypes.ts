@@ -78,6 +78,8 @@ export interface App {
   toggleSidebar(): void;
   /** Write a complete `=NAME()` in the active cell; no-op if the cell is not empty (never overwrites). */
   insertFunction(name: string): void;
+  /** Plan de la feuille active: niveau 0 à 3 par ligne (vue seule, groupes dépliés). Sans commande de groupement encore. */
+  setOutlineLevels(levels: number[]): void;
   recents(): RecentFile[];
   addRecent(path: string): void;
   /** Sort the active column's data block (one undo step); false when nothing to sort. */

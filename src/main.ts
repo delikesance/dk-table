@@ -23,7 +23,9 @@ if (new URLSearchParams(location.search).get("onboarding") !== "0" && homeOnStar
   });
 }
 
-// Dev only (e2e, no Tauri dialog): `window.__dkImportCsv(nom, texte)` ouvre le rapport d'import CSV.
+// Dev only (e2e, no Tauri dialog): `window.__dkImportCsv(nom, texte)` ouvre le rapport d'import CSV;
+// `window.__dkOutline([niveaux])` pose le plan de la feuille active (pas encore de commande de groupement).
 if (import.meta.env.DEV) {
   (window as unknown as Record<string, unknown>).__dkImportCsv = (name: string, text: string) => openImportReport(app, name, text);
+  (window as unknown as Record<string, unknown>).__dkOutline = (levels: number[]) => app.setOutlineLevels(levels);
 }

@@ -95,6 +95,11 @@ export function touch(c: Ctx): void {
 }
 
 /** Rebuild the grid for the current sheet. */
+/** Plan de la feuille active: niveau par ligne (0 à 3, absente = 0), tous les groupes dépliés. Vue seule. */
+export function setOutlineLevels(c: Ctx, levels: number[]): void {
+  c.grid.setOutline({ levels: Array.from({ length: c.cur.sheet.rows }, (_, r) => levels[r] ?? 0), collapsed: [] });
+}
+
 export function buildGrid(c: Ctx): void {
   const old = c.gridHost.querySelector<HTMLElement>(".dkg");
   const prev = c.grid && shown.get(c.grid);

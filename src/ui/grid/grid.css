@@ -158,3 +158,33 @@
 .dk-kinds .dkg-kf { background-color: var(--c-accent-soft-2); }
 .dk-kinds .dkg-kc { background-color: color-mix(in srgb, var(--c-error) 18%, transparent); }
 .dkg-long { box-shadow: inset 0 -2px 0 var(--c-accent, #0000F2); text-align: left; }
+
+/* Plan (outline): +/- dans la marge de l'en-tête de ligne, boutons de niveaux 1 à 3 dans le coin. */
+.dkg-fold {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  font: var(--fw-semibold) 10px/1 var(--font-mono);
+  color: var(--c-text-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line-strong);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.dkg-fold:hover, .dkg-fold:focus-visible, .dkg-lvl:hover, .dkg-lvl:focus-visible { color: var(--c-accent); border-color: var(--c-accent); }
+.dkg-lvls { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; gap: 2px; }
+.dkg-lvl {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  font: var(--fw-semibold) 10px/1 var(--font-mono);
+  color: var(--c-text-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line-strong);
+  border-radius: 2px;
+  cursor: pointer;
+}

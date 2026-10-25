@@ -1,5 +1,6 @@
 /** Public types of the grid component. */
 import type { Freeze } from "./freeze";
+import type { Outline } from "../../engine/outline";
 
 /**
  * View state owned by the caller so it survives grid rebuilds: custom column widths in px and column
@@ -10,6 +11,8 @@ export interface GridView {
   filters: Record<number, string[]>;
   /** Frozen rows/cols (top/left); read at grid creation, rebuild the grid to change it. */
   freeze?: Freeze;
+  /** Plan (niveaux de lignes, groupes repliés): absent = pas de +/- ni de boutons de niveaux. Vue seule. */
+  outline?: Outline;
 }
 
 /** Options for createGrid. */
@@ -62,4 +65,6 @@ export interface Grid {
   destroy(): void;
   /** Current selection: "A1" or "A1:B3". */
   getSelection(): string;
+  /** Replace the outline (levels, folds) and refresh the grid; `undefined` removes the plan. */
+  setOutline(o: Outline | undefined): void;
 }
