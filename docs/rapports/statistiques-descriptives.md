@@ -1,4 +1,5 @@
 # Rapport : Statistiques descriptives
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -17,3 +18,9 @@ Visible : non
 - Variance et écart-type réutilisent `variance()` de `fn-stats.ts` (n-1) ; une valeur seule -> `null` au lieu de `#DIV/0!`.
 - Chemins probables `src/commands/descriptiveStats.ts` et `tests/descriptive.test.ts` non créés : le projet n'a pas de dossier `src/commands/` et les tests sont co-localisés (`*.test.ts`).
 - Mode absent (aucune répétition) -> `null`, pas d'erreur.
+
+## Preuves
+- Tests : ok (8 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":8,"scope":"related"},"tsc":{"ok":true}} -->
