@@ -279,3 +279,5 @@ Classement par gravité (P0 = pire)
 
 - [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
 - [x] statistiques-de-selection-dans-la-barre-d-etat : `ui/statusbar/` (stats.ts, statusbar.ts), Moyenne/Nb/Nb numérique/Min/Max/Somme dès 2 cellules; rapport `docs/rapports/statistiques-de-selection-dans-la-barre-d-etat.md`
+
+- [x] CI/CD rapide: `ci.yml` léger sur push hors main (tsc + vitest --changed), `ci-full.yml` (test, cargo, e2e 3 shards) vers/sur main, concurrency, Chrome du runner; `docs/ci.md`, `src/config/ci.test.ts`
