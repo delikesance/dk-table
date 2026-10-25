@@ -3,6 +3,7 @@
  * merge only when checks are green. Never pushes, never touches master/main.
  * The command runner is injected so tests need no real git.
  */
+import { failureDigest, stripAnsi } from "./cleanOutput";
 
 /** Runs a command; resolves with exit code and combined output. */
 export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code: number; out: string }>;
@@ -43,7 +44,7 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
     if (r.code !== 0) throw new Error(`worktree add failed: ${r.out}`);
     // Dependances propres au worktree (pas de jonction: "Denied ID" sous vitest, voir CLAUDE.md).
     const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir);
-    if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${ci.out.slice(-500)}`);
+    if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${stripAnsi(ci.out).slice(-500)}`);
     return { branch, dir };
   }
 
@@ -74,13 +75,13 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
     const bad = results.findIndex((r) => r.code !== 0);
     if (bad >= 0) {
       const [cmd, args] = checks[bad];
-      return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${results[bad].out.slice(-500)}` };
+      return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${failureDigest(results[bad].out)}` };
     }
     if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
     const m = await git(["merge", "--no-ff", branch]);
     if (m.code !== 0) {
       await git(["merge", "--abort"]);
-      return { merged: false, reason: `merge conflict: ${m.out.slice(-500)}` };
+      return { merged: false, reason: `merge conflict: ${stripAnsi(m.out).slice(-500)}` };
     }
     await git(["worktree", "remove", "--force", dir]);
     return { merged: true };

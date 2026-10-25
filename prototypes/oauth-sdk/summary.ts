@@ -21,6 +21,8 @@ export interface PhaseState {
   agents: { name: string; status: Status; costUsd?: number; note?: string }[];
   spentUsd: number;
   remainingUsd: number;
+  /** Taux EUR -> USD: tout s'affiche en euros (defaut 1,08, comme le budget). */
+  eurUsd?: number;
 }
 
 /** Dependances: query injectee, budget partage, env (jeton OAuth) optionnels. */
@@ -35,12 +37,13 @@ export interface SummaryDeps {
 /** Plafond d'un resume (USD). */
 export const SUMMARY_CAP_USD = 0.05;
 
-/** Montants en dollars, format fr (virgule). */
-const usd = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
+/** Montant en euros (converti depuis les dollars du SDK), format fr (virgule). */
+const eur = (usd: number, rate = 1.08) => (usd / rate).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 
 /** Phrase de chiffres, toujours calculee ici (jamais par le LLM): depense, plafond, reste. */
 export function figures(s: PhaseState): string {
-  return `Dépensé ${usd(s.spentUsd)} sur ${usd(s.spentUsd + s.remainingUsd)} (reste ${usd(s.remainingUsd)}).`;
+  const e = (n: number) => eur(n, s.eurUsd);
+  return `Dépensé ${e(s.spentUsd)} sur ${e(s.spentUsd + s.remainingUsd)} (reste ${e(s.remainingUsd)}).`;
 }
 
 /** Vrai si toutes les phases sont reussies (boucle terminee). */
@@ -69,7 +72,7 @@ export async function summarizePhase(s: PhaseState, deps: SummaryDeps): Promise<
   let cost = 0;
   let text = "";
   try {
-    const { spentUsd: _s, remainingUsd: _r, ...rest } = s;
+    const { spentUsd: _s, remainingUsd: _r, eurUsd: _e, ...rest } = s;
     const prompt =
       "Resume en francais, en 1 a 2 phrases COURTES, ce que font les agents et ou en est la boucle. " +
       "N'ecris jamais de montant ni de budget (ils sont ajoutes a part). Si terminee=true, dis que la boucle est terminee, " +

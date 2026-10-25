@@ -14,7 +14,7 @@ const run: Run = async (cmd, args) => {
 const query: QueryFn = () =>
   (async function* () { yield { type: "result", subtype: "success", result: "- a", total_cost_usd: 0.01 }; })();
 
-async function go() {
+async function go(runner: Run = run) {
   const events: BoucleEvent[] = [];
   const written: Record<string, string> = {};
   const dirs: (string | null)[] = [];
@@ -22,7 +22,7 @@ async function go() {
   const file: DesignFile = { name: "d.html", bytes: 1, mtimeMs: 7, state: "ecrit", kind: "design" };
   let recapArgs: { designs: unknown; steps: BoucleEvent[] } | undefined;
   const pipeline = createPipeline({
-    query, run, cwd: "/repo", eurUsd: 1,
+    query, run: runner, cwd: "/repo", eurUsd: 1,
     writeFile: (p, t) => { written[p] = t; },
     onSectorDir: (d) => dirs.push(d),
     watchDesigns: (dir, cb) => { cb(file); return () => stops.push(dir); },
@@ -41,6 +41,11 @@ describe("pipeline design", () => {
     expect(dirs[0]).toMatch(/worktrees[\\/]+design-.*docs[\\/]+design$/);
     expect(dirs.at(-1)).toBeNull();
     expect(stops.length).toBeGreaterThanOrEqual(1);
+  });
+  it("design non fusionne (tests rouges): le dossier reste expose pour que la page Design l'affiche", async () => {
+    const red: Run = async (cmd, args, cwd) => (cmd === "npm" && args[0] === "test" ? { code: 1, out: "FAIL x" } : run(cmd, args, cwd));
+    const { dirs } = await go(red);
+    expect(dirs.at(-1)).toMatch(/worktrees[\\/]+design-.*docs[\\/]+design$/);
   });
   it("ecrit docs/design/recap-<date>-<HHmmss>.html dans le worktree avec designs et etapes", async () => {
     const { written, recapArgs } = await go();

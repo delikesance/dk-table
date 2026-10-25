@@ -21,6 +21,15 @@ describe("createBudget", () => {
     expect(b.spent()).toBeCloseTo(0.2);
     expect(b.remaining()).toBeCloseTo(0.8);
   });
+  it("left() = plafond - depense, sans les reservations en vol (le 'reste' affiche ne saute plus)", () => {
+    const b = createBudget(20, 1);
+    const grants = [0, 1, 2, 3].map(() => b.reserve(5));
+    b.settle(grants[0], 0.45);
+    expect(b.left()).toBeCloseTo(19.55);
+    expect(b.remaining()).toBeCloseTo(0.45 * 0 + 20 - 0.45 - 15);
+    expect(b.cap()).toBeCloseTo(20);
+    expect(createBudget(20, 1.08).eurUsd).toBe(1.08);
+  });
   it("tolerates cost slightly above granted", () => {
     const b = createBudget(1, 1);
     b.settle(b.reserve(0.5), 0.55);

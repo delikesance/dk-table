@@ -155,7 +155,7 @@ function makeSector(d: SectorDef): Sector {
     name: d.id,
     async run(ctx) {
       const t0 = Date.now();
-      const cap = ctx.budget.spent() + ctx.budget.remaining();
+      const cap = ctx.budget.cap();
       let cost = 0;
       if (d.id === "design") beginDesignRun();
       ctx.emit({ type: "start", sector: d.id });
@@ -170,7 +170,7 @@ function makeSector(d: SectorDef): Sector {
       }
       ctx.emit({
         type: "end", sector: d.id, costUsd: cost, elapsedS: Math.round((Date.now() - t0) / 1000),
-        totalUsd: ctx.budget.spent(), remainingUsd: ctx.budget.remaining(),
+        totalUsd: ctx.budget.spent(), remainingUsd: ctx.budget.left(),
       });
     },
   };

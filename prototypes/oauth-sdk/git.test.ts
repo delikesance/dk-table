@@ -73,6 +73,15 @@ describe("mergeIfGreen", () => {
     expect(f.lines().some((l) => l.startsWith("git merge"))).toBe(false);
     expect(f.lines().some((l) => l.startsWith("git worktree remove"))).toBe(false);
   });
+  it("raison d'echec lisible: sans ANSI et avec la ligne FAIL, meme loin de la fin", async () => {
+    const ESC = String.fromCharCode(27);
+    const out = `${ESC}[31m FAIL ${ESC}[39m a.test.ts > cas\nAssertionError: x\n${"bruit\n".repeat(300)}${ESC}[2m Tests ${ESC}[22m 1 failed | 1833 passed (1835)`;
+    const f = fake({ "npm test": { code: 1, out } });
+    const r = await createGitFlow(f.run, "/r").mergeIfGreen("wt/a-1", "/d");
+    expect(r.reason).not.toContain(ESC);
+    expect(r.reason).toContain("FAIL  a.test.ts > cas");
+    expect(r.reason).toContain("1 failed | 1833 passed");
+  });
   it("red tsc: no merge", async () => {
     const f = fake({ "npx tsc": { code: 2 } });
     const r = await createGitFlow(f.run, "/r").mergeIfGreen("wt/a-1", "/d");
