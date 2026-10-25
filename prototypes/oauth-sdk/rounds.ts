@@ -14,6 +14,7 @@ import { enforceLimit } from "./tries";
 import { runBatch, type AgentResult } from "./parallel";
 import { reportRules } from "./reportRules";
 import type { PlannerState, StateStore } from "./runState";
+import type { Deferred } from "./selectBatch";
 import type { BoucleEvent } from "./server";
 
 /** Raison de fin de boucle. */
@@ -105,6 +106,8 @@ export interface RoundsCtx {
   progress: (remaining: number) => void;
   /** Preuves manquantes seulement (rapport complet): le code les ecrit sans agent; renvoie les ids prouves. */
   prove?: (cards: BoardCard[]) => Promise<string[]>;
+  /** Qualification du lot (qualify.ts + selectBatch.ts): cartes retenues (avec fichiers et criteres) et cartes ecartees avec leur raison. */
+  qualify?: (batch: BoardCard[]) => Promise<{ selected: BoardCard[]; deferred: Deferred[] }>;
   /** Fin de lot : suite complete unique sur developpement, push seulement si verte (voir finishLot.ts). */
   finish?: () => Promise<{ verified: boolean; skipped?: boolean; reason?: string }>;
   /** Etat persistant (absent: rien n'est ecrit). Un run interrompu (`finished` faux) reprend planificateur et `avoid`. */
@@ -142,7 +145,15 @@ export async function runRounds(c: RoundsCtx): Promise<{ complete: boolean; reas
     if (planner.stuck()) { reason = "stuck"; break; }
     if (round >= planner.maxRounds) { reason = "max-rounds"; break; }
     round++;
-    const batch = planner.nextBatch(cards), ids = batch.map((b) => b.id), attempt = planner.attempt(ids);
+    let batch = planner.nextBatch(cards);
+    if (c.qualify && batch.length) {
+      const q = await c.qualify(batch);
+      c.state?.update((st) => { for (const d of q.deferred) st.cards[d.id] = { tries: 0, models: [], ...st.cards[d.id], deferred: { kind: d.kind, reason: d.reason } }; });
+      if (q.deferred.length) c.emit({ type: "info", round, message: `cartes ecartees avant implementation : ${q.deferred.map((d) => `${d.id} (${d.kind}: ${d.reason})`).join(" | ")}` });
+      batch = q.selected;
+      if (!batch.length) { cards = await c.board(); c.progress(left(cards).length); persist(); continue; } // rien a lancer: les ecartees sont bloquees, la tournee suivante prend les autres
+    }
+    const ids = batch.map((b) => b.id), attempt = planner.attempt(ids);
     c.emit({ type: "info", round, cards: ids, message: `tournee ${round} : ${left(cards).length} carte(s) restante(s), lot ${ids.join(", ")}` });
     const merged = await runBatch(batch, {
       n: c.parallel ?? 1, avoid, stop: () => !!c.halt(), emit: c.emit, attempt: planner.attempt, rules: reportRules,

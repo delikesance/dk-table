@@ -36,3 +36,16 @@ describe("splitParallel", () => {
     expect(splitParallel([c("a")]).par).toHaveLength(1);
   });
 });
+
+describe("fichiers declares par la qualification", () => {
+  const c = (id: string, text: string, files?: string[]) => ({ id, title: text, source: "", summary: "", files });
+  it("priment sur les chemins cites dans le texte", () => {
+    const { par, ser } = splitParallel([c("a", "touche src/x.ts", ["src/a.ts"]), c("b", "touche src/x.ts", ["src/b.ts"])]);
+    expect(par.map((x) => x.id)).toEqual(["a", "b"]);
+    expect(ser).toEqual([]);
+  });
+  it("un fichier declare en commun met la seconde carte en serie", () => {
+    const { par, ser } = splitParallel([c("a", "x", ["src/a.ts"]), c("b", "y", ["src/a.ts"])]);
+    expect([par.map((x) => x.id), ser.map((x) => x.id)]).toEqual([["a"], ["b"]]);
+  });
+});

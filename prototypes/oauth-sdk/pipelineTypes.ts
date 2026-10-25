@@ -9,6 +9,7 @@ import type { listDesigns, readDesign, watchDesigns } from "./designs";
 import type { Run } from "./git";
 import type { QueryFn } from "./research";
 import type { watchReports as defaultWatchReports } from "./reportWatch";
+import type { QualifCache } from "./qualify";
 import type { StateStore } from "./runState";
 import type { BoucleEvent } from "./server";
 
@@ -49,6 +50,8 @@ export interface PipelineDeps {
   unfinished?: () => Promise<number>;
   /** Etat des cartes une fois fusionne (absent: un seul passage implementation + correction, sans boucle). */
   board?: (active?: string[]) => Promise<BoardCard[]>;
+  /** Qualification des cartes de chaque lot (qualify.ts): lecture de fichiers du depot, titres des cartes terminees, cache. Absent: aucune qualification. */
+  qualif?: { read: (path: string) => Promise<string | null>; doneTitles: () => Promise<string[]>; cache?: QualifCache };
   /** Surveillance des rapports d'un worktree (defaut: reportWatch.ts; injectable pour les tests). */
   watchReports?: typeof defaultWatchReports;
   /** Suivi des designs (defauts: designs.ts; injectables pour les tests). */

@@ -24,6 +24,9 @@ export interface BoardCard extends MoodCard {
   anomalies: string[];
   /** Raison structuree d'un blocage decide par le code (limite d'essais...): la carte est `bloque` et n'est plus traitee. */
   blockReason?: string;
+  /** Fichiers cibles et criteres d'acceptation de la qualification du lot (qualify.ts), ajoutes aux cartes retenues. */
+  files?: string[];
+  criteria?: string[];
 }
 
 /** Dependances: celles du moodboard + test d'existence d'un fichier (captures). */
