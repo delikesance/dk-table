@@ -41,6 +41,12 @@ describe("parseReport", () => {
   });
 });
 
+describe("parseReport CRLF", () => {
+  it("un rapport en CRLF (checkout Windows) donne le meme resultat", () => {
+    expect(parseReport(GOOD.replace(/\n/g, "\r\n"))).toEqual(parseReport(GOOD));
+  });
+});
+
 describe("validateReport", () => {
   const exists = () => true;
   it("termine + preuves completes -> ok", () => {

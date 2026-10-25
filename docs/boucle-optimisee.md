@@ -93,3 +93,7 @@ puis `shots.board.mjs`.
 ## Comparaison avec l'application
 
 Captures côte à côte (app à gauche, Boucle à droite, 1200x800) : `docs/screenshots/boucle-theme-app/app-vs-boucle-{clair,sombre}.png`. Tokens identiques (servis tels quels); la barre du haut reprend la barre de menus de l'app (Sofia Sans Extra Condensed, capitales). Un panneau lavande (#8c8cff) = ancien CSS d'avant #37 : relancer `boucle.ts` depuis `developpement` à jour.
+
+## Windows (CRLF)
+
+Un checkout Windows (autocrlf) livre les fichiers en `\r\n`. `.gitattributes` force `eol=lf`; les lecteurs de fichiers (`parseReport`, TODO, sorties git) acceptent `\r?\n`, et `designSkill.test.ts` normalise via `readLf`. Tests: `designSkill.test.ts` (CRLF), `card.test.ts` (rapport CRLF).
