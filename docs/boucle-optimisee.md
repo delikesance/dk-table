@@ -97,3 +97,7 @@ Captures côte à côte (app à gauche, Boucle à droite, 1200x800) : `docs/scre
 ## Windows (CRLF)
 
 Un checkout Windows (autocrlf) livre les fichiers en `\r\n`. `.gitattributes` force `eol=lf`; les lecteurs de fichiers (`parseReport`, TODO, sorties git) acceptent `\r?\n`, et `designSkill.test.ts` normalise via `readLf`. Tests: `designSkill.test.ts` (CRLF), `card.test.ts` (rapport CRLF).
+
+## Design absent de la toile (Windows)
+
+Cause : avec `shell: true` (cmd.exe), Node ne protège pas les arguments. `git commit -m "Boucle: design"` arrivait coupé, git échouait (pathspec), rien n'était commité, la fusion ne fusionnait rien et `worktree remove --force` supprimait le design. Correctifs : `shellArgs.ts` (guillemets sous Windows, utilisé par `boucle.ts`), `git.ts` refuse de fusionner (et garde le worktree) si le commit a échoué ou si la branche n'a aucun commit d'avance. La toile affiche déjà le design le plus récent. Captures : `docs/screenshots/boucle-design-canvas/`.

@@ -28,6 +28,8 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
 
   /** Echecs d'installation par worktree (dir -> raison), lus par mergeIfGreen. */
   const installFail = new Map<string, string>();
+  /** Echecs de `git commit` par worktree (dir -> raison): le travail reste dans le worktree, jamais « fusionne ». */
+  const commitFail = new Map<string, string>();
 
   async function ensureDev(): Promise<void> {
     const r = await git(["rev-parse", "--verify", DEV]);
@@ -53,6 +55,8 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
     const st = await git(["status", "--porcelain"], dir);
     if (st.out.trim() === "") return false;
     const r = await git(["commit", "-m", message, "-m", TRAILER], dir);
+    if (r.code !== 0) commitFail.set(dir, stripAnsi(r.out).slice(-300));
+    else commitFail.delete(dir);
     return r.code === 0;
   }
 
@@ -66,6 +70,8 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
   async function mergeIfGreen(branch: string, dir: string) {
     const failed = installFail.get(dir);
     if (failed) return { merged: false, reason: failed };
+    const noCommit = commitFail.get(dir);
+    if (noCommit) return { merged: false, reason: `commit failed: ${noCommit}` };
     const checks: [string, string[]][] = [
       ["npm", ["test"]],
       ["npx", ["tsc", "--noEmit"]],
@@ -78,6 +84,8 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
       return { merged: false, reason: `${cmd} ${args.join(" ")} failed: ${failureDigest(results[bad].out)}` };
     }
     if (!(await onDev())) return { merged: false, reason: `cannot switch to ${DEV}` };
+    const ahead = await git(["rev-list", "--count", `${DEV}..${branch}`]);
+    if (ahead.code === 0 && ahead.out.trim() === "0") return { merged: false, reason: "rien a fusionner (aucun commit sur la branche)" };
     const m = await git(["merge", "--no-ff", branch]);
     if (m.code !== 0) {
       await git(["merge", "--abort"]);

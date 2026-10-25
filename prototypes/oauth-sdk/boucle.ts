@@ -9,6 +9,7 @@
  *        Aucun push, jamais master (fusion dans `developpement` seulement, si tests + tsc verts).
  */
 import { spawn } from "node:child_process";
+import { shellArgs } from "./shellArgs";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { Run } from "./git";
 import type { QueryFn } from "./research";
@@ -29,7 +30,7 @@ for (const [k, v] of Object.entries(process.env)) {
 /** Lance une commande (shell sous Windows pour npm/npx); sortie fusionnee, jamais d'exception. */
 const run: Run = (cmd, args, cwd) =>
   new Promise((resolve) => {
-    const p = spawn(cmd, args, { cwd, shell: process.platform === "win32", env });
+    const p = spawn(cmd, shellArgs(args), { cwd, shell: process.platform === "win32", env });
     let out = "";
     p.stdout.on("data", (c) => (out += c));
     p.stderr.on("data", (c) => (out += c));
