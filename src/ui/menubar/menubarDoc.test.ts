@@ -28,11 +28,11 @@ describe("menus avec un document ouvert", () => {
     const all = spec.flatMap((d) => items(spec, d.label).map((e) => e.label));
     expect(new Set(all).size).toBe(all.length);
   });
-  it("Insertion : cellule liée, tableau lié, barres, tendance", () => {
+  it("Insertion : cellule liée, calcul, tableau lié, barres, tendance", () => {
     const app = fakeApp(true);
     const ins = items(buildMenuSpec(app, deps()), "Insertion");
     ins.forEach((e) => e.run!());
-    expect((app.docInsert as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0])).toEqual(["cell", "table", "bar", "trend"]);
+    expect((app.docInsert as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0])).toEqual(["cell", "calc", "table", "bar", "trend"]);
   });
   it("Format agit sur le texte du document", () => {
     const app = fakeApp(true);

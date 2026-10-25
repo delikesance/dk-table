@@ -34,3 +34,11 @@
 .dk-mention__item small { font: var(--fs-xs) var(--font-mono); color: var(--c-text-2); }
 .dk-mention__item--on { background: var(--c-accent-solid); color: var(--c-text-on-solid); }
 .dk-mention__item--on small { color: inherit; opacity: 0.85; }
+/* Calculation chips (=…): same family as the reference chip, field while editing. */
+.dk-calc { font: var(--fw-medium) 0.88em var(--font-mono); background: var(--c-accent-soft); color: var(--c-accent); padding: 1px 6px; border-bottom: 2px solid var(--c-accent); border-radius: var(--r-xs); cursor: pointer; white-space: nowrap; }
+.dk-calc--err { color: var(--c-error); background: var(--c-error-soft); border-bottom: 2px wavy var(--c-error); }
+.dk-calc--edit { cursor: text; padding: 0; background: var(--c-surface); border: 0; outline: 2px solid var(--c-accent); }
+.dk-calc__input, .dk-calc__fmt { font: inherit; color: var(--c-text); background: transparent; border: 0; outline: none; padding: 1px 6px; }
+.dk-calc__fmt { border-left: 1px solid var(--c-line); color: var(--c-text-2); }
+.dk-calc .live-chart { vertical-align: middle; }
+.dk-calc.ProseMirror-selectednode { outline: 2px solid var(--c-accent); }

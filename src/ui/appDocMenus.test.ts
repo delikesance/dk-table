@@ -68,4 +68,10 @@ describe("insertion dans le document", () => {
     app.docInsert("cell");
     expect(app.docEditor()!.view.state.doc.textContent).toBe("@");
   });
+  it("calcul : insère une puce vide en cours de saisie, sans changer le document tant qu'elle est vide", async () => {
+    await openDoc();
+    app.docInsert("calc");
+    expect(app.docEditor()!.view.state.doc.firstChild!.firstChild!.type.name).toBe("calc");
+    expect(root.querySelector(".dk-calc input")).not.toBeNull();
+  });
 });

@@ -204,5 +204,7 @@ Classement par gravité (P0 = pire)
 - [x] D1b Menu Fichier « Nouveau document » ; menu « Insertion » à la place de Feuille / Données quand un document est ouvert ; renommer / supprimer testés dans l'interface
 - [x] D2 Références `@` (cellule, recherche par noms), puces vivantes, carte au survol, `#REF!`, rafraîchissement après recalcul, clic = ouvrir la cellule, Alt+← = revenir (`doc/refs.ts`, `refView.ts`, `mention.ts`)
 - [x] D3 Tableaux liés (coller, colonnes affichées, morceau A3:D4), graphiques liés (barres, tendance)
+- [x] D5 Puce de calcul `=` (formules du moteur, `@`, formats, mini-graphiques, exports)
+- [ ] D6 Bloc « Calcul » à lignes libellées (variables par libellé)
 - [x] D4 Vue partagée `Ctrl+\`, exports Markdown / HTML / PDF (`Ctrl+E`), e2e `feat-doc.spec.ts`
 

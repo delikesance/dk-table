@@ -43,6 +43,16 @@ Un dk doc est un document de texte riche (titres, listes, citation, gras / itali
 - **Exports** : `doc/exportMd.ts`, `exportHtml.ts` (+ `exportShared.ts`) lisent le JSON du document et les valeurs courantes sans charger ProseMirror ; une puce devient sa valeur, un bloc devient un tableau (barres / tendance : étiquette + valeur). Markdown et HTML passent par la boîte d'enregistrement (`io/docFiles.ts`), PDF par l'impression d'un iframe (`ui/docPrint.ts`, « Enregistrer en PDF »). Boîte `ui/dialogs/exportDoc.ts`.
 - Non vérifié : l'impression PDF dans les fenêtres Tauri (WebView2, WebKitGTK) ; le reste a été exercé en navigateur (`e2e/feat-doc.spec.ts`).
 
+## Calculs dans le texte (puce `=`)
+
+- Taper `=` en début de mot ou de paragraphe (ou Insertion > Calcul) ouvre une puce en saisie : champ de formule avec la syntaxe des cellules, complétion des fonctions (`ui/formula/fnPopup.ts`), `@bob ca` pour insérer l'adresse d'une case (`doc/calcMention.ts`), choix du format (Auto, Nombre, Pourcentage, Monétaire). Entrée / Tab valident, Échap garde le texte tapé tel quel, une formule vide redevient un `=`. Un `=` collé à un mot reste un caractère normal (`doc/calcTrigger.ts`).
+- Nœud inline `calc {src, fmt}` : `src` contient les feuilles par identifiant (`{s1}!B3/{s1}!C3`), donc une feuille renommée ne casse pas la formule ; le texte montré en édition utilise les noms (`doc/calcSrc.ts`).
+- Calcul : `doc/calc.ts` donne à chaque puce une cellule d'une feuille de travail, rattachée au classeur par `engine/book.ts attachTo` sans y être listée. Le moteur parse et évalue (fonctions, plages, erreurs `#REF!`, `#DIV/0!`…) ; rien ne lit cette feuille, donc aucun cycle possible avec les feuilles. Les puces se recalculent à chaque `DocEditor.refresh()`.
+- Format Auto : une formule qui n'est qu'une référence garde le format de la cellule citée, sinon nombre simple.
+- Mini-graphiques : une formule entière `SPARKLINE(plage)`, `BAR(plage)` ou `TREND(plage)` (plage d'une feuille, `Feuille!B2:B9`) s'affiche en SVG dans la ligne (`engine/live`).
+- Exports : Markdown écrit la valeur calculée (rien pour un mini-graphique), HTML garde le SVG (`doc/exportShared.ts calcOut`).
+- Pas encore : blocs « Calcul » à lignes libellées, variables nommées, références entre puces.
+
 ## Tests
 
 `npx vitest run src/doc src/ui/appDocs.test.ts src/io/format.docs.test.ts`, puis `npx playwright test e2e/feat-doc.spec.ts` (navigateur).
