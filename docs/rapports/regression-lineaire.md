@@ -1,4 +1,5 @@
 # Rapport : Régression linéaire
+Statut : en-cours
 
 Visible : non
 
@@ -25,3 +26,9 @@ Aucune (fonctionnalité interne, `Visible : non`).
 - Exclusion par paire (comme `pearson`) : une paire est retenue seulement si x et y sont des nombres finis.
 - Erreur explicite (`#DIV/0!`) si moins de 2 paires valides ou x constant ; jamais de NaN.
 - Y constant (pente 0) : R² = 1 (droite exacte), pas d'erreur.
+
+## Preuves
+- Tests : ok (6 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":6,"scope":"related"},"tsc":{"ok":true}} -->
