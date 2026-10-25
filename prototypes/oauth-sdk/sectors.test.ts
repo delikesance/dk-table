@@ -1,7 +1,8 @@
 /** Tests des secteurs implementation / correction / design (query factice, sans reseau ni cout). */
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import { MODEL_BY_KIND, type QueryFn } from "./research";
+import { MODEL_BY_KIND } from "./agentOptions";
+import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 import { SECTORS, SECTOR_DEFS, beginDesignRun, currentDesignPath, designPath, promptFor, recapPath, runSector } from "./sectors";
 
@@ -26,13 +27,10 @@ describe("definitions", () => {
   it("prompts TDD/CLAUDE.md, git interdit, dontAsk", () => {
     for (const s of SECTOR_DEFS) {
       expect(s.prompt).toMatch(/CLAUDE\.md/);
-      expect(s.disallowedTools).toContain("Bash(git push:*)");
-      expect(s.tools).toContain("Edit");
-      for (const t of s.allowedTools) expect(t).not.toMatch(/git (push|checkout|merge)/);
     }
     const get = (id: string) => SECTOR_DEFS.find((s) => s.id === id)!;
     expect(get("implementation").prompt).toMatch(/docs\/recherche\/fonctionnalites\.md/);
-    expect(get("correction").allowedTools).toContain("Bash(npx tsc:*)");
+    expect(get("correction").prompt).toContain("npx tsc");
   });
 });
 
@@ -59,6 +57,10 @@ describe("design d'abord", () => {
     expect(get("design").prompt).toContain("HTML autonome");
     expect(get("design").prompt).toContain("sombre");
     expect(get("design").prompt).not.toMatch(/^\/design/);
+    expect(get("design").prompt).toContain("toile libre");
+    expect(get("design").prompt).toMatch(/animations?/);
+    expect(get("design").prompt).toContain("design-canvas");
+    expect(get("design").prompt).toContain('data-theme');
     expect(promptFor(get("implementation"))).toContain(currentDesignPath());
     expect(get("implementation").prompt).toContain("docs/recherche/fonctionnalites.md");
     expect(get("implementation").prompt).toContain("TODO.md");
@@ -83,6 +85,9 @@ describe("runSector", () => {
     expect(r).toMatchObject({ costUsd: 1.5, ok: true });
     const o = seen[0].options;
     expect([o.maxBudgetUsd, o.permissionMode, o.cwd]).toEqual([4, "dontAsk", "/w"]);
+    expect(o.tools).toEqual({ type: "preset", preset: "claude_code" });
+    expect(o.skills).toBe("all");
+    expect(o.disallowedTools).toContain("Bash(git push:*)");
     expect(o.model).toBe(MODEL_BY_KIND[SECTOR_DEFS[0].kind]);
   });
 });

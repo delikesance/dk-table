@@ -4,143 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moodboard</title>
-<style>
-  /* Moodboard : cartes par statut (trouvee / en developpement / piste), clair + sombre. */
-  :root { --bg:#f2f2f2; --card:#fff; --fg:#1a1a2e; --mut:#555568; --line:#d8d8e4; --acc:#0000f2;
-    --soft:#e4e4fb; --new:#0b6b3a; --missing:#8a4b00; --neglected:#6a2ca0; --poor:#b3261e; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#19192f; --card:#23233f; --fg:#f2f2f2; --mut:#a0a0bc; --line:#38385c; --acc:#8c8cff;
-      --soft:#2c2c5a; --new:#6fd9a0; --missing:#f0b060; --neglected:#cfa0f5; --poor:#ff9a90; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
-  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; padding: 12px 16px;
-    border-bottom: 1px solid var(--line); }
-  h1 { font-size: 16px; margin: 0; }
-  .counters, .filters { display: flex; flex-wrap: wrap; gap: 6px; }
-  .count { padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--mut); }
-  .count b { color: var(--fg); }
-  .axis-chip { font: inherit; cursor: pointer; padding: 2px 8px; border-radius: 12px; color: var(--fg);
-    border: 1px solid var(--line); background: transparent; }
-  .axis-chip[aria-pressed="true"] { background: var(--soft); border-color: var(--acc); }
-  #board { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 16px; padding: 16px; align-items: start; }
-  @media (max-width: 900px) { #board { grid-template-columns: 1fr; } }
-  .col { min-width: 0; }
-  .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; color: var(--mut); }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 10px; }
-  .card h3 { font-size: 14px; margin: 0 0 4px; }
-  .card p { margin: 0 0 6px; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card small { display: block; color: var(--mut); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .st-found { border-color: var(--new); }
-  .st-developing { border: 2px solid var(--acc); background: var(--soft); padding: 14px 10px;
-    animation: pulse 2s ease-in-out infinite; }
-  .st-lead { border-style: dashed; opacity: .8; padding: 6px 10px; }
-  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 35%, transparent); } }
-  @media (prefers-reduced-motion: reduce) { .st-developing { animation: none; } }
-  .tag { display: inline-block; font-size: 11px; padding: 0 6px; margin-bottom: 4px; border-radius: 10px;
-    border: 1px solid currentColor; }
-  .ax-new { color: var(--new); } .ax-missing { color: var(--missing); }
-  .ax-neglected { color: var(--neglected); } .ax-poor { color: var(--poor); }
-  .empty { color: var(--mut); font-style: italic; }
-  .loaderr { margin: 12px 16px 0; padding: 8px 12px; border: 1px solid var(--poor); border-radius: 4px; }
-  .loaderr button { font: inherit; margin-left: 8px; cursor: pointer; }
-</style>
 <link rel="stylesheet" href="/panel.css">
+<link rel="stylesheet" href="/moodboard-view.css">
 </head>
 <body>
 <nav class="topnav" aria-label="Pages"><b>dk-table</b><a href="/">Boucle</a><a href="/moodboard.html" aria-current="page">Moodboard</a><a href="/design.html">Design</a></nav>
-<header>
+<header class="mb-head">
   <h1>Moodboard</h1>
+  <p id="progress" role="status" aria-live="polite"></p>
   <div class="counters" id="counters"></div>
+  <input id="q" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte">
   <div class="filters" id="filters" role="group" aria-label="Filtre par axe"></div>
 </header>
 <main id="board">
-  <section class="col"><h2>Trouvées</h2><div class="cards" id="col-found"></div></section>
-  <section class="col"><h2>En développement</h2><div class="cards" id="col-developing"></div></section>
-  <section class="col"><h2>Pistes</h2><div class="cards" id="col-lead"></div></section>
+  <section class="col"><h2>Idées</h2><div class="cards" id="col-idee"></div></section>
+  <section class="col"><h2>En cours</h2><div class="cards" id="col-en-cours"></div></section>
+  <section class="col"><h2>Preuves</h2><div class="cards" id="col-preuves"></div></section>
+  <section class="col"><h2>Terminées</h2><div class="cards" id="col-termine"></div></section>
 </main>
-<script>
-(() => {
-  const STATUS = { found: "Trouvées", developing: "En développement", lead: "Pistes" };
-  const AXES = { new: ["✚", "Nouveau"], missing: ["∅", "Manquant"], neglected: ["◔", "Négligé"], poor: ["▽", "Pauvre"] };
-  let cards = [], filter = null;
-  const $ = (id) => document.getElementById(id);
-
-  /** Cree un element avec classe et texte (textContent: pas d'injection HTML). */
-  function el(tag, cls, text) {
-    const e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (text != null) e.textContent = text;
-    return e;
-  }
-  /** Libelle d'axe: icone + texte, jamais la couleur seule. */
-  const axisLabel = (a) => AXES[a][0] + " " + AXES[a][1];
-
-  /** Dessine compteurs, filtres et colonnes depuis `cards` et `filter`. */
-  function render() {
-    const counters = $("counters");
-    counters.replaceChildren();
-    for (const [s, label] of Object.entries(STATUS)) {
-      const n = cards.filter((c) => c.status === s).length;
-      const box = el("span", "count", label + " ");
-      box.append(el("b", null, String(n)));
-      counters.append(box);
-    }
-    const filters = $("filters");
-    filters.replaceChildren();
-    for (const a of Object.keys(AXES)) {
-      const b = el("button", "axis-chip ax-" + a, axisLabel(a));
-      b.dataset.axis = a;
-      b.setAttribute("aria-pressed", String(filter === a));
-      b.addEventListener("click", () => { filter = filter === a ? null : a; render(); });
-      filters.append(b);
-    }
-    for (const s of Object.keys(STATUS)) {
-      const col = $("col-" + s);
-      col.replaceChildren();
-      const list = cards.filter((c) => c.status === s && (!filter || c.axis === filter));
-      if (!list.length) col.append(el("div", "empty", "Aucune carte"));
-      for (const c of list) {
-        const card = el("article", "card st-" + s);
-        card.dataset.id = c.id;
-        if (AXES[c.axis]) card.append(el("span", "tag ax-" + c.axis, axisLabel(c.axis)));
-        card.append(el("h3", null, c.title), el("p", null, c.summary || ""), el("small", null, c.source || ""));
-        card.querySelector("p").title = c.summary || "";
-        col.append(card);
-      }
-    }
-  }
-
-  /** Message d'echec avec bouton Reessayer (un seul, retire au prochain succes). */
-  function showError() {
-    if ($("loaderr")) return;
-    const box = el("div", "loaderr", "Impossible de charger les cartes. ");
-    box.id = "loaderr"; box.setAttribute("role", "alert");
-    const b = el("button", null, "Réessayer");
-    b.addEventListener("click", load);
-    box.append(b);
-    $("board").before(box);
-  }
-
-  /** Recharge les cartes depuis GET /moodboard; en cas d'echec, garde l'etat et propose de reessayer. */
-  async function load() {
-    try {
-      const r = await fetch("/moodboard");
-      if (!r.ok) throw new Error(String(r.status));
-      cards = await r.json();
-      $("loaderr")?.remove();
-      render();
-    } catch { showError(); }
-  }
-
-  load();
-  setInterval(load, 5000);
-  try {
-    const es = new EventSource("/events");
-    es.addEventListener("message", (e) => { if (/summary|end/.test(e.data)) load(); });
-  } catch { /* SSE indisponible: le rafraichissement periodique suffit */ }
-})();
-</script>
+<aside id="drawer" hidden aria-label="Rapport de la carte"></aside>
+<script src="/moodboard-view.js"></script>
 </body>
 </html>

@@ -57,7 +57,7 @@ describe("matches / fallbackSummary", () => {
 
 describe("buildMoodboard", () => {
   it("statuts: developing (tache ouverte), lead (piste/mention), found, tache faite exclue", async () => {
-    const cards = await buildMoodboard({ readFile, query: fake().q });
+    const cards = await buildMoodboard({ llm: true, readFile, query: fake().q });
     const by = Object.fromEntries(cards.map((c) => [c.title, c]));
     expect(by["Graphe de dépendances complet"].status).toBe("developing");
     expect(by["Historique par cellule"].status).toBe("lead");
@@ -69,7 +69,7 @@ describe("buildMoodboard", () => {
   });
   it("un seul appel Haiku groupe, sans outil, 1 tour, plafond par carte", async () => {
     const f = fake();
-    const cards = await buildMoodboard({ readFile, query: f.q });
+    const cards = await buildMoodboard({ llm: true, readFile, query: f.q });
     expect(f.calls).toHaveLength(1);
     expect(f.calls[0].options).toMatchObject({ model: "haiku", maxTurns: 1, tools: [] });
     expect(f.calls[0].options.maxBudgetUsd).toBeCloseTo(0.01 * cards.length);
@@ -79,20 +79,20 @@ describe("buildMoodboard", () => {
     const f = fake(0.003);
     const budget = createBudget(1);
     const cache = new Map<string, string>();
-    await buildMoodboard({ readFile, query: f.q, budget, cache });
+    await buildMoodboard({ llm: true, readFile, query: f.q, budget, cache });
     expect(budget.spent()).toBeCloseTo(0.003);
-    await buildMoodboard({ readFile, query: f.q, budget, cache });
+    await buildMoodboard({ llm: true, readFile, query: f.q, budget, cache });
     expect(f.calls).toHaveLength(1);
   });
   it("repli sans LLM: erreur, budget epuise, jeton absent; ne leve jamais", async () => {
     const boom: QueryFn = () => { throw new Error("x"); };
-    const a = await buildMoodboard({ readFile, query: boom });
+    const a = await buildMoodboard({ llm: true, readFile, query: boom });
     expect(a.every((c) => c.summary.length > 0 && c.summary.length <= 80)).toBe(true);
     const f = fake();
     const b = createBudget(0.001);
     b.settle(0, 1);
-    await buildMoodboard({ readFile, query: f.q, budget: b });
-    await buildMoodboard({ readFile, query: f.q, env: {} });
+    await buildMoodboard({ llm: true, readFile, query: f.q, budget: b });
+    await buildMoodboard({ llm: true, readFile, query: f.q, env: {} });
     expect(f.calls).toHaveLength(0);
     expect(await buildMoodboard({ readFile: async () => { throw new Error("no"); }, query: f.q })).toEqual([]);
   });
@@ -113,19 +113,19 @@ describe("budget du moodboard", () => {
     const q: QueryFn = ({ options }) => (async function* () {
       yield { type: "result", subtype: "success", result: "1|ok", total_cost_usd: Math.min(0.02, options.maxBudgetUsd as number) };
     })();
-    await buildMoodboard({ readFile, query: q, budget: shared, cache: new Map(), env: { CLAUDE_CODE_OAUTH_TOKEN: "x" } });
+    await buildMoodboard({ llm: true, readFile, query: q, budget: shared, cache: new Map(), env: { CLAUDE_CODE_OAUTH_TOKEN: "x" } });
     expect(shared.spent()).toBeGreaterThan(0);
     expect(shared.spent()).toBeLessThanOrEqual(1);
   });
 
-  it("champs de la vue = MoodCard (statuts et axes connus de moodboard.html)", async () => {
-    const html = readFileSync(new URL("./moodboard.html", import.meta.url), "utf-8");
-    const cards = await buildMoodboard({ readFile, query: (() => (async function* () {})()) as QueryFn });
+  it("champs de la vue = MoodCard (axes connus de moodboard-view.js, champs lus par la vue)", async () => {
+    const js = readFileSync(new URL("./moodboard-view.js", import.meta.url), "utf-8");
+    const cards = await buildMoodboard({ llm: true, readFile, query: (() => (async function* () {})()) as QueryFn });
     for (const c of cards) {
-      expect(html).toContain(`${c.status}:`);
-      if (c.axis) expect(html).toContain(`${c.axis}:`);
+      if (c.axis) expect(js).toContain(`${c.axis}:`);
       expect(Object.keys(c).sort()).toEqual(["axis", "id", "source", "status", "summary", "title"]);
     }
-    for (const f of ["c.status", "c.axis", "c.summary", "c.source", "c.title"]) expect(html).toContain(f);
+    for (const f of ["c.state", "c.axis", "c.summary", "c.title", "c.missing"]) expect(js).toContain(f);
+    for (const st of ["idee", "piste", "en-cours", "bloque", "preuves", "termine"]) expect(js).toContain(st);
   });
 });
