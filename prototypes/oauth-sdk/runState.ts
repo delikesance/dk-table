@@ -15,6 +15,9 @@ import { dirname } from "node:path";
 /** Version du schema ecrit sur disque. */
 export const STATE_VERSION = 1;
 
+/** Pourquoi la derniere tentative a ete refusee (contexte de retry, voir failureContext.ts). */
+export interface Failure { kind?: string; reason: string; failed: string[]; changed: string[]; attempt: number }
+
 /** Memoire d'une carte entre deux essais. */
 export interface CardRun {
   tries: number;
@@ -25,6 +28,10 @@ export interface CardRun {
   dir?: string;
   /** Session SDK de l'agent dans ce worktree (reprise de l'essai suivant). */
   sessionId?: string;
+  /** Cout cumule de cette session (une session reprise rapporte un total cumule). */
+  sessionCostUsd?: number;
+  /** Derniere tentative refusee. */
+  failure?: Failure;
   /** Carte ecartee par le code (max d'essais, doublon, dependance, decoupe) avec sa raison structuree. */
   deferred?: { kind: string; reason: string };
 }
@@ -65,7 +72,11 @@ export function parseState(raw: unknown): RunState | null {
   for (const [id, c] of Object.entries(isObj(raw.cards) ? raw.cards : {})) {
     if (!isObj(c) || typeof c.tries !== "number" || !Number.isFinite(c.tries) || c.tries < 0) continue;
     const d = isObj(c.deferred) && str(c.deferred.kind) && str(c.deferred.reason) ? { kind: c.deferred.kind as string, reason: c.deferred.reason as string } : undefined;
+    const f = isObj(c.failure) && str(c.failure.reason) !== undefined ? c.failure : undefined;
+    const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 50) : []);
     s.cards[id] = {
+      sessionCostUsd: typeof c.sessionCostUsd === "number" && c.sessionCostUsd >= 0 ? c.sessionCostUsd : undefined,
+      failure: f ? { kind: str(f.kind), reason: (f.reason as string).slice(0, 4000), failed: strs(f.failed), changed: strs(f.changed), attempt: num(f.attempt) } : undefined,
       tries: c.tries, models: Array.isArray(c.models) ? c.models.filter((m): m is string => typeof m === "string") : [],
       lastReason: str(c.lastReason), branch: str(c.branch), dir: str(c.dir), sessionId: str(c.sessionId), deferred: d,
     };
