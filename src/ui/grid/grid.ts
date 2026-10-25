@@ -195,6 +195,7 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
       root.remove();
     },
     getSelection: selection,
+    hiddenRow: (row) => ctl.hidden(row - 1),
     setOutline(o) { view.outline = o; outline.refresh(); relist(); },
   };
 }

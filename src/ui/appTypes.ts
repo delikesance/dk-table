@@ -55,6 +55,8 @@ export interface App {
   exportDoc(kind: "md" | "html" | "pdf"): Promise<void>;
   /** Add a sheet from imported cells and activate it. */
   importSheet(name: string, sheet: Pick<DocSheet, "cols" | "rows" | "cells"> & Partial<Pick<DocSheet, "validation">>): void;
+  /** Row (1-based) hidden by the grid filter or a folded outline. */
+  rowHidden(row: number): boolean;
   selection(): string;
   selectedKeys(): string[];
   select(key: string): void;
