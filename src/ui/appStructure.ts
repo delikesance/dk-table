@@ -55,8 +55,8 @@ export function structOp(c: Ctx, op: StructOp): void {
   c.cur.styles = moveKeys(c.cur.styles, e);
   c.cur.cf = shiftRules(c.cur.cf, e);
   if (e.axis === "col") {
+    c.cur.widths = shiftCols(c.cur.widths, e);
     const v = viewOf(c.cur);
-    v.widths = shiftCols(v.widths, e);
     v.filters = shiftCols(v.filters, e);
   }
   buildGrid(c);
