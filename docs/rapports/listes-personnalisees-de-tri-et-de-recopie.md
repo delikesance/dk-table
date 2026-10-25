@@ -1,4 +1,5 @@
 # Rapport : Listes personnalisées de tri et de recopie
+Statut : en-cours
 Visible : non
 
 ## Fait
@@ -24,3 +25,9 @@ Aucune: `Visible : non` (pas d'interface pour créer une liste).
 - Tri: éléments de la liste d'abord (ordre de la liste), les autres ensuite triés normalement; en `desc`, l'ordre de la liste est inversé, les autres restent après.
 - Saisie: séparateurs retour à la ligne, virgule, point-virgule.
 - Doublon refusé à casse près et au niveau de la séquence (même liste dans un autre ordre = liste différente, acceptée).
+
+## Preuves
+- Tests : ok (394 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : sans objet
+<!-- boucle-proof {"tests":{"ok":true,"count":394,"scope":"related"},"tsc":{"ok":true}} -->
