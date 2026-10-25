@@ -13,6 +13,7 @@ import { exportCsv, importCsv, newDocument, openFile, openRecent, saveFile } fro
 import { openCfDialog } from "./cf/panel";
 import { openPivot } from "./dialogs/pivot";
 import { openCompare } from "./dialogs/diff";
+import { openMerge } from "./dialogs/merge";
 
 /** Click the discreet tools toggle (single source of truth for the deployed state + persistence). */
 function toggleTools(): void {
@@ -109,6 +110,7 @@ export function installCommands(app: App): void {
   run("format.wrap", "Renvoi à la ligne", () => app.style({ wrap: !app.activeStyle().wrap }), undefined, ["wrap", "retour"]);
   run("data.pivot", "Tableau croisé…", () => openPivot(app), undefined, ["pivot", "croisé", "dynamique", "agrégation", "somme"]);
   run("file.compare", "Comparer avec un fichier…", () => openCompare(app), undefined, ["diff", "différences", "fusion", "version"]);
+  run("file.merge", "Fusionner avec d'autres versions…", () => openMerge(app), undefined, ["fusion", "merge", "conflit", "version", "diff"]);
   run("format.cf", "Formatage conditionnel…", () => openCfDialog(app), undefined, ["conditionnel", "règle", "échelle", "barres", "doublons", "surligner"]);
   for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
