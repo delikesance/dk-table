@@ -25,6 +25,16 @@ export interface Ctx {
   backDoc?: string;
   /** Editor of the open document. */
   docEd?: DocEditor;
+  /** Host of the macro editor view (shown instead of the grid while a macro tab is active). */
+  macroHost: HTMLElement;
+  /** Ids of the macro editor tabs, in opening order. */
+  macroTabs: string[];
+  /** Id of the macro whose editor is shown, or undefined. */
+  curMacro?: string;
+  /** Editor of the macro tab being shown. */
+  macroView?: { destroy(): void; focus(): void };
+  /** Close the macro editor view (set by mount); returns true when one was open. */
+  leaveMacro?(): boolean;
   /** Sheet and document side by side (Ctrl+\\). */
   split?: boolean;
   /** Rebuild the menu bar (set by mount; called when a document opens or closes). */

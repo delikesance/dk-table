@@ -6,7 +6,6 @@ import { defaultRegistry } from "../palette/registry";
 let app: App;
 let root: HTMLElement;
 const cell = (k: string) => root.querySelector<HTMLElement>(`.dkg-cell[data-key="${k}"]`)!;
-const panel = () => root.querySelector<HTMLElement>(".dk-macros")!;
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="app"></div>';
@@ -51,7 +50,7 @@ describe("macros in the app", () => {
     const ids = () => defaultRegistry.list().map((c) => c.label);
     const m = app.macros.create();
     app.macros.update(m.id, { name: "Nettoyer", code: 'sheet.setCell("C1", "ok")' });
-    expect(ids()).toContain("Éditeur de macros");
+    expect(ids()).toContain("Macros");
     const cmd = defaultRegistry.list().find((c) => c.label === "Macro : Nettoyer")!;
     cmd.run();
     await vi.waitFor(() => expect(cell("C1").textContent).toBe("ok"));
@@ -60,42 +59,12 @@ describe("macros in the app", () => {
     expect(ids()).not.toContain("Macro : Nettoyer");
   });
 
-  it("opens the panel with a macro ready, runs it and shows the output", async () => {
-    expect(root.querySelector(".dk-macros")).toBeNull();
-    await app.openMacros();
-    expect(panel().hidden).toBe(false);
-    expect(app.macros.list()).toHaveLength(1);
-    const id = app.macros.list()[0].id;
-    app.macros.update(id, { code: 'print("salut")' });
-    panel().querySelector<HTMLButtonElement>(".dk-macros__run")!.click();
-    expect(panel().querySelector(".dk-macros__out")!.textContent).toBe("salut");
-  });
-
-  it("shows errors in the output line", async () => {
-    await app.openMacros();
-    const id = app.macros.list()[0].id;
-    app.macros.update(id, { code: "error('x')" });
-    panel().querySelector<HTMLButtonElement>(".dk-macros__run")!.click();
-    const out = panel().querySelector<HTMLElement>(".dk-macros__out")!;
-    expect(out.textContent).toBe("Ligne 1 : x");
-    expect(out.classList.contains("dk-macros__out--error")).toBe(true);
-  });
-
-  it("lists macros and switches the edited one on click", async () => {
-    const a = app.macros.create(), b = app.macros.create();
-    app.macros.update(b.id, { code: "print(2)" });
-    await app.openMacros(a.id);
-    const items = [...panel().querySelectorAll<HTMLElement>(".dk-macros__item")];
-    expect(items.map((i) => i.textContent)).toEqual(["Macro 1", "Macro 2"]);
-    items[1].click();
-    expect(panel().querySelector(".dk-macros__item--active")!.textContent).toBe("Macro 2");
-    expect(panel().querySelector(".cm-content")!.textContent).toBe("print(2)");
-  });
-
   it("leaves Ctrl+Z/B/I to the code editor instead of the grid", async () => {
     app.edit("A1", "1");
-    await app.openMacros();
-    const content = panel().querySelector<HTMLElement>(".cm-content")!;
+    const m = app.macros.create();
+    await app.editMacro(m.id);
+    await vi.waitFor(() => expect(root.querySelector(".dk-mview .cm-content")).not.toBeNull());
+    const content = root.querySelector<HTMLElement>(".dk-mview .cm-content")!;
     content.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true }));
     expect(cell("A1").textContent).toBe("1");
   });

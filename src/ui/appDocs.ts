@@ -23,6 +23,7 @@ function openCell(c: Ctx, t: RefTarget): void {
 export async function openDocView(c: Ctx, id: string): Promise<void> {
   const d = c.docs.get(id);
   if (!d) return;
+  c.leaveMacro?.();
   c.docEd?.destroy();
   c.docEd = undefined;
   c.docHost.replaceChildren();
@@ -54,7 +55,8 @@ export function toggleSplit(c: Ctx): void {
 
 /** Leave the document view (if open) and show the grid again; no tab refresh (callers do it). */
 export function leaveDoc(c: Ctx): boolean {
-  if (!c.curDoc) return false;
+  const macro = c.leaveMacro?.() ?? false;
+  if (!c.curDoc) return macro;
   c.docEd?.destroy();
   c.docEd = undefined;
   c.curDoc = undefined;
