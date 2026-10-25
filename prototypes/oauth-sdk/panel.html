@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boucle</title>
+<style>
+  body { font: 15px/1.4 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1a1a2e; }
+  h1 { font-size: 1.3rem; }
+  .bar { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+  input { width: 8rem; padding: .4rem; font: inherit; }
+  button { padding: .4rem 1rem; font: inherit; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #status { margin: .5rem 0 1rem; font-weight: 600; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { padding: .35rem .5rem; border-bottom: 1px solid #ddd; font-variant-numeric: tabular-nums; }
+  li.start { color: #0000f2; } li.error { color: #c0392b; } li.done { font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Boucle</h1>
+<div class="bar">
+  <label for="budget">Budget (€)</label>
+  <input id="budget" type="number" min="0" step="0.5" value="5">
+  <button id="go">Go</button>
+  <button id="stop" disabled>Stop</button>
+</div>
+<div id="status">En attente.</div>
+<ul id="log"></ul>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const usd = (n) => (typeof n === "number" ? n.toFixed(2) + " $" : "-");
+
+  /** Texte d'une ligne de progression. */
+  function describe(e) {
+    const where = [e.sector, e.axis].filter(Boolean).join(" / ");
+    const parts = [where, e.message];
+    if (e.type === "start") parts.push("début");
+    if (e.type === "end") parts.push("fin");
+    if (e.costUsd != null) parts.push("coût " + usd(e.costUsd));
+    if (e.elapsedS != null) parts.push(e.elapsedS.toFixed(1) + " s");
+    if (e.totalUsd != null) parts.push("total " + usd(e.totalUsd));
+    if (e.remainingUsd != null) parts.push("reste " + usd(e.remainingUsd));
+    return parts.filter(Boolean).join(" · ");
+  }
+
+  /** Ajoute un événement à la liste et met à jour l'état des boutons. */
+  function show(e) {
+    const li = document.createElement("li");
+    li.className = e.type;
+    li.textContent = describe(e) || e.type;
+    $("log").prepend(li);
+    if (e.type === "done") { running(false); $("status").textContent = "Terminé : " + (e.message || ""); }
+    if (e.type === "error") $("status").textContent = "Erreur : " + (e.message || "");
+  }
+
+  function running(on) { $("go").disabled = on; $("stop").disabled = !on; }
+
+  $("go").onclick = async () => {
+    const r = await fetch("/go", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ budgetEur: Number($("budget").value) }) });
+    if (r.ok) { $("log").textContent = ""; $("status").textContent = "En cours…"; running(true); }
+    else $("status").textContent = "Refusé : " + ((await r.json()).error || r.status);
+  };
+  $("stop").onclick = () => fetch("/stop", { method: "POST" });
+
+  const es = new EventSource("/events");
+  es.onmessage = (m) => { const e = JSON.parse(m.data); if (e.type !== "done") running(true); show(e); };
+</script>
+</body>
+</html>
