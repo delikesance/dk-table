@@ -270,3 +270,5 @@ Classement par gravité (P0 = pire)
 
 - [x] texte-en-colonnes : Données > Texte en colonnes (virgule, point-virgule, tabulation, espace, autre, fusion), `engine/textsplit.ts` + `ui/dialogs/textToCols.ts`, `docs/texte-en-colonnes.md`
 - [x] plafonds-google-sheets : toast pour cellule > 50 000 car., ligne > MAX_ROWS, import CSV volumineux/tronqué, `ui/limits.ts`, `docs/plafonds.md`
+
+- [x] Correction: npm test (1939 ok, 1 skipped) + tsc verts; rapports de docs/rapports/ verifies (fichiers et captures presents)
