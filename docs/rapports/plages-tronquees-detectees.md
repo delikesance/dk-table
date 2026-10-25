@@ -13,7 +13,7 @@ Visible : oui
 
 ## Preuves
 - Tests : ok (2248 tests)
-- Captures : docs/screenshots/plages-tronquees-detectees/alerte-clair.png, alerte-sombre.png, corrige-clair.png, corrige-sombre.png
+- Captures : docs/screenshots/plages-tronquees-detectees/alerte-clair.png, docs/screenshots/plages-tronquees-detectees/alerte-sombre.png, docs/screenshots/plages-tronquees-detectees/corrige-clair.png, docs/screenshots/plages-tronquees-detectees/corrige-sombre.png
 
 ## Decisions
 - Une seule extension d'une ligne par correction; l'audit relance propose la suivante si besoin.
