@@ -70,13 +70,21 @@ export function pivot(table: string[][], spec: PivotSpec): string[][] {
   return [header, ...body, total];
 }
 
-/** Disposition par défaut : 1re colonne non numérique en lignes, 1re numérique en valeur (SUM). */
+/**
+ * Disposition par défaut : lignes = 1re colonne texte dont les valeurs se répètent
+ * (sinon 1re colonne texte), valeur = 1re colonne numérique qui n'est pas un
+ * identifiant (id, n°, code, année...), agrégation SUM. Évite un TCD d'une ligne par enregistrement.
+ */
 export function defaultSpec(table: string[][]): PivotSpec | undefined {
   const head = table[0] ?? [];
   const body = table.slice(1);
   const numeric = (k: number) => body.some((r) => num(r[k] ?? "") !== null) && body.every((r) => (r[k] ?? "").trim() === "" || num(r[k]) !== null);
-  const r = head.findIndex((_, k) => !numeric(k));
-  const v = head.findIndex((_, k) => numeric(k));
-  if (r < 0 || v < 0) return undefined;
+  const repeats = (k: number) => new Set(body.map((r) => r[k] ?? "")).size < body.length;
+  const idLike = (h: string) => /^(id|n°|no|num|numéro|numero|code|ref|année|annee|year)$/i.test(h.trim());
+  const texts = head.map((_, k) => k).filter((k) => !numeric(k));
+  const r = texts.find(repeats) ?? texts[0];
+  const nums = head.map((_, k) => k).filter(numeric);
+  const v = nums.find((k) => !idLike(head[k])) ?? nums[0];
+  if (r === undefined || v === undefined) return undefined;
   return { row: head[r], value: head[v], agg: "SUM" };
 }
