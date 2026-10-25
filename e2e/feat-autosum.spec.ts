@@ -28,3 +28,13 @@ test("Alt+= does nothing without numeric neighbours", async ({ page }) => {
   await page.keyboard.press("Alt+Equal");
   expect(await cellText(page, "B5")).toBe("");
 });
+
+test("the Σ button sums a selected column below it", async ({ page }) => {
+  await fillColumn(page, "A", ["1", "2", "3"]);
+  await page.locator('.dkg-cell[data-key="A1"]').click();
+  await page.locator('.dkg-cell[data-key="A3"]').click({ modifiers: ["Shift"] });
+  await page.getByRole("button", { name: "Somme rapide (Alt+=)" }).click();
+  expect(await cellText(page, "A4")).toBe("6");
+  await selectCell(page, "A4");
+  await expect(fx(page)).toHaveValue("=SUM(A1:A3)");
+});
