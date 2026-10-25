@@ -56,6 +56,25 @@ describe("commit", () => {
   });
 });
 
+describe("commit manquant (Windows : message mal passe a git)", () => {
+  it("un commit qui echoue n'est pas fusionne et garde le worktree (le travail n'est pas perdu)", async () => {
+    const f = fake({ "git status": { code: 0, out: "?? docs/design/x.html\n" }, "git commit": { code: 1, out: "error: pathspec 'design' did not match" } });
+    const g = createGitFlow(f.run, "/r");
+    expect(await g.commit("/d", "Boucle: design")).toBe(false);
+    const r = await g.mergeIfGreen("wt/a-1", "/d");
+    expect(r.merged).toBe(false);
+    expect(r.reason).toMatch(/commit/);
+    expect(f.lines().some((l) => l.startsWith("git merge") || l.startsWith("git worktree remove"))).toBe(false);
+  });
+  it("branche sans aucun commit d'avance : pas de fusion « reussie » qui supprimerait le worktree", async () => {
+    const f = fake({ "git rev-parse --abbrev-ref": { code: 0, out: "developpement\n" }, "git rev-list --count": { code: 0, out: "0\n" } });
+    const r = await createGitFlow(f.run, "/r").mergeIfGreen("wt/a-1", "/d");
+    expect(r.merged).toBe(false);
+    expect(r.reason).toMatch(/rien/);
+    expect(f.lines().some((l) => l.startsWith("git worktree remove"))).toBe(false);
+  });
+});
+
 describe("mergeIfGreen", () => {
   it("merges --no-ff into developpement and removes worktree when green", async () => {
     const f = fake({ "git rev-parse --abbrev-ref": { code: 0, out: "developpement\n" } });
