@@ -7,6 +7,7 @@ Visible : oui
 - Branché dans `app.ts` (entre grille et onglets) et `appGrid.ts` `syncInfo` (mise à jour à chaque sélection / édition).
 - Moyenne, Nb, Nb numérique, Min, Max, Somme dès 2 cellules sélectionnées; sans nombre, seul Nb s'affiche.
 - Menu « Stats ▾ » (cases à cocher) choisit les entrées affichées; choix persisté (`dk-table.statusbar`, localStorage).
+- Clic droit sur la barre ouvre aussi le menu des entrées (test d'abord).
 - Tests d'abord : `statusbar/stats.test.ts`; e2e `e2e/feat-selstats.spec.ts`.
 
 ## Non fait

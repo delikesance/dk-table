@@ -61,5 +61,6 @@ export function createStatusBar(): StatusBar {
     }
     el.replaceChildren(...nodes);
   };
+  el.addEventListener("contextmenu", (e) => { e.preventDefault(); open = true; render(); }); // right-click = entries menu
   return { el, update(cells, values) { last = [cells, values]; render(); } };
 }
