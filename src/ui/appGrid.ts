@@ -3,6 +3,7 @@ import { getDisplay, getRaw, setCell } from "../engine/sheet";
 import { createGrid } from "./grid/grid";
 import type { GridView } from "./grid/types";
 import { MAX_ROWS } from "./grid/virtual";
+import { checkCells } from "./limits";
 import { pushUndo } from "./model";
 import { liveCell, paintCell } from "./cellview";
 import { computeCf } from "../engine/cf/compute";
@@ -86,6 +87,7 @@ export function buildGrid(c: Ctx): void {
     getDisplay: (k) => formatValue(getDisplay(c.cur.sheet, k), c.cur.styles[k]?.format),
     getRaw: (k) => getRaw(c.cur.sheet, k),
     onEdit: (k, raw) => {
+      checkCells({ [k]: raw });
       if (!c.coalescing) {
         pushUndo(c.cur);
         c.coalescing = true;

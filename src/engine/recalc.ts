@@ -4,7 +4,8 @@ import { getState, type State, type XDep } from "./state";
 import { err } from "./types";
 import { expandRange, inBounds } from "./address";
 import { collectRefs, parseFormula } from "./parser";
-import { evaluate } from "./evaluator";
+import { evaluate, spillResult } from "./evaluator";
+import { applySpill, releaseSpill, spillOwners } from "./spill";
 import { isDecimal } from "./values";
 
 export { getState, type State };
@@ -52,11 +53,20 @@ export function rewire(sheet: Sheet, key: string): void {
   }
 }
 
-/** Compute one cell's value from its raw text / AST using current values. */
-function compute(sheet: Sheet, st: State, key: string): Value {
+/** Compute one cell's value from its raw text / AST using current values; a spill formula also fills its zone. */
+function compute(sheet: Sheet, st: State, key: string, touched: Set<string>): Value {
+  const touch = (k: string, v?: Value) => { for (const a of recalc(sheet, k, v)) touched.add(a); };
+  releaseSpill(sheet, st, key, touch);
   const ast = st.asts.get(key);
   if (!ast) return literal(sheet.cells[key]?.raw ?? "");
-  return evaluate(ast, sheet, (k) => st.values.get(k) ?? "");
+  const get = (k: string) => st.values.get(k) ?? "";
+  const sp = spillResult(ast, sheet, get);
+  return sp ? applySpill(sheet, st, key, sp, touch) : evaluate(ast, sheet, get);
+}
+
+/** Heads whose spill zone (or blocked rectangle) contains `key`: they must be recomputed after an edit of `key`. */
+export function spillHeads(sheet: Sheet, key: string): string[] {
+  return spillOwners(getState(sheet), key);
 }
 
 /**
@@ -81,10 +91,11 @@ export function recalc(sheet: Sheet, key: string, fixed?: Value): Set<string> {
   }
   const queue = [...affected].filter((k) => indeg.get(k) === 0);
   const done = new Set<string>();
+  const touched = new Set<string>();
   while (queue.length) {
     const k = queue.pop()!;
     done.add(k);
-    st.values.set(k, k === key && fixed !== undefined ? fixed : compute(sheet, st, k));
+    st.values.set(k, k === key && fixed !== undefined ? fixed : compute(sheet, st, k, touched));
     for (const d of st.deps.get(k) ?? []) {
       if (!affected.has(d) || !(st.prec.get(d)?.has(k))) continue;
       indeg.set(d, indeg.get(d)! - 1);
@@ -92,5 +103,6 @@ export function recalc(sheet: Sheet, key: string, fixed?: Value): Set<string> {
     }
   }
   for (const k of affected) if (!done.has(k)) st.values.set(k, err("#CYCLE!"));
+  for (const k of touched) affected.add(k);
   return affected;
 }

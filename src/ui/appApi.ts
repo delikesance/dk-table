@@ -1,5 +1,6 @@
 /** Builds the public `App` handle (edit, undo, sheets, docs, styles, recents) over the shared `Ctx`. */
 import { getRaw, setCell } from "../engine/sheet";
+import { checkCells, checkImport } from "./limits";
 import { batchEdit, newEntry, pushUndo, step, type Entry } from "./model";
 import { createMacroStore } from "../macros/store";
 import { buildGrid, paintKey, refreshCf, refreshTabs, syncInfo, touch } from "./appGrid";
@@ -17,6 +18,8 @@ import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
 import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
+import { getUserFunctions, setUserFunctions } from "../engine/userfnStore";
+import { setFunctions } from "./appFns";
 import { docFormat, docInsert, toggleSplit, addDoc, leaveDoc, openDocView, removeDoc, watchDocs } from "./appDocs";
 
 /** Styles map for persistence: a copy, or undefined when empty (keeps files lean). */
@@ -37,11 +40,13 @@ export function createApi(c: Ctx): App {
     hooks: {},
     path: undefined,
     edit(key, raw) {
+      checkCells({ [key]: raw });
       pushUndo(c.cur);
       setCell(c.cur.sheet, key, raw);
       touch(c);
     },
     editMany(cells) {
+      checkCells(cells);
       pushUndo(c.cur);
       for (const [k, raw] of Object.entries(cells)) setCell(c.cur.sheet, k, raw);
       touch(c);
@@ -71,11 +76,13 @@ export function createApi(c: Ctx): App {
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(Object.keys(e.widths).length ? { colWidths: widthsToDoc(e.widths) } : {}),
         ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
+      ...(getUserFunctions().length ? { functions: getUserFunctions() } : {}),
       ...(c.docs.toDocs() ? { docs: c.docs.toDocs() } : {}),
     }),
     loadDoc(doc, path) {
       leaveDoc(c);
       c.docs.load(doc.docs);
+      setUserFunctions(doc.functions ?? []);
       c.entries = doc.sheets.map((s) => newEntry(s.name, s));
       c.cur = c.entries.find((e) => e.id === doc.active) ?? c.entries[0];
       app.path = path;
@@ -83,6 +90,7 @@ export function createApi(c: Ctx): App {
       relink(c); refreshTabs(c); buildGrid(c); setTitle(c, false);
     },
     importSheet(name, sheet) {
+      checkImport(sheet);
       leaveDoc(c);
       c.cur = newEntry(name, sheet);
       c.entries.push(c.cur);
@@ -137,6 +145,8 @@ export function createApi(c: Ctx): App {
     fitColumns: (cols) => fitColumns(c, cols ?? colsOfSelection(c.grid.getSelection())),
     getFreeze: () => ({ rows: c.cur.freeze?.rows ?? 0, cols: c.cur.freeze?.cols ?? 0 }),
     macros,
+    getFunctions: getUserFunctions,
+    setFunctions: (list) => setFunctions(c, list),
     addDoc: () => addDoc(c),
     exportDoc: (kind) => exportDoc(c, kind),
     docFormat: (name) => docFormat(c, name),

@@ -39,7 +39,7 @@ function tokenize(src: string): Tok[] {
       continue;
     }
     // Error literal (#REF! written by structural edits/ref shifts, #N/A...): evaluates to that error.
-    const er = /^#(REF!|N\/A|VALUE!|DIV\/0!|NAME\?|NUM!|CYCLE!)/i.exec(src.slice(i));
+    const er = /^#(REF!|N\/A|VALUE!|DIV\/0!|NAME\?|NUM!|CYCLE!|SPILL!)/i.exec(src.slice(i));
     if (er) { out.push({ k: "err", v: er[0].toUpperCase() }); i += er[0].length; continue; }
     const sh = sheetPrefix(src, i);
     if (sh) { out.push({ k: "sheet", v: sh.name }); i = sh.end; continue; }
@@ -145,7 +145,7 @@ class Parser {
     }
     const up = name.toUpperCase();
     if (up === "TRUE" || up === "FALSE") return { t: "bool", v: up === "TRUE" };
-    if (!parseKey(up)) return { t: "err", code: "#NAME?" };
+    if (!parseKey(up)) return { t: "err", code: "#NAME?", name: up };
     if (this.isOp(":")) {
       this.p++;
       const e = this.t[this.p++];

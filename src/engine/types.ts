@@ -13,7 +13,7 @@ export interface Sheet {
 }
 
 /** Spreadsheet error codes. */
-export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!" | "#N/A" | "#NUM!";
+export type ErrorCode = "#REF!" | "#DIV/0!" | "#NAME?" | "#CYCLE!" | "#VALUE!" | "#N/A" | "#NUM!" | "#SPILL!";
 
 /** Error value carried through evaluation. */
 export interface CellError {
@@ -47,4 +47,5 @@ export type Node =
   | { t: "pct"; e: Node }
   | { t: "bin"; op: string; l: Node; r: Node }
   | { t: "call"; name: string; args: Node[] }
-  | { t: "err"; code: ErrorCode };
+  /** `name`: identifiant inconnu tel que tapé (majuscules), paramètre possible d'une fonction nommée. */
+  | { t: "err"; code: ErrorCode; name?: string };
