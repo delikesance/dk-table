@@ -1,9 +1,9 @@
 /**
- * Plafonds façon Google Sheets : on avertit (toast) quand une limite est atteinte, jamais de troncature silencieuse.
- * Limites : MAX_ROWS lignes affichées, 50 000 caractères par cellule, import volumineux (> IMPORT_WARN_CELLS cellules).
+ * Limites visibles : on avertit (toast) quand une limite est atteinte, jamais de troncature silencieuse.
+ * Pas de plafond de lignes : la grille virtualise toutes les lignes (MAX_ROWS n'est qu'un plancher initial).
+ * Limites : 50 000 caractères par cellule, import volumineux (> IMPORT_WARN_CELLS cellules).
+ * Le poids du classeur est affiché en continu par la barre d'état (`statusbar/weightBadge.ts`).
  */
-import { MAX_ROWS } from "./grid/virtual";
-import { parseKey } from "../engine/address";
 import { showToast } from "./toast/toast";
 
 /** Longueur maximale d'une cellule (comme Google Sheets). */
@@ -15,27 +15,19 @@ export const IMPORT_WARN_CELLS = 200_000;
 function warn(message: string): void { showToast({ message, duration: 8000 }); }
 
 /**
- * Vérifie des cellules écrites (clé A1 -> brut) : cellule trop longue, ligne au-delà de MAX_ROWS.
+ * Vérifie des cellules écrites (clé A1 -> brut) : cellule trop longue (non tronquée, seul un avertissement).
  * Les données ne sont pas modifiées. Retourne vrai si un avertissement a été affiché.
  */
 export function checkCells(cells: Record<string, string>): boolean {
-  let long: string | undefined, out: string | undefined;
-  for (const [k, raw] of Object.entries(cells)) {
-    if (!long && raw.length > MAX_CELL_CHARS) long = k;
-    const p = parseKey(k);
-    if (!out && p && p.row > MAX_ROWS && raw !== "") out = k;
-  }
-  const msgs: string[] = [];
-  if (long) msgs.push(`${long} dépasse ${MAX_CELL_CHARS.toLocaleString("fr-FR")} caractères (non tronquée, lenteurs possibles)`);
-  if (out) msgs.push(`${out} est au-delà de la ligne ${MAX_ROWS} : non affichée`);
-  if (msgs.length) warn(msgs.join(". "));
-  return msgs.length > 0;
+  const long = Object.entries(cells).find(([, raw]) => raw.length > MAX_CELL_CHARS)?.[0];
+  if (!long) return false;
+  warn(`${long} dépasse ${MAX_CELL_CHARS.toLocaleString("fr-FR")} caractères (non tronquée, lenteurs possibles)`);
+  return true;
 }
 
-/** Vérifie un import (CSV) : lignes au-delà de MAX_ROWS, cellules trop longues, taille. Retourne vrai si avertissement. */
+/** Vérifie un import (CSV) : import volumineux (> IMPORT_WARN_CELLS cellules), cellules trop longues. Retourne vrai si avertissement. */
 export function checkImport(s: { cols: number; rows: number; cells: Record<string, { raw: string }> }): boolean {
   const msgs: string[] = [];
-  if (s.rows > MAX_ROWS) msgs.push(`${s.rows} lignes importées, seules les ${MAX_ROWS} premières sont affichées`);
   const n = Object.keys(s.cells).length;
   if (n > IMPORT_WARN_CELLS) msgs.push(`import volumineux : ${n.toLocaleString("fr-FR")} cellules`);
   const long = Object.entries(s.cells).find(([, v]) => v.raw.length > MAX_CELL_CHARS);

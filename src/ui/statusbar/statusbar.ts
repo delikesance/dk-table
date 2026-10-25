@@ -1,8 +1,12 @@
-/** Status bar: shows the chosen figures (Moyenne / Nb / Nb numérique / Min / Max / Somme) of a multi-cell selection. */
+/**
+ * Status bar, always visible: at left the workbook weight (weightBadge), at right the chosen figures
+ * (Moyenne / Nb / Nb numérique / Min / Max / Somme) of a multi-cell selection.
+ */
 import type { Value } from "../../engine/types";
 import { STAT_LABELS, statItems } from "./stats";
+import { createWeightBadge } from "./weightBadge";
 
-export interface StatusBar { el: HTMLElement; update(cells: number, values: Value[]): void }
+export interface StatusBar { el: HTMLElement; update(cells: number, values: Value[]): void; weigh(raws: Iterable<string>): void }
 
 const KEY = "dk-table.statusbar";
 
@@ -15,18 +19,17 @@ function load(): string[] {
   return [...STAT_LABELS];
 }
 
-/** Create the bar (hidden until `update` gets a selection of 2+ cells); the "Stats" button opens a checkbox menu. */
+/** Create the bar (always shown; stats only for a selection of 2+ cells); the "Stats" button opens a checkbox menu. */
 export function createStatusBar(): StatusBar {
   const el = document.createElement("div");
   el.className = "dk-status";
   el.setAttribute("role", "status");
-  el.hidden = true;
+  const weight = createWeightBadge();
   let enabled = load();
   let last: [number, Value[]] = [0, []];
   let open = false;
   const render = () => {
     const items = statItems(last[0], last[1], enabled);
-    el.hidden = !statItems(last[0], last[1]).length;
     const spans = items.map((i) => {
       const s = document.createElement("span");
       s.dataset.stat = i.label;
@@ -39,7 +42,7 @@ export function createStatusBar(): StatusBar {
     btn.textContent = "Stats ▾";
     btn.title = "Choisir les statistiques affichées";
     btn.onclick = () => { open = !open; render(); };
-    const nodes: Node[] = [...spans, btn];
+    const nodes: Node[] = [weight.el, ...spans, btn];
     if (open) {
       const menu = document.createElement("div");
       menu.className = "dk-status__menu";
@@ -62,5 +65,10 @@ export function createStatusBar(): StatusBar {
     el.replaceChildren(...nodes);
   };
   el.addEventListener("contextmenu", (e) => { e.preventDefault(); open = true; render(); }); // right-click = entries menu
-  return { el, update(cells, values) { last = [cells, values]; render(); } };
+  render();
+  return {
+    el,
+    update(cells, values) { last = [cells, values]; render(); },
+    weigh(raws) { weight.update(raws); },
+  };
 }
