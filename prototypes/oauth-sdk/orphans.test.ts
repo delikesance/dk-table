@@ -1,7 +1,7 @@
 // @vitest-environment node
 /** Worktrees orphelins (depot reel): le travail non fusionne est archive sur sa branche avant tout retrait, les worktrees retenus sont gardes. */
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +17,8 @@ const g = (cwd: string, ...a: string[]) => execFileSync("git", a, { cwd, encodin
 const run: Run = async (cmd, args, cwd) => { const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env }); return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 
 function repo() {
-  const r = mkdtempSync(join(tmpdir(), "orph-")); dirs.push(r);
+  // chemin canonique: git affiche le chemin long, tmpdir() peut renvoyer le nom 8.3
+  const r = realpathSync.native(mkdtempSync(join(tmpdir(), "orph-"))); dirs.push(r);
   g(r, "init", "-q", "-b", "developpement");
   writeFileSync(join(r, "a.txt"), "a"); g(r, "add", "-A"); g(r, "commit", "-qm", "init");
   const wt = (name: string) => { const d = join(r, ".claude", "worktrees", name); g(r, "worktree", "add", "-q", "-b", `wt/${name}`, d, "developpement"); return d; };
