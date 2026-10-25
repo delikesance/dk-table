@@ -22,7 +22,16 @@
 .dk-under { text-decoration: underline; }
 .dk-link { color: #000; text-decoration: underline; }
 .dk-code, .dk-codeblock, .dk-chip-src { font-family: "Courier New", Courier, monospace; font-size: 0.9em; background: #eee; }
-.dk-codeblock { display: block; padding: 0 0.5em; }
+.dk-codeblock { display: block; padding: 0 0.6em; background: #f6f6f6; border-left: 1px solid #000; border-right: 1px solid #000; line-height: 1.4; }
+.dk-cb-start { border-top: 1px solid #000; padding-top: 0.3em !important; margin-top: 0.4em; }
+.dk-cb-end { border-bottom: 1px solid #000; height: 0.4em; line-height: 0; margin-bottom: 0.6em; overflow: hidden; }
+.dk-cb-lang { display: block; font: 0.75em "Times New Roman", serif; font-style: italic; color: #444; text-align: right; }
+.dk-t-kw { color: #000; font-weight: bold; }
+.dk-t-str { color: #1a5c2a; }
+.dk-t-num { color: #7a3b00; }
+.dk-t-com { color: #666; font-style: italic; }
+.dk-t-type { color: #1f3a7a; }
+.dk-t-fn { color: #1f3a7a; font-weight: bold; }
 .dk-quote { padding-left: 0.5cm; margin-left: 1cm; border-left: 2px solid #000; }
 .dk-bullet { display: inline-block; width: 1.1em; }
 .dk-rule { border: 0; border-top: 1px solid #000; margin: 0.5em 0; }
