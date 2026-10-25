@@ -11,7 +11,7 @@ import { reportTemplate } from "./card";
 import type { BoardCard } from "./cards";
 
 /** Cartes traitees par tournee (contexte de l'agent borne). */
-export const MAX_BATCH = 3;
+export const MAX_BATCH = 6;
 
 /** Rang de reprise: les cartes deja commencees passent avant les nouvelles. */
 const RANK: Record<string, number> = { preuves: 0, "en-cours": 1, bloque: 2, piste: 3, idee: 4 };
