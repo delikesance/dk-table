@@ -11,9 +11,6 @@ Visible : oui
 - Documentation : `docs/plan-outline.md` (section Interface).
 
 ## Non fait
-- Commandes de groupement / dégroupement et sous-totaux automatiques : cartes « Plan et regroupement » et « Moteur de sous-totaux ». Sans elles, le plan ne se crée que par `window.__dkOutline` (dev).
-- Persistance de l'état replié dans le `.dktable` (vue seule pour l'instant).
-- Pas de raccourci clavier dédié au plan ; pas d'état « pressé » sur les boutons de niveaux.
 
 ## Captures
 - Clair : `docs/screenshots/ui-du-plan-repliable-gouttiere-boutons-de-niveaux/plan-initial-clair.png` (+/- sur lignes 4 et 7)
@@ -31,6 +28,11 @@ Visible : oui
 - État dans `GridView.outline` (vue par feuille, non persistée).
 - `grid.ts` était à 200 lignes : compactage de trois blocs existants (apply de remplissage, `bindClipboard`, relist) pour rester sous la limite.
 - Hook de développement `window.__dkOutline(niveaux)` (et `App.setOutlineLevels`) : sert aux captures et aux tests e2e, car rien ne crée encore de niveaux.
+
+- Hors carte (autres cartes, limites connues) :
+  - Commandes de groupement / dégroupement et sous-totaux automatiques : cartes « Plan et regroupement » et « Moteur de sous-totaux ». Sans elles, le plan ne se crée que par `window.__dkOutline` (dev).
+  - Persistance de l'état replié dans le `.dktable` (vue seule pour l'instant).
+  - Pas de raccourci clavier dédié au plan ; pas d'état « pressé » sur les boutons de niveaux.
 
 ## Preuves
 - Tests : ok (331 tests, tests lies aux fichiers modifies)
