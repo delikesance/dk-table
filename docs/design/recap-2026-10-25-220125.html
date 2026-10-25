@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Récap des designs</title>
+<!-- Pour Canva : Imprimer → Enregistrer en PDF (1 page = 1 diapositive), puis Canva → Importer un fichier -->
+<style>@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font:28px/1.4 system-ui,sans-serif;color:#111;background:#fff}
+.page{width:1920px;height:1080px;padding:60px 80px;overflow:hidden;page-break-after:always;break-after:page}
+.page h1{font-size:72px;margin:0 0 24px}.page h2{font-size:40px;margin:0 0 24px}
+.frame{width:1760px;height:880px;overflow:hidden;border:2px solid #111}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #999;padding:8px;text-align:left}
+.note{display:none}</style></head><body>
+<section class="page cover"><h1>Récap des designs</h1><p>25/10/2026 23:02:55 · 1 design</p></section>
+<section class="page design"><h2>2026-10-25-220125.html</h2><div class="frame">
+<h1>Espion · Analyse rapide · Appareil photo</h1>
+<p class="lead">Trois idees de TODO.md (axe 3 « negligé ailleurs »), absentes de src/. Chaque maquette est interactive.</p>
+
+<section class="idea" id="spy">
+  <h2>1 — Fenetre Espion</h2>
+  <p class="lead">Panneau flottant qui suit des cellules choisies, sur toutes les feuilles, pendant l'edition ailleurs. Au changement : ligne en surbrillance et ecart (↑ ↓). Clic sur une ligne = aller a la cellule.</p>
+  <div class="row">
+    <div>
+      <p class="cap">Feuille « Ventes » (modifier pour voir l'espion reagir)</p>
+      <table class="g" id="spyGrid"></table>
+      <p><button id="spyEdit">Modifier B2 (+120)</button> <button id="spyBreak">Provoquer #DIV/0!</button> <button id="spyReset">Retablir</button></p>
+    </div>
+    <div class="float win" id="spyWin" role="region" aria-label="Espion"></div>
+  </div>
+  <h3>Etats</h3>
+  <div class="states">
+    <div class="state"><p class="cap">Vide</p><div class="float win"><div class="bar">Espion<span class="sp"></span><button>+ Selection</button></div><div class="empty">Aucune cellule suivie. Selectionner des cellules puis « + Selection ».</div></div></div>
+    <div class="state"><p class="cap">Erreur suivie</p><div class="float win"><div class="bar">Espion</div><table><tr><th>Feuille</th><th>Cell.</th><th style="text-align:right">Valeur</th></tr><tr class="row"><td>Ventes</td><td>B6</td><td class="v err">#DIV/0!</td></tr></table></div></div>
+  </div>
+</section>
+
+<section class="idea" id="qa">
+  <h2>2 — Analyse rapide (Ctrl+Q)</h2>
+  <p class="lead">Sur une selection de donnees, une surface flottante propose 4 familles. Survol d'une option = apercu dans la grille, clic = application en un pas d'annulation, Echap = annule l'apercu.</p>
+  <div class="row">
+    <div style="position:relative">
+      <p class="cap">Apercu direct sur la grille</p>
+      <table class="g" id="qaGrid"></table>
+    </div>
+    <div class="float qa" id="qaBox" role="dialog" aria-label="Analyse rapide">
+      <div class="tabs" role="tablist" id="qaTabs"></div><div class="opts" id="qaOpts"></div>
+      <div class="foot"><span id="qaHint">Survoler pour previsualiser</span><span>Echap</span></div>
+    </div>
+  </div>
+  <h3>Option « Totaux » en apercu (themes identiques)</h3>
+  <p class="cap">Ligne de total ajoutee sous la selection, ecrite avec SUM, sans toucher aux donnees.</p>
+</section>
+
+<section class="idea" id="cam">
+  <h2>3 — Appareil photo (plage vivante)</h2>
+  <p class="lead">« Coller en plage liee » : une copie en lecture seule d'une plage source, posee ailleurs (autre feuille ou bloc <span class="mono">dk doc</span>). Elle se met a jour a chaque recalcul de la source, bordure et trait pointille en teinte « dependant ».</p>
+  <div class="row" style="position:relative" id="camRow">
+    <div><p class="cap">Source : Ventes!A1:B4</p><table class="g" id="camSrc"></table><p><button id="camEdit">Modifier B3</button></p></div>
+    <svg width="90" height="60" aria-hidden="true"><path class="link" d="M0 30 H90"/></svg>
+    <div class="cam" data-src="Ventes!A1:B4 (lecture seule)"><table class="g" id="camDst"></table></div>
+  </div>
+  <h3>Etats</h3>
+  <p class="mono" style="font-size:.82rem;color:var(--text2)">Normal : bordure --c-dep-out · Source supprimee : bordure --c-error, valeurs figees, bandeau « Source introuvable » · Edition : interdite (cellule readonly, --c-readonly-bg).</p>
+</section>
+
+<section class="idea" id="contracts">
+  <h2>Interfaces et contrats</h2>
+<div class="contract">// --- 1. Espion ---  (TDD : src/engine/model/watch.test.ts en premier)
+src/engine/model/watch.ts (pur, sans DOM)
+  type WatchItem = { id: string; sheet: string; key: string };       // key "B2"
+  type WatchRow  = WatchItem & { raw: string; display: string; value: Value; prev?: Value; delta?: number; error?: ErrorCode };
+  addWatch(list: WatchItem[], items: Omit<WatchItem,"id">[]): WatchItem[]   // dedoublonne feuille+cellule
+  removeWatch(list, id): WatchItem[]
+  readWatch(book: Workbook, list: WatchItem[], prev?: WatchRow[]): WatchRow[]  // delta = nombre - nombre precedent, undefined sinon
+  onRenameSheet / onDeleteSheet: remappent ou retirent les items
+src/ui/watch/panel.ts   mountWatch(app): { open(), close(), toggle() }  -- surface flottante deplacable, role="region"
+  evenements: abonne a app.onRecalc (apres chaque recalcul) -> readWatch -> met a jour les lignes, classe .flash 1,2 s
+  clic ligne -> app.goTo(sheet, key); Suppr -> removeWatch; bouton « + Selection » -> addWatch(app.selection())
+src/io/watchFormat.ts   DktDoc.watch?: WatchItem[]  (persiste dans .dktable; absent = []) + validation
+palette: « Affichage : Fenetre Espion » ; menu Affichage ; pas de raccourci.
+fichiers: src/ui/watch/{panel.ts,watch.css}, src/ui/appWatch.ts (cablage), src/ui/menubar/spec.ts (entree), docs/espion.md
+
+// --- 2. Analyse rapide ---  (test d'abord : src/engine/quick.test.ts)
+src/engine/quick.ts (pur)
+  type QuickFamily = "format" | "chart" | "total" | "table";
+  type QuickOption = { id: string; family: QuickFamily; label: string; icon: string; plan: QuickPlan };
+  type QuickPlan   = { writes: {key:string; raw:string}[]; styles?: {range:string; style:Partial<CellStyle>}[]; cf?: CfRule[]; live?: {key:string; raw:string} };
+  suggestQuick(sheet, range): QuickOption[]   // total: SUM/AVERAGE/COUNT en ligne/colonne ; format: barres de donnees, echelle de couleurs, > seuil ; chart: SPARKLINE/BAR/TREND via liveResult ; table: tri, filtre
+  Plages sans nombre -> seules les options de tableau. Plan applique via app.batch() = un pas d'annulation.
+src/ui/quick/popup.ts   openQuick(app, range): ferme sur Echap/clic dehors; Ctrl+Q ouvre; hover -> app.preview(plan) / leave -> app.preview(null)
+  app.preview(plan|null): surcouche de rendu (classe .dkg-prev), aucune ecriture dans le moteur
+  clavier: fleches = navigation entre options, Tab = onglet suivant, Entree = appliquer
+fichiers: src/ui/quick/{popup.ts,quick.css}, src/ui/appQuick.ts, src/ui/commands.ts (Ctrl+Q), spec.ts (Donnees), docs/analyse-rapide.md
+
+// --- 3. Appareil photo ---  (test d'abord : src/engine/camera.test.ts)
+src/engine/camera.ts (pur)
+  type Snapshot = { id: string; src: { sheet: string; range: string }; at: { sheet: string; key: string } };
+  readSnapshot(book, snap): string[][]     // valeurs affichees; source absente -> null (etat « introuvable »)
+  shiftSnapshot(snaps, op: StructureOp): Snapshot[]   // suit insertion/suppression de lignes/colonnes, comme refs.ts
+  dependances: la plage source est ajoutee au graphe (rewire) -> recalcul de la copie a chaque changement
+src/io/cameraFormat.ts  DktDoc.snapshots?: Snapshot[]
+src/ui/camera/overlay.ts  rend la copie en cellules readonly (--c-readonly-bg), bordure --c-dep-out, flash au changement
+palette: « Copier en plage liee » (apres Copier) puis « Coller en plage liee »; menu Edition > Collage special
+fichiers: src/ui/camera/{overlay.ts,camera.css}, src/ui/appCamera.ts, src/engine/camera.ts, docs/appareil-photo.md
+
+// e2e + captures (CLAUDE.md): e2e/feat-espion.spec.ts, feat-analyse-rapide.spec.ts, feat-camera.spec.ts,
+// captures 1200x800 clair/sombre dans docs/screenshots/<fonctionnalite>/.
+// Contraintes: fichiers <= 200 lignes, doc comment par fonction, TODO.md mis a jour.</div>
+</section>
+
+
+</div></section>
+<section class="page steps"><h2>Étapes du designer</h2><table><tr><th>Étape</th><th>Date</th><th>État</th><th>Coût</th></tr><tr><td>Début</td><td>25/10/2026 23:01:25</td><td></td><td></td></tr><tr><td>Fichier 2026-10-25-162708.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-152237.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-200330.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-180012.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-212335.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-204816.html</td><td>25/10/2026 23:01:25</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-220125.html</td><td>25/10/2026 23:02:47</td><td>écrit</td><td></td></tr><tr><td>Fichier 2026-10-25-220125.html</td><td>25/10/2026 23:02:50</td><td>mis à jour</td><td></td></tr><tr><td>Fin : ok</td><td></td><td></td><td>0.35 $</td></tr></table></section>
+</body></html>
