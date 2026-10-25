@@ -72,6 +72,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `engine/`: modèle + recalcul (`sheet.ts` API publique: createSheet/setCell/getRaw/getValue/getDisplay/getRangeValues/registerFunction). `engine/live/`: mini-charts SVG purs + `adapter.ts` (registerLive: texte de repli dans le moteur; `liveResult(raw, range)`: `{kind:'html'}` pour la cellule).
 - `io/`: format `.dktable` (`format.ts`), CSV (`csv.ts`), dialogues/fs Tauri (`files.ts`, deps injectables).
+- `ui/statusbar/`: barre d état des statistiques de sélection (`stats.ts` pur, `statusbar.ts`), mise à jour par `syncInfo`.
 - `ui/`: `icons.ts` (Iconoir `iconoir/icons/regular/*.svg?raw`, `icon(name)`, `currentColor`, noir via `--c-icon`), `appTools.ts` (bouton `toggle-tools`, mode minimal, Ctrl+J, état persistant `dk-table.tools`), `app.ts` (mount, câblage), `appTypes.ts` (interface App), `appState.ts`, `appGrid.ts`, `appApi.ts`, `appWidgets.ts` (modules issus du split de app.ts), `model.ts` (feuilles, styles, undo/redo par snapshots), `cellview.ts` (styles + rendu live), `numfmt.ts` (formats de nombre), `commands.ts` (palette, raccourcis Ctrl+Z/Y/B/I/O/S/N, menu contextuel), `fileops.ts`, `fndocs.ts`; sous-dossiers `grid/ toolbar/ (dont `menus.ts`: menus Fichier + Import/Export) tabs/ sidebar/ palette/ contextmenu/`.
 - `engine/cf/` + `ui/cf/` : formatage conditionnel (voir « Decisions (formatage conditionnel) »).
 - Modules neufs (non câblés dans l'UI, voir TODO Phase 8): `engine/range.ts`, `engine/sort.ts`, `ui/sort.ts`, `io/autosave.ts`, `ui/grid/filter.ts`, `ui/toast/`, `ui/toolbar/colors.*`, `ui/toolbar/floating.*`.
@@ -174,6 +175,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## autoloop
 - `tools/autoloop/` (étape 1, squelette): `config.ts` (plafonds), `budget.ts`, `journal.ts` (`runs.jsonl`), `redact.ts` (sk-ant-, token), `agent.ts` (`AgentRunner`, `SdkAgentRunner` à import dynamique, `FakeAgentRunner`), `loop.ts` (`nextAction` pur), `main.ts` (`--dry-run` par défaut, `--env-file`). Étape 2: `cycle.ts` (vérifs npm/tsc par l'orchestrateur -> `roles/audit.ts` -> `dedupe.ts` empreinte `<!-- fp:… -->` -> `github.ts` `GhClient`, issues `auto:bug`, max 3/cycle), `live.ts` (`--live`: SDK + gh réels, seul mode qui crée des issues). Fichier `tools/autoloop/STOP` = arrêt. `state.json`/`runs.jsonl` ignorés par git. Tests: `npm test`.
+
+## Decisions (texte en colonnes)
+
+- `engine/textsplit.ts` (`splitLine`, `splitColumn`; délimiteurs, guillemets, fusion, `widths` largeur fixe, `formats` général/texte = préfixe `'`), dialogue `ui/dialogs/textToCols.ts` (menu Données), e2e `e2e/feat-texte-colonnes.spec.ts`. Détail: `docs/texte-en-colonnes.md`.
 
 ## Decisions (croisé, diff)
 
