@@ -1,24 +1,21 @@
 import { test } from "@playwright/test";
 import { startBoucle } from "./boucle/harness";
-import { makeRepo, researchDoc } from "./boucle/repo";
 
 const ideas = [{ title: "Texte en colonnes", source: "Decoupe un texte." }, { title: "Tri multiple", source: "Trie." }];
-const board = async (base: string) => ((await (await fetch(base + "/moodboard")).json()) as { id: string; state: string }[]).map((c) => `${c.id}:${c.state}`).join(" ");
-
-test("S6 redemarrage", async ({ page }) => {
-  test.setTimeout(240000);
-  const repo = await makeRepo(ideas); const a = await startBoucle({ ideas, repo });
-  await a.go(5); await a.waitDone();
-  console.log("avant:", await board(a.base));
-  await a.close();
-  const b = await startBoucle({ ideas, repo });
-  console.log("apres redemarrage:", await board(b.base));
-  // la recherche est regeneree avec un titre un peu different + une idee en double dans 2 axes
-  repo.write("docs/recherche/fonctionnalites.md", researchDoc([{ title: "Texte en colonnes (assistant)", source: "x" }, { title: "Tri multiple", source: "Trie." }]) + "\n## Absent de dk-table, present ailleurs\n\n- **Tri multiple** : doublon axe 2.\n");
-  await b.repo.git(["add", "-A"]); await b.repo.git(["commit", "-m", "recherche"]); 
-  await b.repo.git(["checkout", "developpement"]); await b.repo.git(["merge", "master"]);
-  await new Promise((r) => setTimeout(r, 2500)); console.log("apres regeneration:", await board(b.base));
-  await page.goto(b.base + "/moodboard.html"); await page.waitForTimeout(1500);
-  console.log("MOOD:", (await page.locator("#board").innerText()).replace(/\n+/g, " ¦ "));
-  await b.close(); repo.cleanup();
+test("S5", async () => {
+  test.setTimeout(180000);
+  let pushed = false;
+  const b = await startBoucle({ ideas, script: { onRun: async (sector) => {
+    if (sector !== "implementation" || pushed) return; pushed = true;
+    const r = b.repo, dir = r.cwd + "-other";
+    console.log((await r.git(["clone", r.origin, dir], r.cwd + "/..")).out);
+    await r.git(["config", "user.email", "o@x"], dir); await r.git(["config", "user.name", "O"], dir);
+    console.log((await r.git(["checkout", "developpement"], dir)).out);
+    r.write("src/texte-en-colonnes.ts", "autre\n", dir); await r.git(["add", "-A"], dir);
+    console.log((await r.git(["commit", "-m", "autre"], dir)).out, (await r.git(["push", "origin", "developpement"], dir)).out);
+  } } });
+  await b.go(5); await b.waitDone(120000);
+  for (const e of b.events) if (e.type === "info" && /push|fusionn|conflit/.test(e.message ?? "")) console.log(e.message?.slice(0, 250));
+  console.log((await b.repo.git(["log", "--oneline", "--graph", "developpement"])).out, (await b.repo.git(["status", "--short"])).out);
+  await b.close();
 });
