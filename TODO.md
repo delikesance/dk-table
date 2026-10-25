@@ -306,6 +306,9 @@ Classement par gravité (P0 = pire)
 - [x] formules-portables-entre-langues-et-separateurs : formule stockée en syntaxe canonique, affichée et saisie avec `;` et `,` en langue fr (`engine/locale.ts`, `ui/formula/syntax.ts`, barre de formule, éditeur); `docs/formules-portables.md`, rapport `docs/rapports/formules-portables-entre-langues-et-separateurs.md`
 
 ## Boucle
+- [x] Vue Kanban (groupement par colonne de statut) (carte vue-kanban-groupement-par-colonne-de-statut)
+- [x] Vue Galerie (cartes) (carte vue-galerie-cartes)
+- [x] Valeur cible (Goal Seek) (carte valeur-cible-goal-seek)
 - [x] Vue Formulaire (saisie de lignes) (carte vue-formulaire-saisie-de-lignes)
 - [x] Gestionnaire de scénarios (carte gestionnaire-de-scenarios)
 - [x] Dialogue d'outils d'analyse et sortie en feuille (carte dialogue-d-outils-d-analyse-et-sortie-en-feuille)

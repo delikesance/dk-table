@@ -1,4 +1,5 @@
 # Rapport : Valeur cible (Goal Seek)
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -20,3 +21,9 @@ Visible : oui
 - Fichiers de la carte (`.tsx`, `src/formula/`) inexistants : projet TS/DOM, code dans `src/engine/` et `src/ui/dialogs/`.
 - Le moteur garde sa recherche (sondes + bissection) au lieu de `solve.ts` (taux > -1 seulement, inadapté à une entrée quelconque).
 - Références inter-feuilles non résolues dans la copie (limite connue).
+
+## Preuves
+- Tests : ok (369 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/valeur-cible-goal-seek/valeur-cible-initial-clair.png, docs/screenshots/valeur-cible-goal-seek/valeur-cible-initial-sombre.png, docs/screenshots/valeur-cible-goal-seek/valeur-cible-resultat-clair.png, docs/screenshots/valeur-cible-goal-seek/valeur-cible-resultat-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":369,"scope":"related"},"tsc":{"ok":true}} -->

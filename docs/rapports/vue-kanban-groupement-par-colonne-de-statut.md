@@ -1,4 +1,5 @@
 # Rapport : Vue Kanban (groupement par colonne de statut)
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -17,3 +18,9 @@ Visible : oui
 ## Decisions
 - Fichiers `.tsx` de la carte inexistants : TS/DOM, boîte modale.
 - Vue non persistée; la boîte ne suit pas les changements de grille pendant qu'elle est ouverte.
+
+## Preuves
+- Tests : ok (369 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/vue-kanban-groupement-par-colonne-de-statut/kanban-initial-clair.png, docs/screenshots/vue-kanban-groupement-par-colonne-de-statut/kanban-initial-sombre.png, docs/screenshots/vue-kanban-groupement-par-colonne-de-statut/kanban-deplace-clair.png, docs/screenshots/vue-kanban-groupement-par-colonne-de-statut/kanban-deplace-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":369,"scope":"related"},"tsc":{"ok":true}} -->

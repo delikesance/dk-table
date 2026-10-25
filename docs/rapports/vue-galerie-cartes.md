@@ -1,4 +1,5 @@
 # Rapport : Vue Galerie (cartes)
+Statut : termine
 Visible : oui
 
 ## Fait
@@ -15,3 +16,9 @@ Visible : oui
 ## Decisions
 - Fichiers `.tsx` de la carte inexistants : implémentation TS/DOM en boîte modale (comme Formulaire), pas d'onglet ni de ViewSwitcher.
 - Vue non persistée dans le classeur.
+
+## Preuves
+- Tests : ok (369 tests, tests lies aux fichiers modifies)
+- Typecheck : ok
+- Captures : docs/screenshots/vue-galerie-cartes/galerie-clair.png, docs/screenshots/vue-galerie-cartes/galerie-sombre.png
+<!-- boucle-proof {"tests":{"ok":true,"count":369,"scope":"related"},"tsc":{"ok":true}} -->
