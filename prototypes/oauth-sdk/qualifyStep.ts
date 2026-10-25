@@ -13,7 +13,7 @@ import { dirname } from "node:path";
 import type { Budget } from "./budget";
 import type { BoardCard } from "./cards";
 import { doneTitles, findDuplicates, type Known } from "./dedupe";
-import { MODEL_BY_KIND } from "./agentOptions";
+import { modelFor } from "./routing";
 import { qualifyCards, type QualifCache, type Qualification } from "./qualify";
 import type { QueryFn } from "./research";
 import { selectBatch, type Deferred } from "./selectBatch";
@@ -53,7 +53,7 @@ function asker(d: QualifierDeps) {
     let cost = 0, out: unknown = null;
     try {
       const stream = d.query({ prompt, options: {
-        model: MODEL_BY_KIND.think, maxTurns: 2, maxBudgetUsd: granted, tools: [], allowedTools: [], permissionMode: "dontAsk", settingSources: [], env: d.env,
+        model: modelFor("qualify", 0), maxTurns: 2, maxBudgetUsd: granted, tools: [], allowedTools: [], permissionMode: "dontAsk", settingSources: [], env: d.env,
         outputFormat: { type: "json_schema", schema },
       } });
       for await (const m of stream) {

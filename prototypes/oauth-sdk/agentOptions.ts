@@ -16,10 +16,8 @@
 import { modelFor } from "./routing";
 
 /** Type de tache d'une requete : code (edition pure), think (recherche, choix, diagnostic, design), plan (arbitrage), summary. */
-export type Kind = "code" | "think" | "plan" | "summary";
 
 /** Modele par type de tache (seul endroit ou les modeles sont nommes). */
-export const MODEL_BY_KIND: Record<Kind, string> = { code: "haiku", think: "sonnet", plan: "opus", summary: "haiku" };
 
 /** Sous-agent d'arbitrage: l'agent principal ne pose jamais de question a l'utilisateur, il l'appelle. */
 const TRANCHEUR = {

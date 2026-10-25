@@ -29,12 +29,13 @@ import { logEvent, trackBoard, wrapQuery, wrapRun } from "./instrument";
 import { createRunLogs } from "./wiringLogs";
 import { createFileStateStore } from "./runState";
 import { createFileQualifCache } from "./qualifyStep";
+import { PARALLEL_DEFAULT } from "./limits";
 
 /** Dependances reelles (ou factices en test). */
 export interface WiringOpts { query: QueryFn; run: Run; env: Record<string, string>; cwd: string; /** Pousser developpement apres chaque fusion (defaut: sauf BOUCLE_PUSH=0). */ push?: boolean }
 
 /** Agents en parallele: `BOUCLE_PARALLEL` (entier >= 1), defaut 3; 1 = un seul agent pour tout le lot. */
-export const parallelOf = (v?: string): number => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 8) : 3; };
+export const parallelOf = (v?: string): number => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 8) : PARALLEL_DEFAULT; };
 
 /** Lit un fichier du dossier du code; `undefined` s'il est absent (=> 404). */
 const here = dirname(fileURLToPath(import.meta.url));

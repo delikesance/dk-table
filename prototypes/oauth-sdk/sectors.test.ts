@@ -1,7 +1,7 @@
 /** Tests des secteurs implementation / correction / design (query factice, sans reseau ni cout). */
+import { modelFor } from "./routing";
 import { describe, expect, it } from "vitest";
 import { createBudget } from "./budget";
-import { MODEL_BY_KIND } from "./agentOptions";
 import type { QueryFn } from "./research";
 import type { BoucleEvent } from "./server";
 import { SECTORS, SECTOR_DEFS, beginDesignRun, currentDesignPath, designPath, promptFor, recapPath, runSector } from "./sectors";
@@ -97,7 +97,7 @@ describe("runSector", () => {
     expect(o.tools).toEqual({ type: "preset", preset: "claude_code" });
     expect(o.skills).toBe("all");
     expect(o.disallowedTools).toContain("Bash(git push:*)");
-    expect(o.model).toBe(MODEL_BY_KIND[SECTOR_DEFS[0].kind]);
+    expect(o.model).toBe(modelFor("design", 0)); // une seule table de routage (routing.ts)
   });
 });
 

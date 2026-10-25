@@ -22,7 +22,7 @@ affiche ce qu'ils font. Elle ne doit ni les ralentir, ni changer leur comporteme
 ## Ce qui a changé
 
 - `agentOptions.ts` : une seule source des options. Recherche et édition = preset complet, skills, sous-agent
-  `trancheur` pour les doutes; seul l'appel « helper » est sans outil. Modèles par type de tâche (`MODEL_BY_KIND`).
+  `trancheur` pour les doutes; seul l'appel « helper » est sans outil. Modèles par type de tâche (`routing.ts`, une seule table).
 - Résumés sans LLM par défaut (`llm: true` / `llmSummaries` pour les rédiger avec Haiku) : 0 processus au lieu de 4 par run.
 - `mergeIfGreen` : `npm test` et `tsc` en parallèle.
 - Serveur : `design.html`/`moodboard.html` + `*-view.js/css` servis en liste blanche; `GET /reports/<id>`, `GET /shots/<png>`;
@@ -35,8 +35,8 @@ affiche ce qu'ils font. Elle ne doit ni les ralentir, ni changer leur comporteme
   `## Fait`, `## Non fait`, `## Preuves` (`- Tests : ok (N)`, `- Captures : a.png, b.png`), `## Decisions`.
 - Une carte n'est **terminée** que si `validateReport` passe : fait non vide, tests `ok`, captures existantes
   (sauf `Visible : non`). Un rapport « terminé » sans preuves reste en colonne Preuves.
-- `pipeline.ts` : recherche, design, puis tournées implémentation + correction (lot de 3 cartes, `reportRules.ts`)
-  jusqu'à ce que `allDone(board)` soit vrai; arrêt si budget épuisé, abandon, 12 tournées ou 2 tournées sans progrès.
+- `pipeline.ts` : recherche, design, puis tournées implémentation + correction (lots de `BATCH` cartes, `rounds.ts`, consigne `reportRules.ts`)
+  jusqu'à ce que `allDone(board)` soit vrai; arrêt si budget épuisé, abandon, `MAX_ROUNDS` tournées ou `PATIENCE` tournées sans progrès (valeurs ci-dessous).
   L'événement final porte `complete` (affiché par le panneau et le moodboard).
 - Aucune question : l'agent délègue les doutes au sous-agent `trancheur` et note la décision.
 - Direct : `reportWatch.ts` surveille `docs/rapports/` du worktree et émet `card`; le moodboard relit le rapport de la carte
@@ -108,9 +108,9 @@ Cause : avec `shell: true` (cmd.exe), Node ne protège pas les arguments. `git c
 
 ## Boucle persistante (arrêt et reprise)
 
-Cause de l'arrêt « sans progrès » avec 12 € de budget restant : le progrès ne comptait que les cartes passées en `termine`, le lot (3 cartes) était toujours le même et 2 tournées sans carte terminée arrêtaient tout, avec au plus 12 tournées (36 cartes pour 55). Sous Windows, les commits échouaient en plus (voir PR #40) : rien n'avançait.
+Cause de l'arrêt « sans progrès » avec 12 € de budget restant : le progrès ne comptait que les cartes passées en `termine`, le lot (3 cartes) était toujours le même et 2 tournées sans carte terminée arrêtaient tout, avec au plus 12 tournées (36 cartes pour 55) — valeurs d'alors, remplacées par celles de `limits.ts`. Sous Windows, les commits échouaient en plus (voir PR #40) : rien n'avançait.
 
-`rounds.ts` : lots de 6 cartes, progrès = toute avancée d'état (idée → en cours → preuves → terminée), rotation (une carte sans progrès après 3 essais passe derrière les autres, puis est reprise), arrêt seulement si budget épuisé, abandon, 3 tournées de suite sans aucune avancée, ou 40 tournées. La raison (`reason` : `complete`, `budget`, `stuck`, `abort`, `max-rounds`) part dans les événements `info`/`done` et le panneau l'affiche (« Budget épuisé », « Bloquée », « Tournées max, cartes restantes »). Le résumé n'écrit « Boucle terminée » que si plus aucune carte ne reste. Pas d'agents en parallèle : plusieurs worktrees fusionnent dans la même branche, risque de conflits (non fait). Captures : `docs/screenshots/boucle-arret/`.
+`rounds.ts` : lots de 6 cartes, progrès = toute avancée d'état (idée → en cours → preuves → terminée), rotation (une carte sans progrès après 3 essais passe derrière les autres, puis est reprise), arrêt seulement si budget épuisé, abandon, 3 tournées de suite sans aucune avancée, ou 40 tournées. La raison (`reason` : `complete`, `budget`, `stuck`, `abort`, `max-rounds`) part dans les événements `info`/`done` et le panneau l'affiche (« Budget épuisé », « Bloquée », « Tournées max, cartes restantes »). Le résumé n'écrit « Boucle terminée » que si plus aucune carte ne reste. Les agents parallèles sont décrits plus bas. Captures : `docs/screenshots/boucle-arret/`.
 
 ## Flux de suivi, modèles minimaux, push auto
 
@@ -122,9 +122,9 @@ Maquette du flux : https://claude.ai/artifact/8eVb5xZRpYMELx3xQW9NVm.
 
 **Routage des modèles** (`routing.ts`, `ROUTES`) : le plus petit modèle d'abord, escalade à chaque échec de la carte. research/design : sonnet → opus; implémentation/correction : haiku → sonnet → opus; résumé : haiku; trancheur : haiku → sonnet. Surcharge : `BOUCLE_MODELS='{"implementation":["sonnet"]}'`. Poids relatifs (haiku 1, sonnet 3, opus 15) : estimation du coût, pas une facture (`costUnits`).
 
-**Push automatique** (`git.ts` `pushDev`) : après chaque fusion validée, `git push origin developpement:developpement`. Jamais master/main (refus si la branche courante n'est pas `developpement`); si le distant a avancé : `git pull --no-rebase`, conflit = abandon propre (`merge --abort`) + message dans le journal (« push non effectué : … »). Désactiver : `BOUCLE_PUSH=0`. Tests avec un vrai dépôt distant nu : `git.push.test.ts`; flux complet avec faux agents : `pipeline.flow.test.ts`.
+**Push automatique** (`git.ts` `pushDev`) : une fois par lot, après la suite complète verte (voir « Optimisation de la boucle »), `git push origin developpement:developpement`. Jamais master/main (refus si la branche courante n'est pas `developpement`); si le distant a avancé : `git pull --no-rebase`, conflit = abandon propre (`merge --abort`) + message dans le journal (« push non effectué : … »). Désactiver : `BOUCLE_PUSH=0`. Tests avec un vrai dépôt distant nu : `git.push.test.ts`; flux complet avec faux agents : `pipeline.flow.test.ts`.
 
-**Limites** : pas d'agents en parallèle (risque de conflits de fusion); coût comparé en unités relatives et en nombre d'appels sur faux agents, pas en euros réels; non vérifié sous Windows.
+**Limites** : coût comparé en unités relatives et en nombre d'appels sur faux agents, pas en euros réels; non vérifié sous Windows.
 
 ## Vérification avant fusion : référence à la base
 
@@ -154,3 +154,31 @@ Run réel avant : 4 axes sonnet, 15 tours, 2 passes complètes, ~0,45 € et ~70
 - **Doublons** entre axes et idées déjà connues retirés par le code (`dedupe`, nom en gras normalisé); la synthèse précédente est conservée et complétée (`mergeDoc`, jamais réécrite de zéro), ses titres sont cités dans la consigne (cache des idées trouvées).
 - **Saut de la recherche** (`researchGate`) quand le moodboard a déjà `BOUCLE_RESEARCH_MIN` cartes non terminées (défaut 12) : aucun appel modèle.
 - Mesure sur faux agents (`research.measure.test.ts`) : 8 requêtes sonnet de 15 tours (coût relatif 24) → 4 requêtes haiku de 8 tours (coût relatif 4), plafond 5,40 $ → 0,30 $ par requête. Le coût en euros réel est à confirmer sur un run.
+
+## Optimisation de la boucle (retry, preuves, vérification, qualification)
+
+Valeurs de référence, lues par `docs.consistency.test.ts` et comparées à `limits.ts` (une seule source) :
+
+<!-- boucle-constantes
+BATCH=6
+PATIENCE=3
+MAX_ROUNDS=40
+MAX_TRIES=3
+PARALLEL_DEFAULT=3
+-->
+
+- **Retry informé** (`retry.ts`, `failureContext.ts`, `tries.ts`) : une carte refusée garde sa branche et son worktree; l'essai suivant les rouvre,
+  reçoit la raison structurée (tsc, tests rouges, fichiers modifiés; 6000 caractères au plus) et reprend la session du SDK (`resume`, repli sur une session neuve).
+  Au bout de `MAX_TRIES` essais la carte est bloquée avec sa raison (`bloque`), aucun agent n'est relancé. Un worktree jamais fusionné est archivé en commit WIP avant retrait.
+- **Preuves et TODO.md écrits par le code** (`proveReport.ts`, `proveCards.ts`, `gitProofs.ts`) : l'agent ne fournit que `Fait`, `Non fait`, `Décisions`, `Visible`/captures;
+  après une fusion verte, le code écrit `## Preuves`, `Statut` et coche `TODO.md` dans un commit `[boucle-proof]` (jamais reverifié, jamais une carte, visible dans `git log` et le journal).
+- **Vérification rapide** (`testPlan.ts`, `gitChecks.ts`) : par carte, `tsc` + `vitest related` sur les fichiers modifiés (tests modifiés inclus); documentation seule : rien; doute : suite complète.
+  `npm ci` seulement pour les secteurs qui exécutent du code. Pas de partage de `node_modules` (jonction fragile sous Windows, mesurer `npm ci` dans le journal des verrous).
+- **Une suite complète par lot** (`gitBatch.ts`, `finishLot.ts`) : sur le worktree de référence, puis push seulement si elle est verte et si `developpement` n'a pas bougé pendant la vérification.
+  Un run interrompu avec des fusions non poussées relance cette suite au démarrage suivant (`recoverUnpushed`) avant tout push.
+- **Qualification** (`dedupe.ts`, `qualify.ts`, `qualifyStep.ts`, `selectBatch.ts`, `split.ts`) : doublons trouvés par le code (titres, `TODO.md`, `termines.jsonl`), puis UN appel
+  modèle par lot (taille S/M/L, fichiers, critères, dépendances; JSON validé à la main, repli `implement`/M, cache `.boucle/qualif.json`). Le code décide : doublon, dépendance non terminée
+  ou carte L écartés (L : sous-cartes ajoutées à `fonctionnalites.md`, commit `[boucle-docs]`). Les fichiers déclarés remplacent les chemins devinés pour l'indépendance des agents parallèles.
+- **Contexte** : `CLAUDE.md` est chargé par le SDK (`settingSources`), les consignes ne le relisent plus; `TODO.md` n'est plus édité par les agents; le lot vient de la boucle, jamais d'un choix de l'agent.
+  Le journal `modele/resultat` porte `ctxChars` et les tokens (`usage`, cache lu/créé) pour mesurer.
+- **État** (`runState.ts`, `resume.ts`, `orphans.ts`) : `.boucle/state.json` (écriture atomique, version, validation; fichier corrompu copié en `.corrupt-<ts>` et ignoré), reprise après crash, worktrees orphelins archivés.

@@ -9,7 +9,7 @@
  */
 
 /** Taches routees. */
-export type Task = "research" | "design" | "implementation" | "correction" | "summary" | "trancheur";
+export type Task = "research" | "design" | "implementation" | "correction" | "summary" | "trancheur" | "qualify";
 
 /** Chaines par defaut, du plus petit au plus gros. */
 export const ROUTES: Record<Task, string[]> = {
@@ -19,6 +19,7 @@ export const ROUTES: Record<Task, string[]> = {
   correction: ["haiku", "sonnet", "opus"],
   summary: ["haiku"],
   trancheur: ["haiku", "sonnet"],
+  qualify: ["sonnet"],
 };
 
 /** Poids de cout relatifs (ordre de grandeur des tarifs): sert a mesurer avant/apres, pas a facturer. */
