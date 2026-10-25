@@ -5,6 +5,7 @@
  */
 import { stripAnsi } from "./cleanOutput";
 import type { Proof } from "./card";
+import { createBatch, type BatchResult } from "./gitBatch";
 import { createSectors } from "./gitSectors";
 import { createProofs } from "./gitProofs";
 import { createPush, type PushResult } from "./gitPush";
@@ -34,6 +35,10 @@ export interface GitFlow {
   dispose(): Promise<void>;
   /** Preuves de cartes dont le rapport est complet mais sans preuves ecrites par le code: suite complete sur `developpement` (worktree de reference), puis commit de preuves si verte. Sans agent. */
   reprove(prove: (proof: Proof) => Promise<string[]>): Promise<{ proved: string[]; reason?: string; proofCommit?: string }>;
+  /** Fin de lot : une suite complete + tsc sur developpement (worktree de reference), puis push seulement si verte. Sans fusion depuis la derniere verification ni commit non pousse : `skipped`. */
+  finishBatch(force?: boolean): Promise<BatchResult>;
+  /** Commits locaux de developpement absents d'origin (run interrompu avant le push). */
+  unpushed(): Promise<number>;
   /** Pousse `developpement` vers origin (jamais master/main); integre le distant si le push est rejete. */
   pushDev(): Promise<PushResult>;
 }
@@ -53,6 +58,7 @@ export interface MergeResult {
 export const isMeta = (p: string) => p === "TODO.md" || p.startsWith("docs/rapports/");
 
 export type { PushResult } from "./gitPush";
+export type { BatchResult } from "./gitBatch";
 
 /** Options du flux git. */
 export interface GitOpts {
@@ -60,6 +66,8 @@ export interface GitOpts {
   onLock?: (s: LockStat) => void;
   /** Pousser `developpement` apres chaque fusion validee (defaut: non; `BOUCLE_PUSH=0` le coupe dans boucle.ts). */
   push?: boolean;
+  /** Quand pousser : `merge` apres chaque fusion (defaut, historique) ou `batch` : une suite complete par lot puis push (`finishBatch`). */
+  pushAt?: "merge" | "batch";
 }
 
 const DEV = "developpement";
@@ -85,10 +93,11 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
     return (await git(["checkout", DEV])).code === 0;
   }
 
-  const { startSector, resumeSector, commit, release, installFail, commitFail } = createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER, ensureDev });
+  const { startSector, resumeSector, commit, release, ensureInstalled, installFail, commitFail } = createSectors({ run, git, cwd, lock, dev: DEV, trailer: TRAILER, ensureDev });
   const { writeProofs, reprove } = createProofs({ git, lock, onDev, check: () => checkBase(), trailer: TRAILER });
   const pushDev = createPush(git, DEV, !!opts.push);
-  const { checks, checkBase, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock });
+  const { checks, checkBase, dispose: disposeChecks } = createChecks({ run, git, cwd, lock, dev: DEV, onLock: opts.onLock, install: (d) => ensureInstalled(d) });
+  const { finishBatch, unpushed, markDirty } = createBatch({ git, lock, dev: DEV, onDev, check: () => checkBase(), pushDev });
 
   async function mergeIfGreen(branch: string, dir: string, extra: MergeExtra = {}): Promise<MergeResult> {
     const failed = installFail.get(dir);
@@ -133,13 +142,14 @@ export function createGitFlow(run: Run, cwd: string, opts: GitOpts = {}): GitFlo
         return { merged: false, kind: "tree", reason: `arbre fusionne different de l'arbre verifie (${merged.slice(0, 8)} / ${tested.slice(0, 8)}) : fusion annulee` };
       }
       const prov = await writeProofs(proof, extra.prove);
+      markDirty();
       await git(["worktree", "remove", "--force", dir]);
       // suite non verte (tests deja rouges tolérés): on garde la fusion en local, jamais sur origin
-      return { merged: true, preexisting, proof, ...prov, push: preexisting?.length ? { pushed: false, reason: "suite non verte (tests deja rouges sur la base) : push retenu" } : await pushDev() };
+      return { merged: true, preexisting, proof, ...prov, push: opts.pushAt === "batch" ? undefined : preexisting?.length ? { pushed: false, reason: "suite non verte (tests deja rouges sur la base) : push retenu" } : await pushDev() };
     });
   }
 
   const dispose = disposeChecks;
 
-  return { ensureDev, startSector, resumeSector, commit, mergeIfGreen, reprove, pushDev, release, dispose };
+  return { ensureDev, startSector, resumeSector, commit, mergeIfGreen, reprove: async (p) => { const r = await reprove(p); if (r.proofCommit) markDirty(); return r; }, finishBatch, unpushed, pushDev, release, dispose };
 }

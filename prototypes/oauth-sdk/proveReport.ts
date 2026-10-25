@@ -49,7 +49,7 @@ export function applyProof(md: string, proof: Proof, exists: (path: string) => b
   const t = proof.tests;
   const proofLines = [
     "", "## Preuves",
-    `- Tests : ${t.ok ? "ok" : "echec"}${t.count !== undefined ? ` (${t.count} tests` : " ("}${t.count !== undefined ? ", " : ""}${t.scope === "related" ? "tests lies aux fichiers modifies" : "suite complete"})`,
+    `- Tests : ${t.ok ? "ok" : "echec"} (${[t.count !== undefined ? `${t.count} tests` : "", t.scope === "related" ? "tests lies aux fichiers modifies" : t.scope === "none" ? "non executes : documentation seule" : "suite complete"].filter(Boolean).join(", ")})`,
     `- Typecheck : ${proof.tsc.ok ? "ok" : "echec"}`,
     `- Captures : ${caps}`,
     `<!-- boucle-proof ${JSON.stringify(proof)} -->`,

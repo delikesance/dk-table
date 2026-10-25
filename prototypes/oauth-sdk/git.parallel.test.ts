@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGitFlow, type Run } from "./git";
-import { gitEnv } from "./testUtil";
+import { gitEnv, isTest } from "./testUtil";
 
 // vrais processus git: des dizaines de ms sous Linux mais des secondes sous Windows quand toute la suite tourne en parallele
 vi.setConfig({ testTimeout: 60_000 });
@@ -25,7 +25,7 @@ function setup(red: () => boolean = () => false) {
   g(repo, "add", "-A"); g(repo, "commit", "-qm", "init");
   const tests: string[] = [];
   const run: Run = async (cmd, args, cwd) => {
-    if (cmd === "npm" && args[0] === "test") { tests.push(cwd ?? ""); return { code: red() ? 1 : 0, out: "" }; }
+    if (isTest(cmd, args)) { tests.push(cwd ?? ""); return { code: red() ? 1 : 0, out: "" }; }
     if (cmd === "npm" || cmd === "npx") return { code: 0, out: "" };
     const r = spawnSync(cmd, args, { cwd, encoding: "utf8", env });
     return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") };

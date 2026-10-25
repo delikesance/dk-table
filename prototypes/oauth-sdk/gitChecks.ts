@@ -11,6 +11,7 @@ import { createMutex, type LockStat, type Mutex } from "./concurrency";
 import type { Run } from "./git";
 import { relatedFailures } from "./mergeGuard";
 import type { Proof } from "./card";
+import { planTests } from "./testPlan";
 import { failedFiles, failedTests, onlyOnBranch, testCount } from "./testFailures";
 
 /** Dependances fournies par le flux git. */
@@ -24,10 +25,12 @@ export interface ChecksDeps {
   dev: string;
   /** Mesure des attentes de verrous. */
   onLock?: (s: LockStat) => void;
+  /** Installation paresseuse des dependances (secteurs sans tests au depart); renvoie la raison d'echec ou null. */
+  install?: (dir: string) => Promise<string | null>;
 }
 
 /** Cree les verifications liees a un depot. */
-export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDeps) {
+export function createChecks({ run, git, cwd, lock, dev: DEV, onLock, install }: ChecksDeps) {
   /** Worktree de reference (developpement detache), cree a la demande: sert a savoir si un test rouge l'est deja sur la base. */
   const baseLock = createMutex({ name: "baseLock", onLock });
   let baseDir: string | null = null;
@@ -67,11 +70,27 @@ export function createChecks({ run, git, cwd, lock, dev: DEV, onLock }: ChecksDe
   }
 
   const suiteLock = createMutex({ name: "suiteLock", onLock }); // une suite a la fois: 3 agents qui lancent vitest ensemble provoquent des timeouts
-  /** Tests + tsc. Test deja rouge sur la base (verifiee en worktree isole) tolere (`preexisting`) seulement s'il n'est lie a aucun fichier modifie. */
-  async function checks(dir: string): Promise<{ reason: string | null; preexisting?: string[]; proof?: Proof; kind?: "tsc" | "tests"; failed?: string[] }> {
-    const [t, c] = await suiteLock.run(() => Promise.all([run("npm", ["test"], dir), run("npx", ["tsc", "--noEmit"], dir)]));
+  /**
+   * Verification d'une carte : documentation seule = rien; sinon tsc + tests LIES aux fichiers modifies (`vitest related`, plus
+   * `extra` = fichiers arrives de developpement a la synchro), repli suite complete (voir testPlan.ts). La suite complete du lot
+   * est lancee une fois par `checkBase`. Test deja rouge sur la base (worktree isole) tolere (`preexisting`) seulement s'il n'est
+   * lie a aucun fichier modifie.
+   */
+  async function checks(dir: string, extra: string[] = []): Promise<{ reason: string | null; preexisting?: string[]; proof?: Proof; kind?: "tsc" | "tests"; failed?: string[] }> {
+    const diff = await git(["diff", "--name-only", `${DEV}...HEAD`], dir);
+    const plan = planTests([...diff.out.split(/\r?\n/), ...extra]);
+    if (plan.mode === "none") return { reason: null, proof: { tests: { ok: true, scope: "none" }, tsc: { ok: true } } };
+    const failedInstall = await install?.(dir);
+    if (failedInstall) return { reason: failedInstall, kind: "tests" };
+    const runTests = (related: boolean) => (related && plan.mode === "related" ? run("npx", ["vitest", "related", "--run", ...plan.files], dir) : run("npm", ["test"], dir));
+    let scope: "related" | "full" = plan.mode === "related" ? "related" : "full";
+    let [t, c] = await suiteLock.run(() => Promise.all([runTests(true), run("npx", ["tsc", "--noEmit"], dir)]));
+    if (scope === "related" && t.code === 0 && /No affected test files found/i.test(t.out)) {
+      scope = "full"; // aucun test ne depend des fichiers modifies: on ne conclut pas, suite complete
+      t = await suiteLock.run(() => runTests(false));
+    }
     if (c.code !== 0) return { reason: `npx tsc --noEmit failed: ${failureDigest(c.out)}`, kind: "tsc" };
-    const proof: Proof = { tests: { ok: true, count: testCount(t.out), scope: "full" }, tsc: { ok: true } };
+    const proof: Proof = { tests: { ok: true, count: testCount(t.out), scope }, tsc: { ok: true } };
     if (t.code === 0) return { reason: null, proof };
     const mine = failedTests(t.out);
     const base = mine.length ? await baseFailures(failedFiles(mine)) : null;
