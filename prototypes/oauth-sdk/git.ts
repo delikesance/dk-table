@@ -10,7 +10,7 @@ export type Run = (cmd: string, args: string[], cwd?: string) => Promise<{ code:
 export interface GitFlow {
   /** Create branch `developpement` from the current branch if missing. Never touches master/main. */
   ensureDev(): Promise<void>;
-  /** Create worktree + branch `wt/<sector>-<timestamp>` from developpement; returns {branch, dir}. */
+  /** Create worktree + branch (then npm ci in it) `wt/<sector>-<timestamp>` from developpement; returns {branch, dir}. */
   startSector(sector: string): Promise<{ branch: string; dir: string }>;
   /** Commit all changes in dir (message + trailer), skip if nothing to commit. */
   commit(dir: string, message: string): Promise<boolean>;
@@ -25,6 +25,9 @@ const TRAILER = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>";
 export function createGitFlow(run: Run, cwd: string): GitFlow {
   const git = (args: string[], at = cwd) => run("git", args, at);
 
+  /** Echecs d'installation par worktree (dir -> raison), lus par mergeIfGreen. */
+  const installFail = new Map<string, string>();
+
   async function ensureDev(): Promise<void> {
     const r = await git(["rev-parse", "--verify", DEV]);
     if (r.code !== 0) await git(["branch", DEV]);
@@ -38,6 +41,9 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
     const dir = `${cwd.replace(/[\\/]+$/, "")}/.claude/worktrees/${slug}-${stamp}`;
     const r = await git(["worktree", "add", "-b", branch, dir, DEV]);
     if (r.code !== 0) throw new Error(`worktree add failed: ${r.out}`);
+    // Dependances propres au worktree (pas de jonction: "Denied ID" sous vitest, voir CLAUDE.md).
+    const ci = await run("npm", ["ci", "--prefer-offline", "--no-audit"], dir);
+    if (ci.code !== 0) installFail.set(dir, `npm ci failed: ${ci.out.slice(-500)}`);
     return { branch, dir };
   }
 
@@ -57,6 +63,8 @@ export function createGitFlow(run: Run, cwd: string): GitFlow {
   }
 
   async function mergeIfGreen(branch: string, dir: string) {
+    const bad = installFail.get(dir);
+    if (bad) return { merged: false, reason: bad };
     const checks: [string, string[]][] = [
       ["npm", ["test"]],
       ["npx", ["tsc", "--noEmit"]],

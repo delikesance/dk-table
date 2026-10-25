@@ -110,3 +110,26 @@ describe("safety", () => {
     expect(f.lines().some((l) => l.startsWith("git merge"))).toBe(false);
   });
 });
+
+describe("dependencies in the worktree", () => {
+  it("runs npm ci in dir after worktree add, before any check", async () => {
+    const f = fake();
+    const flow = createGitFlow(f.run, "/r");
+    const { branch, dir } = await flow.startSector("auth");
+    await flow.mergeIfGreen(branch, dir);
+    const l = f.lines();
+    const ci = l.findIndex((x) => x.startsWith("npm ci"));
+    expect(ci).toBeGreaterThan(l.findIndex((x) => x.startsWith("git worktree add")));
+    expect(ci).toBeLessThan(l.indexOf("npm test"));
+    expect(f.calls[ci].cwd).toBe(dir);
+  });
+  it("install failure: no checks, no merge, reason returned", async () => {
+    const f = fake({ "npm ci": { code: 1, out: "ENOTFOUND" } });
+    const flow = createGitFlow(f.run, "/r");
+    const { branch, dir } = await flow.startSector("auth");
+    const r = await flow.mergeIfGreen(branch, dir);
+    expect(r.merged).toBe(false);
+    expect(r.reason).toMatch(/npm ci/);
+    expect(f.lines().some((x) => x === "npm test" || x.startsWith("git merge"))).toBe(false);
+  });
+});
