@@ -132,7 +132,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(node -p "require('./src-tauri/tauri.conf.json').version")
-          gh release create "v${version}" dist/*/* latest.json \
+          gh release create "v${version}" $(find dist -type f) latest.json \
             --target "${GITHUB_SHA}" \
             --title "dk-table v${version}" \
             --generate-notes

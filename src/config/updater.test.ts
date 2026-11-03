@@ -30,6 +30,6 @@ describe("updater: workflow de release", () => {
   it("latest.json (Linux AppImage + Windows nsis) est généré puis joint à la release", () => {
     expect(release).toMatch(/"linux-x86_64"/);
     expect(release).toMatch(/"windows-x86_64"/);
-    expect(release).toMatch(/gh release create "v\$\{version\}" dist\/\*\/\* latest\.json/);
+    expect(release).toMatch(/gh release create "v\$\{version\}" \$\(find dist -type f\) latest\.json/);
   });
 });
