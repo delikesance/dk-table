@@ -8,6 +8,7 @@ import { showOnboarding } from "./ui/onboarding/onboarding";
 import { homeOnStartup } from "./ui/dialogs/settings";
 import { importCsv } from "./ui/fileops";
 import { openImportReport } from "./ui/dialogs/importReport";
+import { checkForUpdate } from "./ui/updater";
 
 initTheme();
 
@@ -22,6 +23,9 @@ if (new URLSearchParams(location.search).get("onboarding") !== "0" && homeOnStar
     onOpenRecent: (p) => app.hooks.command?.(`recent:${p}`),
   });
 }
+
+// Contrôle silencieux des mises à jour quelques secondes après le démarrage (Tauri seulement).
+setTimeout(() => void checkForUpdate(app, { silent: true }), 5000);
 
 // Dev only (e2e, no Tauri dialog): `window.__dkImportCsv(nom, texte)` ouvre le rapport d'import CSV;
 // `window.__dkOutline([niveaux])` pose le plan de la feuille active (pas encore de commande de groupement).

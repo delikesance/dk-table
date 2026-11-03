@@ -18,6 +18,14 @@
   "bundle": {
     "active": true,
     "targets": ["deb", "appimage", "msi", "nsis"],
-    "icon": ["icons/icon.png", "icons/icon.ico"]
+    "icon": ["icons/icon.png", "icons/icon.ico"],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY1Qjk1MzBDMTAwNzIzQTkKUldTcEl3Y1FERk81WmVVdnNpaHlWY3dvZWE0NHdJc2NMWGxRa2Z3bkN0aHYzNHhaSkRzeWk0TzMK",
+      "endpoints": ["https://github.com/delikesance/dk-table/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
   }
 }

@@ -20,6 +20,7 @@ import { openNamedFns } from "../dialogs/namedFns";
 import { openScenarios } from "../dialogs/scenarios";
 import { openGoalSeek } from "../dialogs/goalSeek";
 import { openMerge } from "../dialogs/merge";
+import { checkForUpdate } from "../updater";
 import { docFormatMenu, insertionMenu } from "./docSpec";
 import type { App } from "../appTypes";
 
@@ -55,7 +56,7 @@ function fichier(app: App, d: MenuDeps, inDoc: boolean): MenuDef {
   const e = fileEntries(d.file);
   e.splice(1, 0, { label: "Nouveau document", run: () => void app.addDoc() });
   if (inDoc) e.splice(e.findIndex((x) => x.label === "Enregistrer sous…") + 1, 0, { label: "Exporter le document…", hint: "Ctrl+E", run: d.exportDoc });
-  return { label: "Fichier", items: [...e, { label: "Paramètres…", hint: "Ctrl+,", run: d.openSettings, sep: true }] };
+  return { label: "Fichier", items: [...e, { label: "Rechercher des mises à jour…", sep: true, run: () => void checkForUpdate(app, { silent: false }) }, { label: "Paramètres…", hint: "Ctrl+,", run: d.openSettings }] };
 }
 
 /** Les menus : 8 dans l'ordre de la maquette validée ; avec un document ouvert, Insertion remplace Feuille et Données. */

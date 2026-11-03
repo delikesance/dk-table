@@ -21,6 +21,7 @@ import { openAnalysis } from "./dialogs/analysis";
 import { openQuery } from "./dialogs/query";
 import { openCompare } from "./dialogs/diff";
 import { openMerge } from "./dialogs/merge";
+import { checkForUpdate } from "./updater";
 import { openHistory } from "./dialogs/history";
 import { openDepMap } from "./dialogs/depmap";
 import { openAudit } from "./dialogs/audit";
@@ -141,6 +142,7 @@ export function installCommands(app: App): void {
   run("format.merge", "Fusionner les cellules", () => app.mergeCells(), undefined, ["fusion", "fusionner", "merge", "cellules", "centrer"]);
   run("format.unmerge", "Annuler la fusion des cellules", () => app.unmergeCells(), undefined, ["fusion", "défusionner", "séparer", "unmerge"]);
   for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
+  run("app.update", "Rechercher des mises à jour…", () => void checkForUpdate(app, { silent: false }), undefined, ["mise à jour", "update", "version", "télécharger"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
   run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);
   run("data.sort-asc", "Trier la colonne A→Z", () => void app.sortColumn(false), undefined, ["tri", "sort", "croissant"]);
