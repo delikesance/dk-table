@@ -86,6 +86,7 @@ function cellMenu(app: App): MenuItem[] {
     { separator: true },
     { label: "Alignement", submenu: (["left", "center", "right"] as const).map((a) => ({
       label: { left: "Gauche", center: "Centre", right: "Droite" }[a], action: () => app.style({ align: a }) })) },
+    { label: app.selectionMerged() ? "Annuler la fusion" : "Fusionner les cellules", action: () => (app.selectionMerged() ? app.unmergeCells() : app.mergeCells()) },
     { separator: true },
     { label: "Trier A→Z", icon: "sort-asc", action: () => void app.sortColumn(false) },
     { label: "Trier Z→A", icon: "sort-desc", action: () => void app.sortColumn(true) },
@@ -137,6 +138,8 @@ export function installCommands(app: App): void {
   run("file.merge", "Fusionner avec d'autres versions…", () => openMerge(app), undefined, ["fusion", "merge", "conflit", "version", "diff"]);
   run("data.validation", "Validation des données…", () => openValidationDialog(app), undefined, ["validation", "règle", "liste", "contrôle", "collage", "invalide", "corriger"]);
   run("format.cf", "Formatage conditionnel…", () => openCfDialog(app), undefined, ["conditionnel", "règle", "échelle", "barres", "doublons", "surligner"]);
+  run("format.merge", "Fusionner les cellules", () => app.mergeCells(), undefined, ["fusion", "fusionner", "merge", "cellules", "centrer"]);
+  run("format.unmerge", "Annuler la fusion des cellules", () => app.unmergeCells(), undefined, ["fusion", "défusionner", "séparer", "unmerge"]);
   for (const [m, l] of BORDER_LABELS) run(`format.borders-${m}`, `Bordures : ${l.toLowerCase()}`, () => app.borders(m), undefined, ["bordure", "border"]);
   run("file.new", "Nouveau", () => newDocument(app), "Ctrl+N", ["document"]);
   run("edit.autosum", "Somme rapide", () => void autosum(app), "Alt+=", ["somme", "sum", "total", "sigma"]);

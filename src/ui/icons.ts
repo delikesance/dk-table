@@ -34,6 +34,7 @@ import borders from "iconoir/icons/regular/border-out.svg?raw";
 import bordersAll from "iconoir/icons/regular/table.svg?raw";
 import bordersBottom from "iconoir/icons/regular/border-bottom.svg?raw";
 import bordersNone from "iconoir/icons/regular/square-dashed.svg?raw";
+import merge from "iconoir/icons/regular/horizontal-merge.svg?raw";
 import arrowUp from "iconoir/icons/regular/arrow-up.svg?raw";
 import arrowDown from "iconoir/icons/regular/arrow-down.svg?raw";
 import edit from "iconoir/icons/regular/edit-pencil.svg?raw";
@@ -44,7 +45,7 @@ const RAW: Record<string, string> = {
   "sort-asc": sortAsc, "sort-desc": sortDesc, percent, sum, "text-color": textColor, add, upload, download, undo, redo, bold, italic, fill, open, save, tools, plus, file,
   chevron: tools, "chevron-right": chevronRight,
   "align-left": alignLeft, "align-center": alignCenter, "align-right": alignRight,
-  filter, underline, wrap, borders, "borders-all": bordersAll, "borders-bottom": bordersBottom, "borders-none": bordersNone,
+  filter, underline, wrap, merge, borders, "borders-all": bordersAll, "borders-bottom": bordersBottom, "borders-none": bordersNone,
   "arrow-up": arrowUp, "arrow-down": arrowDown, edit, trash, play,
 };
 

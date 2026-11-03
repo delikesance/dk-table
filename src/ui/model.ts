@@ -21,6 +21,8 @@ export interface State {
   widths?: Record<number, number>;
   /** Validation rules (absent in snapshots = none). */
   validation?: ValRule[];
+  /** Merged ranges (absent in snapshots = none). */
+  merges?: string[];
 }
 
 /** One sheet of the workbook. */
@@ -35,6 +37,8 @@ export interface Entry {
   validation: ValRule[];
   /** Custom column widths in px by 0-based column (persisted in .dktable, undoable); the grid view shares this object. */
   widths: Record<number, number>;
+  /** Merged cell ranges "B2:D3" (persisted in .dktable, undoable). */
+  merges: string[];
   undo: State[];
   redo: State[];
   /** Frozen panes (top rows / left cols), persisted in .dktable; absent = none. Not part of undo. */
@@ -71,7 +75,7 @@ export function buildSheet(cells: Snap, cols = 26, rows = 100): Sheet {
 export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
   return {
     id: doc?.id ?? uid(), name, styles: structuredClone(doc?.styles ?? {}), undo: [], redo: [],
-    cf: structuredClone(doc?.cf ?? []), validation: structuredClone(doc?.validation ?? []), widths: widthsFromDoc(doc?.colWidths),
+    cf: structuredClone(doc?.cf ?? []), validation: structuredClone(doc?.validation ?? []), widths: widthsFromDoc(doc?.colWidths), merges: [...(doc?.merges ?? [])],
     sheet: buildSheet(doc?.cells ?? {}, doc?.cols, doc?.rows),
     ...(doc?.freeze ? { freeze: { ...doc.freeze } } : {}),
   };
@@ -79,7 +83,7 @@ export function newEntry(name: string, doc?: Partial<DocSheet>): Entry {
 
 /** Deep copy of the entry's raw cells, styles and conditional formatting rules. */
 export function snapshot(e: Entry): State {
-  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles, cf: e.cf, widths: e.widths, validation: e.validation })) as State;
+  return JSON.parse(JSON.stringify({ cells: e.sheet.cells, styles: e.styles, cf: e.cf, widths: e.widths, validation: e.validation, merges: e.merges })) as State;
 }
 
 /** Record the current state before a change (clears redo). */
@@ -99,6 +103,7 @@ export function step(e: Entry, from: "undo" | "redo"): boolean {
   e.cf = snap.cf ?? [];
   e.validation = snap.validation ?? [];
   e.widths = snap.widths ?? {};
+  e.merges = snap.merges ?? [];
   e.sheet = buildSheet(snap.cells, e.sheet.cols, e.sheet.rows);
   return true;
 }

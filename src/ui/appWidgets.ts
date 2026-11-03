@@ -24,6 +24,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onUnderline: () => app.style({ underline: !app.activeStyle().underline }),
     onWrap: () => app.style({ wrap: !app.activeStyle().wrap }),
     onBorders: (mode) => app.borders(mode),
+    onMerge: () => (app.selectionMerged() ? app.unmergeCells() : app.mergeCells()),
     onAlign: (align) => app.style({ align }),
     onFormat: (format) => app.style({ format }),
     onSort: (desc) => void app.sortColumn(desc),

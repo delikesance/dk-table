@@ -324,3 +324,4 @@ Classement par gravité (P0 = pire)
 - [x] Listes personnalisées de tri et de recopie (carte listes-personnalisees-de-tri-et-de-recopie)
 
 - [x] Chiffrement du classeur par mot de passe (carte chiffrement-du-classeur-par-mot-de-passe)
+- [x] Fusion de cellules : Fusionner / Annuler la fusion (barre d’outils, menu Format, clic droit, palette), annulable, enregistrée dans `.dktable` (`merges`), suit insert/suppr. lignes-colonnes (`docs/fusion-de-cellules.md`). Reste : export HTML/Markdown (colspan/rowspan), e2e Playwright

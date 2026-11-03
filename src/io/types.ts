@@ -44,6 +44,8 @@ export interface DocSheet {
   cf?: CfRule[];
   /** Data-validation rules (checked on typing, paste, fill and import); absent = none. */
   validation?: ValRule[];
+  /** Merged cell ranges ("B2:D3", top-left cell = anchor); absent = none. */
+  merges?: string[];
   /** Saved views (filter, sort, group, hidden columns); absent = none. */
   views?: SheetView[];
 }

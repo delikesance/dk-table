@@ -18,6 +18,7 @@ import { invalidOf, markInvalid, notifyInvalid } from "./appValidation";
 import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
+import { mergeCells, selectionMerged, unmergeCells } from "./appMerge";
 import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
 import { decimalMode, onDecimalChange, setDecimalMode } from "../engine/decimal";
@@ -76,12 +77,13 @@ export function createApi(c: Ctx): App {
       c.cur = e; refreshTabs(c); buildGrid(c);
     },
     sheets: () => c.entries.map(({ id, name }) => ({ id, name })),
-    activeDoc: () => ({ id: c.cur.id, name: c.cur.name, cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, cells: c.cur.sheet.cells, styles: stylesOf(c.cur.styles) }),
+    activeDoc: () => ({ id: c.cur.id, name: c.cur.name, cols: c.cur.sheet.cols, rows: c.cur.sheet.rows, cells: c.cur.sheet.cells, styles: stylesOf(c.cur.styles), ...(c.cur.merges.length ? { merges: [...c.cur.merges] } : {}) }),
     toDoc: () => ({
       version: 1, active: c.cur.id,
       sheets: c.entries.map((e) => ({ id: e.id, name: e.name, cols: e.sheet.cols, rows: e.sheet.rows,
         cells: JSON.parse(JSON.stringify(e.sheet.cells)), styles: stylesOf(e.styles),
         ...(e.freeze ? { freeze: { ...e.freeze } } : {}), ...(Object.keys(e.widths).length ? { colWidths: widthsToDoc(e.widths) } : {}),
+        ...(e.merges.length ? { merges: [...e.merges] } : {}),
         ...(e.cf.length ? { cf: structuredClone(e.cf) } : {}),
         ...(e.validation.length ? { validation: structuredClone(e.validation) } : {}) })),
       macros: macros.list().map((m) => ({ ...m })),
@@ -130,6 +132,9 @@ export function createApi(c: Ctx): App {
       c.grid.refresh();
       setTitle(c, true); syncInfo(c);
     },
+    mergeCells: () => mergeCells(c),
+    unmergeCells: () => unmergeCells(c),
+    selectionMerged: () => selectionMerged(c),
     activeStyle: () => c.cur.styles[firstKey(c)] ?? {},
     cfRules: () => structuredClone(c.cur.cf),
     setCfRules(rules) {

@@ -3,10 +3,10 @@ import fast from "../../.github/workflows/ci.yml?raw";
 import full from "../../.github/workflows/ci-full.yml?raw";
 import release from "../../.github/workflows/release.yml?raw";
 
-/** Stratégie CI : rapide sur `développement`, complète seulement vers/sur `main`. */
+/** Stratégie CI : rapide sur `développement`, complète seulement vers/sur `master`. */
 describe("CI rapide (développement)", () => {
-  it("ne tourne pas sur main (la CI complète s'en charge)", () => {
-    expect(fast).toMatch(/branches-ignore:\s*\[main\]/);
+  it("ne tourne pas sur master (la CI complète s'en charge)", () => {
+    expect(fast).toMatch(/branches-ignore:\s*\[master\]/);
   });
 
   it("annule les runs obsolètes", () => {
@@ -31,10 +31,10 @@ describe("CI rapide (développement)", () => {
   });
 });
 
-describe("CI complète (main)", () => {
-  it("tourne sur PR vers main et sur push main, avec concurrency", () => {
-    expect(full).toMatch(/pull_request:\s*\n\s*branches:\s*\[main\]/);
-    expect(full).toMatch(/push:\s*\n\s*branches:\s*\[main\]/);
+describe("CI complète (master)", () => {
+  it("tourne sur PR vers master et sur push master, avec concurrency", () => {
+    expect(full).toMatch(/pull_request:\s*\n\s*branches:\s*\[master\]/);
+    expect(full).toMatch(/push:\s*\n\s*branches:\s*\[master\]/);
     expect(full).toMatch(/cancel-in-progress:\s*true/);
   });
 
@@ -56,7 +56,7 @@ describe("CI complète (main)", () => {
 });
 
 describe("release", () => {
-  it("n'est pas doublée par un autre run sur main", () => {
+  it("n'est pas doublée par un autre run sur master", () => {
     expect(release).toMatch(/concurrency:/);
   });
 });

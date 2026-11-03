@@ -3,6 +3,7 @@ import { FORMAT_VERSION, type Borders, type CellStyle, type DktDoc, type DocMacr
 
 import { DktParseError, isObj } from "./parseError";
 import { checkCf } from "./cfFormat";
+import { addMerge, parseRect } from "../ui/grid/merges";
 import { checkValidation } from "./validationFormat";
 import { checkDocs } from "./docsFormat";
 import { checkFunctions } from "./fnFormat";
@@ -85,6 +86,20 @@ function checkFreeze(v: unknown, at: string): NonNullable<DocSheet["freeze"]> {
   return { rows: v.rows, cols: v.cols };
 }
 
+/** Keep only multi-cell, non-overlapping ranges (later ones win). */
+const addAll = (list: string[]): string[] => list.reduce<string[]>((acc, s) => addMerge(acc, parseRect(s)), []);
+
+/** Validates the optional `merges` of a sheet: multi-cell ranges "B2:D3" (single cells and overlaps dropped). */
+function checkMerges(v: unknown, at: string): string[] {
+  if (!Array.isArray(v)) throw new DktParseError(`${at} must be an array`);
+  const out: string[] = [];
+  for (const s of v) {
+    if (typeof s !== "string" || !/^[A-Z]+\d+:[A-Z]+\d+$/.test(s)) throw new DktParseError(`${at}: invalid range ${JSON.stringify(s)}`);
+    out.push(s);
+  }
+  return addAll(out);
+}
+
 /** Validates one sheet entry, throwing a located DktParseError. */
 function checkSheet(s: unknown, i: number): DocSheet {
   const at = `sheets[${i}]`;
@@ -106,6 +121,7 @@ function checkSheet(s: unknown, i: number): DocSheet {
   if (s.styles !== undefined) sheet.styles = checkStyles(s.styles, at);
   if (s.freeze !== undefined) sheet.freeze = checkFreeze(s.freeze, at);
   if (s.colWidths !== undefined) sheet.colWidths = checkColWidths(s.colWidths, `${at}.colWidths`);
+  if (s.merges !== undefined) sheet.merges = checkMerges(s.merges, `${at}.merges`);
   if (s.cf !== undefined) sheet.cf = checkCf(s.cf, `${at}.cf`);
   if (s.validation !== undefined) sheet.validation = checkValidation(s.validation, `${at}.validation`);
   return sheet;

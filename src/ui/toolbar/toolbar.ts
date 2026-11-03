@@ -14,6 +14,8 @@ export interface ToolbarHandlers {
   onAlign(a: Align): void; onFormat(f: string): void; onFill(color: string | null): void;
   /** Underline toggle (Ctrl+U), wrap toggle and « Bordures » menu pick. */
   onUnderline?(): void; onWrap?(): void; onBorders?(mode: BorderMode): void;
+  /** « Fusionner les cellules » toggle (merges the selection, or unmerges when it is already merged). */
+  onMerge?(): void;
   /** Text colour (null = "Aucune"). */
   onTextColor?(color: string | null): void;
   /** Quick sum (Σ). */
@@ -87,6 +89,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
 
   const underline = mkBtn("underline", "Souligné (Ctrl+U)", () => h.onUnderline?.());
   const wrap = mkBtn("wrap", "Renvoi à la ligne", () => h.onWrap?.());
+  const merge = mkBtn("merge", "Fusionner / annuler la fusion des cellules", () => h.onMerge?.());
   const borders = createBordersControl((m) => h.onBorders?.(m));
   const sel = document.createElement("select");
   sel.className = "dk-toolselect"; sel.setAttribute("aria-label", "Format de nombre");
@@ -104,7 +107,7 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   el.append(
     n2,
     group(undo, redo), sep(), group(bold, italic, underline), sep(), group(...alignBtns, wrap), sep(),
-    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap, borders),
+    group(sel, mkBtn("sum", "Somme rapide (Alt+=)", () => h.onSum?.())), sep(), group(fillWrap, textWrap, borders, merge),
   );
   host.append(el);
 

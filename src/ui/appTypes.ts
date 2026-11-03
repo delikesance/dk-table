@@ -64,6 +64,12 @@ export interface App {
   style(patch: CellStyle): void;
   /** Apply a « Bordures » mode to the selection (per-cell edges, one undo step). */
   borders(mode: BorderMode): void;
+  /** Merge the selected cells into the top-left one (values of the others are lost; one undo step). */
+  mergeCells(): void;
+  /** Unmerge the merged ranges touching the selection (one undo step). */
+  unmergeCells(): void;
+  /** True when the selection touches a merged range. */
+  selectionMerged(): boolean;
   /** Style of the active cell (own style; conditional formats are not included). */
   activeStyle(): CellStyle;
   /** Conditional formatting rules of the active sheet, by priority (a copy). */

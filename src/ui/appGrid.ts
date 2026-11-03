@@ -17,6 +17,7 @@ import { colsOfSelection } from "./grid/fit";
 import { markInvalid, notifyInvalid } from "./appValidation";
 import { firstKey, keysOf, setTitle, type Ctx } from "./appState";
 import { clearSpecial } from "./appSpecial";
+import { mergeRects } from "./appMerge";
 
 /** Per-sheet grid view state (column widths, filters): survives rebuilds, widths and freeze come from the entry (saved in files), filters are not saved; `viewOf(entry)` gets/creates it. */
 const views = new WeakMap<object, GridView>();
@@ -127,6 +128,7 @@ export function buildGrid(c: Ctx): void {
       }
       setCell(c.cur.sheet, k, raw);
     },
+    merges: () => mergeRects(c.cur),
     onBulk: () => queueMicrotask(() => notifyInvalid(c)), // after the coalesced touch
     onSelect: () => { clearSpecial(c); syncInfo(c); },
     onResizeStart: () => { pushUndo(c.cur); setTitle(c, true); syncInfo(c); },

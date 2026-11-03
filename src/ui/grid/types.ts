@@ -1,6 +1,7 @@
 /** Public types of the grid component. */
 import type { Freeze } from "./freeze";
 import type { Outline } from "../../engine/outline";
+import type { Rect } from "./merges";
 
 /**
  * View state owned by the caller so it survives grid rebuilds: custom column widths in px and column
@@ -35,6 +36,8 @@ export interface GridOptions {
   gap?(key: string): string | undefined;
   /** Hook: true when the cell has a custom number format (`custom:`), so a numeric text with a unit aligns right. */
   numeric?(key: string): boolean;
+  /** Merged ranges of the sheet (anchor = top-left); read on every cell paint, so keep it cheap. */
+  merges?(): Rect[];
   /** Called when a cell element is created and attached (rows are virtualized: re-created on scroll), e.g. to apply styles. */
   onCellCreated?(key: string, el: HTMLElement): void;
   /** Freeze drag handles in the corner (Sheets); called with the dropped freeze. No handles when omitted. */

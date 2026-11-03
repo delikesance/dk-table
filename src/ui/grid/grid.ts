@@ -24,6 +24,7 @@ import { bindMouse } from "./mouse";
 import { bindFillHandle } from "./fillHandle";
 import { addFreezeHandles } from "./freezeHandle";
 import { clampFreeze, frozenPx } from "./freeze";
+import { mergeAt, stepOut } from "./merges";
 
 export type { Grid, GridOptions } from "./types";
 
@@ -68,15 +69,25 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
   const outline = createOutlineCtl(root, () => win.heads, view, relist);
 
   const sigs = new Map<string, string>();
+  /** Span the anchor of a merge over its range, hide the absorbed cells, restore plain cells. */
+  function layoutMerge(el: HTMLElement, p: Pos, m: ReturnType<typeof mergeAt>, lay: string): void {
+    el.style.display = lay === "x" ? "none" : "";
+    el.style.setProperty("grid-row", m && lay !== "x" ? `${p.row + 2} / span ${m.r1 - m.r0 + 1}` : String(p.row + 2));
+    el.style.setProperty("grid-column", m && lay !== "x" ? `${p.col + 2} / span ${m.c1 - m.c0 + 1}` : String(p.col + 2));
+    el.classList.toggle("dkg-merged", !!m && lay !== "x");
+  }
   /** Render one cell (hook element if provided, else text); skips the DOM write when unchanged. */
   function paint(key: string): void {
     const el = cells.get(key);
     if (!el) return;
     const custom = opts.renderCell?.(key) ?? null;
     const text = custom ? "" : opts.getDisplay(key);
-    const kind = rawKind(opts.getRaw(key)), sig = `${kind}|` + (custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`);
+    const pos = parseKey(key), rects = opts.merges?.() ?? [], m = rects.length ? mergeAt(rects, pos.col, pos.row) : undefined;
+    const lay = !m ? "" : m.c0 === pos.col && m.r0 === pos.row ? `s${m.c1 - m.c0 + 1}x${m.r1 - m.r0 + 1}` : "x";
+    const kind = rawKind(opts.getRaw(key)), sig = `${lay}|${kind}|` + (custom ? `h:${custom.outerHTML}` : `t:${text}${opts.gap?.(key) ?? ""}`);
     if (sigs.get(key) === sig) return;
     sigs.set(key, sig);
+    layoutMerge(el, pos, m, lay);
     markKind(el, text, opts.gap?.(key), kind, opts.numeric?.(key));
     if (custom) el.replaceChildren(custom);
     else el.textContent = text;
@@ -107,6 +118,10 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Scroll the active cell into view when `reveal` (frozen panes aware), refresh the window and highlights, then notify. */
   function render(notify = true, reveal = true): void {
+    if (anchor.col === active.col && anchor.row === active.row) { // a lone cursor inside a merge sits on its anchor
+      const m = mergeAt(opts.merges?.() ?? [], active.col, active.row);
+      if (m) anchor = active = { col: m.c0, row: m.r0 };
+    }
     if (reveal) fz.scrollRow(Math.max(0, ctl.index(active.row)));
     sync();
     mark();
@@ -116,10 +131,13 @@ export function createGrid(host: HTMLElement, opts: GridOptions): Grid {
 
   /** Apply a keyboard navigation action (pure math in nav.ts) and re-render. */
   function nav(a: NavAction, extend = false): void {
+    const prev = active;
     ({ anchor, active } = navigate(a, { anchor, active }, extend, {
       cols, rows, order: ctl.order(), page: pageRows(root.clientHeight || FALLBACK_VIEWPORT_H, ROW_H),
       filled: (c, r) => opts.getRaw(keyOf(c, r)) !== "",
     }));
+    const rects = opts.merges?.() ?? [];
+    if (!extend && rects.length && a.kind !== "all" && a.kind !== "cols" && a.kind !== "rows") anchor = active = stepOut(rects, prev, active, cols, rows);
     render();
   }
 

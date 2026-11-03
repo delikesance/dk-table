@@ -7,6 +7,7 @@ import { applyEdit, moveKeys, type StructEdit } from "../engine/structure";
 import { shiftRules } from "../engine/cf/structure";
 import { buildSheet, pushUndo } from "./model";
 import { parseKey } from "./grid/keys";
+import { shiftMerges } from "./grid/merges";
 import { buildGrid, viewOf } from "./appGrid";
 import { setTitle, type Ctx } from "./appState";
 
@@ -54,6 +55,7 @@ export function structOp(c: Ctx, op: StructOp): void {
   c.cur.sheet = buildSheet(snap, c.cur.sheet.cols, c.cur.sheet.rows);
   c.cur.styles = moveKeys(c.cur.styles, e);
   c.cur.cf = shiftRules(c.cur.cf, e);
+  c.cur.merges = shiftMerges(c.cur.merges, e);
   if (e.axis === "col") {
     c.cur.widths = shiftCols(c.cur.widths, e);
     const v = viewOf(c.cur);
