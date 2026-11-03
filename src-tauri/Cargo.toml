@@ -1,6 +1,6 @@
 [package]
 name = "dk-table"
-version = "0.3.0"
+version = "0.4.0"
 description = "dk-table spreadsheet"
 edition = "2021"
 
