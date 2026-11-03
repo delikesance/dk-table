@@ -1,11 +1,11 @@
-# CI rapide : tout push sur une branche autre que `main` (une PR vers développement a déjà ses pushs).
+# CI rapide : tout push sur une branche autre que `master` (une PR vers développement a déjà ses pushs).
 # Objectif < 1-2 min : types + tests des fichiers modifiés seulement.
-# Les gros tests (vitest complet, e2e, Rust, builds) sont dans ci-full.yml (vers/sur main).
+# Les gros tests (vitest complet, e2e, Rust, builds) sont dans ci-full.yml (vers/sur master).
 name: CI
 
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore: [master]
 
 # Un nouveau push annule le run précédent de la même branche.
 concurrency:
@@ -32,6 +32,6 @@ jobs:
       - name: Types
         run: npx tsc --noEmit
 
-      # Seuls les tests liés aux fichiers modifiés ; la suite complète tourne vers main.
+      # Seuls les tests liés aux fichiers modifiés ; la suite complète tourne vers master.
       - name: Tests des fichiers modifiés
         run: npx vitest run --changed HEAD~1 --passWithNoTests

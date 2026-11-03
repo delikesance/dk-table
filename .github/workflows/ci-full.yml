@@ -1,12 +1,12 @@
-# CI complète : uniquement sur PR vers `main` (ex. développement -> main) et au push sur `main`.
+# CI complète : uniquement sur PR vers `master` (ex. développement -> master) et au push sur `master`.
 # Gros tests : vitest complet, cargo, e2e Playwright en 3 shards. Jobs `test` et `e2e` = checks requis.
 name: CI complète
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: ci-full-${{ github.ref }}
