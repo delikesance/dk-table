@@ -1,5 +1,5 @@
 /** Standalone HTML export of a dk doc (also the source of the PDF print): inline styles, no script. */
-import type { BlockAttrs } from "./blocks";
+import { readRange, tableCells, type BlockAttrs, type TCell } from "./blocks";
 import { blockRows, calcOut, refText, type CalcOut, type JNode } from "./exportShared";
 import type { RefBook } from "./refs";
 
@@ -35,10 +35,15 @@ function inline(nodes: JNode[] | undefined, x: Ctx): string {
 
 /** Table of a linked block. */
 function table(x: Ctx, a: BlockAttrs): string {
-  const r = blockRows(x.book, a);
+  const r = blockRows(x.book, a), d = a.kind === "table" ? readRange(x.book, a) : null;
   if (!r) return '<p class="err">#REF! (cible supprimée)</p>';
-  const head = r.head ? `<thead><tr>${r.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>` : "";
-  const body = r.body.map((row) => `<tr>${row.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
+  const spans = d?.merges?.length ? tableCells(d, a) : null; // merged cells only for plain tables
+  const cell = (tag: string, c: TCell): string =>
+    c.skip ? "" : `<${tag}${c.cs > 1 ? ` colspan="${c.cs}"` : ""}${c.rs > 1 ? ` rowspan="${c.rs}"` : ""}>${esc(c.t)}</${tag}>`;
+  const head = spans ? (spans.head ? `<thead><tr>${spans.head.map((c) => cell("th", c)).join("")}</tr></thead>` : "")
+    : r.head ? `<thead><tr>${r.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>` : "";
+  const body = spans ? spans.body.map((row) => `<tr>${row.map((c) => cell("td", c)).join("")}</tr>`).join("")
+    : r.body.map((row) => `<tr>${row.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
   return `<table>${head}<tbody>${body}</tbody></table>`;
 }
 

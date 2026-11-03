@@ -2,6 +2,7 @@
 import { getDisplay, getValue, type Sheet } from "../engine/sheet";
 import { formatValue } from "../ui/numfmt";
 import { keyOf, parseKey } from "../ui/grid/keys";
+import { parseRect, type Rect } from "../ui/grid/merges";
 import type { RefBook } from "./refs";
 
 /** Attributes of a `liveBlock` node. */
@@ -19,7 +20,11 @@ export interface BlockAttrs {
 }
 
 /** A range read from the workbook: displayed text and numbers (NaN when not a number). */
-export interface RangeData { sheetName: string; rows: string[][]; nums: number[][] }
+export interface RangeData {
+  sheetName: string; rows: string[][]; nums: number[][];
+  /** Merged cells of the sheet, relative to the range origin (may start before or end after it). */
+  merges?: Rect[];
+}
 
 /** Read `a.ref` from the workbook; null when the sheet or the range is gone. */
 export function readRange(book: RefBook, a: BlockAttrs): RangeData | null {
@@ -40,7 +45,8 @@ export function readRange(book: RefBook, a: BlockAttrs): RangeData | null {
       }
       rows.push(tr); nums.push(nr);
     }
-    return { sheetName: s.name, rows, nums };
+    const merges = (s.merges ?? []).map(parseRect).map((m) => ({ c0: m.c0 - c0, c1: m.c1 - c0, r0: m.r0 - r0, r1: m.r1 - r0 }));
+    return { sheetName: s.name, rows, nums, ...(merges.length ? { merges } : {}) };
   } catch { return null; }
 }
 
@@ -49,6 +55,30 @@ export function tableView(d: RangeData, a: BlockAttrs): { head: string[] | null;
   const pick = (row: string[]): string[] => (a.cols ? a.cols.filter((i) => i < row.length).map((i) => row[i]) : row);
   const head = a.header && d.rows.length ? pick(d.rows[0]) : null;
   return { head, body: d.rows.slice(a.header ? 1 : 0).map(pick) };
+}
+
+/** One table cell with its merge: `skip` = covered by a neighbouring merged cell (draw nothing). */
+export interface TCell { t: string; rs: number; cs: number; skip: boolean }
+
+/** Like {@link tableView} with merged cells: spans on the anchor, `skip` on the covered cells; merges never cross the header/body boundary. */
+export function tableCells(d: RangeData, a: BlockAttrs): { head: TCell[] | null; body: TCell[][] } {
+  const width = d.rows[0]?.length ?? 0;
+  const picked = a.cols ? a.cols.filter((i) => i < width) : Array.from({ length: width }, (_, i) => i);
+  const section = (r0: number, r1: number): TCell[][] => {
+    const out: TCell[][] = [];
+    for (let r = r0; r < r1; r++) {
+      out.push(picked.map((c) => {
+        const t = d.rows[r][c], m = d.merges?.find((x) => c >= x.c0 && c <= x.c1 && r >= x.r0 && r <= x.r1);
+        const anchorShown = !!m && m.r0 >= r0 && m.r0 < r1 && picked.includes(m.c0);
+        if (!m || !anchorShown) return { t, rs: 1, cs: 1, skip: false };
+        if (m.r0 === r && m.c0 === c) return { t, rs: Math.min(m.r1, r1 - 1) - r + 1, cs: picked.filter((p) => p >= m.c0 && p <= m.c1).length, skip: false };
+        return { t, rs: 1, cs: 1, skip: true };
+      }));
+    }
+    return out;
+  };
+  const from = a.header && d.rows.length ? 1 : 0;
+  return { head: from ? section(0, 1)[0] : null, body: section(from, d.rows.length) };
 }
 
 /** Series of a chart block: labels = first column, values = chosen (default last) column. */

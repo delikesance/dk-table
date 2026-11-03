@@ -8,7 +8,7 @@ export interface RefTarget { sheet: string; ref: string }
 
 /** The workbook as the documents see it (read only). */
 export interface RefBook {
-  sheets(): { id: string; name: string; sheet: Sheet; styles: Record<string, { format?: string }> }[];
+  sheets(): { id: string; name: string; sheet: Sheet; styles: Record<string, { format?: string }>; merges?: string[] }[];
 }
 
 /** Result of {@link resolveRef}. */

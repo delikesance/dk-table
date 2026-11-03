@@ -82,3 +82,29 @@ describe("export des puces de calcul", () => {
     expect(md).not.toContain("<svg");
   });
 });
+
+describe("cellules fusionnées dans un bloc tableau", () => {
+  const merged = (merges: string[]): RefBook => {
+    const b = book();
+    return { sheets: () => b.sheets().map((s) => ({ ...s, merges })) };
+  };
+  it("HTML : colspan / rowspan sur l'ancre, cellules couvertes absentes", () => {
+    const html = toHtml("R", doc(block()), merged(["B2:C2", "A2:A3"]));
+    expect(html).toContain('<td rowspan="2">Alice</td>');
+    expect(html).toContain('<td colspan="2">39500</td>');
+    expect(html).not.toContain("<td>Bob</td>");
+    expect(html).toContain("<td>40000</td>");
+  });
+  it("HTML : une fusion ne traverse pas l'en-tête, colonnes choisies comptées", () => {
+    const html = toHtml("R", doc(block({ cols: [0, 1] })), merged(["A1:C2", "B2:C2"]));
+    expect(html).not.toContain("rowspan");
+    expect(html).toContain('<td>39500</td>'); // anchor column B picked, only 1 column left in the merge -> no colspan
+  });
+  it("sans fusion le HTML est inchangé", () => {
+    expect(toHtml("R", doc(block()), merged([]))).toBe(toHtml("R", doc(block()), book()));
+  });
+  it("Markdown : un tableau à pipes ne sait pas fusionner, la valeur de l'ancre reste", () => {
+    const md = toMarkdown(doc(block()), merged(["B2:C2"]));
+    expect(md).toContain("| Alice | 39500 |");
+  });
+});

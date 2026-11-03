@@ -1,6 +1,6 @@
 /** Body of a linked block: a table, labelled bars, or a trend curve, drawn from `RangeData`. */
 import { sparklineSvg, trendHtml } from "../engine/live";
-import { chartData, tableView, type BlockAttrs, type RangeData } from "./blocks";
+import { chartData, tableCells, type BlockAttrs, type RangeData, type TCell } from "./blocks";
 
 /** Element with a class and text. */
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
@@ -18,15 +18,20 @@ const numeric = (t: string): boolean => /^[-+\d\s.,%€$  ]+$/.test(t) && /\d
 
 /** Table of the chosen columns, header row first when `a.header`. */
 function table(d: RangeData, a: BlockAttrs): HTMLElement {
-  const v = tableView(d, a), t = el("table", "dk-block__table");
+  const v = tableCells(d, a), t = el("table", "dk-block__table");
+  const span = (e: HTMLElement, c: TCell): HTMLElement => { // merged cells of the sheet
+    if (c.cs > 1) e.setAttribute("colspan", String(c.cs));
+    if (c.rs > 1) e.setAttribute("rowspan", String(c.rs));
+    return e;
+  };
   if (v.head) {
     const tr = t.createTHead().insertRow();
-    v.head.forEach((h) => tr.append(el("th", "", h)));
+    v.head.filter((h) => !h.skip).forEach((h) => tr.append(span(el("th", "", h.t), h)));
   }
   const body = t.createTBody();
   v.body.forEach((row) => {
     const tr = body.insertRow();
-    row.forEach((c) => tr.append(el("td", numeric(c) ? "dk-num" : "", c)));
+    row.filter((c) => !c.skip).forEach((c) => tr.append(span(el("td", numeric(c.t) ? "dk-num" : "", c.t), c)));
   });
   return t;
 }
