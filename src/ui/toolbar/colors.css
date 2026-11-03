@@ -25,3 +25,15 @@
 .color-none {
   background: linear-gradient(135deg, transparent 45%, var(--c-error) 45%, var(--c-error) 55%, transparent 55%), var(--c-surface);
 }
+
+/* Custom color + colors already used in the document (spans the 5-column swatch grid). */
+.color-custom {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: 12px; color: var(--c-text); cursor: pointer;
+}
+.color-custom input[type="color"] { width: 28px; height: 24px; padding: 0; border: 1px solid var(--c-line-strong); border-radius: var(--r-sm); background: none; cursor: pointer; }
+.color-doc { grid-column: 1 / -1; }
+.color-doc[hidden] { display: none; }
+.color-doc__title { font-size: 11px; color: var(--c-text-2); margin-bottom: var(--s-2); }
+.color-doc__grid { display: grid; grid-template-columns: repeat(5, 24px); gap: var(--s-2); }

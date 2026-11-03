@@ -31,6 +31,7 @@ export function createWidgets(c: Ctx, root: HTMLElement): void {
     onSum: () => void autosum(app),
     onFill: (fill) => app.style({ fill: fill ?? undefined }),
     onTextColor: (color) => app.style({ color: color ?? undefined }),
+    docColors: (kind) => app.usedColors(kind),
   });
   c.fbar = createFormulaBar(q(".dk-app__bar"), {
     onGoto: (t) => { c.grid.select(t.split(":")[0]); c.grid.focus(); },

@@ -19,6 +19,7 @@ import { colsOfSelection } from "./grid/fit";
 import { structOp } from "./appStructure";
 import { borderEdges } from "./borders";
 import { mergeCells, selectionMerged, unmergeCells } from "./appMerge";
+import { normalizeHex } from "./toolbar/colors";
 import { exportDoc } from "./appDocExport";
 import { openMacroView } from "./appMacros";
 import { decimalMode, onDecimalChange, setDecimalMode } from "../engine/decimal";
@@ -131,6 +132,14 @@ export function createApi(c: Ctx): App {
       }
       c.grid.refresh();
       setTitle(c, true); syncInfo(c);
+    },
+    usedColors(kind) {
+      const n = new Map<string, number>();
+      for (const e of c.entries) for (const st of Object.values(e.styles)) {
+        const col = normalizeHex((kind === "fill" ? st.fill : st.color) ?? "");
+        if (col) n.set(col, (n.get(col) ?? 0) + 1);
+      }
+      return [...n].sort((a, b) => b[1] - a[1]).map(([col]) => col);
     },
     mergeCells: () => mergeCells(c),
     unmergeCells: () => unmergeCells(c),

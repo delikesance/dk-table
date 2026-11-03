@@ -77,3 +77,44 @@ describe("color picker", () => {
     expect(sw()[10].getAttribute("aria-pressed")).toBe("true");
   });
 });
+
+describe("couleurs personnalisées et du document", () => {
+  it("normalizeHex: #rgb -> #rrggbb, minuscules, invalide -> null", async () => {
+    const { normalizeHex } = await import("./colors");
+    expect(normalizeHex("#ABC")).toBe("#aabbcc");
+    expect(normalizeHex("#FF8800")).toBe("#ff8800");
+    expect(normalizeHex("rouge")).toBeNull();
+    expect(normalizeHex("")).toBeNull();
+  });
+  it("extraColors: sans doublon, hors palette, plafonné", async () => {
+    const { extraColors } = await import("./colors");
+    const used = ["#FDE2E0", "#ff8800", "#F80", "#ff8800", "#123456", "nope"];
+    expect(extraColors(used, FILL_COLORS)).toEqual(["#ff8800", "#123456"]);
+    expect(extraColors(["#111111", "#222222", "#333333"], FILL_COLORS, 2)).toEqual(["#111111", "#222222"]);
+  });
+  it("l'entrée couleur personnalisée applique la couleur choisie (à la validation)", () => {
+    const { pop, onPick } = mk("fill");
+    const input = pop.querySelector<HTMLInputElement>('input[type="color"]')!;
+    expect(input.getAttribute("aria-label")).toBe("Couleur personnalisée");
+    input.value = "#12ab34";
+    input.dispatchEvent(new Event("change"));
+    expect(onPick).toHaveBeenLastCalledWith("#12ab34");
+  });
+  it("les couleurs du document apparaissent à l'ouverture, cliquables, sans toucher aux 11 boutons de la palette", async () => {
+    const onPick = vi.fn();
+    const pop = createColorPicker({ kind: "fill", onPick, root: document.body, docColors: () => ["#FDE2E0", "#ff8800"] });
+    pop.hidden = true;
+    pop.hidden = false;
+    await new Promise((r) => setTimeout(r, 0)); // MutationObserver
+    const doc = [...pop.querySelectorAll<HTMLButtonElement>(".color-doc button")];
+    expect(doc.map((b) => b.dataset.color)).toEqual(["#ff8800"]); // #fde2e0 est déjà dans la palette
+    doc[0].click();
+    expect(onPick).toHaveBeenLastCalledWith("#ff8800");
+    pop.setCurrent("#ff8800");
+    expect(doc[0].getAttribute("aria-pressed")).toBe("true");
+  });
+  it("aucune couleur du document: la section reste cachée", () => {
+    const { pop } = mk("fill");
+    expect(pop.querySelector<HTMLElement>(".color-doc")!.hidden).toBe(true);
+  });
+});

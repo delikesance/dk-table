@@ -49,7 +49,7 @@ export function installFloating(c: Ctx, root: HTMLElement, onAction: (id: Floati
   };
   const fb = createFloatingBar(root, (id) => (pickers.has(id) ? togglePicker(id) : onAction(id)));
   const addPicker = (id: "fill" | "text", apply: (col: string | null) => void): void => {
-    const p = createColorPicker({ kind: id, root: fb.el, onPick: (col) => { p.hidden = true; apply(col); } });
+    const p = createColorPicker({ kind: id, root: fb.el, docColors: () => c.app.usedColors(id), onPick: (col) => { p.hidden = true; apply(col); } });
     p.hidden = true; pickers.set(id, p);
   };
   addPicker("fill", (col) => c.app.style({ fill: col ?? undefined }));

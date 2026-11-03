@@ -61,6 +61,27 @@ export interface ColorPickerOptions {
   onPick: (color: string | null) => void;
   /** Element the popover is appended to. */
   root: HTMLElement;
+  /** Colors already used in the document (most used first); listed under « Couleurs du document » each time the popover opens. */
+  docColors?: () => string[];
+}
+
+/** Normalised `#rrggbb` (lowercase) of a `#rgb` / `#rrggbb` color, or null. */
+export function normalizeHex(c: string): string | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c.trim());
+  if (!m) return null;
+  const h = m[1].toLowerCase();
+  return "#" + (h.length === 3 ? [...h].map((x) => x + x).join("") : h);
+}
+
+/** Document colors not already in the palette, deduplicated (case, short hex), in the given order, at most `max`. */
+export function extraColors(used: readonly string[], palette: readonly PaletteColor[], max = 20): string[] {
+  const known = new Set(palette.map((c) => c.value));
+  const out: string[] = [];
+  for (const u of used) {
+    const n = normalizeHex(u);
+    if (n && !known.has(n) && !out.includes(n)) out.push(n);
+  }
+  return out.slice(0, max);
 }
 
 /** Popover element exposing `setCurrent` to mark the active color. */
@@ -70,7 +91,7 @@ const COLS = 5;
 
 /** Builds the popover (grid of swatches + "Aucune"), appended to `root`. */
 export function createColorPicker(opts: ColorPickerOptions): ColorPicker {
-  const { kind, onPick, root } = opts;
+  const { kind, onPick, root, docColors } = opts;
   const palette = kind === "fill" ? FILL_COLORS : TEXT_COLORS;
   const pop = document.createElement("div") as unknown as ColorPicker;
   pop.className = "color-picker";
@@ -81,20 +102,57 @@ export function createColorPicker(opts: ColorPickerOptions): ColorPicker {
     ...palette.map((c) => ({ color: c.value, name: c.name })),
     { color: null, name: "Aucune" },
   ];
-  const btns = entries.map((e) => {
+  let current: string | null = null;
+  /** One swatch button (palette, document color or « Aucune »). */
+  const swatch = (color: string | null, name: string): HTMLButtonElement => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = e.color ? "color-swatch" : "color-swatch color-none";
-    b.setAttribute("aria-label", e.name);
-    b.title = e.name;
-    b.setAttribute("aria-pressed", "false");
-    if (e.color) b.style.background = e.color;
-    b.addEventListener("click", () => onPick(e.color));
-    pop.appendChild(b);
+    b.className = color ? "color-swatch" : "color-swatch color-none";
+    b.setAttribute("aria-label", name);
+    b.title = name;
+    b.dataset.color = color ?? "";
+    b.setAttribute("aria-pressed", String(color === current));
+    if (color) b.style.background = color;
+    b.addEventListener("click", () => onPick(color));
     return b;
-  });
+  };
+  entries.forEach((e) => pop.appendChild(swatch(e.color, e.name)));
 
+  // Custom color: native picker, applied when the dialog is validated (not on every drag step).
+  const custom = document.createElement("label");
+  custom.className = "color-custom";
+  const input = document.createElement("input");
+  input.type = "color";
+  input.setAttribute("aria-label", "Couleur personnalisée");
+  input.value = "#3366cc";
+  input.addEventListener("change", () => { const c = normalizeHex(input.value); if (c) onPick(c); });
+  custom.append(input, document.createTextNode(" Couleur personnalisée…"));
+  pop.appendChild(custom);
+
+  // Colors already used in the document, rebuilt each time the popover opens.
+  const doc = document.createElement("div");
+  doc.className = "color-doc";
+  pop.appendChild(doc);
+  const refreshDoc = (): void => {
+    const list = docColors ? extraColors(docColors(), palette) : [];
+    doc.replaceChildren();
+    doc.hidden = list.length === 0;
+    if (!list.length) return;
+    const title = document.createElement("div");
+    title.className = "color-doc__title";
+    title.textContent = "Couleurs du document";
+    doc.appendChild(title);
+    const grid = document.createElement("div");
+    grid.className = "color-doc__grid";
+    list.forEach((c) => grid.appendChild(swatch(c, c)));
+    doc.appendChild(grid);
+  };
+  refreshDoc();
+  new MutationObserver(() => { if (!pop.hidden) refreshDoc(); }).observe(pop, { attributes: true, attributeFilter: ["hidden"] });
+
+  const swatches = (): HTMLButtonElement[] => [...pop.querySelectorAll<HTMLButtonElement>("button.color-swatch")];
   pop.addEventListener("keydown", (ev) => {
+    const btns = swatches();
     const i = btns.indexOf(ev.target as HTMLButtonElement);
     if (i < 0) return;
     const step: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: COLS, ArrowUp: -COLS };
@@ -104,17 +162,15 @@ export function createColorPicker(opts: ColorPickerOptions): ColorPicker {
       btns[j].focus();
     } else if (ev.key === "Enter") {
       ev.preventDefault();
-      onPick(entries[i].color);
+      onPick(btns[i].dataset.color || null);
     } else if (ev.key === "Escape") {
       pop.hidden = true;
     }
   });
 
   pop.setCurrent = (color) => {
-    btns.forEach((b, i) => {
-      const cur = color === null ? entries[i].color === null : entries[i].color === color;
-      b.setAttribute("aria-pressed", String(cur));
-    });
+    current = color;
+    swatches().forEach((b) => b.setAttribute("aria-pressed", String(color === null ? !b.dataset.color : b.dataset.color === color)));
   };
   root.appendChild(pop);
   return pop;

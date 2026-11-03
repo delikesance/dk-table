@@ -16,6 +16,8 @@ export interface ToolbarHandlers {
   onUnderline?(): void; onWrap?(): void; onBorders?(mode: BorderMode): void;
   /** « Fusionner les cellules » toggle (merges the selection, or unmerges when it is already merged). */
   onMerge?(): void;
+  /** Colors already used in the document (most used first) for the « Couleurs du document » section of each picker. */
+  docColors?(kind: "fill" | "text"): string[];
   /** Text colour (null = "Aucune"). */
   onTextColor?(color: string | null): void;
   /** Quick sum (Σ). */
@@ -62,10 +64,10 @@ function sep(): HTMLElement {
 }
 
 /** Icon button + colour popover; picking (or "Aucune" -> null) closes the popover and calls `onPick`. */
-function colorControl(kind: "fill" | "text", label: string, onPick: (c: string | null) => void): HTMLElement {
+function colorControl(kind: "fill" | "text", label: string, onPick: (c: string | null) => void, docColors?: () => string[]): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "dk-colorwrap";
-  const picker = createColorPicker({ kind, root: wrap, onPick: (c) => { picker.hidden = true; onPick(c); } });
+  const picker = createColorPicker({ kind, root: wrap, docColors, onPick: (c) => { picker.hidden = true; onPick(c); } });
   picker.hidden = true;
   wrap.prepend(mkBtn(kind === "fill" ? "fill" : "text-color", label, () => { picker.hidden = !picker.hidden; }));
   document.addEventListener("mousedown", (e) => {
@@ -97,8 +99,8 @@ export function createToolbar(host: HTMLElement, h: ToolbarHandlers): Toolbar {
   sel.addEventListener("change", () => h.onFormat(sel.value));
 
   // Fill / text colour: icon button + palette popover ("Aucune" -> null clears the colour).
-  const fillWrap = colorControl("fill", "Couleur de fond", h.onFill);
-  const textWrap = colorControl("text", "Couleur du texte", (c) => h.onTextColor?.(c));
+  const fillWrap = colorControl("fill", "Couleur de fond", h.onFill, () => h.docColors?.("fill") ?? []);
+  const textWrap = colorControl("text", "Couleur du texte", (c) => h.onTextColor?.(c), () => h.docColors?.("text") ?? []);
 
   // N2 (extras): hidden until the tools toggle deploys it; N1 is always visible.
   const n2 = document.createElement("div");

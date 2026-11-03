@@ -70,6 +70,8 @@ export interface App {
   unmergeCells(): void;
   /** True when the selection touches a merged range. */
   selectionMerged(): boolean;
+  /** Colors already used in the document's cell styles (all sheets), most used first, as `#rrggbb`: reusable from the color pickers. */
+  usedColors(kind: "fill" | "text"): string[];
   /** Style of the active cell (own style; conditional formats are not included). */
   activeStyle(): CellStyle;
   /** Conditional formatting rules of the active sheet, by priority (a copy). */
