@@ -81,6 +81,7 @@ P2 : perf et fonctions
 
 P3 : livraison
 - [x] Packaging Linux config (deb + AppImage, `release.yml`, `src/config/packaging.test.ts`) ; reste : valider `release.yml` via workflow_dispatch sur GitHub
+- [x] CI/CD adaptée à la stratégie de branches (PR vers `développement`, build+release Linux/Windows sur `main`, `docs/branches.md`) ; reste : créer les branches, rulesets, valider sur GitHub
 - [ ] Test de l'installeur Windows (MSI/NSIS construits en T1.7)
 - [ ] T4.1 Analyser LibreOffice Calc via REA, sans copier de code (optionnel ; "Libre Fiscal" à confirmer)
 - [ ] T5.2 Mettre à jour CLAUDE.md (commandes build/test, état réel : section Status encore "no app code")
